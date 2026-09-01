@@ -53,7 +53,13 @@ const NAV_BY_PERSONA: Record<Exclude<Persona, 'loading'>, Array<{ value: string;
   ],
   teacher: [
     { value: '/teaching',       label: 'Teach',    icon: <GraduationCap size={20} /> },
-    { value: '/progress',       label: 'Students', icon: <Users size={20} /> },
+    // Regression (/investigate, 2026-09-01): this pointed at /progress, the
+    // STUDENT's own progress page (keyed off an anonymous useSession() id) —
+    // never a teacher-facing view. A teacher/admin tapping "Students" landed
+    // on a page about their own anonymous session, which was also blank or
+    // crashing (see ProgressPage.tsx's useMemo-ordering fix, same session).
+    // /teacher/roster is the actual "students I teach" page.
+    { value: '/teacher/roster', label: 'Students', icon: <Users size={20} /> },
   ],
 };
 
@@ -127,19 +133,51 @@ export function AppLayout() {
   // elsewhere (knowledge→/knowledge-home, exam→/planned,
   // teacher→/teaching) — `/` was never migrated off the pre-refactor
   // default and is only still reachable via the logo's plain `<a
-  // href="/">` or a direct nav. For a teacher this is unambiguously
-  // wrong in every case (GateHome has no student-vs-teacher branch at
-  // all), so redirect there specifically. exam/knowledge are left alone:
-  // GateHome may still be an intentional onboarding surface for a new or
+  // href="/">` or a direct nav. exam/knowledge are left alone: GateHome
+  // may still be an intentional onboarding surface for a new or
   // anonymous exam-persona visitor, and that's a product call, not a bug
   // to guess at here.
+  //
+  // Refined (/investigate, 2026-09-01): the original fix sent admin/owner
+  // to /teaching too, since they share the 'teacher' persona bucket
+  // (line ~108). Live QA on an admin account showed that's wrong on its
+  // own: /teaching assumes a personal class roster ("no students assigned
+  // yet") an admin was never given, so it's a dead end for a principal who
+  // isn't personally teaching. Branch on the actual role first so a real
+  // teacher still lands on /teaching, while admin/owner land on their own
+  // dashboard route.
+  //
+  // Fixed (/ship Red Team review, 2026-09-01): this used to check
+  // user?.role before persona, which bypassed the vidhya.room "first
+  // priority persona override" (see RoomsPage.tsx) — an admin/owner who had
+  // deliberately entered the exam or learn room (both open to every role)
+  // got bounced back to their admin dashboard the instant they hit `/`,
+  // e.g. via the header logo's plain <a href="/">. Gating on
+  // persona === 'teacher' first restores that: persona only resolves to
+  // 'teacher' when there's no room override redirecting elsewhere, or the
+  // user explicitly chose the teach room.
   useEffect(() => {
-    if (persona === 'teacher' && location.pathname === '/') {
-      navigate('/teaching', { replace: true });
-    }
-  }, [persona, location.pathname, navigate]);
+    if (location.pathname !== '/') return;
+    if (persona !== 'teacher') return;
+    if (user?.role === 'admin') { navigate('/admin/dashboard', { replace: true }); return; }
+    if (user?.role === 'owner') { navigate('/owner/dashboard', { replace: true }); return; }
+    navigate('/teaching', { replace: true });
+  }, [persona, location.pathname, navigate, user]);
 
-  const navItems = persona !== 'loading' ? NAV_BY_PERSONA[persona] : [];
+  // Regression (/ship pre-landing review, 2026-09-01): the 'teacher' persona
+  // bucket is shared by teacher/admin/owner (line ~114 above), so the
+  // "Students" bottom-nav tab sent admin/owner to /teacher/roster too — the
+  // same personal-roster dead end ("no students assigned yet") the Cohort
+  // Insight card's link was fixed to avoid, just reached through a second,
+  // untested affordance. Admin/owner get the platform-wide attention surface
+  // instead; an actual teacher still gets their own roster.
+  const navItems = persona === 'loading'
+    ? []
+    : persona === 'teacher' && (user?.role === 'admin' || user?.role === 'owner')
+      ? NAV_BY_PERSONA.teacher.map(item =>
+          item.value === '/teacher/roster' ? { ...item, value: '/admin/cohort' } : item,
+        )
+      : NAV_BY_PERSONA[persona];
   const activeTab = navItems.find(it => location.pathname.startsWith(it.value))?.value ?? '';
 
   const onTabChange = (value: string) => navigate(value);

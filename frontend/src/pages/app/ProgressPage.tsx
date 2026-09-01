@@ -67,6 +67,18 @@ export default function ProgressPage() {
       .finally(() => setLoading(false));
   }, [sessionId]);
 
+  // Regression (/investigate, 2026-09-01): these two useMemo calls used to sit
+  // AFTER the loading/empty early returns below. On the first render (loading)
+  // React saw 5 hooks; once data with topics arrived and the component fell
+  // through both early returns, it called 2 more — a Rules-of-Hooks violation
+  // ("Rendered more hooks than during the previous render") that throws during
+  // render. With no ErrorBoundary anywhere in the app (frontend/src/main.tsx),
+  // that throw unmounted the whole tree: a blank page, exactly what live QA
+  // reported at /progress. Hooks must run unconditionally on every render, so
+  // they're pinned here, before any early return, with null-safe fallbacks.
+  const weakSet = useMemo(() => new Set((data?.weakTopics ?? []).map(w => w.topic)), [data]);
+  const sortedTopics = useMemo(() => [...(data?.topics ?? [])].sort((a, b) => a.mastery - b.mastery), [data]);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -95,8 +107,6 @@ export default function ProgressPage() {
   const dueToday = parseInt(overall.due_today) || 0;
   const allCaughtUp = dueToday === 0;
 
-  const weakSet = useMemo(() => new Set(data.weakTopics.map(w => w.topic)), [data.weakTopics]);
-  const sortedTopics = useMemo(() => [...data.topics].sort((a, b) => a.mastery - b.mastery), [data.topics]);
   const WEAK_LIMIT = Math.max(weakSet.size, 3);
   const visibleTopics = showAllTopics ? sortedTopics : sortedTopics.slice(0, WEAK_LIMIT);
   const hasMoreTopics = sortedTopics.length > WEAK_LIMIT;

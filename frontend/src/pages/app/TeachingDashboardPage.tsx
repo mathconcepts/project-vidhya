@@ -39,7 +39,7 @@ interface Brief {
 }
 
 export default function TeachingDashboardPage() {
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, loading: authLoading } = useAuth();
   const [showTeacherWelcome, setShowTeacherWelcome] = useState(
     () => !localStorage.getItem('teaching_welcome_dismissed')
   );
@@ -69,7 +69,10 @@ export default function TeachingDashboardPage() {
     }
   }, []);
 
-  useEffect(() => { if (hasRole('teacher')) refresh(); else setLoading(false); }, [hasRole, refresh]);
+  useEffect(() => {
+    if (authLoading) return;
+    if (hasRole('teacher')) refresh(); else setLoading(false);
+  }, [authLoading, hasRole, refresh]);
 
   const openBrief = async (concept_id: string) => {
     setOpenConceptId(concept_id);
@@ -123,6 +126,14 @@ export default function TeachingDashboardPage() {
     }
   };
 
+  // Regression (/investigate, 2026-09-01): this gate used to run before
+  // AuthContext's async /api/auth/me fetch resolved. On a full page load
+  // (e.g. the demo-login walkthrough's window.location.assign, which
+  // remounts the whole app) `user` is briefly null and `hasRole('teacher')`
+  // is false regardless of the eventual real role — a fully-authorized
+  // admin saw "Teacher role required." flash (or persist, on a slow/cold
+  // Render boot) before the real content ever had a chance to load.
+  if (authLoading) return <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>Loading…</p>;
   if (!hasRole('teacher')) {
     return (
       <div className="max-w-md mx-auto p-6 text-center space-y-2">

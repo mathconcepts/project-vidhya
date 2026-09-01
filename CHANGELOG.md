@@ -4,6 +4,62 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.46.0] — 2026-09-01 — Admin/owner no longer hit teacher-only dead ends
+
+**Operator action:** none required. No new env vars, no migrations.
+
+Four bugs from live QA on a production admin account ("Devika — principal,
+auditing"), root-caused via `/investigate`, plus two more of the same class
+caught by this branch's own review before landing.
+
+- **`/progress` crashed to a blank page.** Two `useMemo` calls ran after
+  early returns in `ProgressPage.tsx` — React saw a different number of
+  hooks between the loading render and the loaded render ("Rendered more
+  hooks than during the previous render"), a real thrown error with no
+  ErrorBoundary anywhere in the app to catch it. Both hooks now run
+  unconditionally, before any early return.
+- **The header logo always opened the Teaching page for admin/owner.** The
+  bare `/` redirect sent every `teacher`-persona user (teacher, admin, and
+  owner all share that bucket) to `/teaching`, which assumes a personal
+  class roster an admin/owner never has ("no students assigned yet").
+  Admin/owner now land on their own dashboard route instead.
+- **The Admin Dashboard's "1 need attention" stat led to "no students
+  assigned yet."** The stat is platform-wide (`summarizeCohort()` over
+  every student); the chip linked to `/teacher/roster`, which is scoped to
+  the calling user's own `teacher_of[]` list — empty for an admin. The chip
+  now links to `/admin/cohort`, the actual platform-wide attention surface.
+  The same bottom-nav "Students" tab hit the identical dead end through a
+  second affordance this branch's own review caught; it now points there
+  too for admin/owner, while a real teacher still gets their own roster.
+- **A fully-authorized admin saw "Teaching role required."** `hasRole()`
+  reads `AuthContext`'s `user`, which is `null` until the async
+  `/api/auth/me` call resolves — so `TeachingDashboardPage.tsx`,
+  `TeacherRosterPage.tsx`, and (caught in this branch's own Red Team review)
+  `AdminDashboardPage.tsx` all briefly showed their "role required" gate to
+  real admins/teachers on every fresh page load, most visibly right after
+  the demo-login walkthrough's full-page reload. All three now check
+  `loading` before `hasRole()`.
+- **A second regression, found only by this branch's own review before
+  shipping:** the admin/owner root redirect above checked `user.role`
+  before checking which "room" (`/rooms`) the user had deliberately chosen,
+  so an admin who'd picked the exam or learn room got bounced back to their
+  dashboard on every visit to `/` instead of staying where they chose to
+  be. Fixed by gating on persona first, which already respects the room
+  choice.
+
+2288 frontend tests (up from 2267), including full happy-path coverage for
+`TeacherRosterPage.tsx`/`TeachingDashboardPage.tsx` (previously untested
+anywhere) and every fix above pinned by a stash/pop-verified regression
+test. A shared `test-utils/mockAuthContext.ts` now wraps the real
+`roleGte`/`Role` from `lib/auth/client.ts` instead of a hand-copied,
+already-drifted role table.
+
+Two related gaps, real but out of this branch's repro path, are filed in
+TODOS.md rather than guessed at: seven more admin/owner/teacher pages still
+lack the auth-loading guard, and `/teacher/roster` still dead-ends for
+admin/owner on a direct bookmark visit (only the two known nav entry points
+were fixed).
+
 ## [4.45.0] — 2026-09-01 — Seven more live-QA fixes on the lesson page, and a scrub slider
 
 **Operator action:** none required. No new env vars, no migrations. One

@@ -96,4 +96,64 @@ describe('AtomCardRenderer — error-streak auto modality switch', () => {
     await waitFor(() => expect(screen.getByText('Q2.')).toBeInTheDocument());
     expect(screen.queryByText('Visual card.')).not.toBeInTheDocument();
   });
+
+  it('a manual toggle-off after the auto-switch sticks, even though the streak is still >= 3 (red-team CRITICAL fix)', async () => {
+    // Bug (pre-landing review, /ship 2026-09-01): the original effect
+    // guard was `errorStreak < 3 || showVisually` — once the streak hit 3
+    // and never dropped (only a CORRECT answer resets it), toggling
+    // showVisually back to false for ANY reason, including the student's
+    // own manual tap, made the guard true again on the very next render
+    // and the effect silently flipped it straight back to true. The
+    // manual "show me visually" control was effectively dead until the
+    // student happened to get a recall right.
+    render(<AtomCardRenderer atoms={ATOMS} conceptId="c" studentId="s1" />);
+    fireEvent.click(screen.getByLabelText('Next')); // -> q1
+    await waitFor(() => expect(screen.getByText('Q1.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 1, -> q2
+    await waitFor(() => expect(screen.getByText('Q2.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 2, -> q3
+    await waitFor(() => expect(screen.getByText('Q3.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 3 — auto-switch fires
+
+    await waitFor(() => expect(screen.getByText('Visual card.')).toBeInTheDocument());
+
+    // Student manually turns visual mode back off via the eye-icon toggle.
+    fireEvent.click(screen.getByLabelText('Show all atoms'));
+
+    // Must land back on the ORIGINAL (unreordered) front card and STAY
+    // there — errorStreak is still 3, so a broken guard would immediately
+    // re-flip showVisually and snap right back to the visual card.
+    await waitFor(() => expect(screen.getByText('Hook card.')).toBeInTheDocument());
+    expect(screen.queryByText('Visual card.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Show visual atoms first')).toBeInTheDocument();
+  });
+
+  it('never claims a modality switch when the concept has no visual-modality atom to switch to', async () => {
+    // Bug (pre-landing review, /ship 2026-09-01): flipping showVisually on
+    // a concept with no visual/visual_analogy atom is a no-op on ordering
+    // (the `atoms` memo's own `visual.length === 0` fallback), but the
+    // effect still reset the carousel to index 0 and the footer still
+    // claimed "· streak switched modality" — the exact "label claims
+    // something that didn't happen" bug class this whole feature exists
+    // to close, just triggered a different way.
+    const noVisualAtoms: ContentAtom[] = [
+      makeAtom({ id: 'c.hook', atom_type: 'hook', modality: 'text', content: 'Hook card.' }),
+      makeAtom({ id: 'c.q1', atom_type: 'micro_exercise', content: 'Q1.' }),
+      makeAtom({ id: 'c.q2', atom_type: 'micro_exercise', content: 'Q2.' }),
+      makeAtom({ id: 'c.q3', atom_type: 'micro_exercise', content: 'Q3.' }),
+      makeAtom({ id: 'c.q4', atom_type: 'micro_exercise', content: 'Q4.' }),
+    ];
+    render(<AtomCardRenderer atoms={noVisualAtoms} conceptId="c" studentId="s1" />);
+    fireEvent.click(screen.getByLabelText('Next')); // -> q1
+    await waitFor(() => expect(screen.getByText('Q1.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 1, -> q2
+    await waitFor(() => expect(screen.getByText('Q2.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 2, -> q3
+    await waitFor(() => expect(screen.getByText('Q3.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 3 — crosses the threshold, nothing to switch to
+
+    // Advances normally to q4 — no reset to index 0, no false claim.
+    await waitFor(() => expect(screen.getByText('Q4.')).toBeInTheDocument());
+    expect(screen.queryByText(/streak switched modality/)).not.toBeInTheDocument();
+  });
 });

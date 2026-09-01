@@ -275,6 +275,25 @@ const FENCE_RE = /```interactive-spec\s*([\s\S]*?)```/m;
 // GIF_SCENE_FENCE_RE precedent in AtomCardRenderer.tsx).
 const FENCE_RE_ALL = /```interactive-spec\s*[\s\S]*?```/g;
 
+/**
+ * Strips every ```interactive-spec``` fence from a body, unconditionally —
+ * regardless of whether any of them parse successfully. Callers that render
+ * an atom's prose must use THIS, not `parsed.body_without_spec` gated on
+ * `parsed.ok`, so a malformed FIRST fence never leaks a well-formed LATER
+ * fence (or itself) to the student as raw JSON.
+ *
+ * Red-team finding (/ship, 2026-09-01): `parseInteractiveSpec`'s stripping
+ * only ever ran on the success path. On a ParseFailure (bad JSON, unknown
+ * kind, wrong version in the FIRST fence), callers that did
+ * `parsed.ok ? parsed.body_without_spec : atom.content` fell back to the
+ * raw, completely unstripped body — reproducing the exact bug this file's
+ * FENCE_RE_ALL fix (see below) closed for the success case, just triggered
+ * by a malformed fence instead of a second valid one.
+ */
+export function stripAllInteractiveSpecFences(body: string): string {
+  return typeof body === 'string' ? body.replace(FENCE_RE_ALL, '').trim() : '';
+}
+
 export interface ParseSuccess {
   ok: true;
   spec: InteractiveSpec;
@@ -312,7 +331,7 @@ export function parseInteractiveSpec(body: string): ParseSuccess | ParseFailure 
     // (live QA, 2026-09-01): eigenvalues.intuition.shaken authored two
     // fences; only the first (manipulable) stripped, so the second
     // (guided_walkthrough) rendered as raw code instead of vanishing.
-    body_without_spec: body.replace(FENCE_RE_ALL, '').trim(),
+    body_without_spec: stripAllInteractiveSpecFences(body),
   };
 }
 

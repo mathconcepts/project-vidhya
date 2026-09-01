@@ -20,7 +20,7 @@ import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
 import { InteractiveSidecar } from './interactives/InteractiveSidecar';
 import { Simulation } from './interactives/Simulation';
-import { parseInteractiveSpec, type SimulationSpec } from './interactives/types';
+import { parseInteractiveSpec, stripAllInteractiveSpecFences, type SimulationSpec } from './interactives/types';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
@@ -402,19 +402,16 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
   );
 }
 
-/** Return type of `parseInteractiveSpec` — the single hoisted parse (W2
- *  "Honest sizing") threaded into every card that needs it, instead of each
- *  one calling the parser independently. */
-type ParsedSpecResult = ReturnType<typeof parseInteractiveSpec>;
-
-function WorkedExampleCard({ atom, parsed }: { atom: ContentAtom; parsed: ParsedSpecResult }) {
+function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   // T19a: strip the fenced interactive-spec block BEFORE splitting on `---`
   // step delimiters. Without this, a spec-carrying worked_example (96/97
   // concepts) renders the raw JSON as literal text inside the last step box,
   // and InteractiveSidecar renders the widget a second time below it.
-  // Mirrors DefaultAtomCard's handling of the same fenced block. `parsed` is
-  // the card render's ONE hoisted parse (W2), not a fresh call here.
-  const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
+  // Mirrors DefaultAtomCard's handling of the same fenced block.
+  // `stripAllInteractiveSpecFences` (not the hoisted `parsedSpec` — red-team
+  // finding, /ship 2026-09-01) strips every fence unconditionally, so a
+  // malformed fence can't leak a later valid one through unstripped.
+  const prose = stripGifSceneBlock(stripAllInteractiveSpecFences(atom.content));
   const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
   return (
@@ -456,12 +453,14 @@ function WorkedExampleCard({ atom, parsed }: { atom: ContentAtom; parsed: Parsed
   );
 }
 
-function DefaultAtomCard({ atom, parsed }: { atom: ContentAtom; parsed: ParsedSpecResult }) {
+function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
   // Strip the interactive-spec fenced block from the prose — InteractiveSidecar
   // (or, for a promoted resonance simulation, the figure slot itself) renders
   // the widget; MarkdownAtomRenderer must not also render it as raw JSON.
-  // `parsed` is the card render's ONE hoisted parse (W2), not a fresh call here.
-  const prose = stripGifSceneBlock(parsed.ok ? parsed.body_without_spec : atom.content);
+  // `stripAllInteractiveSpecFences` (not the hoisted `parsedSpec` — red-team
+  // finding, /ship 2026-09-01) strips every fence unconditionally, so a
+  // malformed fence can't leak a later valid one through unstripped.
+  const prose = stripGifSceneBlock(stripAllInteractiveSpecFences(atom.content));
   return (
     <MarkdownAtomRenderer
       content={prose}
@@ -759,6 +758,15 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
     setIndex(0); // Jump to the new front so the change is visible.
   };
 
+  // Whether the concept actually has anything to switch TO. Computed from
+  // intentOrderedAtoms (pre-showVisually) so it stays accurate regardless of
+  // the current toggle state — mirrors the same modality check the `atoms`
+  // memo above uses when showVisually is on.
+  const hasVisualModalityAtom = useMemo(
+    () => intentOrderedAtoms.some((a) => a.modality === 'visual' || a.atom_type === 'visual_analogy'),
+    [intentOrderedAtoms],
+  );
+
   // Bug (/investigate, 2026-09-01, "Recall section -> no wow, no learning
   // intuition"): the nav footer below already prints "· streak switched
   // modality" once errorStreak reaches 3, but nothing ever switched the
@@ -769,14 +777,38 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
   // "Not yet"s pulls the concept's own visual-modality atoms (hook/
   // intuition/visual_analogy — the same reorder toggleVisual() already
   // implements) to the front and jumps there, same as the student manually
-  // asking to see it visually. Guarded on `!showVisually` so it fires once,
-  // not on every render while the streak holds at 3+.
+  // asking to see it visually.
+  //
+  // Pre-landing review (red team, /ship 2026-09-01) — two follow-up fixes
+  // on top of the first pass:
+  //  1. [CRITICAL] The original `!showVisually` guard re-fired every time
+  //     showVisually went back to false for ANY reason, including the
+  //     student manually toggling the eye-icon back off — errorStreak
+  //     never resets except on a correct answer, so the very next render
+  //     after a manual toggle-off silently flipped it back on, making the
+  //     manual control dead until the student got a recall right.
+  //     `autoSwitchedRef` makes the auto-switch fire at most once per
+  //     streak (reset only when the streak itself breaks), so a manual
+  //     toggle-off sticks.
+  //  2. When the concept has NO visual-modality atom, flipping showVisually
+  //     was a silent no-op on ordering but still reset the carousel to
+  //     index 0 and (via the footer below) claimed a switch happened —
+  //     exactly the "label claims something that didn't happen" bug this
+  //     fix was meant to close, just triggered a different way. No-op
+  //     entirely (and hide the footer label) when there's nothing to
+  //     switch to.
+  const autoSwitchedRef = useRef(false);
   useEffect(() => {
-    if (errorStreak < ERROR_STREAK_MODALITY_SWITCH_THRESHOLD || showVisually) return;
+    if (errorStreak < ERROR_STREAK_MODALITY_SWITCH_THRESHOLD) {
+      autoSwitchedRef.current = false; // streak broke — a later streak may switch again
+      return;
+    }
+    if (autoSwitchedRef.current || showVisually || !hasVisualModalityAtom) return;
+    autoSwitchedRef.current = true;
     setShowVisually(true);
     try { localStorage.setItem(VISUAL_PREF_KEY, '1'); } catch { /* ignore */ }
     setIndex(0);
-  }, [errorStreak, showVisually]);
+  }, [errorStreak, showVisually, hasVisualModalityAtom]);
 
   const engagement = useEngagement(
     conceptId,
@@ -1010,11 +1042,11 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             const stage = promotedSimSpec ? 'above' : deferFigure ? 'below' : presentation.stage;
             const prose =
               current.atom_type === 'worked_example' ? (
-                <WorkedExampleCard atom={current} parsed={parsedSpec} />
+                <WorkedExampleCard atom={current} />
               ) : current.atom_type === 'common_traps' ? (
                 <CommonTrapsCard atom={current} />
               ) : (
-                <DefaultAtomCard atom={current} parsed={parsedSpec} />
+                <DefaultAtomCard atom={current} />
               );
             // Figure slot: a promoted simulation takes over entirely — no
             // MediaSidecar (no GIF fetch, no "still generating" placeholder;
@@ -1094,7 +1126,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
         </button>
         <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {index + 1} of {atoms.length}
-          {errorStreak >= ERROR_STREAK_MODALITY_SWITCH_THRESHOLD && (
+          {errorStreak >= ERROR_STREAK_MODALITY_SWITCH_THRESHOLD && hasVisualModalityAtom && (
             <span className="ml-2" style={{ color: 'var(--orange)' }}>· streak switched modality</span>
           )}
         </div>

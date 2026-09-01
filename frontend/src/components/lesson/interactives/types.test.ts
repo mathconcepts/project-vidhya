@@ -10,6 +10,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseInteractiveSpec,
+  stripAllInteractiveSpecFences,
   evalFormula,
   INTERACTIVE_SPEC_VERSION,
   MAX_SIMULATION_BEATS,
@@ -341,6 +342,62 @@ describe('parseInteractiveSpec', () => {
     const r = parseInteractiveSpec(body);
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.reason).toMatch(/JSON\.parse/);
+  });
+});
+
+describe('stripAllInteractiveSpecFences', () => {
+  // Regression (red-team finding, /ship 2026-09-01): parseInteractiveSpec's
+  // own fence-stripping only ever ran on the SUCCESS path (inside the
+  // `ok: true` return). A caller doing `parsed.ok ? parsed.body_without_spec
+  // : atom.content` therefore fell back to the fully-unstripped raw body
+  // whenever the FIRST fence failed to parse — leaking even a well-formed
+  // SECOND fence to the student as raw JSON, the exact bug class this file
+  // exists to prevent. Callers must use this function directly instead of
+  // gating on parse success.
+
+  it('strips a fence whose own JSON is malformed', () => {
+    const body = ['Prose before.', '', '```interactive-spec', '{ this is not valid JSON', '```', '', 'Prose after.'].join('\n');
+    const stripped = stripAllInteractiveSpecFences(body);
+    expect(stripped).toContain('Prose before');
+    expect(stripped).toContain('Prose after');
+    expect(stripped).not.toContain('interactive-spec');
+    expect(stripped).not.toContain('not valid JSON');
+  });
+
+  it('strips a well-formed SECOND fence even when the FIRST fence is malformed', () => {
+    const validSecond = JSON.stringify({
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'guided_walkthrough',
+      title: 'Second (valid) widget',
+      steps: [{ prompt: 'p', answer: 'a' }],
+    });
+    const body = [
+      'Prose before.',
+      '',
+      '```interactive-spec',
+      '{ broken json',
+      '```',
+      '',
+      '```interactive-spec',
+      validSecond,
+      '```',
+      '',
+      'Prose after.',
+    ].join('\n');
+    // parseInteractiveSpec itself still fails — the FIRST fence is what it
+    // tries to parse, and it's broken — but that must never be a reason to
+    // skip stripping. This is the exact call shape a caller falling back
+    // to raw atom.content on ParseFailure would get wrong.
+    expect(parseInteractiveSpec(body).ok).toBe(false);
+    const stripped = stripAllInteractiveSpecFences(body);
+    expect(stripped).toContain('Prose before');
+    expect(stripped).toContain('Prose after');
+    expect(stripped).not.toContain('interactive-spec');
+    expect(stripped).not.toContain('Second (valid) widget');
+  });
+
+  it('handles a body with no fence at all (no-op)', () => {
+    expect(stripAllInteractiveSpecFences('Just plain prose.')).toBe('Just plain prose.');
   });
 });
 

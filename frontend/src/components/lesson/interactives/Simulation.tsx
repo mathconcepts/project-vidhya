@@ -598,12 +598,19 @@ function ScrubSlider({
   // there's nothing to caption (Simulation.test.tsx: "renders no caption/
   // narration row when neither is present"). The label is still real for
   // assistive tech via aria-label on the input itself.
+  //
+  // step=0.02 (red-team finding, /ship 2026-09-01): 0.001 made a native
+  // range input's arrow-key increment — which IS the step value — nearly
+  // useless for a keyboard-only user (~1000 presses to traverse a scene).
+  // 0.02 is still fine-grained for pointer dragging (50 steps across the
+  // full duration reads as smooth) while keeping keyboard scrubbing
+  // actually usable (~50 presses end to end, Home/End jump the extremes).
   return (
     <input
       type="range"
       min={0}
       max={1}
-      step={0.001}
+      step={0.02}
       value={progress}
       onChange={(e) => onScrub(parseFloat(e.target.value))}
       aria-label={label}

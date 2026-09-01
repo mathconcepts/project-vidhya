@@ -146,11 +146,22 @@ export function AppLayout() {
   // isn't personally teaching. Branch on the actual role first so a real
   // teacher still lands on /teaching, while admin/owner land on their own
   // dashboard route.
+  //
+  // Fixed (/ship Red Team review, 2026-09-01): this used to check
+  // user?.role before persona, which bypassed the vidhya.room "first
+  // priority persona override" (see RoomsPage.tsx) — an admin/owner who had
+  // deliberately entered the exam or learn room (both open to every role)
+  // got bounced back to their admin dashboard the instant they hit `/`,
+  // e.g. via the header logo's plain <a href="/">. Gating on
+  // persona === 'teacher' first restores that: persona only resolves to
+  // 'teacher' when there's no room override redirecting elsewhere, or the
+  // user explicitly chose the teach room.
   useEffect(() => {
     if (location.pathname !== '/') return;
+    if (persona !== 'teacher') return;
     if (user?.role === 'admin') { navigate('/admin/dashboard', { replace: true }); return; }
     if (user?.role === 'owner') { navigate('/owner/dashboard', { replace: true }); return; }
-    if (persona === 'teacher') { navigate('/teaching', { replace: true }); }
+    navigate('/teaching', { replace: true });
   }, [persona, location.pathname, navigate, user]);
 
   // Regression (/ship pre-landing review, 2026-09-01): the 'teacher' persona

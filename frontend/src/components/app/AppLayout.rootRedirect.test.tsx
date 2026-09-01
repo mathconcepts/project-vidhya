@@ -20,6 +20,13 @@
  * students assigned yet") an admin was never given. The admin/owner test
  * below now asserts the corrected destination (their own dashboard route)
  * instead of re-asserting the bug.
+ *
+ * Fixed (/ship Red Team review, 2026-09-01): that refinement checked
+ * user?.role before persona, which bypassed the vidhya.room "first-priority
+ * persona override" (RoomsPage.tsx) — an admin/owner who had deliberately
+ * entered the exam or learn room (both role-open, per ROOMS in
+ * RoomsPage.tsx) got bounced back to their admin dashboard the instant they
+ * hit `/`. Gating on persona === 'teacher' first restores the override.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
@@ -113,5 +120,22 @@ describe('AppLayout — root route persona redirect', () => {
     expect(queryByText('Teaching content')).toBeNull();
     expect(queryByText('Admin dashboard content')).toBeNull();
     expect(queryByText('Owner dashboard content')).toBeNull();
+  });
+
+  // Regression (/ship Red Team review, 2026-09-01): an admin/owner who
+  // deliberately chose the exam or learn room (vidhya.room in localStorage)
+  // must stay there — the role-based redirect must never override a
+  // conscious room choice.
+  it('REGRESSION: does not force-redirect an admin who chose the exam room to /admin/dashboard', async () => {
+    appLayoutAuthState.role = 'admin';
+    localStorage.setItem('vidhya.room', 'exam');
+    const { getByText, queryByText } = await renderAtRoot();
+
+    // The exam room doesn't itself navigate away from `/` — it only changes
+    // which persona (and thus which redirect rules) apply. The bug was the
+    // role-based redirect firing regardless of the room override and
+    // bouncing this admin to their dashboard; the fix is that it doesn't.
+    await waitFor(() => expect(getByText('GateHome content')).toBeInTheDocument());
+    expect(queryByText('Admin dashboard content')).toBeNull();
   });
 });

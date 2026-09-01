@@ -70,6 +70,28 @@ describe('AdminDashboardPage — cohort attention link regression', () => {
   });
 });
 
+describe('AdminDashboardPage — auth-loading regression (/ship Red Team review, 2026-09-01)', () => {
+  // hasRole() reads `user`, which is null until AuthContext's async
+  // /api/auth/me resolves — a real admin briefly saw "Admin role required."
+  // on a fresh load, same mechanism as TeachingDashboardPage.test.tsx /
+  // TeacherRosterPage.test.tsx. This page is now the root-redirect target
+  // for admin/owner (AppLayout.tsx), which makes hitting this window on a
+  // hard refresh far more likely.
+  it('REGRESSION: shows a loading state, not "Admin role required.", while auth is still resolving', async () => {
+    authMockState.loading = true;
+    authMockState.user = null;
+
+    await renderPage();
+
+    expect(screen.queryByText('Admin role required.')).not.toBeInTheDocument();
+    expect(screen.getByText('Loading…')).toBeInTheDocument();
+
+    // Restore the module-level defaults other describe blocks in this file rely on.
+    authMockState.loading = false;
+    authMockState.user = { role: 'admin' };
+  });
+});
+
 describe('AdminDashboardPage — "need attention" chip hidden when nothing is flagged', () => {
   // Gap found on ship's coverage audit: the fixed link only renders inside
   // `flagged_for_teacher_attention > 0` (AdminDashboardPage.tsx:292). The

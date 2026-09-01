@@ -36,7 +36,13 @@ interface DashboardSummary {
 }
 
 export default function AdminDashboardPage() {
-  const { user, hasRole } = useAuth();
+  // Fixed (/ship Red Team review, 2026-09-01): same auth-loading race as
+  // TeachingDashboardPage.tsx/TeacherRosterPage.tsx — hasRole() reads `user`,
+  // which is null until AuthContext's async /api/auth/me resolves, so a
+  // fresh load briefly showed "Admin role required." to a real admin. This
+  // page is now this branch's own root-redirect target for admin/owner
+  // (AppLayout.tsx), which makes that window far more likely to be hit.
+  const { user, hasRole, loading: authLoading } = useAuth();
   const [data, setData] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +62,14 @@ export default function AdminDashboardPage() {
     }
   }, []);
 
-  useEffect(() => { if (hasRole('admin')) refresh(); else setLoading(false); }, [hasRole, refresh]);
+  useEffect(() => {
+    if (authLoading) return;
+    if (hasRole('admin')) refresh(); else setLoading(false);
+  }, [authLoading, hasRole, refresh]);
+
+  if (authLoading) {
+    return <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>Loading…</p>;
+  }
 
   if (!hasRole('admin')) {
     return (

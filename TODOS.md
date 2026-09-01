@@ -676,3 +676,78 @@ declines to decide either here.
 **Priority:** P3.
 **Deferred from:** `/investigate` session, 2026-09-01, branch
 `claude/exam-pattern-engagement-bugs-wdff09`.
+
+## Remaining pages still gate on hasRole() without an auth-loading guard
+
+**Trigger:** the next live-QA pass on any admin/owner/teacher-only page, or a
+support report of "I'm signed in as X but the page said I'm not authorized"
+that resolves on a refresh/retry.
+
+**What:** `AuthContext`'s `user` is `null` until the async `/api/auth/me`
+call resolves, and `hasRole()` reads `user` — so any page that renders a
+"role required" gate off `hasRole()` without first checking `loading` shows
+a false permission-denied flash to a fully-authorized user on every fresh
+page load (most visibly after the demo-login walkthrough's
+`window.location.assign`, which remounts the whole app). `/investigate`
+(2026-09-01) and this branch's own `/ship` pre-landing review fixed the four
+pages actually in the reported repro paths — `TeachingDashboardPage.tsx`,
+`TeacherRosterPage.tsx`, and (found by Red Team review) `AdminDashboardPage.tsx`
+— by adding `if (authLoading) return <Loading/>;` before the `hasRole()`
+gate. The same pattern is still missing on:
+`ContentStudioPage.tsx`, `ExamGroupsPage.tsx`, `ExamSetupPage.tsx`,
+`FeaturesPage.tsx`, `FounderDashboardPage.tsx`, `OwnerSettingsPage.tsx`,
+`UserAdminPage.tsx`.
+
+**Why not fixed inline:** none of these were in the reported bug's repro
+path, and applying the same two-line change to seven files without a live
+QA report motivating each one risks masking a genuinely-wrong role check
+behind "it's just the loading race" — worth a deliberate pass, not a
+drive-by batch edit bundled into an unrelated fix branch.
+
+**Where to start:** grep each file for `hasRole(` and mirror the guard added
+to `TeacherRosterPage.tsx`/`TeachingDashboardPage.tsx`/`AdminDashboardPage.tsx`
+in this branch — destructure `loading: authLoading` from `useAuth()`, return
+a loading state before the `hasRole()` early return, gate the data-fetching
+effect on `!authLoading`.
+
+**Effort:** S human / CC ~5 min per page (mechanical, same diff shape ×7).
+**Priority:** P2 (real UX bug, but each instance needs its own confirmation
+that hasRole() is otherwise correct before assuming the fix applies as-is).
+**Deferred from:** `/ship` pre-landing review, 2026-09-01, branch
+`claude/teaching-audit-progress-bugs`.
+
+## `/teacher/roster` direct navigation still dead-ends for admin/owner
+
+**Trigger:** the next report of an admin/owner landing on "No students
+assigned yet" — via a bookmark, browser back/forward, or a stale link —
+after this branch's nav-tab and dashboard-chip fixes ship.
+
+**What:** this branch fixed the two known entry points that sent admin/owner
+to `frontend/src/pages/app/TeacherRosterPage.tsx` (the Admin Dashboard's
+"need attention" chip, and the teacher-persona bottom-nav "Students" tab —
+both now point at `/admin/cohort` for admin/owner). The route itself is
+untouched: `TeacherRosterPage.tsx`'s `hasRole('teacher')` check passes for
+admin/owner too (role hierarchy — `roleGte` ranks them above teacher), and
+`/api/teacher/roster` is scoped to the calling user's own `teacher_of[]`
+list, which no admin/owner has. Direct navigation — a bookmark, browser
+back/forward, a stale shared link — still reproduces the original "No
+students assigned yet" dead end for that role.
+
+**Why not fixed inline:** found by Red Team review (2026-09-01) as a
+pre-existing gap, not a regression introduced by this branch, and the right
+fix is a product call — redirect admin/owner away from this route entirely,
+or have the page detect the role and show a different, accurate empty
+state ("You don't have a personal roster — see the cohort view") instead of
+the teacher-facing copy ("Ask your admin to assign students to you"), which
+is actively wrong advice for an admin to see.
+
+**Where to start:** `frontend/src/pages/app/TeacherRosterPage.tsx:66-74`
+(the empty/denied states) — branch on `user?.role` the same way
+`AppLayout.tsx`'s nav-tab fix does, or redirect via `useNavigate()`.
+
+**Effort:** S human / CC ~10 min once the desired behavior (redirect vs.
+role-aware messaging) is picked.
+**Priority:** P3 (narrower than the two already-fixed entry points; needs a
+bookmark/back-button visit specifically to hit).
+**Deferred from:** `/ship` Red Team review, 2026-09-01, branch
+`claude/teaching-audit-progress-bugs`.

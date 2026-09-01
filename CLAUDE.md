@@ -232,9 +232,11 @@ For `/land-and-deploy` to skip the dry-run on subsequent runs.
 - **Production URL:** https://vidhya-demo.onrender.com
 - **Frontend platform:** Render (bundled in the Docker image — frontend built at deploy time, served as static files by the backend)
 - **Deploy workflow:** none — Render watches the `main` branch directly. There is no GitHub Actions deploy step.
+- **Post-deploy verification:** `.github/workflows/prod-smoke.yml` — runs automatically on every push to `main` (and daily at 09:00 UTC). Waits for the new commit to actually go live (`scripts/wait-for-deploy.ts`, matched against `github.sha`, so it can't pass against the previous build), then checks the SPA shell, `/api/demo/rails`, `/api/teaching/roster`, `/api/progress/*`, `/api/practice/item/*`, stance-adapted content delivery, and a real headless-browser render. This is the actual post-deploy canary — prefer triggering/watching this run over ad-hoc curl checks.
 - **Health check:** `curl -sI https://vidhya-demo.onrender.com` — the API root returns HTTP 403 by design (auth-gated). Treat any non-5xx response as "deploy is live"; treat 502/503 as "Render is still spinning the service up."
 - **Typical deploy duration:** ~2-5 minutes after push to `main`.
 - **Staging:** none configured.
+- **Merge method:** squash (confirmed from the last 15 merged PRs on `main` — every merge is a single `(#NNN)` squash commit).
 - **Persistent state caveat:** Render free tier uses ephemeral disk; `.data/` resets on restart/sleep. Paid plans get `/app/.data` mount per `render.yaml` comments.
 
 ## Local development

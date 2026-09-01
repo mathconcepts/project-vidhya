@@ -90,3 +90,34 @@ describe('ProgressPage — weakTopics null-safety (edge case introduced by the f
     expect(screen.getByText('Eigenvalues')).toBeInTheDocument();
   });
 });
+
+describe('ProgressPage — the other two hook-order transitions', () => {
+  // Gap found on ship's coverage audit: the fix hoists the two useMemo
+  // calls so they run on every render, not just the "loaded with topics"
+  // one already covered above. The empty-topics and null-data early
+  // returns exercise the exact same hoisted hooks with different inputs —
+  // low risk since it's the same 2-line fix, but never separately
+  // asserted, so a future edit to just one of the three return paths
+  // could silently break the other two without any test catching it.
+  it('renders the empty state (not a crash) when topics is an empty array', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockResolvedValueOnce({
+      topics: [],
+      overall: { problems_attempted: '0', total_correct: '0', total_attempts: '0', due_today: '0' },
+      weakTopics: [],
+    });
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('No progress yet')).toBeInTheDocument());
+  });
+
+  it('renders the empty state (not a crash) when the fetch fails and data stays null', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockRejectedValueOnce(new Error('network error'));
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('No progress yet')).toBeInTheDocument());
+  });
+});

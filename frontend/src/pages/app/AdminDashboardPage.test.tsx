@@ -60,3 +60,27 @@ describe('AdminDashboardPage — cohort attention link regression', () => {
     expect(link.closest('a')).toHaveAttribute('href', '/admin/cohort');
   });
 });
+
+describe('AdminDashboardPage — "need attention" chip hidden when nothing is flagged', () => {
+  // Gap found on ship's coverage audit: the fixed link only renders inside
+  // `flagged_for_teacher_attention > 0` (AdminDashboardPage.tsx:292). The
+  // regression test above only exercises the count>0 branch; this locks in
+  // that a healthy cohort (nothing flagged) renders no link to
+  // /admin/cohort at all, rather than a chip pointing at a stale/empty view.
+  it('renders no "need attention" chip when flagged_for_teacher_attention is 0', async () => {
+    const authModule = await import('@/lib/auth/client');
+    (authModule.authFetch as any).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ...DASHBOARD_SUMMARY,
+        cohort: { ...DASHBOARD_SUMMARY.cohort, flagged_for_teacher_attention: 0 },
+      }),
+    });
+
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText(/Admin Dashboard/)).toBeInTheDocument());
+    expect(screen.queryByText(/need attention/)).not.toBeInTheDocument();
+  });
+});

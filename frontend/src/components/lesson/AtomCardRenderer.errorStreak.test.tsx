@@ -128,6 +128,47 @@ describe('AtomCardRenderer — error-streak auto modality switch', () => {
     expect(screen.getByLabelText('Show visual atoms first')).toBeInTheDocument();
   });
 
+  it('a manual toggle-off still sticks even when visual mode was ALREADY on before the streak crossed 3 (cycle-2 fix)', async () => {
+    // Bug (pre-landing review cycle 2, /ship 2026-09-01 — testing AND
+    // red-team re-checks both independently found this): the cycle-1 fix
+    // only marked `autoSwitchedRef` true when the effect itself performed
+    // the flip. If showVisually was ALREADY true when the streak first hit
+    // 3 (here: the student manually toggled it on before missing anything),
+    // the effect returned via the `showVisually` branch without ever
+    // marking the ref — so a manual toggle-OFF afterward, with the streak
+    // still >= 3, found ref=false and got forced straight back on. Same
+    // failure shape as the cycle-1 bug, reached through different state
+    // ordering.
+    render(<AtomCardRenderer atoms={ATOMS} conceptId="c" studentId="s1" />);
+
+    // Student turns visual mode on manually, BEFORE missing anything.
+    fireEvent.click(screen.getByLabelText('Show visual atoms first'));
+    await waitFor(() => expect(screen.getByText('Visual card.')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText('Next')); // -> hook (reordered atoms[1])
+    await waitFor(() => expect(screen.getByText('Hook card.')).toBeInTheDocument());
+    fireEvent.click(screen.getByLabelText('Next')); // -> q1 (reordered atoms[2])
+    await waitFor(() => expect(screen.getByText('Q1.')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Not yet')); // miss 1, -> q2
+    await waitFor(() => expect(screen.getByText('Q2.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 2, -> q3
+    await waitFor(() => expect(screen.getByText('Q3.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 3 — streak crosses 3 while ALREADY showing visually
+
+    // Nothing to flip (already on) — stays on q3, no visible change.
+    await waitFor(() => expect(screen.getByText('Q3.')).toBeInTheDocument());
+
+    // Now the student manually turns visual mode back OFF.
+    fireEvent.click(screen.getByLabelText('Show all atoms'));
+
+    // Must land on the original (unreordered) front card and STAY there —
+    // the broken cycle-1-only fix would immediately snap back to visual.
+    await waitFor(() => expect(screen.getByText('Hook card.')).toBeInTheDocument());
+    expect(screen.queryByText('Visual card.')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Show visual atoms first')).toBeInTheDocument();
+  });
+
   it('never claims a modality switch when the concept has no visual-modality atom to switch to', async () => {
     // Bug (pre-landing review, /ship 2026-09-01): flipping showVisually on
     // a concept with no visual/visual_analogy atom is a no-op on ordering

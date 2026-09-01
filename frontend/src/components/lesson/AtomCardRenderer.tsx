@@ -803,8 +803,18 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
       autoSwitchedRef.current = false; // streak broke — a later streak may switch again
       return;
     }
-    if (autoSwitchedRef.current || showVisually || !hasVisualModalityAtom) return;
+    if (autoSwitchedRef.current || !hasVisualModalityAtom) return;
+    // Mark "already considered this streak" BEFORE checking showVisually,
+    // not after setShowVisually(true) — cycle-2 review (both the testing
+    // and red-team re-checks independently found the same gap): if
+    // showVisually was ALREADY true when the streak first crossed the
+    // threshold (a persisted preference, or a manual toggle-on before the
+    // 3rd miss), the old code returned via `|| showVisually` without ever
+    // marking the ref, so a later manual toggle-OFF during the same streak
+    // still found ref=false and got forced back on — the exact bug this
+    // whole guard exists to prevent, just reached a different way.
     autoSwitchedRef.current = true;
+    if (showVisually) return; // already on — nothing to flip, streak still marked considered
     setShowVisually(true);
     try { localStorage.setItem(VISUAL_PREF_KEY, '1'); } catch { /* ignore */ }
     setIndex(0);

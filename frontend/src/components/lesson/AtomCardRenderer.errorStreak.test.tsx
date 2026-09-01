@@ -52,6 +52,8 @@ describe('AtomCardRenderer — error-streak auto modality switch', () => {
     // The claimed switch is now real: the visual atom is pulled to the front
     // and the carousel jumps there.
     await waitFor(() => expect(screen.getByText('Visual card.')).toBeInTheDocument());
+    // ...and the label backs the claim up while the switch is actually in effect.
+    expect(screen.getByText(/streak switched modality/)).toBeInTheDocument();
   });
 
   it('two misses (no third) never switches modality', async () => {
@@ -126,6 +128,13 @@ describe('AtomCardRenderer — error-streak auto modality switch', () => {
     await waitFor(() => expect(screen.getByText('Hook card.')).toBeInTheDocument());
     expect(screen.queryByText('Visual card.')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Show visual atoms first')).toBeInTheDocument();
+
+    // Adversarial review (/ship, 2026-09-01): the footer label's own render
+    // condition didn't check showVisually, so it kept claiming "switched
+    // modality" even after this manual toggle-off put the ordering back to
+    // normal — the same false-claim bug reintroduced through the one path
+    // the earlier fixes didn't touch.
+    expect(screen.queryByText(/streak switched modality/)).not.toBeInTheDocument();
   });
 
   it('a manual toggle-off still sticks even when visual mode was ALREADY on before the streak crossed 3 (cycle-2 fix)', async () => {

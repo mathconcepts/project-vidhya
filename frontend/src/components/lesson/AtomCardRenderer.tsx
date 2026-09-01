@@ -1136,7 +1136,14 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
         </button>
         <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {index + 1} of {atoms.length}
-          {errorStreak >= ERROR_STREAK_MODALITY_SWITCH_THRESHOLD && hasVisualModalityAtom && (
+          {/* Adversarial review (/ship, 2026-09-01): must also require
+              showVisually itself — without it, the label kept claiming a
+              switch was in effect even after the student manually toggled
+              visual mode back off, the same "label claims something the
+              code doesn't do" bug this whole feature exists to close, just
+              reintroduced through the one render condition the earlier
+              fixes didn't touch. */}
+          {errorStreak >= ERROR_STREAK_MODALITY_SWITCH_THRESHOLD && hasVisualModalityAtom && showVisually && (
             <span className="ml-2" style={{ color: 'var(--orange)' }}>· streak switched modality</span>
           )}
         </div>

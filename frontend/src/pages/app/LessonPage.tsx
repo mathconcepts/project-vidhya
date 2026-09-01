@@ -735,6 +735,26 @@ export default function LessonPage() {
         <DemoCaption step={demoStep} captions={getDemoCaptions()} />
         <div ref={atomStackRef}>
           <AtomCardRenderer
+            // Defense-in-depth (adversarial review, /ship 2026-09-01): the
+            // reviewer's claim — that AtomCardRenderer's per-concept
+            // session state (errorStreak, the auto-switch one-shot ref,
+            // the carousel index) could leak across a concept change,
+            // since React Router doesn't remount on a route PARAM change
+            // alone — does NOT currently reproduce: the compose-fetch
+            // effect above calls `setLoading(true)` on every `concept_id`
+            // change, and this component's own `if (loading) return
+            // <Loader2 .../>` early-return already unmounts the whole
+            // atom-stack subtree (AtomCardRenderer included) for the
+            // duration of every concept switch, which resets its state
+            // regardless of any key. Verified, not assumed: a regression
+            // test (LessonPage.test.tsx, "does not leak into concept B")
+            // passes identically with and without this `key` prop. Kept
+            // anyway as cheap, explicit insurance — the loading-gate
+            // reset is an invariant of the CURRENT fetch flow, not
+            // something this line depends on, so a future change to that
+            // flow (e.g. skip-loading for a cached lesson) can't quietly
+            // reopen the leak this makes structurally impossible instead.
+            key={concept_id}
             onStepChange={(a) => setDemoStep(a?.atom_type ?? '')}
             atoms={lesson.atoms}
             conceptId={concept_id}

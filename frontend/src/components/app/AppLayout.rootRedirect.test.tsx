@@ -102,4 +102,26 @@ describe('AppLayout — root route persona redirect', () => {
     // Give the persona-detection effect a tick to settle, then confirm no redirect fired.
     await waitFor(() => expect(getByText('GateHome content')).toBeInTheDocument());
   });
+
+  // Gap found on re-audit: every existing case here is admin/owner/teacher
+  // (redirected) or a signed-out anonymous visitor (not redirected). A
+  // signed-in 'student' exercises a THIRD path through the new branching —
+  // it falls through all three `if`s (not admin, not owner, persona resolves
+  // to 'exam'/'knowledge' via the /api/student/profile fetch, never
+  // 'teacher') — and was never asserted, even though the reordered effect
+  // touches every role's fallthrough behavior, not just admin/owner's.
+  it('does not redirect a signed-in student away from `/` — GateHome stays', async () => {
+    mockUser = { role: 'student' };
+    const { authFetch } = await import('@/lib/auth/client');
+    (authFetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ exams: [] }),
+    });
+    const { getByText, queryByText } = await renderAtRoot();
+
+    await waitFor(() => expect(getByText('GateHome content')).toBeInTheDocument());
+    expect(queryByText('Teaching content')).toBeNull();
+    expect(queryByText('Admin dashboard content')).toBeNull();
+    expect(queryByText('Owner dashboard content')).toBeNull();
+  });
 });

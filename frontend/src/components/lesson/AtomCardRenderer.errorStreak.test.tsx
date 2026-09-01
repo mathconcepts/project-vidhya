@@ -66,4 +66,34 @@ describe('AtomCardRenderer — error-streak auto modality switch', () => {
     await waitFor(() => expect(screen.getByText('Q3.')).toBeInTheDocument());
     expect(screen.queryByText('Visual card.')).not.toBeInTheDocument();
   });
+
+  it('a fourth consecutive miss, after the switch already happened, does not re-jump the student back to the front', async () => {
+    // Idempotency guard on the effect (`!showVisually`): once the switch has
+    // fired, a later miss must not keep dragging the student's own
+    // navigation back to index 0 every render — it should just advance
+    // normally, same as any other miss.
+    render(<AtomCardRenderer atoms={ATOMS} conceptId="c" studentId="s1" />);
+    fireEvent.click(screen.getByLabelText('Next')); // -> q1
+    await waitFor(() => expect(screen.getByText('Q1.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 1, -> q2
+    await waitFor(() => expect(screen.getByText('Q2.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 2, -> q3
+    await waitFor(() => expect(screen.getByText('Q3.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Not yet')); // miss 3 — switch fires, jumps to index 0
+
+    await waitFor(() => expect(screen.getByText('Visual card.')).toBeInTheDocument());
+
+    // The student navigates forward past the promoted visual atom on their own.
+    fireEvent.click(screen.getByLabelText('Next')); // -> hook (reordered atoms[1])
+    await waitFor(() => expect(screen.getByText('Hook card.')).toBeInTheDocument());
+    fireEvent.click(screen.getByLabelText('Next')); // -> q1 (reordered atoms[2])
+    await waitFor(() => expect(screen.getByText('Q1.')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Not yet')); // miss 4 — errorStreak >= 3 again, but showVisually is already true
+
+    // Advances normally to the next card in the reordered sequence (q2), not
+    // reset back to the visual card at index 0.
+    await waitFor(() => expect(screen.getByText('Q2.')).toBeInTheDocument());
+    expect(screen.queryByText('Visual card.')).not.toBeInTheDocument();
+  });
 });

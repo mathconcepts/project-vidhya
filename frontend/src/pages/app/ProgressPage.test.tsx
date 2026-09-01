@@ -63,3 +63,30 @@ describe('ProgressPage — hook-order regression', () => {
     expect(screen.getByText('Eigenvalues')).toBeInTheDocument();
   });
 });
+
+describe('ProgressPage — weakTopics null-safety (edge case introduced by the fix)', () => {
+  // Gap found on re-audit: the fix didn't just reorder the two useMemo
+  // calls, it also changed their bodies from `data.weakTopics.map(...)` to
+  // `(data?.weakTopics ?? []).map(...)`. That fallback is new defensive
+  // code, and it's only exercised when the field is actually missing —
+  // the happy-path fixture above always supplies `weakTopics`. A backend
+  // response that omits the field (a real possibility this component has
+  // no control over) would have thrown `Cannot read properties of
+  // undefined (reading 'map')` even under the fixed hook ordering, since
+  // hook order alone doesn't guarantee the accessed field exists.
+  it('does not crash when the API response omits weakTopics', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockResolvedValueOnce({
+      topics: [
+        { topic: 'eigenvalues', totalProblems: 10, correct: 6, attempts: 8, mastery: 0.6, easiness: 2.3, due: 2 },
+      ],
+      overall: { problems_attempted: '10', total_correct: '6', total_attempts: '8', due_today: '0' },
+      // weakTopics intentionally omitted
+    });
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('Your Progress')).toBeInTheDocument());
+    expect(screen.getByText('Eigenvalues')).toBeInTheDocument();
+  });
+});

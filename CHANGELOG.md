@@ -4,6 +4,53 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.45.0] — 2026-09-01 — Seven more live-QA fixes on the lesson page, and a scrub slider
+
+**Operator action:** none required. No new env vars, no migrations. One
+content fix (a stray duplicate fenced block removed from
+`eigenvalues.intuition.shaken`) — re-verified against `ci:variant-agreement`.
+
+Seven bug reports from live QA on the eigenvalues lesson, all root-caused
+against the real rendering pipeline rather than patched at the symptom.
+
+- **A widget rendered as raw JSON code instead of the visual.** The
+  interactive-spec parser only ever stripped the FIRST fenced block from an
+  atom body; a second (or malformed) fence in the same body fell straight
+  through to the markdown renderer as a literal code block — exactly what
+  the eigenvalues `intuition` (shaken variant) atom showed, since it had
+  authored two fences by mistake. The parser now strips every fence it
+  finds, unconditionally, regardless of which one (if any) actually parses.
+- **Dense fact-lists read as a wall of text.** "How GATE actually asks
+  this," common-traps rows, and visual_analogy/mnemonic captions now pace
+  in one row or paragraph at a time instead of appearing all at once — a
+  CSS-only stagger that collapses to instant under `prefers-reduced-motion`.
+  `formal_definition` deliberately keeps its current instant, whole,
+  referenceable rendering — pacing in the one thing a student needs to look
+  up fast would cost more than it saves.
+- **The page said "this is how it opens" toward practice, but didn't open
+  anywhere.** The concept page's "Most students come here to practise real
+  questions" line was description with no action behind it. It's now a real
+  button that scrolls straight to the concept's live Explanation/
+  Interactive/Practice/Test rail.
+- **Missing three recalls in a row claimed a re-teach that never
+  happened.** The nav footer has said "· streak switched modality" since
+  before this release, but nothing ever switched it — the visual-first
+  reordering only ever responded to the student's own manual toggle. Three
+  consecutive misses now genuinely pulls the concept's own visual atoms to
+  the front, the label only shows while that's actually true, and the
+  student's own manual toggle always wins regardless of streak state.
+- **Interactive scenes gained a manual scrub control.** Alongside play/pause
+  and per-beat seeking, every scene (with or without beats) now has a
+  drag-to-scrub slider, so a student can sit on one moment or move at their
+  own pace instead of only watching the fixed-duration autoplay.
+
+Also on the roadmap, not shipped this release: a researched proposal for
+bringing `formal_definition`/`mnemonic` atoms up to the same standard —
+`docs/designs/2026-09-01-definition-mnemonic-engagement-framework.md` lays
+out why motion is the wrong lever for definitions specifically (unlike
+mnemonics, where it already shipped above) and what the right one looks
+like instead.
+
 ## [4.44.0] — 2026-08-30 — Fused resonance hooks: motion, captions, trap ghost-paths and per-stance narration, together
 
 **Operator action:** one optional command. `npx tsx scripts/activate-resonance-experiment.ts`

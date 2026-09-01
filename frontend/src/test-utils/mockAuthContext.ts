@@ -23,10 +23,21 @@
  *   // in a test:
  *   authMockState.loading = false;
  *   authMockState.user = { role: 'teacher' };
+ *
+ * Any test file that imports this module also needs a `vi.mock` for
+ * '@/lib/auth/client' that preserves the real exports (roleGte, Role,
+ * ROLE_RANK) rather than stubbing the whole module — use the
+ * `importOriginal` form:
+ *
+ *   vi.mock('@/lib/auth/client', async (importOriginal) => {
+ *     const actual = await importOriginal<typeof import('@/lib/auth/client')>();
+ *     return { ...actual, authFetch: vi.fn() };
+ *   });
  */
+import { roleGte, type Role } from '@/lib/auth/client';
 
 export interface MockAuthUser {
-  role: string;
+  role: Role;
 }
 
 export const authMockState: { loading: boolean; user: MockAuthUser | null } = {
@@ -34,9 +45,6 @@ export const authMockState: { loading: boolean; user: MockAuthUser | null } = {
   user: null,
 };
 
-const ROLE_RANK: Record<string, number> = { student: 0, teacher: 1, admin: 2, owner: 3 };
-
-export function mockHasRole(min: string): boolean {
-  if (!authMockState.user) return false;
-  return (ROLE_RANK[authMockState.user.role] ?? -1) >= (ROLE_RANK[min] ?? 99);
+export function mockHasRole(min: Role): boolean {
+  return roleGte(authMockState.user?.role, min);
 }

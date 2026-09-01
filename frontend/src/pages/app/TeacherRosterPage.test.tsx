@@ -10,7 +10,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { authMockState, mockHasRole } from '@/test-utils/mockAuthContext';
 
-vi.mock('@/lib/auth/client', () => ({ authFetch: vi.fn() }));
+vi.mock('@/lib/auth/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/auth/client')>();
+  return { ...actual, authFetch: vi.fn() };
+});
 vi.mock('@/lib/demoMode', () => ({
   isDemoMode: () => false,
   isSeededRole: () => false,

@@ -360,6 +360,21 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     applyProgress(atProgress);
   }
 
+  /**
+   * Manual-scrub input (/investigate, 2026-09-01: "manual progression/
+   * manual slider as an option for student to resonate better"). Autoplay
+   * is a fixed pace picked for the average viewer; a student who wants to
+   * sit on one moment, re-drag past a confusing beat, or move faster than
+   * the authored duration has no way to do that with play/pause alone —
+   * BeatBar (above) only jumps beat-to-beat. This is continuous, so it
+   * pauses playback on grab (design contract item 10's "seek never fights
+   * the tick loop" rule, extended: a drag IS a seek, held for its duration).
+   */
+  function scrub(atProgress: number) {
+    setPlaying(false);
+    seekTo(atProgress);
+  }
+
   if (samples.error) {
     return (
       <div
@@ -469,6 +484,10 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         )}
       </svg>
 
+      {!hasBeats && !reducedMotion && (
+        <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the trace manually" />
+      )}
+
       {!hasBeats && reducedMotion && (
         <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
           Reduced-motion enabled — showing the final trace instead of animation.
@@ -546,7 +565,58 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           </div>
         </div>
       )}
+
+      {showLiveBeatUI && !reducedMotion && (
+        <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the scene at your own pace" />
+      )}
     </div>
+  );
+}
+
+/**
+ * Continuous manual-progression control — a plain HTML range input, not a
+ * custom draggable (native inputs come with keyboard support, touch
+ * dragging, and a11y semantics for free, and DESIGN-SYSTEM.md's motion
+ * budget doesn't cover a bespoke slider). Ink accent, not indigo/green:
+ * scrubbing a scene is neither an AI/tutor action nor a mastery signal.
+ * Rendered only when NOT reduced-motion — under reduced motion the scene is
+ * already a static final frame (or the full storyboard), so there is
+ * nothing to scrub through.
+ */
+function ScrubSlider({
+  progress,
+  onScrub,
+  label,
+}: {
+  progress: number;
+  onScrub: (atProgress: number) => void;
+  label: string;
+}) {
+  // No visible caption row here (matches the play/pause buttons above,
+  // which are icon-only with an aria-label, not a labeled row) — the
+  // no-beats path has a locked contract that it renders no <p> at all when
+  // there's nothing to caption (Simulation.test.tsx: "renders no caption/
+  // narration row when neither is present"). The label is still real for
+  // assistive tech via aria-label on the input itself.
+  //
+  // step=0.02 (red-team finding, /ship 2026-09-01): 0.001 made a native
+  // range input's arrow-key increment — which IS the step value — nearly
+  // useless for a keyboard-only user (~1000 presses to traverse a scene).
+  // 0.02 is still fine-grained for pointer dragging (50 steps across the
+  // full duration reads as smooth) while keeping keyboard scrubbing
+  // actually usable (~50 presses end to end, Home/End jump the extremes).
+  return (
+    <input
+      type="range"
+      min={0}
+      max={1}
+      step={0.02}
+      value={progress}
+      onChange={(e) => onScrub(parseFloat(e.target.value))}
+      aria-label={label}
+      className="w-full"
+      style={{ accentColor: 'var(--ink)' }}
+    />
   );
 }
 

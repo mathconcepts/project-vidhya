@@ -92,9 +92,26 @@ export interface ProblemStatementBlockProps {
    * fetched internally so a single page-level flag read gates every surface
    * T4 touches, and so tests can render both states without mocking fetch. */
   enabled: boolean;
+  /**
+   * Scrolls to the concept's WalkthroughRail (Explanation/Interactive/
+   * Practice/Test), which already knows — live, per-student — whether
+   * practice items exist and where to send the student.
+   *
+   * Bug (/investigate, 2026-09-01): the framing line below ("Most students
+   * come here to practise real questions — that's how this page opens.")
+   * was pure description with no way to act on it — a promise about how
+   * the page opens that the page itself never followed through on. Rather
+   * than duplicate WalkthroughRail's own live availability fetch here (this
+   * block renders collapsed by default and must stay fetch-free to protect
+   * first paint — see the attention-pass note above), the framing line
+   * becomes a real affordance that hands the student to the rail's already
+   * correct, already-honest Practice row. Optional: omitting it keeps the
+   * line plain text, which is what every existing caller/test does today.
+   */
+  onSeeWhatsNext?: () => void;
 }
 
-export function ProblemStatementBlock({ conceptId, enabled }: ProblemStatementBlockProps) {
+export function ProblemStatementBlock({ conceptId, enabled, onSeeWhatsNext }: ProblemStatementBlockProps) {
   const [open, setOpen] = useState(false);
   if (!enabled) return null;
   const slice = INTENT_SLICES[conceptId];
@@ -156,7 +173,25 @@ export function ProblemStatementBlock({ conceptId, enabled }: ProblemStatementBl
               {slice.pyq_count} past-paper question{slice.pyq_count === 1 ? '' : 's'} mapped to this concept.
             </p>
           )}
-          <p style={supportingStyle}>{framingLine}</p>
+          {onSeeWhatsNext ? (
+            <button
+              type="button"
+              onClick={onSeeWhatsNext}
+              data-testid="dps-see-whats-next"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                minHeight: 44, padding: 0, width: '100%',
+                background: 'none', border: 'none', cursor: 'pointer',
+                font: 'inherit', textAlign: 'left',
+                ...supportingStyle,
+              }}
+            >
+              <span>{framingLine}</span>
+              <ChevronDown size={13} aria-hidden style={{ flexShrink: 0 }} />
+            </button>
+          ) : (
+            <p style={supportingStyle}>{framingLine}</p>
+          )}
         </>
       )}
     </div>

@@ -529,6 +529,7 @@ export default function LessonPage() {
   // jumpToAtomId drives the Interactive leg's "jump to the first
   // interactive atom" via AtomCardRenderer's jumpToAtomId prop.
   const atomStackRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
   const [jumpToAtomId, setJumpToAtomId] = useState<string | null>(null);
   const reducedMotion = usePrefersReducedMotion();
 
@@ -600,6 +601,17 @@ export default function LessonPage() {
 
   const scrollToAtomStack = useCallback(() => {
     atomStackRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+  }, [reducedMotion]);
+
+  // Bug (/investigate, 2026-09-01): ProblemStatementBlock's closing framing
+  // line ("Most students come here to practise real questions — that's how
+  // this page opens.") described the page without giving the student any
+  // way to act on it. WalkthroughRail already renders the real, live,
+  // per-student Practice/Explanation/Interactive/Test rail below the atom
+  // stack; this hands the framing line's tap straight to it instead of
+  // duplicating the rail's own availability fetch inside the DPS block.
+  const scrollToRail = useCallback(() => {
+    railRef.current?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
   }, [reducedMotion]);
 
   const jumpToInteractiveAtom = useCallback(() => {
@@ -719,10 +731,30 @@ export default function LessonPage() {
             </div>
           </div>
         </div>
-        <ProblemStatementBlock conceptId={concept_id} enabled={intentLanesEnabled} />
+        <ProblemStatementBlock conceptId={concept_id} enabled={intentLanesEnabled} onSeeWhatsNext={scrollToRail} />
         <DemoCaption step={demoStep} captions={getDemoCaptions()} />
         <div ref={atomStackRef}>
           <AtomCardRenderer
+            // Defense-in-depth (adversarial review, /ship 2026-09-01): the
+            // reviewer's claim — that AtomCardRenderer's per-concept
+            // session state (errorStreak, the auto-switch one-shot ref,
+            // the carousel index) could leak across a concept change,
+            // since React Router doesn't remount on a route PARAM change
+            // alone — does NOT currently reproduce: the compose-fetch
+            // effect above calls `setLoading(true)` on every `concept_id`
+            // change, and this component's own `if (loading) return
+            // <Loader2 .../>` early-return already unmounts the whole
+            // atom-stack subtree (AtomCardRenderer included) for the
+            // duration of every concept switch, which resets its state
+            // regardless of any key. Verified, not assumed: a regression
+            // test (LessonPage.test.tsx, "does not leak into concept B")
+            // passes identically with and without this `key` prop. Kept
+            // anyway as cheap, explicit insurance — the loading-gate
+            // reset is an invariant of the CURRENT fetch flow, not
+            // something this line depends on, so a future change to that
+            // flow (e.g. skip-loading for a cached lesson) can't quietly
+            // reopen the leak this makes structurally impossible instead.
+            key={concept_id}
             onStepChange={(a) => setDemoStep(a?.atom_type ?? '')}
             atoms={lesson.atoms}
             conceptId={concept_id}
@@ -733,19 +765,21 @@ export default function LessonPage() {
           />
         </div>
         <ConceptMathViz conceptId={concept_id} />
-        <WalkthroughRail
-          conceptId={concept_id}
-          onExplanationTap={scrollToAtomStack}
-          onInteractiveTap={jumpToInteractiveAtom}
-          interactiveJumpReady={firstInteractiveAtomId !== null}
-          // The rail's copy talks about what is "above" / "in this lesson",
-          // so it must count the served subset, not everything authored on
-          // disk. See WalkthroughRailProps.renderedAtomCount.
-          renderedAtomCount={lesson.atoms.length}
-          renderedInteractiveCount={
-            lesson.atoms.filter((a) => parseInteractiveSpec(a.content).ok).length
-          }
-        />
+        <div ref={railRef}>
+          <WalkthroughRail
+            conceptId={concept_id}
+            onExplanationTap={scrollToAtomStack}
+            onInteractiveTap={jumpToInteractiveAtom}
+            interactiveJumpReady={firstInteractiveAtomId !== null}
+            // The rail's copy talks about what is "above" / "in this lesson",
+            // so it must count the served subset, not everything authored on
+            // disk. See WalkthroughRailProps.renderedAtomCount.
+            renderedAtomCount={lesson.atoms.length}
+            renderedInteractiveCount={
+              lesson.atoms.filter((a) => parseInteractiveSpec(a.content).ok).length
+            }
+          />
+        </div>
       </div>
     );
   }

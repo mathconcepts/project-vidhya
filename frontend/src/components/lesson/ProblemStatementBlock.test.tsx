@@ -25,7 +25,7 @@
  * can't share a file with tests that need the real generated data.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProblemStatementBlock } from './ProblemStatementBlock';
@@ -82,6 +82,31 @@ describe('ProblemStatementBlock', () => {
     const order = Array.from(block.querySelectorAll('p')).map((p) => p.textContent);
     expect(order.indexOf(slice.exam_intent)).toBeGreaterThanOrEqual(0);
     expect(order.indexOf(slice.exam_intent)).toBeLessThan(order.indexOf(slice.pain_point));
+  });
+
+  it('renders the framing line as plain text when no onSeeWhatsNext is given (backward compatible)', async () => {
+    const user = userEvent.setup();
+    render(<ProblemStatementBlock conceptId="eigenvalues" enabled />);
+    await user.click(screen.getByTestId('dps-more-trigger'));
+    expect(screen.queryByTestId('dps-see-whats-next')).toBeNull();
+    expect(
+      screen.getByText("Most students come here to practise real questions — that's how this page opens."),
+    ).toBeInTheDocument();
+  });
+
+  it('turns the framing line into a real affordance that hands off to the rail when onSeeWhatsNext is given', async () => {
+    // Bug (/investigate, 2026-09-01): "that's how this page opens" was a
+    // description with nothing behind it — no link, no scroll, no action.
+    // The line must be an actual tappable CTA wired to the caller's handler.
+    const user = userEvent.setup();
+    const onSeeWhatsNext = vi.fn();
+    render(<ProblemStatementBlock conceptId="eigenvalues" enabled onSeeWhatsNext={onSeeWhatsNext} />);
+    await user.click(screen.getByTestId('dps-more-trigger'));
+    const cta = screen.getByTestId('dps-see-whats-next');
+    expect(cta.tagName).toBe('BUTTON');
+    expect(cta).toHaveTextContent("Most students come here to practise real questions — that's how this page opens.");
+    await user.click(cta);
+    expect(onSeeWhatsNext).toHaveBeenCalledTimes(1);
   });
 
   it('labels the pain point as common slips, not as marks dying', async () => {

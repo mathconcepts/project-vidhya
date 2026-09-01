@@ -8,6 +8,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { authMockState, mockHasRole } from '@/test-utils/mockAuthContext';
 
 vi.mock('@/lib/auth/client', () => ({ authFetch: vi.fn() }));
 vi.mock('@/lib/demoMode', () => ({
@@ -17,17 +18,11 @@ vi.mock('@/lib/demoMode', () => ({
 }));
 vi.mock('@/components/app/SampleDataChip', () => ({ SampleDataChip: () => null }));
 
-let mockLoading = true;
-let mockUser: { role: string } | null = null;
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: mockUser,
-    loading: mockLoading,
-    hasRole: (min: string) => {
-      if (!mockUser) return false;
-      const rank: Record<string, number> = { student: 0, teacher: 1, admin: 2, owner: 3 };
-      return (rank[mockUser.role] ?? -1) >= (rank[min] ?? 99);
-    },
+    user: authMockState.user,
+    loading: authMockState.loading,
+    hasRole: mockHasRole,
   }),
 }));
 
@@ -38,8 +33,8 @@ async function renderPage() {
 
 describe('TeacherRosterPage — auth-loading regression', () => {
   it('REGRESSION: shows a loading state, not "Teacher role required.", while auth is still resolving', async () => {
-    mockLoading = true;
-    mockUser = null;
+    authMockState.loading = true;
+    authMockState.user = null;
 
     await renderPage();
 
@@ -48,8 +43,8 @@ describe('TeacherRosterPage — auth-loading regression', () => {
   });
 
   it('renders "Teacher role required." once auth resolves and the role genuinely is not teacher+', async () => {
-    mockLoading = false;
-    mockUser = { role: 'student' };
+    authMockState.loading = false;
+    authMockState.user = { role: 'student' };
 
     await renderPage();
 
@@ -64,8 +59,8 @@ describe('TeacherRosterPage — happy path (gap found on ship coverage audit)', 
   // permission-denied states. This locks in the real path: auth resolved,
   // role is teacher+, roster data fetched and rendered.
   it('renders the fetched roster once auth resolves and the role is teacher+', async () => {
-    mockLoading = false;
-    mockUser = { role: 'teacher' };
+    authMockState.loading = false;
+    authMockState.user = { role: 'teacher' };
     const authModule = await import('@/lib/auth/client');
     (authModule.authFetch as any).mockResolvedValueOnce({
       ok: true,
@@ -99,8 +94,8 @@ describe('TeacherRosterPage — happy path (gap found on ship coverage audit)', 
   });
 
   it('renders the empty-roster message when the teacher has no assigned students', async () => {
-    mockLoading = false;
-    mockUser = { role: 'teacher' };
+    authMockState.loading = false;
+    authMockState.user = { role: 'teacher' };
     const authModule = await import('@/lib/auth/client');
     (authModule.authFetch as any).mockResolvedValueOnce({
       ok: true,

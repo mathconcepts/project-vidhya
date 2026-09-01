@@ -11,14 +11,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { authMockState, mockHasRole } from '@/test-utils/mockAuthContext';
 
 vi.mock('@/components/admin/ContentMaturityCard', () => ({ ContentMaturityCard: () => null }));
 vi.mock('@/components/admin/AdminQuickLinks', () => ({ AdminQuickLinks: () => null }));
 
+authMockState.loading = false;
+authMockState.user = { role: 'admin' };
+
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
-    user: { id: 'admin-1', role: 'admin', name: 'Devika', email: 'd@example.com' },
-    hasRole: (min: string) => min === 'admin' || min === 'teacher' || min === 'student',
+    user: authMockState.user,
+    loading: authMockState.loading,
+    hasRole: mockHasRole,
   }),
 }));
 
@@ -37,11 +42,15 @@ const DASHBOARD_SUMMARY = {
   checklist: [],
 };
 
-vi.mock('@/lib/auth/client', () => ({
-  authFetch: vi.fn(() =>
-    Promise.resolve({ ok: true, status: 200, json: async () => DASHBOARD_SUMMARY } as Response),
-  ),
-}));
+vi.mock('@/lib/auth/client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/auth/client')>();
+  return {
+    ...actual,
+    authFetch: vi.fn(() =>
+      Promise.resolve({ ok: true, status: 200, json: async () => DASHBOARD_SUMMARY } as Response),
+    ),
+  };
+});
 
 async function renderPage() {
   const AdminDashboardPage = (await import('./AdminDashboardPage')).default;

@@ -153,7 +153,20 @@ export function AppLayout() {
     if (persona === 'teacher') { navigate('/teaching', { replace: true }); }
   }, [persona, location.pathname, navigate, user]);
 
-  const navItems = persona !== 'loading' ? NAV_BY_PERSONA[persona] : [];
+  // Regression (/ship pre-landing review, 2026-09-01): the 'teacher' persona
+  // bucket is shared by teacher/admin/owner (line ~114 above), so the
+  // "Students" bottom-nav tab sent admin/owner to /teacher/roster too — the
+  // same personal-roster dead end ("no students assigned yet") the Cohort
+  // Insight card's link was fixed to avoid, just reached through a second,
+  // untested affordance. Admin/owner get the platform-wide attention surface
+  // instead; an actual teacher still gets their own roster.
+  const navItems = persona === 'loading'
+    ? []
+    : persona === 'teacher' && (user?.role === 'admin' || user?.role === 'owner')
+      ? NAV_BY_PERSONA.teacher.map(item =>
+          item.value === '/teacher/roster' ? { ...item, value: '/admin/cohort' } : item,
+        )
+      : NAV_BY_PERSONA[persona];
   const activeTab = navItems.find(it => location.pathname.startsWith(it.value))?.value ?? '';
 
   const onTabChange = (value: string) => navigate(value);

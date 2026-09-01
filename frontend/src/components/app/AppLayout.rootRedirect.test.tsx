@@ -24,26 +24,16 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { appLayoutAuthState, appLayoutAuthValue, NullChrome } from '@/test-utils/mockAppLayoutChrome';
 
 vi.mock('@/lib/auth/client', () => ({
   authFetch: vi.fn(),
 }));
 
-vi.mock('@/components/app/DemoRoleSwitcher', () => ({ DemoRoleSwitcher: () => null }));
-vi.mock('@/components/app/DemoRailNav', () => ({ DemoRailNav: () => null }));
-vi.mock('@/components/app/WalkthroughBar', () => ({ WalkthroughBar: () => null, default: () => null }));
-
-let mockUser: { role: string } | null = null;
-vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({
-    user: mockUser ? { id: 'u1', email: 't@example.com', name: 'Test User', role: mockUser.role } : null,
-    loading: false,
-    refresh: vi.fn(),
-    signOut: vi.fn(),
-    setToken: vi.fn(),
-    hasRole: () => true,
-  }),
-}));
+vi.mock('@/components/app/DemoRoleSwitcher', () => ({ DemoRoleSwitcher: NullChrome }));
+vi.mock('@/components/app/DemoRailNav', () => ({ DemoRailNav: NullChrome }));
+vi.mock('@/components/app/WalkthroughBar', () => ({ WalkthroughBar: NullChrome, default: NullChrome }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: appLayoutAuthValue }));
 
 async function renderAtRoot() {
   const { AppLayout } = await import('./AppLayout');
@@ -68,11 +58,11 @@ describe('AppLayout — root route persona redirect', () => {
     sessionStorage.clear();
     // Skip the separate one-time /welcome redirect — orthogonal to this bug.
     localStorage.setItem('vidhya.demo_welcomed', '1');
-    mockUser = null;
+    appLayoutAuthState.role = null;
   });
 
   it('REGRESSION: redirects a teacher away from `/` to /teaching instead of showing GateHome', async () => {
-    mockUser = { role: 'teacher' };
+    appLayoutAuthState.role = 'teacher';
     const { queryByText, getByText } = await renderAtRoot();
 
     await waitFor(() => expect(getByText('Teaching content')).toBeInTheDocument());
@@ -80,7 +70,7 @@ describe('AppLayout — root route persona redirect', () => {
   });
 
   it('REGRESSION: redirects an admin away from `/` to their own dashboard, not /teaching', async () => {
-    mockUser = { role: 'admin' };
+    appLayoutAuthState.role = 'admin';
     const { queryByText, getByText } = await renderAtRoot();
 
     await waitFor(() => expect(getByText('Admin dashboard content')).toBeInTheDocument());
@@ -88,7 +78,7 @@ describe('AppLayout — root route persona redirect', () => {
   });
 
   it('REGRESSION: redirects an owner away from `/` to their own dashboard, not /teaching', async () => {
-    mockUser = { role: 'owner' };
+    appLayoutAuthState.role = 'owner';
     const { queryByText, getByText } = await renderAtRoot();
 
     await waitFor(() => expect(getByText('Owner dashboard content')).toBeInTheDocument());
@@ -96,7 +86,7 @@ describe('AppLayout — root route persona redirect', () => {
   });
 
   it('does not redirect an anonymous (exam-persona) visitor — GateHome stays at `/`', async () => {
-    mockUser = null;
+    appLayoutAuthState.role = null;
     const { getByText } = await renderAtRoot();
 
     // Give the persona-detection effect a tick to settle, then confirm no redirect fired.
@@ -111,7 +101,7 @@ describe('AppLayout — root route persona redirect', () => {
   // 'teacher') — and was never asserted, even though the reordered effect
   // touches every role's fallthrough behavior, not just admin/owner's.
   it('does not redirect a signed-in student away from `/` — GateHome stays', async () => {
-    mockUser = { role: 'student' };
+    appLayoutAuthState.role = 'student';
     const { authFetch } = await import('@/lib/auth/client');
     (authFetch as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,

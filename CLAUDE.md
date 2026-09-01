@@ -1586,6 +1586,59 @@ end-to-end — coverage on the generation side is unit-level (prompt assembly
 + fence validation against fixtures). The first live batch is the
 operator's smoke test, same as the v4.33.0 precedent.
 
+### Seven live-QA fixes on the lesson page + a scrub slider (v4.45.0)
+
+Same discipline as the v4.36.0/v4.43.0 live-QA passes: root-caused against
+the real rendering pipeline, not patched at the symptom.
+
+- **`stripAllInteractiveSpecFences()`** (`frontend/src/components/lesson/interactives/types.ts`)
+  replaces the single-fence strip `WorkedExampleCard`/`DefaultAtomCard`
+  relied on. `parseInteractiveSpec`'s own `body_without_spec` only ever
+  stripped the FIRST `` ```interactive-spec``` `` fence (and nothing on a
+  parse failure) — a second or malformed fence in the same atom body fell
+  through to `MarkdownAtomRenderer` as literal JSON. Caught live on
+  `eigenvalues.intuition.shaken`, which had authored two fences by mistake
+  (content fixed too, `modules/project-vidhya-content/concepts/eigenvalues/atoms/intuition-shaken.md`).
+- **CSS-only row/paragraph stagger.** The existing
+  `.vidhya-atom-body--structured li` entrance (exam-pattern/common-traps
+  rows) gains a sibling `.vidhya-atom-body--progressive > p` for
+  `visual_analogy` and `mnemonic` caption prose (`AtomCardRenderer.tsx`,
+  `globals.css`). Entry-once, `--ease-standard`/`--dur-base` tokens,
+  collapses under `prefers-reduced-motion` — same discipline as every other
+  motion in the system. `formal_definition` deliberately opts out (see the
+  new design doc below — pacing a definition fights its own job).
+- **`ProblemStatementBlock`'s framing line is now a real CTA.** "Most
+  students come here to practise real questions" used to be inert text; an
+  optional `onSeeWhatsNext` prop turns it into a 44px button that scrolls to
+  the concept's WalkthroughRail — no duplicate live-availability fetch, the
+  block stays fetch-free for first paint.
+- **Error-streak auto-modality-switch now actually switches.** The nav
+  footer has said "· streak switched modality" since before this release;
+  nothing ever flipped `showVisually`. `AtomCardRenderer.tsx` now pulls the
+  concept's visual-modality atoms to the front after 3 consecutive misses
+  (`ERROR_STREAK_MODALITY_SWITCH_THRESHOLD` — the one literal both the
+  effect and the footer label read, so they can't drift independently
+  again), gated so a manual toggle-off sticks (`autoSwitchedRef`, resets
+  only when the streak itself breaks) and is a true no-op — footer label
+  hidden too — when the concept has no visual atom to switch to.
+- **Manual scrub slider on every `Simulation` scene** (`ScrubSlider` in
+  `interactives/Simulation.tsx`) — a native `<input type="range">`,
+  `step=0.02` (fine enough for pointer drag, ~50 keyboard presses end to
+  end), ink-accented (scrubbing is neither a mastery nor an AI/tutor
+  signal), pauses autoplay on grab. Renders for both beat and non-beat
+  scenes; hidden under `prefers-reduced-motion` (nothing to scrub once the
+  scene is a static frame).
+
+**Not shipped, proposed:** `docs/designs/2026-09-01-definition-mnemonic-engagement-framework.md`
+lays out why animation is the wrong lever for `formal_definition`
+specifically (Sweller's split-attention effect — a moving figure competes
+with parsing a precise statement for the same working memory), six
+research-grounded rules, and a composable "delivery modifier" scheme
+(`#term-first`, `#restate-check`, `#not-this`, `#device-reveal`,
+`#apply-once`). `#device-reveal` (the `mnemonic` stagger above) is the one
+row shipped in this pass; the rest is future content/schema work, not
+decided here — see TODOS.md.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

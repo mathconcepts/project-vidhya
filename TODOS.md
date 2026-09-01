@@ -644,3 +644,35 @@ new small check; `docs/designs/2026-08-30-resonance-fused-atoms-plan.md` S10.
 **Effort:** S human / ~15 min CC.
 **Priority:** P3.
 **Deferred from:** /autoplan eng phase, 2026-08-30.
+
+## Delivery-modifier framework for `formal_definition`/`mnemonic` — only `#device-reveal` shipped
+
+**Trigger:** the next content-authoring pass touching `formal_definition`
+atoms, or renewed "definition/mnemonic feels thin, no MOAT" feedback.
+
+**What:** `docs/designs/2026-09-01-definition-mnemonic-engagement-framework.md`
+proposes five composable delivery modifiers grounded in six cognitive-load/
+generative-learning results (Sweller, Roediger & Karpicke, Fiorella & Mayer,
+Bjork & Bjork, Chi et al., Paivio/Mayer). `#device-reveal` (the `mnemonic`
+paragraph stagger) shipped in v4.45.0. Four remain unbuilt: `#term-first`
+and `#not-this` and `#apply-once` are content-only (wrap the statement in
+the existing `<details>` convention; one authored line per atom);
+`#restate-check` needs a distractor-sourcing pipeline off each concept's
+`common-traps.md` — real work, not mechanical, since parsing prose traps
+into MCQ-shaped near-misses isn't a lookup. A further `#mnemonic-scene`
+(extending the resonance-beat `isBeatAtom` gate, `orchestrator.ts:598, to
+`mnemonic`) is named as a later follow-up only, not scoped here.
+
+**Why not fixed inline:** each remaining modifier is either a product/
+content-authoring call (what a good `#not-this` line says per concept) or
+real engineering (the distractor picker) — the doc's own §4 explicitly
+declines to decide either here.
+
+**Where to start:** `docs/designs/2026-09-01-definition-mnemonic-engagement-framework.md`
+§3 (modifier table), §7 (suggested build order).
+
+**Effort:** S human / CC ~15 min per content-only modifier row;
+`#restate-check`'s distractor picker is its own follow-up PR (M-sized).
+**Priority:** P3.
+**Deferred from:** `/investigate` session, 2026-09-01, branch
+`claude/exam-pattern-engagement-bugs-wdff09`.

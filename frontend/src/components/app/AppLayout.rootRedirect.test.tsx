@@ -12,6 +12,14 @@
  *
  * Reproduced live in a real browser session against this exact repro
  * before the fix; these tests pin it at the component level.
+ *
+ * Refined (/investigate, 2026-09-01): the original fix sent admin/owner to
+ * /teaching too, since AppLayout folds those roles into the same 'teacher'
+ * persona bucket as real teachers. Live QA on an admin account found that's
+ * its own dead end — /teaching assumes a personal class roster ("no
+ * students assigned yet") an admin was never given. The admin/owner test
+ * below now asserts the corrected destination (their own dashboard route)
+ * instead of re-asserting the bug.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, waitFor } from '@testing-library/react';
@@ -46,6 +54,8 @@ async function renderAtRoot() {
           <Route index element={<div>GateHome content</div>} />
           <Route path="teaching" element={<div>Teaching content</div>} />
           <Route path="planned" element={<div>Planned content</div>} />
+          <Route path="admin/dashboard" element={<div>Admin dashboard content</div>} />
+          <Route path="owner/dashboard" element={<div>Owner dashboard content</div>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -69,11 +79,20 @@ describe('AppLayout — root route persona redirect', () => {
     expect(queryByText('GateHome content')).toBeNull();
   });
 
-  it('also redirects an admin away from `/` (same persona bucket as teacher)', async () => {
+  it('REGRESSION: redirects an admin away from `/` to their own dashboard, not /teaching', async () => {
     mockUser = { role: 'admin' };
-    const { getByText } = await renderAtRoot();
+    const { queryByText, getByText } = await renderAtRoot();
 
-    await waitFor(() => expect(getByText('Teaching content')).toBeInTheDocument());
+    await waitFor(() => expect(getByText('Admin dashboard content')).toBeInTheDocument());
+    expect(queryByText('Teaching content')).toBeNull();
+  });
+
+  it('REGRESSION: redirects an owner away from `/` to their own dashboard, not /teaching', async () => {
+    mockUser = { role: 'owner' };
+    const { queryByText, getByText } = await renderAtRoot();
+
+    await waitFor(() => expect(getByText('Owner dashboard content')).toBeInTheDocument());
+    expect(queryByText('Teaching content')).toBeNull();
   });
 
   it('does not redirect an anonymous (exam-persona) visitor — GateHome stays at `/`', async () => {

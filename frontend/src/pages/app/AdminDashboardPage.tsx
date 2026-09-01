@@ -290,8 +290,16 @@ export default function AdminDashboardPage() {
                   <p className="text-2xl font-bold" style={{ color: 'var(--indigo-ink)' }}>{Math.round(data.cohort.avg_mastery * 100)}%</p>
                 </div>
                 {data.cohort.flagged_for_teacher_attention > 0 && (
+                  // Regression (/investigate, 2026-09-01): this linked to
+                  // /teacher/roster, which the backend scopes to the CALLING
+                  // user's own teacher_of[] list. The count above it, though,
+                  // comes from summarizeCohort() over every student
+                  // platform-wide — an admin (never personally assigned as
+                  // anyone's teacher) clicked a real "1 need attention" stat
+                  // and landed on "no students assigned yet". /admin/cohort
+                  // is the actual platform-wide attention surface (PR #60).
                   <Link
-                    to="/teacher/roster"
+                    to="/admin/cohort"
                     className="px-3 py-2 inline-flex items-center gap-1.5 text-xs"
                     style={{
                       borderRadius: 'var(--radius-xs)',

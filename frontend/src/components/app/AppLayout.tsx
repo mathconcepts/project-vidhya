@@ -53,7 +53,13 @@ const NAV_BY_PERSONA: Record<Exclude<Persona, 'loading'>, Array<{ value: string;
   ],
   teacher: [
     { value: '/teaching',       label: 'Teach',    icon: <GraduationCap size={20} /> },
-    { value: '/progress',       label: 'Students', icon: <Users size={20} /> },
+    // Regression (/investigate, 2026-09-01): this pointed at /progress, the
+    // STUDENT's own progress page (keyed off an anonymous useSession() id) —
+    // never a teacher-facing view. A teacher/admin tapping "Students" landed
+    // on a page about their own anonymous session, which was also blank or
+    // crashing (see ProgressPage.tsx's useMemo-ordering fix, same session).
+    // /teacher/roster is the actual "students I teach" page.
+    { value: '/teacher/roster', label: 'Students', icon: <Users size={20} /> },
   ],
 };
 
@@ -127,17 +133,25 @@ export function AppLayout() {
   // elsewhere (knowledge→/knowledge-home, exam→/planned,
   // teacher→/teaching) — `/` was never migrated off the pre-refactor
   // default and is only still reachable via the logo's plain `<a
-  // href="/">` or a direct nav. For a teacher this is unambiguously
-  // wrong in every case (GateHome has no student-vs-teacher branch at
-  // all), so redirect there specifically. exam/knowledge are left alone:
-  // GateHome may still be an intentional onboarding surface for a new or
+  // href="/">` or a direct nav. exam/knowledge are left alone: GateHome
+  // may still be an intentional onboarding surface for a new or
   // anonymous exam-persona visitor, and that's a product call, not a bug
   // to guess at here.
+  //
+  // Refined (/investigate, 2026-09-01): the original fix sent admin/owner
+  // to /teaching too, since they share the 'teacher' persona bucket
+  // (line ~108). Live QA on an admin account showed that's wrong on its
+  // own: /teaching assumes a personal class roster ("no students assigned
+  // yet") an admin was never given, so it's a dead end for a principal who
+  // isn't personally teaching. Branch on the actual role first so a real
+  // teacher still lands on /teaching, while admin/owner land on their own
+  // dashboard route.
   useEffect(() => {
-    if (persona === 'teacher' && location.pathname === '/') {
-      navigate('/teaching', { replace: true });
-    }
-  }, [persona, location.pathname, navigate]);
+    if (location.pathname !== '/') return;
+    if (user?.role === 'admin') { navigate('/admin/dashboard', { replace: true }); return; }
+    if (user?.role === 'owner') { navigate('/owner/dashboard', { replace: true }); return; }
+    if (persona === 'teacher') { navigate('/teaching', { replace: true }); }
+  }, [persona, location.pathname, navigate, user]);
 
   const navItems = persona !== 'loading' ? NAV_BY_PERSONA[persona] : [];
   const activeTab = navItems.find(it => location.pathname.startsWith(it.value))?.value ?? '';

@@ -32,7 +32,7 @@ interface RosterResponse {
 }
 
 export default function TeacherRosterPage() {
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, loading: authLoading } = useAuth();
   const [data, setData] = useState<RosterResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,8 +52,17 @@ export default function TeacherRosterPage() {
     }
   }, []);
 
-  useEffect(() => { if (hasRole('teacher')) refresh(); else setLoading(false); }, [hasRole, refresh]);
+  useEffect(() => {
+    if (authLoading) return;
+    if (hasRole('teacher')) refresh(); else setLoading(false);
+  }, [authLoading, hasRole, refresh]);
 
+  // Regression (/investigate, 2026-09-01): same missing-loading-guard bug
+  // as TeachingDashboardPage — see its comment for the full mechanism. This
+  // page is the "Students" tab destination for teacher/admin nav (fixed in
+  // the same session, AppLayout.tsx's NAV_BY_PERSONA), so it's on the same
+  // full-page-reload demo-login path that exposed the race.
+  if (authLoading) return <p style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)' }}>Loading…</p>;
   if (!hasRole('teacher')) {
     return (
       <div style={{ maxWidth: 448, margin: '0 auto', padding: 24, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>

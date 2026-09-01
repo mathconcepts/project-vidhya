@@ -660,7 +660,7 @@ the existing `<details>` convention; one authored line per atom);
 `#restate-check` needs a distractor-sourcing pipeline off each concept's
 `common-traps.md` — real work, not mechanical, since parsing prose traps
 into MCQ-shaped near-misses isn't a lookup. A further `#mnemonic-scene`
-(extending the resonance-beat `isBeatAtom` gate, `orchestrator.ts:598, to
+(extending the resonance-beat `isBeatAtom` gate, `orchestrator.ts:598`, to
 `mnemonic`) is named as a later follow-up only, not scoped here.
 
 **Why not fixed inline:** each remaining modifier is either a product/

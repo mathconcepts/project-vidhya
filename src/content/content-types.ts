@@ -64,6 +64,14 @@ export interface RouteRequest {
    * See {@link SessionMode}.
    */
   session_mode?: SessionMode;
+  /**
+   * How much of a concept's atom sequence to serve — 'micro' | 'standard' |
+   * 'deep' (src/content/delivery-length.ts). Defaults to
+   * deliveryLengthFromSessionMode(session_mode) when omitted, so a plain
+   * `session_mode: 'micro_sprint'` request gets the compressed atom set
+   * without the caller having to know about this field too.
+   */
+  delivery_length?: 'micro' | 'standard' | 'deep';
   /** Days until the student's next exam, if known. Used by CadenceStrategy. */
   exam_proximity_days?: number;
   /** Difficulty hint, usually masteryToDifficulty(mastery). */

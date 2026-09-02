@@ -366,6 +366,14 @@ export interface LessonRequest {
   student?: StudentSnapshot;
   /** When true, forces first-visit layout even if student has history */
   force_full?: boolean;
+  /** Cadence mode — see content-types.ts's SessionMode. Optional; unaffected requests behave exactly as before. */
+  session_mode?: 'knowledge' | 'exam-prep' | 'revision' | 'micro_sprint';
+  /**
+   * How much of the atom sequence to serve (src/content/delivery-length.ts).
+   * Defaults from session_mode when omitted (micro_sprint -> 'micro',
+   * everything else -> 'standard') — see deliveryLengthFromSessionMode.
+   */
+  delivery_length?: 'micro' | 'standard' | 'deep';
   /** Optional user-material chunk IDs to surface (passed from the client's IndexedDB) */
   user_material_chunks?: Array<{
     material_id: string;

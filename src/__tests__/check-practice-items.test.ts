@@ -320,9 +320,37 @@ describe('checkPhraseRule', () => {
     expect(checkPhraseRule('id-1', undefined, { question_text: 'Compute the eigenvalues of A.' })).toEqual([]);
   });
 
-  it('reports nothing when evidence_level is directly_reviewed, even with a forbidden phrase', () => {
+  it('reports nothing when evidence_level is directly_reviewed AND a source_locator is present', () => {
     expect(
-      checkPhraseRule('id-1', 'directly_reviewed', { question_text: 'This is a high-yield pattern.' }),
+      checkPhraseRule(
+        'id-1',
+        'directly_reviewed',
+        { question_text: 'This is a high-yield pattern.' },
+        { paper: 'GATE CS 2023', question_id: 'Q42' },
+      ),
+    ).toEqual([]);
+  });
+
+  it('P4: still flags a forbidden phrase when directly_reviewed but source_locator is missing', () => {
+    const problems = checkPhraseRule('id-1', 'directly_reviewed', { question_text: 'This is a high-yield pattern.' });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('source_locator is missing');
+  });
+
+  it('P4: an empty source_locator object does not count as present', () => {
+    const problems = checkPhraseRule(
+      'id-1', 'directly_reviewed', { question_text: 'This is a high-yield pattern.' }, {},
+    );
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('source_locator is missing');
+  });
+
+  it('P4: a locator with only one field (e.g. a bare url) is enough', () => {
+    expect(
+      checkPhraseRule(
+        'id-1', 'directly_reviewed', { question_text: 'This is a high-yield pattern.' },
+        { url: 'https://example.test/paper.pdf' },
+      ),
     ).toEqual([]);
   });
 
@@ -459,11 +487,31 @@ describe('checkPyqBank', () => {
     expect(checkPyqBank(bank)).toHaveLength(1);
   });
 
-  it('does not flag a forbidden phrase when evidence_level is directly_reviewed', () => {
+  it('does not flag a forbidden phrase when evidence_level is directly_reviewed AND source_locator is present', () => {
+    const bank = pyqBank([
+      {
+        id: 'la-001', question_text: 'This is high-yield.', evidence_level: 'directly_reviewed',
+        source_locator: { paper: 'GATE CS 2023', question_id: 'Q12' },
+      },
+    ]);
+    expect(checkPyqBank(bank)).toEqual([]);
+  });
+
+  it('P4: still flags when directly_reviewed but source_locator is missing', () => {
     const bank = pyqBank([
       { id: 'la-001', question_text: 'This is high-yield.', evidence_level: 'directly_reviewed' },
     ]);
-    expect(checkPyqBank(bank)).toEqual([]);
+    const problems = checkPyqBank(bank);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('source_locator is missing');
+  });
+
+  it('P4: rejects a malformed source_locator (structural check runs independently of the phrase rule)', () => {
+    const bank = pyqBank([
+      { id: 'la-001', question_text: 'clean text', source_locator: { year: 'not-a-number' } },
+    ]);
+    const problems = checkPyqBank(bank);
+    expect(problems).toEqual(['la-001: source_locator.year must be a number when present']);
   });
 
   it('falls back to a positional label when id is missing', () => {

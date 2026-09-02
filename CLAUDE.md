@@ -1704,15 +1704,64 @@ constraint as `npm run variants:eval` elsewhere in this doc):
   `fetch`.
 
 **Deliberately not touched:** `content_gate_ledger` (5 gates),
-`assessment_contracts`, `evidence_level`, no new `AtomType`/`StageKind`,
+`assessment_contracts`, no new `AtomType`/`StageKind`,
 `ci:template-coverage`/`ci:la-walkthrough` unchanged.
 
-**Deferred, named in TODOS.md:** three-tier delivery length
-(Micro/Standard/Deep), a bounded-depth diagnostic probe replacing
-`traceWeakestPrerequisite`'s unbounded BFS, custom-PDF ingestion, and a
-per-claim source locator alongside `evidence_level`. Each touches either a
-live student-facing path or a large net-new subsystem and needs its own
-reviewed pass.
+**Second pass, same day — the four items above were re-scoped and shipped:**
+
+- **Per-claim source locator.** `src/content/source-locator.ts`
+  (`SourceLocator`) sits beside `evidence_level` on `AuthoredItem` and
+  `PyqBankProblem`. Does NOT touch `historical-evidence.yml` — that file's
+  own header already refuses to invent per-item locators for its 116
+  topic-level D/P/S rows without a real coding protocol, and doing so here
+  would be exactly that fabrication. Instead, `scripts/check-practice-
+  items.ts`'s `checkPhraseRule` now requires a locator on the one
+  combination that needs it: `evidence_level: 'directly_reviewed'` PLUS an
+  actual phrase-rule-licensed claim in the text. Zero committed items
+  trigger this today (a forward-looking tightening, not a breaking change).
+- **Three-tier delivery length.** `src/content/delivery-length.ts`
+  (`'micro' | 'standard' | 'deep'`) is a pure filter wired into
+  `pedagogy-engine.ts`'s `selectAtoms()` via a new `RouteRequest.
+  delivery_length` field (`/api/lesson/compose` now reads `body.
+  delivery_length` / `body.session_mode`). `'micro'` keeps only the
+  research's 6 named anchors; `'standard'`/`'deep'` are honest no-ops today
+  (Vidhya's base already matches "Standard," and a real "Deep" layer
+  doesn't exist yet — claiming otherwise would be fabricated precision).
+  `SessionMode.micro_sprint` (previously modality-only) now also compresses
+  the atom set via `deliveryLengthFromSessionMode()`. Resonance-beat
+  safety: `carriesInteractiveScene()` keeps any atom with a real
+  ` ```interactive-spec` `` / ` ```gif-scene` `` fence regardless of
+  atom_type, so a fused scene authored on `intuition` is never silently
+  dropped by the micro filter.
+- **Bounded-depth diagnostic probe — additive, not a replacement.**
+  `src/gbrain/diagnostic-probe.ts`'s `diagnoseWrongAnswer()` implements the
+  research's bounded traversal + ranking + "smallest discriminating probe"
+  + converging-evidence gate (reusing FIRe's own `FIRE_MAX_DEPTH` bound,
+  not a second depth constant). `traceWeakestPrerequisite` and
+  `refreshPrerequisiteAlerts` — the live path gating real interventions —
+  are untouched; the new function is wired ADDITIVELY into
+  `student-audit.ts`'s report (`diagnostic_probes` field + a new markdown
+  section), an on-demand coaching view, never the live decision path.
+- **Custom-PDF ingestion scaffold.** `src/content/custom-source/types.ts`
+  is the full research §15.6 data model (`CustomSourceDocument`,
+  `SourceSpan`, `ClaimDraft`) with a `CustomSourceExtractor` interface left
+  deliberately UNIMPLEMENTED — same LLMJudge/CASChecker split: an interface
+  first, a concrete OCR/extraction adapter in its own wiring PR once a
+  provider decision is made. `src/content/custom-source/repo.ts` is the
+  real, usable half — `CustomSourceRepo` (Pg + File, same two-impl pattern
+  as every repo in `src/storage/repositories/`) with hash-deduped
+  registration, permission-gated span attachment, and a review workflow
+  (`resolveClaim` refuses to reject/quarantine without a `review_note`, and
+  is idempotent). Migration `057_custom_source_ingestion.sql` creates the
+  three tables, empty until an upload flow calls in. `ClaimDraft` reuses
+  `DeltaKind` and `SourceLocator` from the two pieces above rather than
+  inventing its own vocabulary.
+
+**Still deliberately out of scope, named in TODOS.md:** migrating the live
+prerequisite-alert path onto the bounded algorithm (vs. the additive view
+that already ships), a concrete `CustomSourceExtractor` adapter (needs an
+OCR/storage product decision), and wiring the remaining 8 unwired
+`DeltaKind` values to real trigger detectors (each its own scoped project).
 
 ## Skill routing
 

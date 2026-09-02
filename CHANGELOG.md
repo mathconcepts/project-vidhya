@@ -4,6 +4,35 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.48.0] — 2026-09-02 — Content strategy: research integration, second pass (P4–P7)
+
+**Operator action:** migration `057_custom_source_ingestion.sql`
+auto-applies on boot (no manual step). No new env vars.
+
+Same-day follow-up to 4.47.0: the four items that release deferred were
+re-scoped and shipped, each narrowed to what's safely buildable without a
+live LLM call or an undecided product choice (OCR provider, file storage).
+Full rationale: `docs/designs/2026-09-02-content-strategy-research-
+integration-plan.md` §5–6.
+
+- **Per-claim source locator** (`src/content/source-locator.ts`) beside
+  `evidence_level` — required only when `directly_reviewed` licenses a
+  phrase-rule claim; zero committed items trigger this today.
+- **Three-tier delivery length** (`src/content/delivery-length.ts`) wired
+  into `pedagogy-engine.ts`'s `selectAtoms()`; `SessionMode.micro_sprint`
+  now compresses the atom set, not just modality. Resonance-beat safe: a
+  fused scene on `intuition` is never dropped by the micro filter.
+- **Bounded-depth diagnostic probe** (`src/gbrain/diagnostic-probe.ts`) —
+  additive in `student-audit.ts`'s report; the live prerequisite-alert path
+  (`traceWeakestPrerequisite`, `refreshPrerequisiteAlerts`) is untouched.
+- **Custom-PDF ingestion scaffold** (`src/content/custom-source/`) — a
+  real, tested `CustomSourceRepo` (register/hash-dedup/permission-gate/
+  review workflow); the extraction/OCR adapter itself is deliberately
+  unimplemented pending a provider decision (TODOS.md).
+
+See CLAUDE.md's "Content strategy: research integration" section for full
+detail and what remains out of scope.
+
 ## [4.47.0] — 2026-09-02 — Content strategy: research integration
 
 **Operator action:** migration `056_delta_kind.sql` auto-applies on boot

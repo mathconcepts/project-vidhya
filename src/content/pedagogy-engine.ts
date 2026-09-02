@@ -22,6 +22,7 @@ import type {
 } from './content-types';
 import type { ConceptMeta, ExamOverlay } from '../curriculum/types';
 import type { StudentModel } from '../gbrain/student-model';
+import { selectAtomsForDeliveryLength, deliveryLengthFromSessionMode } from './delivery-length';
 
 // ─── Mastery tier classification ────────────────────────────────────────
 
@@ -145,19 +146,27 @@ export function selectAtoms(input: SelectAtomsInput): ContentAtom[] {
     ? conceptMeta.exam_overlays?.[preferred_exam_id]
     : undefined;
 
+  // P5 (2026-09-02 content-strategy plan): how much of the sequence to
+  // serve, independent of mastery/exam filtering below. delivery_length
+  // wins when the caller sets it explicitly; otherwise derived from
+  // session_mode so a plain micro_sprint request compresses too.
+  const deliveryLength =
+    routeRequest.delivery_length ?? deliveryLengthFromSessionMode(routeRequest.session_mode);
+  const baseCandidates = (atoms: ContentAtom[]) =>
+    selectAtomsForDeliveryLength(
+      atoms.filter((a) => passesExamOverlay(a, overlay) && passesExamFilter(a, preferred_exam_id)),
+      deliveryLength,
+    );
+
   // 1. Filter
-  let candidates = conceptAtoms.filter(
-    (a) => passesExamOverlay(a, overlay) && passesExamFilter(a, preferred_exam_id),
-  );
+  let candidates = baseCandidates(conceptAtoms);
 
   // 2. Filter by difficulty: serve atoms whose difficulty <= mastery + 0.2 buffer
   // (so "cold" students don't get advanced atoms; mastery 0.0 still gets difficulty <= 0.2)
   candidates = candidates.filter((a) => a.difficulty <= mastery + 0.25);
   // If the difficulty filter killed everything, fall back to the unfiltered set
   if (candidates.length === 0) {
-    candidates = conceptAtoms.filter(
-      (a) => passesExamOverlay(a, overlay) && passesExamFilter(a, preferred_exam_id),
-    );
+    candidates = baseCandidates(conceptAtoms);
   }
 
   // 3. Order by tier

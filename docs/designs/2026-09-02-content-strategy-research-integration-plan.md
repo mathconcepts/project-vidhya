@@ -1,7 +1,11 @@
 # Content strategy: research integration plan
 
 **Date:** 2026-09-02
-**Status:** implemented (P0–P3); P4+ deferred, see §5
+**Status:** implemented (P0–P7). Two items remain intentionally out of
+scope (§6): a bounded diagnostic probe REPLACING the live prerequisite-alert
+path (P6 shipped an additive one instead), and full custom-PDF ingestion
+end-to-end (P7 shipped the data model + repo; extraction/OCR is a Phase-0
+seam, unimplemented on purpose — see §6).
 
 ## 0. Input
 
@@ -162,31 +166,108 @@ correctness doesn't depend on live reachability here.
   what they measure; Method Selector content is additive prompt guidance,
   not a new coverage dimension to fail against on day one.
 
-## 5. Deferred (named, not silently dropped)
+## 5. Second pass — P4 through P7 (2026-09-02, same day)
 
-- **Three-tier delivery length (Micro/Standard/Deep).** Real gap, but
-  reshaping lesson compose to select a shorter atom subset per topic risks
-  the resonance-beat/`MediaSidecar` rendering pipeline (§ CLAUDE.md
-  "Resonance beats", "Seven live-QA fixes") if rushed. Needs its own design
-  pass on which atoms are droppable per family without breaking the fused
-  hook/intuition scene contract.
-- **Bounded-depth diagnostic probe** replacing/augmenting
-  `traceWeakestPrerequisite`'s unbounded mastery-vector BFS with the
-  research's "smallest discriminating probe" algorithm. Touches the live
-  prerequisite-alert path (`src/gbrain/student-model.ts:378-396`) that
-  gates real interventions — a correctness regression here is student-
-  facing, so it deserves its own reviewed change, not a rider on this one.
-- **Custom-PDF ingestion → delta pipeline** (hash, OCR, span extraction,
-  review queue). Net-new subsystem, no existing seam to extend safely in
-  scope.
-- **Per-claim source locator** alongside `evidence_level` (research wants
-  claim-granularity with page/URL; Vidhya has item-granularity). Worth
-  doing, but touches every existing `evidence_level` write site — a
-  reviewed follow-up, not bundled here.
+The four items §5 (below, in its original form) deferred were re-examined
+after further scoping and shipped, each narrowed to what's safely buildable
+without a live LLM call or a product decision this pass can't make:
+
+**P4 — per-claim source locator.** `src/content/source-locator.ts`
+(`SourceLocator`: `source_id`/`url`/`paper`/`year`/`question_id`/`page`/
+`section`, all optional) sits beside `evidence_level` on `AuthoredItem`
+(`src/scoring/learning-object-catalog-file.ts`) and `PyqBankProblem`
+(`scripts/check-practice-items.ts`). Deliberately does NOT touch
+`data/curriculum/gate-em/historical-evidence.yml` — that file's own header
+already refuses to invent per-item paper/year/question-id locators for its
+116 topic-level D/P/S rows without a real coding protocol, and adding one
+here would be exactly the fabrication it warns against. Instead, the
+locator becomes required at the one place it was structurally missing: an
+item whose `evidence_level` is `directly_reviewed` AND whose text uses a
+phrase-rule-licensed claim ("high-yield" etc., `src/content/evidence-
+phrase-rule.ts`) must now also carry a locator — `checkPhraseRule` in
+`scripts/check-practice-items.ts` enforces it. Zero committed items
+currently trigger this (no item uses `directly_reviewed` yet), so this is a
+forward-looking tightening, not a breaking change to real data.
+
+**P5 — three-tier delivery length.** `src/content/delivery-length.ts`
+(`DeliveryLength = 'micro' | 'standard' | 'deep'`) is a pure filter wired
+into `pedagogy-engine.ts`'s `selectAtoms()` (the existing atom
+selector/orderer) via a new `RouteRequest.delivery_length` field, and
+`/api/lesson/compose` now reads `body.delivery_length` /
+`body.session_mode` from the client. `'micro'` keeps only the research's 6
+named anchors (hook, formal_definition, worked_example, common_traps,
+retrieval_prompt, exam_pattern); `'standard'`/`'deep'` are no-ops today —
+Vidhya's authored base already matches "Standard," and a systematically
+separate "Deep" layer doesn't exist per concept yet, so claiming `'deep'`
+does more than `'standard'` would be fabricated precision (same discipline
+as `evidence_level`, `DeltaKind`). `SessionMode.micro_sprint`
+(pre-existing, previously only forced STATIC modality) now ALSO compresses
+the atom set via `deliveryLengthFromSessionMode()` — the exact gap named
+below. Resonance-beat safety (the risk this item was originally deferred
+over): `carriesInteractiveScene()` is a cheap synchronous substring check
+that keeps ANY atom carrying a real ` ```interactive-spec` `` or
+` ```gif-scene` `` fence regardless of its atom_type, so a fused hook/
+intuition scene authored on `intuition` (which Micro's atom-type list would
+otherwise drop) is never silently excluded.
+
+**P6 — bounded-depth diagnostic probe (additive).** `src/gbrain/
+diagnostic-probe.ts`'s `diagnoseWrongAnswer()` implements the research's
+steps 4-6 and 8 (bounded traversal, ranking, smallest discriminating probe,
+converging-evidence gate) as a pure function, reusing FIRe's own
+`FIRE_MAX_DEPTH` bound (`src/gbrain/fire.ts`) rather than inventing a
+second depth constant. It does NOT touch `traceWeakestPrerequisite`
+(`src/constants/concept-graph.ts`) or `refreshPrerequisiteAlerts`
+(`src/gbrain/student-model.ts`) — those stay exactly as they were, still
+gating real interventions unchanged. The new function is wired ADDITIVELY
+into `student-audit.ts`'s report (a new `diagnostic_probes` field +
+"Diagnostic Probe" markdown section, alongside the existing "Prerequisite
+Alerts" section) — an on-demand coaching/operator view, not a live
+decision path. Converging-evidence discipline: it refuses to recommend a
+probe unless BOTH the target concept AND at least one upstream prerequisite
+are weak — a single bad attempt on an otherwise-mastered concept is not
+evidence of a prerequisite gap, and the function says so explicitly rather
+than guessing.
+
+**P7 — custom-PDF ingestion scaffold.** `src/content/custom-source/types.ts`
+is the full research §15.6 data model (`CustomSourceDocument`, `SourceSpan`,
+`ClaimDraft`) plus a `CustomSourceExtractor` interface left deliberately
+UNIMPLEMENTED — matching the exact split this repo already used for
+`LLMJudge`/`CASChecker` (an interface lands first, a concrete adapter lands
+in its own reviewed wiring PR once a provider decision — which OCR library,
+which file storage — is actually made). `src/content/custom-source/repo.ts`
+is the REAL, usable half: a `CustomSourceRepo` (Pg + File implementations,
+same two-implementation pattern as every other repo in `src/storage/
+repositories/`) with working register/hash-dedup, permission-gated
+span-attachment, and a review workflow (`resolveClaim` refuses to
+reject/quarantine without a `review_note`, and is idempotent — a second
+resolve call never overwrites the first operator's decision). Migration
+`057_custom_source_ingestion.sql` creates the three tables, empty until a
+future upload flow calls in. `ClaimDraft.delta_kind` reuses P2's `DeltaKind`
+union and `ClaimDraft.locator` reuses P4's `SourceLocator` — the three
+pieces this pass shipped click together rather than each inventing its own
+vocabulary.
+
+## 6. What's still out of scope, and why (updated from the original §5)
+
+- **Bounded-depth diagnostic probe REPLACING the live path.** P6 shipped
+  the additive version deliberately instead — augmenting
+  `traceWeakestPrerequisite`/`refreshPrerequisiteAlerts` themselves would
+  touch the path that gates real interventions for real students; a
+  correctness regression there is student-facing, so replacing it (as
+  opposed to adding a second, on-demand view) still deserves its own
+  reviewed change with regression tests against known student cases.
+- **Custom-PDF ingestion end-to-end.** P7 shipped the data model and a
+  real repo; extraction/OCR itself (`CustomSourceExtractor`) is
+  unimplemented on purpose — no upload UI, no OCR provider, no file
+  storage decision has been made, and inventing one without a product
+  decision would be exactly the kind of premature commitment this pass's
+  other honesty gates (evidence_level, DeltaKind, delivery-length) exist to
+  avoid making elsewhere.
 - **Wiring the other 9 `DeltaKind` values to real trigger detectors.**
   P2 makes the taxonomy real; it does not invent nine new detection
   algorithms (prerequisite-gap probes, representation-shift detection,
   confidence-calibration divergence, etc.) — each is its own scoped
-  project.
+  project. `custom_source` now has a real writer (P7's `addClaimDraft`),
+  narrowing this from 10 unwired kinds to 9.
 
-These five are tracked in `TODOS.md` with this doc as the reference.
+These are tracked in `TODOS.md` with this doc as the reference.

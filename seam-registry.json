@@ -77,6 +77,13 @@
       "interface_file": "src/scoring/marking-strategy.ts",
       "config_source": "supabase/migrations/050_assessment_contracts.sql (assessment_contracts.marking), with src/exams/marking-constants.ts as the compiled DB-less fallback",
       "conformance_test_path": "src/scoring/__tests__/marking-strategy-contract.test.ts"
+    },
+    {
+      "name": "prompt-resource-registry",
+      "description": "Wolfram Prompt Repository-inspired typed registry (plan: docs/designs/2026-09-02-wolfram-prompt-resource-registry.md) — every prompt-shaping resource (teaching_function, modifier, persona, and the other 6 Wolfram-inspired categories) buildPrompt() composes from, named/versioned/approval-gated instead of hardcoded function calls. A resource must pass runPromptResourceContract() and reach approval_state 'released'/'pilot' before it ever resolves into a live prompt.",
+      "interface_file": "src/content/prompt-registry/types.ts",
+      "config_source": "src/content/prompt-registry/resources/*.ts (in-repo TypeScript resource definitions, same trust boundary as pedagogy-patterns.yml/template-families.yml — not user-submitted)",
+      "conformance_test_path": "src/content/prompt-registry/__tests__/contract.test.ts"
     }
   ]
 }

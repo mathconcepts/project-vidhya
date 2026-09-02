@@ -38,21 +38,18 @@ import { casPreVerify } from './cas-pre-verifier';
 import { appendVersion } from './atom-versions';
 import { writeArtifact, markFailed as markMediaFailed } from './media-artifacts';
 import { renderScene, isKnownSceneType, type SceneDescription } from './gif-generator';
-// Phase B of personalization plan — see buildPrompt() for usage.
-// Decoupled via a single-function import so the orchestrator stays
-// generic; if the personalization module is removed, the orchestrator
-// silently falls back to today's generic prompts.
-import { toPromptText as _toPromptTextRef } from '../../personalization/student-context';
 import { generateNarration, shouldNarrate } from './tts-generator';
-// E1 Pain-Point Registry — cohort-level prompt steering from reviewed modules.
-// Falls back silently (empty string) when no reviewed entry exists.
-import { buildPainPointPromptBlock } from '../../registry/pain-points';
-import { buildPatternPromptBlock } from '../../registry/pedagogy-patterns';
-// Resonance plan §W4 — per-topic attention strategy, joined from the
-// founder's content-generation spec via the hand-verified concept crosswalk.
-// Pure, memoized, read-only — see resonance-strategy.ts's own header for the
-// N:1 merge rule (eigenvalues ← LA-06+LA-07).
-import { resonanceStrategyFor, type ResonanceStrategy } from '../resonance-strategy';
+// Wolfram-inspired prompt resource registry (plan: docs/designs/2026-09-02-
+// wolfram-prompt-resource-registry.md). buildPrompt() composes its blocks
+// from the registry instead of calling pain-point/pattern/resonance/tone
+// helpers directly — those now live as registered resources under
+// src/content/prompt-registry/resources/. Behavior-preserving: today
+// exactly one resource per category resolves per call, in the same order,
+// so output is unchanged for every existing atom_type/topic_family pair.
+import {
+  ensureBuiltInPromptResourcesRegistered,
+  resolvePromptResources,
+} from '../prompt-registry';
 
 export const ALL_ATOM_TYPES: AtomType[] = [
   'hook', 'intuition', 'formal_definition', 'visual_analogy',
@@ -545,90 +542,54 @@ async function enforceInteractiveSpecPolicy(
 }
 
 /**
- * Resonance plan §W4 — the fifth prompt block for hook/intuition atoms in
- * BATCH generation only (see buildPrompt's generationContext gate). Two
- * independent pieces:
- *   1. The founder's per-topic strategy (resonanceStrategyFor) when one
- *      resolves for this concept — omitted entirely on null, never
- *      fabricated (mirrors resonance-strategy.ts's own discipline).
- *   2. The beat-scripting instruction, which applies whether or not a
- *      per-topic strategy exists for this concept — it's the mechanism
- *      (schema + trap + stance text), not the strategy data.
+ * Composes buildPrompt()'s prompt blocks from the registered prompt
+ * resources (src/content/prompt-registry/) — one call per category, same
+ * order as the pre-registry hardcoded sequence: modifier (tone) →
+ * persona (student context) → teaching_function (pain-point, pattern,
+ * resonance, each in registration order). A category with no resolvable
+ * resource, or a resolved resource whose build() returns '' for this
+ * call, contributes nothing — identical to the old "only concatenate a
+ * non-empty block" behavior.
  */
-function buildResonanceBlock(strategy: ResonanceStrategy | null): string {
-  const strategyLines = strategy
-    ? `Per-topic attention strategy (founder's content-generation spec, ${strategy.atomic_ids.join('+')}): recommended hooks — ${strategy.recommended_hooks.join('; ')}. Attention-design hypothesis: ${strategy.attention_design_hypothesis}\n\n`
-    : '';
+function composePromptBlocks(args: GenerateOneArgs): string {
+  ensureBuiltInPromptResourcesRegistered();
+  const buildArgs = {
+    concept_id: args.concept_id,
+    topic_family: args.topic_family,
+    atom_type: args.atom_type,
+    generation_context: args.generation_context,
+    student_context: args.student_context,
+  };
+  const topics = [args.topic_family];
 
-  return `${strategyLines}Fuse this into one experience instead of a static learning beat: emit a fenced \`\`\`interactive-spec\`\`\` block with a "simulation" spec carrying 3-5 narration_steps beats synced to at_progress (0..1). Exactly ONE beat must carry a "trap" woven from this concept's top pain point (see the pain-point block above — cite it, do not invent a new mistake): {"text": "what students get wrong", "avoid": "the one-line fix"}. Give per-stance beat text where it earns its keep (text_shaken / text_assured; base text is the fallback for a steady reader) and an optional top-level "ghost" parametric path for the mistaken route. Third person only in the trap ("students read the 2 as…"), never "you might…". Schema example:
+  const modifierBlocks = resolvePromptResources('modifier', topics).map((r) => r.build(buildArgs));
+  const personaBlocks = resolvePromptResources('persona', topics).map((r) => r.build(buildArgs));
+  const teachingBlocks = resolvePromptResources('teaching_function', topics)
+    .map((r) => r.build(buildArgs))
+    .filter(Boolean)
+    .map((b) => `${b}\n\n`);
 
-\`\`\`interactive-spec
-{"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...","t_min":0,"t_max":1,"narration_steps":[{"at_progress":0,"text":"..."},{"at_progress":0.5,"text":"...","text_shaken":"...","text_assured":"...","trap":{"text":"Students read the 2 as scaling both axes.","avoid":"Match each diagonal entry to its own axis before writing anything."}}],"ghost":{"x_expr":"...","y_expr":"..."}}
-\`\`\`
-
-`;
+  return [...modifierBlocks, ...personaBlocks, ...teachingBlocks].join('');
 }
-
-/**
- * Register/tone directive — unconditional on every generation prompt
- * (/investigate, 2026-09-02: "use eli5 language, aimed at anxious student
- * persona... use Indian English as default... do not use unfamiliar
- * language"). Distinct from the Motivation-Aware Teaching Policy
- * (src/teaching/motivation-aware-policy.ts, which re-ranks which ALREADY-
- * GENERATED atoms to serve and when) — this shapes how new prose gets
- * WRITTEN in the first place, so the default register is right from the
- * moment an atom is authored rather than only at serve time.
- *
- * "Indian English as default" is scoped to the platform's actual exam
- * roster, not hardcoded to GATE: every exam pack Vidhya ships today (GATE,
- * BITSAT, NEET, civil services — see CLAUDE.md's "Exam-agnostic by
- * design") is an Indian competitive exam, so Indian English IS the
- * region-appropriate default for "all exams" as the platform stands. If a
- * non-Indian exam pack is ever added, this block is the one place to
- * branch on region — there's no per-exam locale field to read yet, and
- * inventing one here (schema, migration, exam-pack UI) is a separate,
- * larger change than a prompt-tone fix.
- *
- * Applies to every atom_type — the anxious-student persona reads
- * `formal_definition` and `common_traps` atoms just as often as `hook`,
- * and jargon dropped without a plain-language gloss is the same failure
- * mode regardless of which atom carries it.
- */
-const TONE_REGISTER_BLOCK = `Register: write for a student who gets anxious about this exam and needs the plainest possible path in. ELI5 the reasoning — explain WHY a step happens, not just that it happens. The first time you use a technical term (e.g. "Hermitian", "eigenbasis", "orthonormal"), gloss it in plain words in the same sentence before using it bare again; never introduce two new terms back to back without grounding the first one. Default to Indian English: familiar Indian-classroom phrasing and idiom (e.g. "sums" for practice problems is fine), not translated-from-American phrasing. Short sentences. No word the student would have to look up.
-
-`;
 
 function buildPrompt(args: GenerateOneArgs & {
   template_scaffold: string;
   template_guidance: string;
   pyq_context: string;
 }): string {
-  // Phase B of personalization plan — when a student_context is threaded
-  // through, render a verbose prefix that steers tone/level/misconception-
-  // targeting. The formatter is the SOLE boundary where context fields
-  // become prompt bytes; absent context → identical prompt to pre-Phase-B.
-  const studentContextBlock = args.student_context
-    ? renderStudentContextBlock(args.student_context)
-    : '';
-
-  // E1 Pain-Point Registry — inject cohort-level pain steering for reviewed modules.
-  // topic_family maps to module name (e.g. 'linear-algebra', 'calculus').
-  const painPointBlock = buildPainPointPromptBlock(args.topic_family, args.concept_id);
-
-  // E4 Pedagogy Pattern Library — inject active prompt directives for the module.
-  const patternBlock = buildPatternPromptBlock(args.topic_family);
+  const promptBlocks = composePromptBlocks(args);
 
   // Resonance plan §W4 — batch generation ONLY. NEVER personalized-regen:
   // an LLM-authored ghost path or trap "avoid" line reaching a struggling
   // student unreviewed is exactly the harm this gate exists to prevent (the
   // P0 eng-review finding on this plan). Hook/intuition are the fusion
   // surface (plan §1/§2) — every other atom type is unaffected either way.
+  // (Eligibility mirrors teach.resonance_beat_block's own gate, checked
+  // separately here only to pick the right closing instruction sentence —
+  // the resource itself is the single source of truth for the block text.)
   const generationContext = args.generation_context ?? 'batch';
   const isBeatAtom = args.atom_type === 'hook' || args.atom_type === 'intuition';
   const resonanceEligible = isBeatAtom && generationContext === 'batch';
-  const resonanceBlock = resonanceEligible
-    ? buildResonanceBlock(resonanceStrategyFor(args.concept_id))
-    : '';
 
   const closingInstruction = args.atom_type === 'worked_example'
     ? 'worked_example: separate steps with `\\n---\\n` and end with "Answer: <value>" so :::verify can confirm.'
@@ -636,7 +597,7 @@ function buildPrompt(args: GenerateOneArgs & {
       ? 'hook/intuition: script the beats — motion, caption, emphasis and exactly one trap, together (see the beat-scripting instructions above). Do not just keep the body to a single static learning beat.'
       : 'other types: keep the body focused on a single learning beat.';
 
-  return `${TONE_REGISTER_BLOCK}${studentContextBlock}${painPointBlock ? painPointBlock + '\n\n' : ''}${patternBlock ? patternBlock + '\n\n' : ''}${resonanceBlock}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
+  return `${promptBlocks}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
 
 Scaffold: ${args.template_scaffold}
 ${args.template_guidance ? `Guidance:\n${args.template_guidance}` : ''}
@@ -658,28 +619,6 @@ Do not include frontmatter — only the body. Prose is capped at 400 words; a fe
  * in ESM-only territory; cache the result in module scope so we pay the
  * import cost at most once per process.
  */
-let _ctxFormatter: ((ctx: any) => string) | null | undefined = undefined;
-function renderStudentContextBlock(ctx: unknown): string {
-  if (_ctxFormatter === null) return '';
-  if (_ctxFormatter === undefined) {
-    try {
-      // dynamic import is async; but we can use require-equivalent via
-      // a sync module-cache hit since ESM modules resolve eagerly at
-      // top-level import. We declare the import below at module scope.
-      _ctxFormatter = _toPromptTextRef ?? null;
-    } catch {
-      _ctxFormatter = null;
-    }
-  }
-  if (!_ctxFormatter) return '';
-  try {
-    const text = _ctxFormatter(ctx);
-    return text ? `${text}\n\n---\n\n` : '';
-  } catch {
-    return '';
-  }
-}
-
 /**
  * Multi-modal hook (§4.15). Generates GIF + audio sidecars based on
  * atom_type. Each path is gated:

@@ -3,21 +3,15 @@ id: propositional-logic.visual-analogy
 concept_id: propositional-logic
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.2
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## Think of Propositional Logic as Electrical Circuits
+Picture $P\to Q$ not as a sentence but as a bar for each of its four possible inputs — one bar per combination of $P$ and $Q$, height $1$ if the implication comes out true and $0$ if false. Three bars stand tall; only the $P{=}T,Q{=}F$ combination drops to zero.
 
-Imagine a light bulb controlled by switches. Each proposition is a switch: **open** (false) or **closed** (true).
+That shape is worth recognizing on sight: $P\to Q$ is false in exactly one of its four rows. Every connective has its own signature shape — $P\land Q$ has exactly one bar up, $P\lor Q$ has exactly one bar down, $P\oplus Q$ alternates, two up and two down. Spotting the shape is faster than re-deriving the table each time.
 
-**AND ($p \land q$):** Two switches in **series**. The bulb lights only if *both* switches are closed. Open one switch, the circuit breaks—the bulb is dark.
-
-**OR ($p \lor q$):** Two switches in **parallel**. The bulb lights if *either* switch is closed. Both must be open for the bulb to stay dark.
-
-**NOT ($\neg p$):** A relay that flips the switch state. When the input is open, the relay closes; when open, the relay closes. Inversion.
-
-**Why this works:** Just as current flows or stops based on switch configuration, truth propagates through logical formulas based on connective rules. Complex circuits are combinations of simple series–parallel patterns, just like complex formulas combine with AND, OR, and NOT.
-
-This mental model makes equivalences intuitive: De Morgan's law simply says *how series and parallel rewire*.
+```gif-scene
+{"type": "discrete-bars", "values": [1, 0, 1, 1], "labels": ["TT", "TF", "FT", "FF"]}
+```

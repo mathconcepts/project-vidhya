@@ -12,17 +12,18 @@ id: multivariable-calculus.intuition.shaken
 concept_id: multivariable-calculus
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: multivariable-calculus.intuition
 for_stance: shaken
 ---
 
-Stand on the hillside $z=x^2+3xy$ at $(x,y)=(2,1)$, where $z=4+6=10$. Walk east: freeze $y=1$, differentiate with respect to $x$ only: $\frac{\partial z}{\partial x}=2x+3y$, which at $(2,1)$ gives $4+3=7$. Walk north instead: freeze $x=2$, differentiate with respect to $y$ only: $\frac{\partial z}{\partial y}=3x$, which at $(2,1)$ gives $6$. Two different slopes, from the same spot, depending only on which way you walked.
+$f(x,y)=x^2y$ at the point $(1,1)$.
 
-Each partial derivative treats every other variable as a plain number while it works — that is the entire technique: freeze everything except the one variable named in the $\partial$, differentiate as usual, done.
+Freeze $y=1$: slice $g(x)=x^2$. Slope at $x=1$: $g'(1)=2$. So $\partial f/\partial x=2$.
 
-Collect both partials into one row, $[\frac{\partial z}{\partial x},\frac{\partial z}{\partial y}]=[7,6]$ at this point, and that row is the Jacobian of a scalar function — a complete snapshot of the steepness in every direction at once, built from just these two numbers.
+Freeze $x=1$ instead: slice $h(y)=y$. Slope at $y=1$: $h'(1)=1$. So $\partial f/\partial y=1$.
 
-To compute a partial derivative on an exam: pick the variable named in the $\partial$, treat every other letter as a constant, and differentiate exactly the way single-variable calculus already taught.
+Gradient: $\nabla f=(2,1)$ at $(1,1)$.
+
+Check: recompute symbolically. $\partial f/\partial x=2xy$, at $(1,1)$: $2$. $\partial f/\partial y=x^2$, at $(1,1)$: $1$. Matches.

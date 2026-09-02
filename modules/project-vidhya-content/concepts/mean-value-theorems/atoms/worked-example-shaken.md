@@ -35,7 +35,7 @@ for_stance: shaken
 
 **Step 7.** Keep only the value inside the open interval $(0,3)$: $c=0$ is excluded, so $c=2$.
 
-**Answer:** $c=2$.
+**Answer:** $\boxed{c=2}$.
 
 **Check it:** $f'(2)=3(4)-6(2)=12-12=0$, matching the average slope of $0$ exactly.
 

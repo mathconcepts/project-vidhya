@@ -1,34 +1,21 @@
 ---
-# Alternative body for ode-second-order-homo.intuition, served when the
-# learner stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# for_stance: shaken — one concrete example walked end to end, full arithmetic, explicit check.
 id: ode-second-order-homo.intuition.shaken
 concept_id: ode-second-order-homo
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: ode-second-order-homo.intuition
 for_stance: shaken
 ---
 
-## One small example
+$y''-5y'+6y=0$. First step: substitute $y=e^{rx}$, giving $ar^2+br+c=0$ with $a=1,b=-5,c=6$: $r^2-5r+6=0$. Factor: $(r-2)(r-3)=0$, so $r=2$ or $r=3$.
 
-Look at $y''-5y'+6y=0$ and try $y=e^{rx}$ as the solution. Its derivatives are $y'=re^{rx}$, $y''=r^2e^{rx}$; put those into the equation:
+Two distinct real roots means two solutions, $e^{2x}$ and $e^{3x}$, and the general solution is their combination:
+$$y=C_1e^{2x}+C_2e^{3x}$$
 
-$$e^{rx}(r^2-5r+6)=0$$
+Check: differentiate twice.
+$$y''-5y'+6y=(4-10+6)C_1e^{2x}+(9-15+6)C_2e^{3x}=0$$
 
-$e^{rx}$ is never zero, so $r^2-5r+6=0$ — the characteristic equation. Factor it: $(r-2)(r-3)=0$, giving $r=2$ and $r=3$.
-
-Two distinct roots on a second-order equation hand back exactly two basis functions:
-
-$$y=c_1e^{2x}+c_2e^{3x}$$
-
-One substitution turned a calculus problem, solving a differential equation, into an algebra problem, factoring a quadratic. Every $ay''+by'+cy=0$ works the same way: write $ar^2+br+c=0$, solve for $r$, and the roots hand you the solution directly.
+If instead the discriminant $b^2-4ac$ came out zero, the second solution would be $xe^{rx}$, not a second exponential — that is the one case to remember separately.

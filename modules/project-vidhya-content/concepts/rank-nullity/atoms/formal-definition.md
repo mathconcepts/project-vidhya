@@ -7,11 +7,12 @@ difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-**Rank**: The rank of a matrix $A \in \mathbb{R}^{m \times n}$, denoted $\text{rank}(A)$, is the dimension of its column space (the span of its column vectors). Equivalently, it is the dimension of its row space, or the number of linearly independent rows/columns.
+**Rank**: for $A \in \mathbb{R}^{m \times n}$, $\text{rank}(A)$ is the dimension of its column space — equivalently, of its row space, or the number of linearly independent rows/columns.
 
-**Nullity**: The nullity of $A$, denoted $\text{nullity}(A)$ or $\text{null}(A)$, is the dimension of the null space—the set of all vectors $x$ such that $Ax = 0$.
+**Nullity**: $\text{nullity}(A)$ is the dimension of the null space, $\{x : Ax = 0\}$.
 
-**Rank-Nullity Theorem**: For an $m \times n$ matrix $A$:
-$$\text{rank}(A) + \text{nullity}(A) = n$$
+**Rank-Nullity Theorem**: $\text{rank}(A) + \text{nullity}(A) = n$.
 
-**Row Echelon Form**: To compute rank, reduce $A$ to row echelon form (REF). The rank equals the number of non-zero rows in the REF.
+**Row echelon form**: to compute rank, reduce $A$ to row echelon form (REF); rank equals the number of non-zero rows in the REF.
+
+**Method selector.** Row-reduce once — the pivot count IS the rank, and $n$ minus that count IS the nullity, with no separate computation needed for either. The tempting wrong move is subtracting from the wrong dimension: for an $m \times n$ matrix that isn't square, nullity is $n - \text{rank}(A)$ (columns), never $m - \text{rank}(A)$ (rows) — that latter quantity is the *left* nullity, $\text{nullity}(A^T)$, a genuinely different number whenever $m \neq n$.

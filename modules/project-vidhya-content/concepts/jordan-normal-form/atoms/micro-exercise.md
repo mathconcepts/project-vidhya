@@ -1,22 +1,17 @@
 ---
-id: jordan-normal-form.micro_exercise
+id: jordan-normal-form.micro-exercise
 concept_id: jordan-normal-form
 atom_type: micro_exercise
 bloom_level: 3
 difficulty: 0.45
-estimated_minutes: 2
 exam_ids: ["*"]
+estimated_minutes: 2
 ---
 
-Consider $A = \begin{pmatrix} 3 & 0 & 0 \\ 0 & 3 & 1 \\ 0 & 0 & 3 \end{pmatrix}$. Write the Jordan Normal Form and find the minimal polynomial.
+A $3\times3$ matrix has eigenvalue $5$ with algebraic multiplicity $3$, and $\operatorname{rank}(A-5I)=2$. How many Jordan blocks does $\lambda=5$ have, and what size is the single largest one?
 
 <details>
 <summary>Answer</summary>
 
-**Jordan form:** The matrix is already in Jordan form: $J = \begin{pmatrix} 3 & 0 & 0 \\ 0 & 3 & 1 \\ 0 & 0 & 3 \end{pmatrix}$.
-
-There are two Jordan blocks: one $1 \times 1$ block $J_1(3)$ and one $2 \times 2$ block $J_2(3)$.
-
-**Minimal polynomial:** The largest Jordan block for eigenvalue $\lambda = 3$ has size 2, so $m_A(x) = (x - 3)^2$.
-
+Geometric multiplicity $=3-\operatorname{rank}(A-5I)=3-2=1$, so there is exactly $1$ Jordan block. With algebraic multiplicity $3$ split across $1$ block, that block has size $3$.
 </details>

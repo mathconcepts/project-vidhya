@@ -1,20 +1,14 @@
 ---
-id: continuity.formal-definition
+id: continuity.formal_definition
 concept_id: continuity
 atom_type: formal_definition
 bloom_level: 2
-difficulty: 0.24
+difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-**Continuity at a Point**: A function $f$ is continuous at $x = a$ if:
-1. $f(a)$ is defined
-2. $\lim_{x \to a} f(x)$ exists
-3. $\lim_{x \to a} f(x) = f(a)$
+**Continuity at a point.** $f$ is **continuous** at $x=a$ if all three hold: (1) $f(a)$ is defined, (2) $\lim_{x\to a}f(x)$ exists, (3) $\lim_{x\to a}f(x)=f(a)$. $f$ is continuous **on an interval** if it is continuous at every point of that interval.
 
-**Continuity on an Interval**: $f$ is continuous on $(a,b)$ if it is continuous at every point in the interval. $f$ is continuous on the **closed interval** $[a,b]$ if it is continuous on $(a,b)$ and the one-sided limits at the endpoints equal the function values: $\lim_{x \to a^+} f(x) = f(a)$ and $\lim_{x \to b^-} f(x) = f(b)$.
+**Intermediate Value Theorem (IVT).** If $f$ is continuous on $[a,b]$ and $k$ lies between $f(a)$ and $f(b)$, then $f(c)=k$ for some $c\in[a,b]$.
 
-**Types of Discontinuity:**
-- **Removable discontinuity:** $\lim_{x \to a} f(x)$ exists but $\neq f(a)$ (or $f(a)$ undefined).
-- **Jump discontinuity:** $\lim_{x \to a^-} f(x) \neq \lim_{x \to a^+} f(x)$.
-- **Infinite discontinuity:** $\lim_{x \to a} f(x) = \pm \infty$.
+**Method selector:** reach for the IVT when a question only asks whether a root or a specific value is *attained* somewhere on an interval — not for numerical root-solving methods (Newton–Raphson, bisection by hand), which some students reach for even when the question never asks for the root's actual location. The IVT proves **existence** in one line from a sign change; it never identifies where.

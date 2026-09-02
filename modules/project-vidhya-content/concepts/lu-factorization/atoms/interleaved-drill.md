@@ -4,31 +4,21 @@ concept_id: lu-factorization
 atom_type: interleaved_drill
 bloom_level: 4
 difficulty: 0.60
-exam_ids: ["*"]
 modality: drill
+exam_ids: ["*"]
 tested_by_atom: lu-factorization.micro_exercise
 ---
 
-**Cross-concept check: LU factorization → determinants.**
+**Cross-concept check: LU factorization → positive-definite matrices.**
 
-$A = \begin{pmatrix} 2 & -1 & 0 \\ 4 & 3 & 1 \\ 2 & 1 & 3 \end{pmatrix}$ factors (Doolittle) as
+$A=\begin{pmatrix}4&2\\2&3\end{pmatrix}$ is symmetric. Its Doolittle factorization: $u_{11}=4$, $\ell_{21}=2/4=1/2$, $u_{22}=3-(1/2)(2)=2$ — verified: $\begin{pmatrix}1&0\\1/2&1\end{pmatrix}\begin{pmatrix}4&2\\0&2\end{pmatrix}=\begin{pmatrix}4&2\\2&3\end{pmatrix}=A$.
 
-$$L = \begin{pmatrix} 1 & 0 & 0 \\ 2 & 1 & 0 \\ 1 & 2/5 & 1 \end{pmatrix}, \quad U = \begin{pmatrix} 2 & -1 & 0 \\ 0 & 5 & 1 \\ 0 & 0 & 13/5 \end{pmatrix}$$
+**Question 1 (LU → definiteness):** Both pivots, $u_{11}=4$ and $u_{22}=2$, came out positive with no row swap needed. What does that alone tell you about $A$?
 
-(verified: $LU = A$ exactly.)
+*Answer:* For a symmetric matrix, an LU factorization (no pivoting) with every diagonal pivot of $U$ positive is exactly the $LDL^\top$ certificate of positive definiteness — the pivots ARE the diagonal entries of $D$ in $A=LDL^\top$, and $D>0$ entrywise iff $A$ is positive definite. So $A$ here is positive definite, confirmed structurally, with no eigenvalues or minors computed separately.
 
-**Question 1 (LU → determinants):** Without expanding a single cofactor, what is $\det A$?
+**Question 2 (definiteness → LU):** If instead a symmetric matrix hit a negative pivot partway through elimination, what would that mean?
 
-*Answer:* $\det(LU) = \det L \cdot \det U$. Both factors are triangular, so each determinant is its diagonal product. $L$ is *unit* lower triangular, so $\det L = 1 \cdot 1 \cdot 1 = 1$. Therefore
+*Answer:* A negative pivot means $D$ has a negative diagonal entry, so $A=LDL^\top$ has mixed-sign quadratic form values — $A$ is indefinite (or negative definite if every pivot is negative), never positive definite. The elimination itself becomes the definiteness test, no separate check required.
 
-$$\det A = \det U = 2 \cdot 5 \cdot \tfrac{13}{5} = 26$$
-
-The fraction cancels — that is normal, not a red flag. $\det A$ must be an integer here because $A$ has integer entries, even though $U$ does not.
-
-**Question 2 (determinants → LU):** Cofactor-expand $\det A$ along the first row as an independent check. Then: if solving $Ax = b$ had required swapping rows 1 and 2 before eliminating, what would change?
-
-*Answer:* Along row 1, $\det A = 2(3\cdot3 - 1\cdot1) - (-1)(4\cdot3 - 1\cdot2) + 0 = 2(8) + 1(10) = 26$ ✓ — same answer, roughly triple the arithmetic.
-
-With one row swap you no longer factor $A$; you factor $PA = LU$. Since $\det P = -1$ for a single swap, $\det A = (-1)^{1}\prod u_{ii}$. The diagonal product of $U$ is then $-26$, and dropping the sign gives exactly the wrong answer with entirely correct elimination.
-
-**Why this drill exists:** students reliably compute $L$ and $U$ correctly and then reach for cofactor expansion anyway, because "determinant" and "factorization" are stored as separate procedures. They are the same computation — $U$'s diagonal *is* the determinant, up to the sign of the permutation. This drill targets the missing link, and the sign trap that punishes anyone who finds it half-way.
+**Why this drill exists:** students treat "factor $A$" and "test positive definiteness" as unrelated procedures needing separate machinery (eigenvalues here, Gaussian elimination there). For a symmetric matrix they are the same arithmetic read two ways — this drill targets that missing link directly.

@@ -1,35 +1,14 @@
 ---
-id: continuity.retrieval-prompt
+id: continuity.retrieval_prompt
 concept_id: continuity
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.15
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["continuity-three-conditions", "removable-vs-jump"]
 ---
 
-The function $f(x) = \begin{cases} x^2 & \text{if } x < 1 \\ ax + 2 & \text{if } x \geq 1 \end{cases}$ is continuous everywhere if $a =$
+Before checking, try to recall from memory: which type of discontinuity — removable, jump, or infinite — can be fixed by redefining a single point, and why do the other two resist that fix?
 
-- **(A)** $-1$
-- **(B)** $0$
-- **(C)** $1$
-- **(D)** $-2$
-
-<details>
-<summary>Answer</summary>
-
-**A**. For the piecewise function to be continuous everywhere, it must be continuous at $x = 1$. This requires:
-$$\lim_{x \to 1^-} f(x) = \lim_{x \to 1^+} f(x) = f(1)$$
-
-Left limit:
-$$\lim_{x \to 1^-} x^2 = 1$$
-
-Right limit (and function value at $x = 1$):
-$$\lim_{x \to 1^+} (ax + 2) = a(1) + 2 = a + 2$$
-$$f(1) = a + 2$$
-
-For continuity:
-$$1 = a + 2$$
-$$a = -1$$
-
-</details>
+<details><summary>Answer</summary>Only **removable**: the two-sided limit exists and is finite, so setting $f(a)$ to that value patches it. A **jump** can't be fixed because the two one-sided limits genuinely disagree — no single value satisfies both. An **infinite** discontinuity can't be fixed because there is no finite value to assign at all.</details>

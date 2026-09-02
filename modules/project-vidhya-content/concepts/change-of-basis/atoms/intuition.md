@@ -3,11 +3,13 @@ id: change-of-basis.intuition
 concept_id: change-of-basis
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.15
+difficulty: 0.1
 modality: visual
 exam_ids: ["*"]
 ---
 
-# Intuition: Seeing the Same Vector in Two Ways
+A basis is a choice of ruler, and coordinates are what you read off that ruler. $[x]_B$ answers "how many of each basis vector, added together, makes $x$?" — change the basis, and the same $x$ gets a new answer to that question, even though $x$ itself never moved.
 
-Imagine you're standing in a room looking at a point on the floor. Using standard $x$-$y$ axes, you describe it as $(3, 1)$. Now rotate your head $45°$—the point hasn't moved, but your new axes describe it differently, say as $(2.83, 1.41)$. This is exactly what happens with change of basis: a single geometric object (the vector) is unchanged, but its numerical description depends on which axes (basis) you use. The change-of-basis matrix $P$ is the decoder that translates a vector's coordinates from one basis to another, like switching between languages without changing the meaning.
+The change-of-basis matrix $P$ packages this translation as one matrix multiplication instead of solving a fresh system every time: its columns are the *new* basis vectors, written in the *old* coordinates. Multiplying by $P$ converts new-basis coordinates into old-basis coordinates; multiplying by $P^{-1}$ goes the other way.
+
+This matters beyond bookkeeping. A linear transformation's matrix representation is basis-dependent — the same transformation $T$ can look like a messy matrix in the standard basis and a clean diagonal matrix in a basis built from its eigenvectors. Choosing the right basis is often the entire trick to a problem, not a formality before it.

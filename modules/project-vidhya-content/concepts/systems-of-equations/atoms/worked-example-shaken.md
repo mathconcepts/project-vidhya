@@ -1,12 +1,7 @@
 ---
-# Alternative body for systems-of-equations-worked-example, served when the
+# Alternative body for systems-of-equations.worked-example, served when the
 # learner stance is `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
-#
-# Note: the base atom's own id is `systems-of-equations-worked-example` (no
-# dot), a legacy naming drift check-content-integrity.ts tolerates.
-# variant_of points at that exact id; this file's own id follows the normal
-# convention instead of propagating the drift.
 #
 # Written for a student who is low on this concept and low on confidence:
 # smallest true first step, concrete numbers before symbols, picture before
@@ -21,50 +16,37 @@ concept_id: systems-of-equations
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: systems-of-equations-worked-example
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: systems-of-equations.worked-example
 for_stance: shaken
 ---
 
-## The system
-
 $$2x+y-z=8, \qquad -3x-y+2z=-11, \qquad -2x+y+2z=-3$$
 
-## Write the augmented matrix
+---
 
-$$[A\mid\mathbf{b}]=\begin{bmatrix}2&1&-1&\mid&8\\-3&-1&2&\mid&-11\\-2&1&2&\mid&-3\end{bmatrix}
-$$
+**Write the augmented matrix.**
 
-## Clear column 1 below the pivot
+$$[A\mid\mathbf{b}]=\begin{bmatrix}2&1&-1&\mid&8\\-3&-1&2&\mid&-11\\-2&1&2&\mid&-3\end{bmatrix}$$
 
-$R_2\leftarrow R_2+\tfrac32R_1$ gives $R_2=(0,\ \tfrac12,\ \tfrac12,\mid\ 1)$.
+---
 
-$R_3\leftarrow R_3+R_1$ gives $R_3=(0,\ 2,\ 1,\mid\ 5)$.
+**Clear column 1 below the pivot.** $R_2\leftarrow R_2+\tfrac32R_1$ gives $R_2=(0,\ \tfrac12,\ \tfrac12,\mid\ 1)$. $R_3\leftarrow R_3+R_1$ gives $R_3=(0,\ 2,\ 1,\mid\ 5)$.
 
-$$
-\begin{bmatrix}2&1&-1&\mid&8\\0&\tfrac12&\tfrac12&\mid&1\\0&2&1&\mid&5\end{bmatrix}
-$$
+$$\begin{bmatrix}2&1&-1&\mid&8\\0&\tfrac12&\tfrac12&\mid&1\\0&2&1&\mid&5\end{bmatrix}$$
 
-## Clear column 2 below the pivot
+---
 
-$R_3\leftarrow R_3-4R_2$ gives $R_3=(0,\ 0,\ -1,\mid\ 1)$.
+**Clear column 2 below the pivot.** $R_3\leftarrow R_3-4R_2$ gives $R_3=(0,\ 0,\ -1,\mid\ 1)$.
 
-$$
-\begin{bmatrix}2&1&-1&\mid&8\\0&\tfrac12&\tfrac12&\mid&1\\0&0&-1&\mid&1\end{bmatrix}
-$$
+$$\begin{bmatrix}2&1&-1&\mid&8\\0&\tfrac12&\tfrac12&\mid&1\\0&0&-1&\mid&1\end{bmatrix}$$
 
 Three non-zero rows: rank $3$, and $n=3$. One solution.
 
-## Solve from the bottom up
+---
 
-$-z=1 \Rightarrow z=-1$
-
-$\tfrac12y+\tfrac12(-1)=1 \Rightarrow y=3$
-
-$2x+3-(-1)=8 \Rightarrow x=2$
-
-## Check
+**Solve from the bottom up.** $-z=1 \Rightarrow z=-1$. $\tfrac12y+\tfrac12(-1)=1 \Rightarrow y=3$. $2x+3-(-1)=8 \Rightarrow x=2$.
 
 $$\boxed{x=2,\ y=3,\ z=-1}$$
 

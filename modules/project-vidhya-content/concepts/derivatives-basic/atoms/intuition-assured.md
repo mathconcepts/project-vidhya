@@ -24,7 +24,7 @@ The derivative existing at every point does not make $f'$ itself continuous. Tak
 :::interactive{ref=derivatives-tangent-slope}
 :::
 
-The distinction that matters: "differentiable at $a$" is a statement about one point; it says nothing about the derivative *function*'s continuity nearby. Differentiability of $f$ on an interval guarantees $f'$ satisfies the intermediate value property there (Darboux's theorem) — not that $f'$ is continuous. Confusing "the derivative exists" with "the derivative is nice" is what makes this trap work.
+The distinction that matters: "differentiable at $a$" describes one single point; it says nothing about the derivative *function*'s continuity nearby. Differentiability of $f$ on an interval guarantees $f'$ satisfies the intermediate value property there (Darboux's theorem) — not that $f'$ is continuous. Confusing "the derivative exists" with "the derivative is nice" is what makes this trap work.
 
 :::interactive{ref=parabola-explorer}
 :::

@@ -18,3 +18,5 @@ The columns of $P$ are eigenvectors of $A$, and the diagonal entries of $D$ are 
 $$A^k = PD^kP^{-1}$$
 
 For diagonal $D$, $D^k$ is just the diagonal entries raised to the $k$-th power.
+
+**Method selector.** Diagonalize only once every eigenvalue's geometric multiplicity has been checked against its algebraic multiplicity — not the moment the characteristic polynomial factors into $n$ real roots. Factoring completely is the tempting stopping point, but a repeated root with a deficient eigenspace (geometric multiplicity $<$ algebraic multiplicity) still blocks $A=PDP^{-1}$ even though every root is accounted for.

@@ -1,20 +1,14 @@
 ---
 # Alternative body for random-variables.hook, served when the learner
-# stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# stance is `assured`. See src/content/stance-variants.ts.
 id: random-variables.hook.assured
 concept_id: random-variables
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: random-variables.hook
 for_stance: assured
 ---
 
-$E[aX+b]=aE[X]+b$ holds unconditionally — no independence, no distributional assumption required — while $\text{Var}(aX+b)=a^2\text{Var}(X)$ drops the additive shift entirely and squares the multiplicative one, since variance measures spread and a shift moves everything together without stretching it. Confusing the two (squaring the shift, or forgetting to square $a$ for the variance) fails a problem that never even required knowing $X$'s actual distribution — both identities hold for every random variable with finite mean and variance, discrete or continuous.
+You already sum $x\cdot P(x)$ without thinking. The habit that costs marks under pressure: $\text{Var}(X)=E[X^2]-(E[X])^2$, not $E\big[(X^2-X)\big]$ or $\big(E[X^2]-E[X]\big)^2$. Compute $E[X^2]$ and $E[X]$ as two separate sums over the *same* PMF, square only the second, then subtract. A variance that comes out negative is a sign the squaring happened on the wrong side of the subtraction, not a sign the distribution is unusual.

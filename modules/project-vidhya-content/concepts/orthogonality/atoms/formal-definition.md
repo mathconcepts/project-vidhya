@@ -22,3 +22,5 @@ Equivalently, $Q^{-1} = Q^T$. Columns of $Q$ form an orthonormal set.
 **Orthogonal Subspaces**: Subspaces $U$ and $V$ of $\mathbb{R}^n$ are orthogonal if every vector in $U$ is orthogonal to every vector in $V$.
 
 **Orthogonal Complement**: For subspace $W$, its orthogonal complement $W^\perp = \{\mathbf{v} : \mathbf{v} \cdot \mathbf{w} = 0 \text{ for all } \mathbf{w} \in W\}$.
+
+**Method selector.** Run Gram-Schmidt (subtract each projection, then normalize) whenever an orthonormal basis of the *same span* is wanted — not the shortcut of normalizing each vector individually, $\mathbf{v}_i/\|\mathbf{v}_i\|$. That shortcut produces unit length on every vector but does nothing about the angles between them; it only happens to work when the original vectors were already orthogonal.

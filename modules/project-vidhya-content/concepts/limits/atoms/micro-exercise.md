@@ -1,31 +1,13 @@
 ---
-id: limits.micro-exercise
+id: limits.micro_exercise
 concept_id: limits
 atom_type: micro_exercise
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-$\lim_{x \to 0} \frac{\sin(x)}{x} = $
+Evaluate $\displaystyle\lim_{x\to 0}\frac{\sin(3x)}{x}$.
 
-- **(A)** $0$
-- **(B)** $1$
-- **(C)** $\pi$
-- **(D)** Does not exist
-
-<details>
-<summary>Answer</summary>
-
-**B**. This is a standard indeterminate form $0/0$.
-
-Using **L'Hôpital's rule** (differentiate numerator and denominator):
-$$\lim_{x \to 0} \frac{\sin(x)}{x} = \lim_{x \to 0} \frac{\cos(x)}{1} = \frac{\cos(0)}{1} = 1$$
-
-Alternatively, this is a **fundamental limit** that must be memorized:
-$$\lim_{x \to 0} \frac{\sin(x)}{x} = 1$$
-
-This limit is crucial in calculus and appears frequently in GATE.
-
-</details>
+<details><summary>Answer</summary>Write $\dfrac{\sin(3x)}{x}=3\cdot\dfrac{\sin(3x)}{3x}$. As $x\to0$, $3x\to0$ too, so $\dfrac{\sin(3x)}{3x}\to1$ by the standard $\sin u/u\to1$ limit. The answer is $3\cdot1=\boxed{3}$.</details>

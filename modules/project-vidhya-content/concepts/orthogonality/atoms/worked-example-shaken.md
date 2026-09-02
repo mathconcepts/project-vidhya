@@ -56,7 +56,7 @@ $$\mathbf{q}_3 = \tfrac{1}{\sqrt3}(-1,1,1)$$
 
 ## The answer
 
-$$\mathbf{q}_1 = \tfrac{1}{\sqrt2}(1,1,0), \quad \mathbf{q}_2 = \tfrac{1}{\sqrt6}(1,-1,2), \quad \mathbf{q}_3 = \tfrac{1}{\sqrt3}(-1,1,1)$$
+$$\boxed{\mathbf{q}_1 = \tfrac{1}{\sqrt2}(1,1,0), \quad \mathbf{q}_2 = \tfrac{1}{\sqrt6}(1,-1,2), \quad \mathbf{q}_3 = \tfrac{1}{\sqrt3}(-1,1,1)}$$
 
 Every pairwise dot product is $0$; each length is $1$.
 

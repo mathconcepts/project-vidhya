@@ -3,28 +3,17 @@ id: ode-second-order-homo.visual-analogy
 concept_id: ode-second-order-homo
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.3
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## Spring-Mass Damping: The Physical Story of Second-Order ODEs
+## Three Ways a Released Spring Can Settle
 
-Imagine a mass hanging from a spring in a viscous fluid. When you displace it and let go, the motion is governed by $m \frac{d^2x}{dt^2} + c \frac{dx}{dt} + kx = 0$ — a perfect second-order homogeneous ODE. 
+A mass on a spring, pulled and let go with no further push, is governed by exactly $ay''+by'+cy=0$ — the damping coefficient $b$ decides which of three shapes the settling motion takes. Weak damping (complex roots) lets it overshoot and ring, like the hook's guitar string. Strong damping (distinct real roots) creeps back without ever crossing zero. The boundary between them — repeated real roots — is called **critical damping**: the fastest possible return with no overshoot at all, which is why real shock absorbers are tuned to sit exactly there.
 
-The **characteristic equation** $mr^2 + cr + k = 0$ captures the competition between restoring force (spring) and damping (fluid). The roots tell the entire story:
-
-- **Two real roots:** Overdamped (slow creep back to equilibrium)
-- **One repeated root:** Critically damped (fastest return without oscillation)
-- **Complex roots:** Underdamped (oscillates while fading)
-
-The solution family $y = c_1 e^{r_1 t} + c_2 e^{r_2 t}$ shows why: different $r$ values mean different decay rates or oscillation frequencies. All solutions stem from the same characteristic equation — different initial conditions just change the coefficients $c_1$ and $c_2$.
+The curve below is that boundary case: $(1+2x)e^{-3x}$, the repeated-root solution from the micro-exercise, released at $y=1$ with velocity $-1$.
 
 ```gif-scene
-{"type":"parametric","expression":"exp(-0.3*t)*cos(3*t)","x_range":[0,10],"y_range":[-1.5,1.5],"t_range":[0,10],"frames":30,"fps":12}
+{"type": "function-trace", "expression": "(1+2*x)*exp(-3*x)", "x_range": [0, 3], "y_range": [-0.1, 1.2]}
 ```
-
-The animation above shows a classic underdamped solution: oscillation amplitude decays exponentially.
-
-
----

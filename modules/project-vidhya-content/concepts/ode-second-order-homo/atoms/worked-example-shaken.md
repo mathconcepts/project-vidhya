@@ -1,39 +1,34 @@
 ---
-# Alternative body for ode-second-order-homo.worked-example, served when the
-# learner stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
+# for_stance: shaken — same problem, terse steps, full arithmetic shown, explicit check.
 id: ode-second-order-homo.worked-example.shaken
 concept_id: ode-second-order-homo
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: ode-second-order-homo.worked-example
 for_stance: shaken
 ---
 
-## Solve $y''-3y'+2y=0$
+$y''+4y'+13y=0$, $y(0)=0$, $y'(0)=3$.
 
-**Classify.** Homogeneous, constant coefficients — guess $y=e^{rx}$.
+Characteristic equation: $r^2+4r+13=0$.
 
-**Solve.** $y'=re^{rx}$, $y''=r^2e^{rx}$. Substituting: $e^{rx}(r^2-3r+2)=0$, so $r^2-3r+2=0$. Factor: $(r-1)(r-2)=0$, giving $r_1=1$, $r_2=2$.
+Roots: $r=\dfrac{-4\pm\sqrt{16-52}}{2}=-2\pm3i$.
 
-$$\boxed{y=c_1e^{x}+c_2e^{2x}}$$
+General solution: $y=e^{-2x}(C_1\cos3x+C_2\sin3x)$.
 
-**Check.** $y'=c_1e^x+2c_2e^{2x}$ and $y''=c_1e^x+4c_2e^{2x}$. Then $y''-3y'+2y=c_1e^x(1-3+2)+c_2e^{2x}(4-6+2)=0$. Holds.
+Apply $y(0)=0$: $C_1=0$.
+
+Differentiate: $y'=e^{-2x}\big[-2(C_1\cos3x+C_2\sin3x)+(-3C_1\sin3x+3C_2\cos3x)\big]$.
+
+Apply $y'(0)=3$ with $C_1=0$: $3C_2=3$, so $C_2=1$.
+
+$$\boxed{y(x)=e^{-2x}\sin(3x)}$$
+
+Check: $y'(x)=e^{-2x}(3\cos3x-2\sin3x)$. At $x=0$: $y=0$, $y'=3$. Both match the given conditions.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: y'' - 3y' + 2y = 0","steps":[{"prompt":"Step 1: Assume $y = e^{rx}$ and find $y'$ and $y''$.","hint":"Use the chain rule: if $y = e^{rx}$ then $y' = re^{rx}$ and $y'' = r^2 e^{rx}$.","answer":"$y' = re^{rx}$ and $y'' = r^2 e^{rx}$"},{"prompt":"Step 2: Substitute into $y'' - 3y' + 2y = 0$ and factor out $e^{rx}$.","hint":"You should get $e^{rx}(r^2 - 3r + 2) = 0$. Since $e^{rx} \\neq 0$, set the bracket to zero.","answer":"The characteristic equation is $r^2 - 3r + 2 = 0$."},{"prompt":"Step 3: Factor the quadratic $r^2 - 3r + 2 = 0$ to find both roots.","hint":"Look for two numbers that multiply to 2 and add to -3. They are -1 and -2.","answer":"$(r - 1)(r - 2) = 0$, so $r_1 = 1$ and $r_2 = 2$."},{"prompt":"Step 4: Write the general solution for two distinct real roots.","hint":"The formula is $y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$.","answer":"$y = c_1 e^x + c_2 e^{2x}$"}],"caption":"Key exam insight: characteristic equation → roots → general solution. The formula structure is the same for all second-order homogeneous ODEs."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: solving y'' + 4y' + 13y = 0 by characteristic roots","steps":[{"prompt":"Write the characteristic equation for $y''+4y'+13y=0$.","hint":"Replace $y''$ with $r^2$, $y'$ with $r$, $y$ with $1$.","answer":"$r^2+4r+13=0$."},{"prompt":"Solve for the roots using the quadratic formula.","hint":"Compute the discriminant $16-52$ first — it is negative, so expect a complex pair.","answer":"$r=\\\\dfrac{-4\\\\pm\\\\sqrt{-36}}{2}=-2\\\\pm3i$."},{"prompt":"Given $y(0)=0$ and $y'(0)=3$, find the particular solution.","hint":"General solution is $y=e^{-2x}(C_1\\\\cos3x+C_2\\\\sin3x)$. Use $y(0)=0$ first to get $C_1$, then differentiate for $y'(0)$.","answer":"$C_1=0$, then $y'(0)=3C_2=3$ gives $C_2=1$, so $y(x)=e^{-2x}\\\\sin(3x)$."}]}
 ```
-
-The whole method in one line: turn $y=e^{rx}$ into an algebra problem, then read the answer off the roots.

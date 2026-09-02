@@ -1,22 +1,18 @@
 ---
-id: hypothesis-testing-worked-example
+id: hypothesis-testing.worked-example
 concept_id: hypothesis-testing
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.40
 exam_ids: [gate-ma]
-scaffold_fade: 1
+scaffold_fade: true
 ---
 
-# Worked Example — Two-Tailed z-Test (GATE Style)
+## Worked Example — Two-Tailed z-Test (GATE Style)
 
-## Problem
-
-A machine fills packets with a mean weight $\mu$. Historically the population standard deviation is $\sigma = 6$ g. A quality inspector randomly selects $n = 36$ packets and finds the sample mean $\bar{x} = 52$ g.
+**Problem.** A machine fills packets with a mean weight $\mu$. Historically the population standard deviation is $\sigma = 6$ g. A quality inspector randomly selects $n = 36$ packets and finds the sample mean $\bar{x} = 52$ g.
 
 Test $H_0: \mu = 50$ against $H_1: \mu \neq 50$ at significance level $\alpha = 0.05$.
-
----
 
 ## Step 1 — Identify the Test
 
@@ -29,19 +25,13 @@ $$z = \frac{\bar{x} - \mu_0}{\sigma / \sqrt{n}} = \frac{52 - 50}{6 / \sqrt{36}} 
 
 ## Step 3 — Identify the Critical Value
 
-For $\alpha = 0.05$ (two-tailed), the critical values are $z_{\alpha/2} = \pm 1.96$.
-
-Rejection region: $|z| > 1.96$.
+For $\alpha = 0.05$ (two-tailed), the critical values are $z_{\alpha/2} = \pm 1.96$. Rejection region: $|z| > 1.96$.
 
 ## Step 4 — Make the Decision
 
 $$|z_{\text{computed}}| = 2 > 1.96$$
 
-The test statistic falls in the rejection region.
-
-**Conclusion:** Reject $H_0$ at the 5% significance level. There is sufficient statistical evidence that the true mean weight differs from 50 g.
-
----
+The test statistic falls in the rejection region. $\boxed{\text{Reject } H_0}$ at the 5% significance level. There is sufficient statistical evidence that the true mean weight differs from 50 g.
 
 ## p-value Verification
 
@@ -49,7 +39,9 @@ $$p\text{-value} = 2 \times P(Z > 2) = 2 \times 0.0228 = 0.0456$$
 
 Since $0.0456 < 0.05$, we again reject $H_0$. Both approaches agree.
 
----
+## Method Selector
+
+Use the $z$-test whenever the population standard deviation $\sigma$ is stated as **known** (as here, $\sigma=6$ g from history) — not the $t$-test, which a student reaches for out of caution even when $\sigma$ is explicitly given, on the mistaken belief that "small-ish $n$" alone forces $t$. The trigger is what's known about $\sigma$, not the sample size; a known $\sigma$ always licenses $z$, whatever $n$ is.
 
 ## Common GATE Traps
 

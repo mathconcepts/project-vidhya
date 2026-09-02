@@ -1,34 +1,24 @@
 ---
-# Alternative body for ode-second-order-homo.worked-example, served when the
-# learner stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
+# for_stance: assured — the one distinction that costs marks: constants from a complex-root derivation must land real, not stay complex.
 id: ode-second-order-homo.worked-example.assured
 concept_id: ode-second-order-homo
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: ode-second-order-homo.worked-example
 for_stance: assured
 ---
 
-## $y''-3y'+2y=0$: roots first, everything else follows
+The complex-root case hides one subtlety: $r=-2\pm3i$ gives two independent complex exponentials, $e^{(-2+3i)x}$ and $e^{(-2-3i)x}$, and it's tempting to keep the solution in that form and solve for complex constants $A,B$ directly from the real initial conditions — which technically works but obscures that $y$ is real-valued throughout. The standard move is to convert first: Euler's formula turns the complex pair into $e^{-2x}(C_1\cos3x+C_2\sin3x)$, with $C_1,C_2$ guaranteed real once $y(0),y'(0)$ are real, because $C_1=A+B$ and $C_2=i(A-B)$ collapse to real numbers exactly when $A,B$ are complex conjugates — which they must be, for a real characteristic equation to have a real solution.
 
-Characteristic equation $r^2-3r+2=(r-1)(r-2)=0$, roots $1,2$ — real and distinct, so
+For $y(0)=0,\,y'(0)=3$: $C_1=0$, $C_2=1$.
 
-$$\boxed{y=c_1e^{x}+c_2e^{2x}}$$
+$$\boxed{y(x)=e^{-2x}\sin(3x)}$$
 
-with no further casework needed here. Keep the other two cases ready anyway: a repeated root (discriminant $0$) forces $(c_1+c_2x)e^{rx}$ instead, and a negative discriminant forces $e^{\alpha x}(c_1\cos\beta x+c_2\sin\beta x)$ from the complex pair $\alpha\pm i\beta$ — this problem's clean factorisation is the easy branch, not the general rule.
+Solve in the cos/sin form from the start; it is both safer and matches how GATE expects the final answer written.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: y'' - 3y' + 2y = 0","steps":[{"prompt":"Step 1: Assume $y = e^{rx}$ and find $y'$ and $y''$.","hint":"Use the chain rule: if $y = e^{rx}$ then $y' = re^{rx}$ and $y'' = r^2 e^{rx}$.","answer":"$y' = re^{rx}$ and $y'' = r^2 e^{rx}$"},{"prompt":"Step 2: Substitute into $y'' - 3y' + 2y = 0$ and factor out $e^{rx}$.","hint":"You should get $e^{rx}(r^2 - 3r + 2) = 0$. Since $e^{rx} \\neq 0$, set the bracket to zero.","answer":"The characteristic equation is $r^2 - 3r + 2 = 0$."},{"prompt":"Step 3: Factor the quadratic $r^2 - 3r + 2 = 0$ to find both roots.","hint":"Look for two numbers that multiply to 2 and add to -3. They are -1 and -2.","answer":"$(r - 1)(r - 2) = 0$, so $r_1 = 1$ and $r_2 = 2$."},{"prompt":"Step 4: Write the general solution for two distinct real roots.","hint":"The formula is $y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$.","answer":"$y = c_1 e^x + c_2 e^{2x}$"}],"caption":"Key exam insight: characteristic equation → roots → general solution. The formula structure is the same for all second-order homogeneous ODEs."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: solving y'' + 4y' + 13y = 0 by characteristic roots","steps":[{"prompt":"Write the characteristic equation for $y''+4y'+13y=0$.","hint":"Replace $y''$ with $r^2$, $y'$ with $r$, $y$ with $1$.","answer":"$r^2+4r+13=0$."},{"prompt":"Solve for the roots using the quadratic formula.","hint":"Compute the discriminant $16-52$ first — it is negative, so expect a complex pair.","answer":"$r=\\\\dfrac{-4\\\\pm\\\\sqrt{-36}}{2}=-2\\\\pm3i$."},{"prompt":"Given $y(0)=0$ and $y'(0)=3$, find the particular solution.","hint":"General solution is $y=e^{-2x}(C_1\\\\cos3x+C_2\\\\sin3x)$. Use $y(0)=0$ first to get $C_1$, then differentiate for $y'(0)$.","answer":"$C_1=0$, then $y'(0)=3C_2=3$ gives $C_2=1$, so $y(x)=e^{-2x}\\\\sin(3x)$."}]}
 ```

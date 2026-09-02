@@ -1,30 +1,13 @@
 ---
-id: series.micro-exercise
+id: series.micro_exercise
 concept_id: series
 atom_type: micro_exercise
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-The series $\sum_{n=1}^{\infty} \frac{1}{2^n}$ converges to:
+Does $\displaystyle\sum_{n=1}^{\infty}\frac{(-1)^{n+1}}{n}$ converge absolutely, conditionally, or not at all?
 
-- **(A)** $1$
-- **(B)** $2$
-- **(C)** $\frac{1}{2}$
-- **(D)** $\infty$
-
-<details>
-<summary>Answer</summary>
-
-**A**. This is a geometric series with first term $a = 1/2$ and common ratio $r = 1/2$.
-
-Since $|r| = 1/2 < 1$, the series converges to:
-$$S = \frac{a}{1-r} = \frac{1/2}{1 - 1/2} = \frac{1/2}{1/2} = 1$$
-
-Alternatively, compute partial sums:
-$$S_n = \frac{1}{2} + \frac{1}{4} + \cdots + \frac{1}{2^n} = 1 - \frac{1}{2^n}$$
-$$\lim_{n \to \infty} S_n = 1 - 0 = 1$$
-
-</details>
+<details><summary>Answer</summary>Conditionally. The terms alternate and $\frac1n$ decreases to $0$, so the Leibniz test gives convergence (in fact to $\ln 2$). But the absolute-value series $\sum \frac1n$ is the harmonic series, which diverges — so the convergence is conditional, not absolute.</details>

@@ -14,13 +14,12 @@ atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: improper-integrals.intuition
 for_stance: shaken
 ---
 
-$\int_1^\infty\frac{dx}{x^2}$ has an infinite upper limit — replace $\infty$ with a finite number $R$ first: $\int_1^R\frac{dx}{x^2}=\left[-\frac1x\right]_1^R=1-\frac1R$. At $R=10$, that's $0.9$; at $R=1000$, it's $0.999$. As $R\to\infty$, $\frac1R\to0$, so the whole thing settles at exactly $1$. Because that limit is a finite number, the integral **converges** to $1$.
+Case A: $\int_1^\infty x^{-2}dx$. Domain runs to infinity, exponent $p=2$. Antiderivative: $-x^{-1}$. Limit as $N\to\infty$ of $-\tfrac1N-(-1)=1$. Finite — converges.
 
-A different kind of infinity shows up when the function itself blows up inside the interval. Take $\int_0^1\frac{dx}{\sqrt x}$: the integrand shoots to $\infty$ at $x=0$. Replace the bad endpoint with $\epsilon>0$ first: $\int_\epsilon^1 x^{-1/2}\,dx=\left[2\sqrt x\right]_\epsilon^1=2-2\sqrt\epsilon$. At $\epsilon=0.01$, that's $2-0.2=1.8$; as $\epsilon\to0^+$, $2\sqrt\epsilon\to0$, so the limit is $2$ — this one converges too, even though the curve itself is unbounded.
+Case B: $\int_0^1 x^{-1/2}dx$. Domain is finite, but the integrand blows up at $x=0$. Antiderivative: $2x^{1/2}$. Limit as $\varepsilon\to0$ of $2-2\sqrt\varepsilon=2$. Finite — converges too.
 
-Whenever the limit settles on a finite number, the integral converges to that number. Whenever the limit grows without bound or refuses to settle, it diverges.
+Both converge, but for opposite reasons: Case A needed a LARGE exponent ($p>1$); Case B needed a SMALL one ($p<1$, here $p=\tfrac12$). Check which kind of trouble spot you have — infinity, or a finite point — before picking a direction for the exponent rule.

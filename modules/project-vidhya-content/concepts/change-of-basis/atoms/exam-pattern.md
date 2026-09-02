@@ -3,21 +3,21 @@ id: change-of-basis.exam-pattern
 concept_id: change-of-basis
 atom_type: exam_pattern
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.4
 exam_ids: ["*"]
 modality: text
 ---
 
 **How GATE actually asks this.**
 
-- **MCQ/MSQ: "which of these is the same for $A$ and $P^{-1}AP$?"** This is the most common form, and it is pure recall — no computation. **Invariant** under a change of basis: trace, determinant, rank, eigenvalues, characteristic polynomial. **Not invariant:** the individual entries, and the eigenvectors (they get re-expressed as $P^{-1}v$).
+- **It rarely gets asked by name.** "Find the matrix representation of $T$ with respect to basis $B$" or "express $x$ in terms of the given basis" are change-of-basis questions wearing a different label. Recognizing the disguise is most of the work.
 
-  Example: $T$ swaps coordinates in $\mathbb{R}^2$, so $[T]_E = \begin{pmatrix} 0 & 1 \\ 1 & 0\end{pmatrix}$. In the basis $B = \left\{\begin{pmatrix}1\\1\end{pmatrix}, \begin{pmatrix}1\\-1\end{pmatrix}\right\}$ with $P = \begin{pmatrix} 1 & 1 \\ 1 & -1\end{pmatrix}$, the matrix becomes $[T]_B = P^{-1}[T]_E P = \begin{pmatrix} 1 & 0 \\ 0 & -1\end{pmatrix}$ (verified). Every entry changed; trace $0$ and determinant $-1$ did not.
+- **NAT questions usually want one coordinate.** "The coefficient of $v_2$ in the representation of $x$" is one entry of $[x]_B$ — solve the linear system (or invert $P$) only as far as that one component, not the whole vector, if that's all the stem asks for.
 
-- **The direction trap.** GATE will state "$P$ is the matrix that converts $B$-coordinates to standard coordinates" — or the exact reverse — and the two answers both appear in the options. Read that sentence twice before you write anything. Getting it backwards produces $P[T]_BP^{-1}$, which is a legitimate-looking matrix and a zero-mark answer.
+  Example: for $B=\{(1,1),(1,-1)\}$ and $x=(5,1)$, solving $a+b=5,\ a-b=1$ gives $a=3$ (verified) directly, without also needing $b$ if only $a$ was asked.
 
-- **The shortcut GATE is testing for.** If $B$ is an **eigenbasis** of $T$, then $[T]_B$ is diagonal with the eigenvalues on it — you can write the answer down with no matrix multiplication at all. In the example above, $(1,1)$ and $(1,-1)$ are exactly the eigenvectors of the swap, which is why the answer came out $\text{diag}(1,-1)$.
+- **The trap GATE likes: which direction the matrix goes.** A question giving $P$ with columns in old-basis coordinates and then asking for new-basis coordinates wants $P^{-1}$, not $P$. Options built from $P$ applied backwards are a standard distractor.
 
-- **Orthonormal shortcut.** When the new basis is orthonormal, $P^{-1} = P^T$. Inverting a $3\times3$ by adjugate costs two minutes; transposing costs five seconds. Always check the columns for orthonormality first.
+- **The similarity-transform framing.** "If $T$ has matrix $A$ in the standard basis, find its matrix in basis $B=\{v_1,v_2\}$" is $P^{-1}AP$ with $P=[v_1\mid v_2]$. When $B$ is an eigenbasis of $A$, this collapses to the diagonal matrix of eigenvalues — recognizing that shortcut turns a matrix-multiplication question into a two-line one.
 
-- **Time budget:** a $2\times2$ sandwich should take under 2 minutes end to end. If you are inverting a $3\times3$ $P$ by cofactors, stop — look for an eigenbasis or orthonormal columns, because GATE almost always plants one of the two.
+- **Time budget:** a $2\times2$ coordinate conversion, either direction, is under 90 seconds — set up $P$, invert if needed, multiply. If you're solving simultaneous equations from scratch each time instead of building $P$ once, you're repeating work the matrix already does for you.

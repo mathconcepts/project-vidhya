@@ -1,65 +1,15 @@
 ---
-id: vector-fields-intuition
+id: vector-fields.intuition
 concept_id: vector-fields
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
+difficulty: 0.10
+exam_ids: ["*"]
+modality: visual
 ---
 
-# What Is a Vector Field?
+Picture a landscape's height as a **scalar field** $\phi(x,y)$ — one number per point, no direction. Now stand at a point and ask: which way is uphill, and how steep is it right here? Both answers together — a direction and a magnitude — make a vector, and doing this at every point produces a **vector field**, $\nabla\phi$, built out of the scalar field underneath it.
 
-A **vector field** $\mathbf{F}$ assigns a vector to every point in space:
+Take $\phi(x,y) = x^2+y^2$, a bowl with its bottom at the origin. The gradient is $\nabla\phi=(2x,2y)$. At $(1,1)$: $\nabla\phi=(2,2)$, an arrow pointing away from the origin — exactly the uphill direction on this bowl, since height only increases as you move outward. At $(0,0)$, the bottom, $\nabla\phi=(0,0)$: flat ground, no uphill direction at all.
 
-$$\mathbf{F}(x, y, z) = F_x(x,y,z)\,\hat{i} + F_y(x,y,z)\,\hat{j} + F_z(x,y,z)\,\hat{k}$$
-
-Think of it as a rule: "at this location, the force (or velocity, or whatever) points *this* direction with *this* magnitude."
-
----
-
-## Line Integrals — Work Done Along a Curve
-
-The **line integral** of $\mathbf{F}$ along a curve $C$ measures work:
-
-$$\int_C \mathbf{F} \cdot d\mathbf{r} = \int_C (F_x\,dx + F_y\,dy + F_z\,dz)$$
-
-- If $\mathbf{F}$ is a force field, this is the total work done as a particle moves along $C$.
-- The dot product $\mathbf{F} \cdot d\mathbf{r}$ picks out only the component of $\mathbf{F}$ *along* the path.
-
----
-
-## Conservative Fields and Scalar Potential
-
-A vector field is **conservative** if there exists a scalar function $\phi$ (the potential) such that:
-
-$$\mathbf{F} = \nabla \phi = \left(\frac{\partial\phi}{\partial x},\, \frac{\partial\phi}{\partial y},\, \frac{\partial\phi}{\partial z}\right)$$
-
-**Key consequence:** The line integral depends only on endpoints, not on the path:
-
-$$\int_C \mathbf{F} \cdot d\mathbf{r} = \phi(B) - \phi(A)$$
-
-This is the vector-calculus version of the fundamental theorem of calculus.
-
----
-
-## How to Tell if a Field Is Conservative
-
-In a **simply connected region** (no holes), $\mathbf{F}$ is conservative **if and only if**:
-
-$$\nabla \times \mathbf{F} = \mathbf{0} \qquad \text{(curl is zero everywhere)}$$
-
-This is the GATE test. Check all three components of the curl; if each is zero, the field is conservative and you can find $\phi$ by integration.
-
----
-
-## Quick Reference
-
-| Property | Condition | Implication |
-|---|---|---|
-| Conservative | $\nabla \times \mathbf{F} = 0$ (simply connected) | Path-independent line integrals |
-| Irrotational | $\nabla \times \mathbf{F} = 0$ | No net rotation in the field |
-| Solenoidal | $\nabla \cdot \mathbf{F} = 0$ | No sources or sinks |
-| Gradient field | $\mathbf{F} = \nabla\phi$ | Conservative + potential exists |
-
-> **GATE tip:** On a closed path, $\oint_C \mathbf{F} \cdot d\mathbf{r} = 0$ if and only if $\mathbf{F}$ is conservative. This is a common MCQ check.
+Not every vector field arises this way. A field like $(-y,x)$, which circles rather than radiates, is not the gradient of any scalar height map — there is no hill whose steepest-ascent directions spiral. Gradient fields are the special, well-behaved case; general vector fields need not come from a scalar at all.

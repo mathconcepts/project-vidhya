@@ -1,21 +1,18 @@
 ---
-id: jordan-normal-form.retrieval_prompt
+id: jordan-normal-form.retrieval-prompt
 concept_id: jordan-normal-form
 atom_type: retrieval_prompt
 bloom_level: 1
 difficulty: 0.3
-estimated_minutes: 1
 exam_ids: ["*"]
+estimated_minutes: 1
+retention_tags: ["geometric multiplicity", "jordan blocks"]
 ---
 
-Define a Jordan block $J_k(\lambda)$ and state the Jordan Normal Form theorem.
+Before checking: what single number tells you how many Jordan blocks an eigenvalue has, and what tells you the size of its largest block?
 
 <details>
 <summary>Answer</summary>
 
-A **Jordan block** of size $k$ for eigenvalue $\lambda$ is the $k \times k$ matrix with $\lambda$ on the diagonal, 1's on the superdiagonal, and 0's elsewhere:
-$$J_k(\lambda) = \begin{pmatrix} \lambda & 1 & & \\ & \lambda & \ddots & \\ & & \ddots & 1 \\ & & & \lambda \end{pmatrix}$$
-
-The **Jordan Normal Form theorem** states: Every square matrix $A$ over $\mathbb{C}$ is similar to a block-diagonal matrix $J = \text{diag}(J_{k_1}(\lambda_1), \ldots, J_{k_r}(\lambda_r))$, and this form is unique up to the order of the blocks. In other words, $A = PJP^{-1}$ for some invertible $P$.
-
+Number of blocks = geometric multiplicity, $\dim\ker(A-\lambda I)$. Size of the largest block = the exponent of $(x-\lambda)$ in the minimal polynomial.
 </details>

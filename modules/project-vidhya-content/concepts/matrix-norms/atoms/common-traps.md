@@ -1,24 +1,17 @@
 ---
-id: matrix-norms.common_traps
+id: matrix-norms.common-traps
 concept_id: matrix-norms
 atom_type: common_traps
-bloom_level: 4
+bloom_level: 3
 difficulty: 0.55
 exam_ids: ["*"]
+tested_by_atom: matrix-norms.micro-exercise
 ---
 
-**Trap 1: Confusing the spectral norm with the Frobenius norm**
+**Trap 1 — Spectral norm mistaken for spectral radius.** $\|A\|_2=\sigma_{\max}(A)$; $\rho(A)=\max|\lambda_i(A)|$. These agree only when $A$ is symmetric (normal). $A=\begin{pmatrix}0&1\\0&0\end{pmatrix}$ has $\rho(A)=0$ but $\|A\|_2=1$ — a shear stretching a direction with no eigenvalue attached to it.
 
-The spectral norm $\|A\|_2 = \sigma_{\max}(A)$ is the largest singular value alone. The Frobenius norm $\|A\|_F = \sqrt{\text{tr}(A^T A)} = \sqrt{\sum_i \sigma_i^2}$ is the square root of the sum of *all* squared singular values. For a diagonal matrix, $\|A\|_2$ picks the largest diagonal entry, while $\|A\|_F$ is the Euclidean norm of the diagonal vector. They are *not* equal unless the matrix has only one nonzero singular value.
+**Trap 2 — Condition number treated as norm-independent.** $\kappa_1(A)$, $\kappa_2(A)$, $\kappa_\infty(A)$ can differ. Comparing a computed $\kappa_2$ against a threshold quoted in $\kappa_1$ silently changes the question.
 
-**Trap 2: Computing condition number with the wrong norm**
+**Trap 3 — $\kappa(A)<1$ accepted as a valid answer.** $\kappa(A)\geq1$ always. A computed value below $1$ signals an arithmetic mistake, not an unusually well-conditioned matrix.
 
-When a GATE problem asks for $\kappa(A)$ without specifying the norm, **always default to the spectral norm** $\kappa_2(A) = \sigma_{\max} / \sigma_{\min}$. Do not use $\kappa_1(A) = \|A\|_1 \|A^{-1}\|_1$ or other norm-based definitions unless explicitly asked. The spectral condition number is far more common in GATE and has the elegant form: ratio of singular values.
-
-**Trap 3: Forgetting the square root when computing spectral norm from eigenvalues**
-
-The spectral norm is $\|A\|_2 = \sqrt{\lambda_{\max}(A^T A)}$ where $\lambda_{\max}$ is the largest eigenvalue of $A^T A$. Many students compute the eigenvalues of $A^T A$ and mistakenly claim $\|A\|_2 = \lambda_{\max}(A^T A)$, forgetting the square root. Remember: singular values are the square roots of the eigenvalues of $A^T A$.
-
-**Trap 4: Assuming $\|A^{-1}\| = 1/\|A\|$**
-
-This is **false**. The correct relationship is $\|A^{-1}\|_2 = 1/\sigma_{\min}(A)$. If $\sigma_{\min}$ is tiny (ill-conditioned matrix), then $\|A^{-1}\|$ blows up. There is no simple formula $\|A^{-1}\| = 1/\|A\|$ for general norms; such confusion leads to wildly incorrect condition number estimates.
+**Trap 4 — Small determinant read as ill-conditioning.** $\det(cA)=c^n\det(A)$ scales with $c$; $\kappa(cA)=\kappa(A)$ does not. Scaling a matrix can shrink its determinant toward zero without moving its condition number at all.

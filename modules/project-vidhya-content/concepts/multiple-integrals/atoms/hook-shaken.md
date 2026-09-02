@@ -12,10 +12,14 @@ id: multiple-integrals.hook.shaken
 concept_id: multiple-integrals
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: multiple-integrals.hook
 for_stance: shaken
 ---
 
-Take $f(x,y)=1$ over the rectangle $0\le x\le2,\,0\le y\le3$. Stack a height of $1$ over every point: the volume is just the base area, $2\times3=6$. As a double integral: $\int_0^2\int_0^3 1\,dy\,dx=\int_0^2 3\,dx=6$. Same number, reached by summing area elements instead of measuring a box directly.
+A plate's density varies. To find total mass: cut it into a grid. Each small rectangle: multiply its own area by its own density. Add every piece.
+
+Do this twice — once summing across one direction, once across the other. Shrink every rectangle to a point, and the sum becomes an integral, run twice: a double integral.
+
+Check: does "multiply area by density everywhere, then add" match what a CONSTANT density would give? Yes — it reduces to density times total area, the case you already know.

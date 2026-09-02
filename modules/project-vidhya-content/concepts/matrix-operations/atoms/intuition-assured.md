@@ -21,15 +21,15 @@ variant_of: matrix-operations.intuition
 for_stance: assured
 ---
 
-## The three operations, and where they actually differ
+## Where the three operations actually differ
 
-Addition and transpose are structural: same-shape addition is entrywise, transpose just reads $A$ by columns instead of rows. Multiplication does the real work — $(AB)_{ij} = \sum_k A_{ik}B_{kj}$, defined only when columns of $A$ match rows of $B$.
+Addition and transpose are structural — entrywise, and a relabeling of rows as columns. Multiplication is where the marks live: $(AB)_{ij} = \sum_k A_{ik}B_{kj}$, defined only when columns of $A$ match rows of $B$.
 
-Non-commutativity is not a technicality. $AB$ and $BA$ compose two transformations in opposite order, and "rotate then scale" genuinely differs from "scale then rotate." Associativity does hold — $(AB)C = A(BC)$ — so a chain of transformations can be grouped however is cheapest to compute.
+Non-commutativity isn't a technicality to memorize — $AB$ and $BA$ compose two maps in opposite order, and "shear then scale" genuinely differs from "scale then shear." Associativity does hold, $(AB)C = A(BC)$, so group a chain however is cheapest.
 
-Two identities worth having cold: $(AB)^T = B^TA^T$ (order reverses under transpose) and $(A+B)^T = A^T+B^T$ (order is preserved, since addition already commutes).
+Two identities worth having automatic: $(AB)^T = B^TA^T$ (reverses) and $(A+B)^T = A^T + B^T$ (doesn't, since addition already commutes).
 
-Watch for symmetric ($A^T=A$) and skew-symmetric ($A^T=-A$) matrices as exam premises — $A^TA$ is symmetric for any $A$, and that single fact underlies most least-squares and normal-equation questions.
+The exam edge is symmetric/skew-symmetric structure: $A^TA$ is symmetric for *any* $A$, square or not — that single fact underlies most least-squares and normal-equation questions, and it's worth recognizing on sight rather than re-deriving.
 
 ```interactive-spec
 {

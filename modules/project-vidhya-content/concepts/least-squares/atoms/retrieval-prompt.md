@@ -4,21 +4,14 @@ concept_id: least-squares
 atom_type: retrieval_prompt
 bloom_level: 1
 difficulty: 0.3
-estimated_minutes: 1
 exam_ids: ["*"]
+estimated_minutes: 1
+retention_tags: ["normal-equations", "orthogonal-projection"]
 ---
 
-**Question:** State the normal equations for finding the least squares solution to an overdetermined system $Ax = b$, and explain the orthogonality condition they impose.
+Before checking: state the normal equations for the least squares solution of $Ax=b$, and say what orthogonality condition forces them.
 
-<details>
-<summary>Answer</summary>
+<details><summary>Answer</summary>
 
-The normal equations are:
-$$A^T A \hat{x} = A^T b$$
-
-If $A$ has full column rank, the unique solution is:
-$$\hat{x} = (A^T A)^{-1} A^T b$$
-
-The orthogonality condition: the residual $b - A\hat{x}$ is perpendicular to $\text{col}(A)$, expressed as $A^T(b - A\hat{x}) = 0$, which rearranges to give the normal equations. This means no further reduction in $\|b - A\hat{x}\|^2$ is possible by any change in $\hat{x}$.
-
+$A^TA\hat x = A^Tb$. This comes from requiring the residual $b-A\hat x$ to be orthogonal to $\text{col}(A)$: $A^T(b-A\hat x)=0$ rearranges directly into the normal equations. If $A$ has full column rank, $\hat x=(A^TA)^{-1}A^Tb$ is unique.
 </details>

@@ -1,25 +1,28 @@
 ---
-# Alternative body for jordan-normal-form.intuition, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
+# Alternative body for jordan-normal-form.intuition, served when the learner
+# stance is `assured`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# marks rather than re-teaching the chain metaphor.
 id: jordan-normal-form.intuition.assured
 concept_id: jordan-normal-form
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.15
-modality: visual
 exam_ids: ["*"]
+modality: visual
 variant_of: jordan-normal-form.intuition
 for_stance: assured
 ---
 
-A Jordan block of size $k$ for $\lambda$ is $\lambda I + N$, where $N$ is nilpotent with a single superdiagonal of $1$s ($N^k = 0$). One eigenvector spans the eigenspace; the rest of the block is generalized eigenvectors, each satisfying $(A-\lambda I)^j v \ne 0$ for $j$ up to the block size, $=0$ beyond it.
+$Av=\lambda v$ and $(A-\lambda I)w=v$ are the same statement about **invariant subspaces**, one dimension apart: an eigenvector spans a $1$-dimensional invariant line; a Jordan chain spans a higher-dimensional invariant subspace on which $A$ acts as $\lambda I$ plus a nilpotent shift.
 
-Block count for $\lambda$ equals the geometric multiplicity; block sizes are read off the rank drop of $(A-\lambda I)^j$ as $j$ increases — the standard trap is assuming one block per eigenvalue whenever the algebraic multiplicity exceeds $1$, when in fact several smaller blocks are equally possible and only the rank sequence disambiguates.
+## What actually costs marks
 
-Worth remembering as invariant: trace and determinant survive from $A$ to $J$ unchanged, since similarity preserves both — a fast sanity check before committing to a block structure.
+**Block count vs. block size.** Geometric multiplicity, $\dim\ker(A-\lambda I)$, gives the *number* of Jordan blocks for $\lambda$. Algebraic multiplicity gives their *combined* size. A repeated eigenvalue with geometric multiplicity $1$ is always exactly one block, whatever the algebraic multiplicity is.
+
+**Minimal polynomial reads off the largest block.** The exponent of $(x-\lambda)$ in the minimal polynomial equals the size of $\lambda$'s *largest* Jordan block — not the number of blocks, and not their total size (that's the characteristic polynomial's job).
+
+**$A$ is similar to $J$, not equal to it.** $A=PJP^{-1}$, where $P$'s columns are the eigenvector/generalized-eigenvector chain, in chain order. Reordering the chain reorders $P$'s columns, never $J$ itself.

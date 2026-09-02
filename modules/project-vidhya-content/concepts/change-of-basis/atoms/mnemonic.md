@@ -3,23 +3,13 @@ id: change-of-basis.mnemonic
 concept_id: change-of-basis
 atom_type: mnemonic
 bloom_level: 2
-difficulty: 0.20
+difficulty: 0.2
 exam_ids: ["*"]
 modality: mnemonic
 ---
 
-**"P's columns are the new basis vectors, written in the old coordinates."** That single sentence builds $P$ every time — no formula to recall, just fill the columns.
+**"Columns are the new coat, standard is bare skin."** Build $P_{B\to E}$ by putting $B$'s vectors — the "new coat" — as columns, written in plain standard ("bare skin") coordinates. $P$ dresses a $B$-coordinate vector in standard clothes: $[x]_E = P[x]_B$. To undress it back to $B$-coordinates, invert: $[x]_B = P^{-1}[x]_E$.
 
-**The sandwich, read right to left: IN → ACT → OUT.**
+**Worked in one line:** $B=\{(1,1),(1,-1)\}$, $[x]_B=(2,1)$. $P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$, so $[x]_E = P(2,1)^T = (3,1)$.
 
-$$[T]_B = P^{-1} \, [T]_E \, P$$
-
-A matrix product acts on a column vector from the *right*, so read it in that order:
-
-- $P$ — take $B$-coordinates **IN** to standard coordinates
-- $[T]_E$ — let $T$ **ACT**, in the coordinates where you know its matrix
-- $P^{-1}$ — bring the result back **OUT** to $B$-coordinates
-
-**Direction check reflex.** Every student mixes up $P$ and $P^{-1}$ at least once. Test it in three seconds: the vector $v_1$ has $B$-coordinates $[v_1]_B = e_1$, so a correct $P$ must send $e_1$ to $v_1$'s standard coordinates — that is, $Pe_1$ is the first column of $P$, which is $v_1$. If your candidate matrix fails that, you have the pair swapped.
-
-**Free simplification:** if the columns of $P$ are orthonormal, then $P^{-1} = P^T$ — transpose instead of invert.
+**Sanity-check reflex:** whichever direction you converted, reconstruct $x$ as a literal linear combination of the *other* basis and confirm it matches. If $[x]_E=(3,1)$ came from $[x]_B=(2,1)$, check $2v_1+1v_2$ by hand — it should land exactly on $(3,1)$, no rounding needed.

@@ -1,5 +1,5 @@
 ---
-id: gram-schmidt.formal_definition
+id: gram-schmidt.formal-definition
 concept_id: gram-schmidt
 atom_type: formal_definition
 bloom_level: 2
@@ -7,23 +7,12 @@ difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-# Gram-Schmidt Process: Formal Definition
+Given linearly independent $v_1,\ldots,v_n$ in an inner-product space, the **Gram-Schmidt process** builds an orthogonal sequence $u_1,\ldots,u_n$ by:
 
-## The Gram-Schmidt Algorithm
+$$u_1 = v_1, \qquad u_i = v_i - \sum_{j=1}^{i-1} \frac{\langle v_i, u_j\rangle}{\langle u_j, u_j\rangle}\, u_j \quad (i \ge 2)$$
 
-Given linearly independent vectors $v_1, v_2, \ldots, v_n \in \mathbb{R}^m$ (or any inner-product space), the Gram-Schmidt process computes an orthonormal sequence $e_1, e_2, \ldots, e_n$ as follows:
+Normalizing gives an **orthonormal** basis: $e_i = u_i / \|u_i\|$.
 
-1. **Orthogonalization:** For $i = 1, 2, \ldots, n$:
-   $$\tilde{u}_i = v_i - \sum_{j=1}^{i-1} \langle v_i, e_j \rangle \, e_j$$
-   where $\langle \cdot, \cdot \rangle$ is the inner product.
+**Theorem.** $\langle u_i, u_j\rangle = 0$ for $i \ne j$, and $\text{span}(u_1,\ldots,u_i) = \text{span}(v_1,\ldots,v_i)$ for every $i$ — the process preserves each leading subspace exactly, not just the final one. This is the algorithmic engine behind **QR decomposition**: $A = QR$, where $Q$'s columns are the $e_i$'s and $R$'s entries are the projection coefficients computed along the way.
 
-2. **Normalization:** 
-   $$e_i = \frac{\tilde{u}_i}{\|\tilde{u}_i\|}$$
-
-## Key Theorem
-
-**Theorem:** The vectors $e_1, \ldots, e_n$ form an orthonormal basis for $\text{span}(v_1, \ldots, v_n)$, meaning:
-- $\langle e_i, e_j \rangle = \delta_{ij}$ (Kronecker delta: 1 if $i=j$, 0 otherwise)
-- $\text{span}(e_1, \ldots, e_n) = \text{span}(v_1, \ldots, v_n)$
-
-This process is the computational foundation for QR decomposition: any matrix $A$ with linearly independent columns can be factored as $A = QR$, where $Q$ has orthonormal columns (from Gram-Schmidt) and $R$ is upper triangular.
+**Method Selector.** Apply Gram-Schmidt when the resulting basis must still span the *original* set's subspace — not when any orthogonal basis of the ambient space will do. A tempting shortcut for a small, structured problem — finding an orthogonal basis by inspection, or via eigen-decomposition of a symmetric matrix — is often faster, but it does not, in general, span the same subspace as the given independent vectors; Gram-Schmidt is the method that guarantees it.

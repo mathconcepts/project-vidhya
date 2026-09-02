@@ -2,11 +2,15 @@
 id: random-variables.common-traps
 concept_id: random-variables
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 3
+difficulty: 0.5
 exam_ids: ["*"]
 ---
 
-- **Confusing PMF and PDF**: PMF applies to **discrete** random variables (sums to 1, evaluated at specific points), while PDF applies to **continuous** random variables (integrates to 1, evaluated over intervals). A student trying to compute $P(X = x)$ for a continuous RV gets 0 (the PDF at a single point has no area), which causes confusion.
-- **Forgetting that PMF values sum to 1**: When finding the constant $c$ in a PMF like $p(x) = c \cdot x$, students sometimes forget to enforce $\sum p(x) = 1$. They just leave the answer in terms of $c$ instead of solving for it.
-- **Misinterpreting CDF**: Students confuse $P(X \le x)$ with $P(X = x)$. The CDF is cumulative and monotonically non-decreasing; at a discrete point, $P(X = x) = F(x) - F(x^-)$ (the jump in the CDF).
+**Trap 1 — Squaring in the wrong order.** $\text{Var}(X)=E[X^2]-(E[X])^2$, never $E[(X^2-X)]$ or $(E[X^2]-E[X])^2$. Compute both expectations separately before subtracting.
+
+**Trap 2 — A PMF that doesn't sum to 1.** If given probabilities look like a PMF but sum to $0.9$ or $1.1$, the question has an error or a missing value — check the sum before computing anything downstream.
+
+**Trap 3 — Confusing $f(x)$ with $P(X=x)$ for continuous variables.** A PDF's value at a point is not a probability; only $\int_a^b f(x)dx$ over an interval is. $P(X=a)=0$ for any single point of a continuous variable.
+
+**Trap 4 — Reading the CDF at the wrong point.** $F(x)=P(X\le x)$ includes $x$ itself for a discrete variable — using a strict $<$ silently drops that value's probability.

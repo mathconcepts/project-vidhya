@@ -1,5 +1,5 @@
 ---
-id: joint-distributions-intuition
+id: joint-distributions.intuition
 concept_id: joint-distributions
 atom_type: intuition
 bloom_level: 2
@@ -8,7 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
 
-# Joint Distributions: Two Variables at Once
+## Joint Distributions: Two Variables at Once
 
 When an experiment produces two random outputs simultaneously — say, a student's exam score AND their study hours — we need a **joint distribution** to describe them together.
 

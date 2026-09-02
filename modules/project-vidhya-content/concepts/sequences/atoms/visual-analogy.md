@@ -1,25 +1,15 @@
 ---
-id: sequences.visual-analogy
+id: sequences.visual_analogy
 concept_id: sequences
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.15
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-# Sequences as Ripples in Water: Damping Oscillation
-
-Imagine throwing a stone into still water. The ripples start large and vigorous, but gradually get smaller and smaller until the surface is almost flat. This is exactly how an **oscillating damped sequence** behaves.
-
-Consider $a_n = \frac{(-1)^n}{n}$: the numerator alternates the sign (the stone keeps bouncing up and down), while the denominator grows (friction dampens the energy). Each oscillation gets closer to zero. By $n = 100$, you're oscillating between $±0.01$—practically still. By $n = 1000$, you're barely rippling at all.
-
-The visual pattern below shows this beautifully: the function $\frac{\sin(x)}{x}$ captures the essence. High-frequency oscillations (near $x=0$) have large amplitude, but as $x$ increases, the amplitude shrinks toward zero. Each "hump" and "dip" represents one oscillation, and the envelope—the boundary touching all peaks—is the curve $\frac{1}{x}$, which decays to zero.
+Eight bars, one per term of $a_n = \dfrac1n$: $1,\ 0.5,\ 0.333,\ 0.25,\ 0.2,\ 0.167,\ 0.143,\ 0.125$. Read them left to right and watch the height drop every single step — steeply at first, then by smaller and smaller amounts, but never stopping and never crossing zero. That's the shape of a sequence converging to $0$: a monotone slide toward a floor it approaches but never reaches. Contrast this in your head with a sequence like $(-1)^n$, whose "bars" would just alternate between two fixed heights forever, never settling — a completely different shape, and a different fate. The bar heights are the whole proof here: no algebra needed to see where this one is going.
 
 ```gif-scene
-{"type":"function-trace","expression":"sin(x)/x","x_range":[0.1,20],"y_range":[-0.3,1.2],"frames":30,"fps":12}
+{"type":"discrete-bars","values":[1,0.5,0.333,0.25,0.2,0.167,0.143,0.125],"labels":["a1","a2","a3","a4","a5","a6","a7","a8"]}
 ```
-
-This convergence-through-damping pattern appears everywhere in engineering: RLC circuits cooling down, signal filtering, and Fourier series convergence.
-
----

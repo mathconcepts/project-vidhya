@@ -1,53 +1,25 @@
 ---
-id: systems-of-equations-intuition
+id: systems-of-equations.intuition
 concept_id: systems-of-equations
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
+exam_ids: ["*"]
+scaffold_fade: true
 ---
 
-# Systems of Linear Equations
+A system of linear equations in matrix form is $A\mathbf{x} = \mathbf{b}$, where $A$ is $m \times n$, $\mathbf{x}$ is $n \times 1$, and $\mathbf{b}$ is $m \times 1$.
 
-A **system of linear equations** in matrix form is $A\mathbf{x} = \mathbf{b}$, where $A$ is an $m \times n$ matrix of coefficients, $\mathbf{x}$ is the $n \times 1$ unknown vector, and $\mathbf{b}$ is the $m \times 1$ right-hand side.
+**When does a solution exist?** The Rouché–Capelli consistency theorem: $A\mathbf{x} = \mathbf{b}$ is consistent iff $\text{rank}(A) = \text{rank}([A \mid \mathbf{b}])$, the **augmented matrix**.
 
-## Consistency — When Does a Solution Exist?
+Three outcomes, decided entirely by ranks:
 
-The **fundamental consistency theorem** (Rouché–Capelli):
-
-> The system $A\mathbf{x} = \mathbf{b}$ is **consistent** (has at least one solution) if and only if
-> $$\text{rank}(A) = \text{rank}([A \mid \mathbf{b}])$$
-
-where $[A \mid \mathbf{b}]$ is the **augmented matrix**.
-
-## Three Possible Outcomes
-
-| Condition | Number of solutions |
+| Condition | Solutions |
 |---|---|
 | $\text{rank}(A) \neq \text{rank}([A\mid\mathbf{b}])$ | **Zero** — inconsistent |
-| $\text{rank}(A) = \text{rank}([A\mid\mathbf{b}]) = n$ | **Exactly one** — unique solution |
-| $\text{rank}(A) = \text{rank}([A\mid\mathbf{b}]) < n$ | **Infinitely many** — free variables exist |
+| $\text{rank}(A) = \text{rank}([A\mid\mathbf{b}]) = n$ | **Exactly one** |
+| $\text{rank}(A) = \text{rank}([A\mid\mathbf{b}]) < n$ | **Infinitely many**, with $n - \text{rank}(A)$ free variables |
 
-The number of **free variables** = $n - \text{rank}(A)$.
+**Two ways to solve.** Gaussian elimination: reduce $[A\mid\mathbf{b}]$ to row echelon form with row swaps, row scaling, and adding a multiple of one row to another, then back-substitute. Cramer's rule (square, $\det(A)\neq0$): $x_i = \det(A_i)/\det(A)$, where $A_i$ replaces column $i$ with $\mathbf{b}$ — fine for 2 or 3 unknowns, impractical beyond.
 
-## Methods of Solution
-
-**Gaussian Elimination (Row Reduction):** Convert $[A\mid\mathbf{b}]$ to **row echelon form** using three elementary row operations: swap rows, scale a row, add a multiple of one row to another. Then back-substitute.
-
-**Cramer's Rule (square, non-singular):** For $n \times n$ systems with $\det(A) \neq 0$:
-
-$$x_i = \frac{\det(A_i)}{\det(A)}$$
-
-where $A_i$ is $A$ with the $i$-th column replaced by $\mathbf{b}$. Impractical for large $n$ but useful for GATE 2-variable and 3-variable problems.
-
-## Homogeneous Systems ($\mathbf{b} = \mathbf{0}$)
-
-$A\mathbf{x} = \mathbf{0}$ always has the **trivial solution** $\mathbf{x} = \mathbf{0}$. It has **non-trivial solutions** if and only if $\text{rank}(A) < n$, equivalently $\det(A) = 0$ when $A$ is square.
-
-## GATE Focus Areas
-
-- Computing $\text{rank}$ by reducing to row echelon form — the most frequent sub-step
-- Deciding the number of solutions from ranks (often asked as MCQ)
-- Solving $3 \times 3$ systems by Gaussian elimination within the context of a larger problem
-- Eigenvalue problems: $(A - \lambda I)\mathbf{x} = \mathbf{0}$ is a homogeneous system
+**Homogeneous systems** ($\mathbf{b}=\mathbf{0}$) always have the trivial solution $\mathbf{x}=\mathbf{0}$; a non-trivial one exists iff $\text{rank}(A)<n$ — for square $A$, the same as $\det(A)=0$. GATE tests: row-reducing to find rank, deciding solution count from ranks, solving a $3\times3$ system inside a larger question, and recognizing $(A-\lambda I)\mathbf{x}=\mathbf{0}$ as a homogeneous system.

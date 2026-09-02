@@ -18,8 +18,6 @@ Compute $\det \begin{pmatrix} 3 & 2 \\ 1 & 4 \end{pmatrix}$.
 <details>
 <summary>Answer</summary>
 
-**A**. For a 2×2 matrix $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$, the determinant is $ad - bc$.
-
-$\det \begin{pmatrix} 3 & 2 \\ 1 & 4 \end{pmatrix} = 3 \cdot 4 - 2 \cdot 1 = 12 - 2 = 10$.
+**A**. $\det\begin{pmatrix} a & b \\ c & d \end{pmatrix} = ad - bc = 3(4) - 2(1) = 12 - 2 = 10$.
 
 </details>

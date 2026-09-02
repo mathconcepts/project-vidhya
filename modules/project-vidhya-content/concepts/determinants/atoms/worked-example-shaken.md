@@ -1,5 +1,5 @@
 ---
-# Alternative body for determinants.worked_example, served when the learner stance is
+# Alternative body for determinants.worked-example, served when the learner stance is
 # `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
@@ -18,13 +18,11 @@ bloom_level: 3
 difficulty: 0.40
 exam_ids: ["*"]
 scaffold_fade: true
-variant_of: determinants.worked_example
+variant_of: determinants.worked-example
 for_stance: shaken
 ---
 
-## A $3\times3$ determinant, one piece at a time
-
-**Problem:** Compute $\det(A)$ for $A = \begin{pmatrix} 2 & 1 & -1 \\ 1 & 3 & 2 \\ -1 & 2 & 0 \end{pmatrix}$
+**Problem:** $\det(A)$ for $A = \begin{pmatrix} 2 & 1 & -1 \\ 1 & 3 & 2 \\ -1 & 2 & 0 \end{pmatrix}$.
 
 ---
 
@@ -32,19 +30,11 @@ for_stance: shaken
 
 ---
 
-**Term 1.**
-
-$$\begin{vmatrix} 1 & -1 \\ 3 & 2 \end{vmatrix} = (1)(2) - (-1)(3) = 5$$
-
-Sign $+$. Contribution $= (-1)(5) = -5$.
+**Term 1.** $\begin{vmatrix} 1 & -1 \\ 3 & 2 \end{vmatrix} = (1)(2) - (-1)(3) = 5$. Sign $+$. Contribution $= (-1)(5) = -5$.
 
 ---
 
-**Term 2.**
-
-$$\begin{vmatrix} 2 & -1 \\ 1 & 2 \end{vmatrix} = (2)(2) - (-1)(1) = 5$$
-
-Sign $-$. Contribution $= (2)(-5) = -10$.
+**Term 2.** $\begin{vmatrix} 2 & -1 \\ 1 & 2 \end{vmatrix} = (2)(2) - (-1)(1) = 5$. Sign $-$. Contribution $= (2)(-5) = -10$.
 
 ---
 

@@ -1,42 +1,33 @@
 ---
 # Alternative body for continuity.worked_example, served when the learner
-# stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# stance is `shaken`. Same steps, concrete-first, full arithmetic.
 id: continuity.worked_example.shaken
 concept_id: continuity
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: continuity-worked-example
+difficulty: 0.2
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: continuity.worked_example
 for_stance: shaken
 ---
 
-**Given:** is $f(x)=\dfrac{x^2-4}{x-2}$ continuous at $x=2$?
+Same problem: $f(x)=\dfrac{x^3-1}{x-1}$ for $x\neq1$, $f(1)=5$. Three checks, done in order.
 
-**Step 1.** Plug $x=2$ into $f$ directly: $f(2)=\dfrac{4-4}{2-2}=\dfrac{0}{0}$ — undefined. Condition 1 already fails.
+**Check 1.** Is $f(1)$ defined? Yes: $f(1)=5$, given directly.
 
-**Step 2.** Factor the numerator only: $x^2-4=(x-2)(x+2)$.
+**Check 2.** Does the limit exist? Factor: $x^3-1=(x-1)(x^2+x+1)$, so $f(x)=x^2+x+1$ for $x\neq1$. At $x=1$: $1+1+1=3$. Limit exists, equals $3$.
 
-**Step 3.** Cancel the common factor, valid since $x\neq2$: $\dfrac{(x-2)(x+2)}{x-2}=x+2$.
+**Check 3.** Does the limit equal $f(1)$? $3\neq5$. No — condition (3) fails.
 
-**Step 4.** Take the limit of the simplified form: $\lim_{x\to2}(x+2)=4$. The limit exists.
+**Conclusion.** Not continuous at $x=1$. The limit is finite and exists, so this is removable.
 
-**Step 5.** Compare: the limit is $4$, but $f(2)$ doesn't exist, so they cannot agree. Condition 3 fails.
+$$
+\boxed{\text{Redefine } f(1)=3 \text{ to fix it}}
+$$
 
-**Answer:** $f$ is discontinuous at $x=2$ — a removable discontinuity, since redefining $f(2)=4$ patches it.
-
-**Check it:** redefine $\tilde f(2)=4$ and recompute the limit at $x=2$ — still $4$, so $\tilde f$ now matches its own value there. The hole was exactly one point wide.
-
----
+**Check.** At $x=1.01$: $1.01^2+1.01+1=3.0301$ — close to $3$, not close to $5$.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: classifying the removable discontinuity at x = 2","steps":[{"prompt":"Apply the three-condition checklist to $f(x) = \\frac{x^2-4}{x-2}$ at $x=2$. Which condition fails first, and why?","hint":"Substitute $x=2$ directly into the formula. What happens to the denominator?","answer":"**Condition 1 fails.** $f(2) = \\frac{0}{0}$ is undefined — the denominator is zero, so the function is not defined at $x=2$."},{"prompt":"Even though $f(2)$ is undefined, compute $\\lim_{x \\to 2} f(x)$ and name the type of discontinuity.","hint":"Factor $x^2-4 = (x-2)(x+2)$ and cancel the $(x-2)$ term before substituting.","answer":"$\\lim_{x \\to 2}(x+2) = 4$. The limit exists, but $f(2)$ is undefined, so this is a **removable discontinuity**. Redefining $f(2)=4$ makes the function continuous."}]}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: is f(x) = (x^3-1)/(x-1), f(1)=5, continuous at x=1?","steps":[{"prompt":"Simplify (x^3-1)/(x-1) for x != 1. What single expression does it reduce to?","hint":"Factor x^3 - 1 as a difference of cubes: (x-1)(x^2+x+1).","answer":"x^2 + x + 1, valid for x != 1."},{"prompt":"What is lim_{x to 1} f(x), and does it equal f(1) = 5?","hint":"Substitute x = 1 into the simplified expression x^2 + x + 1.","answer":"The limit is 1 + 1 + 1 = 3, which does NOT equal f(1) = 5 — condition (3) for continuity fails."},{"prompt":"Since the limit exists and is finite but disagrees with f(1), what type of discontinuity is this, and what value fixes it?","hint":"A finite, existing limit that just doesn't match f(a) is the removable case.","answer":"A removable discontinuity — redefining \\boxed{f(1)=3} makes f continuous at x=1."}]}
 ```

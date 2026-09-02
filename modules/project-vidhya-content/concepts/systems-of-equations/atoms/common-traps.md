@@ -5,8 +5,13 @@ atom_type: common_traps
 bloom_level: 2
 difficulty: 0.3
 exam_ids: ["*"]
+tested_by_atom: systems-of-equations.micro-exercise
 ---
 
-- **Confusing rank conditions**: Students often forget to distinguish between $\text{rank}(A)$ and $\text{rank}(A|b)$. The augmented matrix rank must be checked to determine consistency. If $\text{rank}(A) = \text{rank}(A|b)$, the system is consistent; otherwise, it's inconsistent.
-- **Misapplying Cramer's rule**: Cramer's rule only applies when the system is square ($m = n$) and the coefficient matrix is non-singular ($\det(A) \neq 0$). Students sometimes try to use it for rectangular systems.
-- **Arithmetic errors in elimination**: Gaussian elimination requires careful row operations. A single sign error or computational mistake early on propagates to the final answer.
+**Trap 1 — Checking $\text{rank}(A)$ but not $\text{rank}(A\mid b)$.** Consistency needs both ranks compared, not just $\text{rank}(A)$ examined alone. If $\text{rank}(A) = \text{rank}(A\mid b)$, the system is consistent; otherwise it is not.
+
+**Trap 2 — Misapplying Cramer's rule.** It only applies to square systems ($m=n$) with $\det(A)\neq0$. Students sometimes try to force it onto rectangular systems.
+
+**Trap 3 — Reading $\det(A)=0$ as "no solution."** It means "not unique" — the system could still have infinitely many solutions. Whether it's zero or infinite depends on $b$.
+
+**Trap 4 — Arithmetic drift in elimination.** A single sign error early in Gaussian elimination propagates to every later row. Recompute the final pivot row independently as a check.

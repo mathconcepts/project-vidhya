@@ -1,75 +1,54 @@
 ---
-# Alternative body for jordan-normal-form.worked_example, served when the learner
-# stance is `shaken`. The base file is what a steady student reads.
+# Alternative body for jordan-normal-form.worked-example, served when the
+# learner stance is `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who is low on this concept and low on confidence.
-# The prose is held at or below the base atom's length — a screen visibly
-# longer than the one that already defeated this reader signals difficulty
-# no matter how kindly it is written. No praise, no reassurance, and no
-# mention of how the reader might be feeling.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
+# Prose is held at or below the base atom's length; every step is written
+# out in full with an explicit check, no praise, no reassurance.
 id: jordan-normal-form.worked-example.shaken
 concept_id: jordan-normal-form
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.25
-scaffold_fade: true
+difficulty: 0.2
 exam_ids: ["*"]
-variant_of: jordan-normal-form.worked_example
+scaffold_fade: true
+variant_of: jordan-normal-form.worked-example
 for_stance: shaken
 ---
 
-**Matrix:** $A = \begin{pmatrix} 2 & 1 & 0 \\ 0 & 2 & 1 \\ 0 & 0 & 2 \end{pmatrix}$. Find its Jordan form.
+**Problem:** Jordan form of $A=\begin{pmatrix}4&1\\-1&2\end{pmatrix}$.
 
 ---
 
-**Step 1 — eigenvalue.**
+**Step 1 — Subtract $\lambda$ down the diagonal, expand the determinant.**
 
-Upper triangular, so eigenvalues sit on the diagonal: $\lambda = 2$, three times.
-
----
-
-**Step 2 — how many eigenvectors?**
-
-$(A-2I) = \begin{pmatrix} 0&1&0\\0&0&1\\0&0&0 \end{pmatrix}$ has rank $2$, so its null space is $3-2=1$-dimensional.
-
-One eigenvector, e.g. $(1,0,0)^T$ — for three copies of $\lambda=2$. Not enough. This matrix is defective.
+$$\det(A-\lambda I)=(4-\lambda)(2-\lambda)-(1)(-1)=\lambda^2-6\lambda+9$$
 
 ---
 
-**Step 3 — block size.**
+**Step 2 — Solve.**
 
-Square it: $(A-2I)^2 = \begin{pmatrix} 0&0&1\\0&0&0\\0&0&0 \end{pmatrix}$, rank $1$.
+$$\lambda^2-6\lambda+9=(\lambda-3)^2=0 \Rightarrow \lambda=3 \text{ (repeated)}$$
 
-One eigenvector means one Jordan block. Algebraic multiplicity $3$, one block, so the block has size $3$ — the whole matrix is already the block.
+---
 
-$$\boxed{J = \begin{pmatrix} 2 & 1 & 0 \\ 0 & 2 & 1 \\ 0 & 0 & 2 \end{pmatrix}}$$
+**Step 3 — Find the eigenvector.**
 
-```interactive-spec
-{
-  "v": 1,
-  "kind": "guided_walkthrough",
-  "title": "Walk through: Jordan Form of defective matrix",
-  "steps": [
-    {
-      "prompt": "What is the characteristic polynomial of $A$, and what are its roots?",
-      "hint": "Compute $\\det(A - \\lambda I)$ for the upper-triangular matrix. The diagonal entries are all $(2-\\lambda)$.",
-      "answer": "$\\det(A - \\lambda I) = (2-\\lambda)^3$, so $\\lambda = 2$ with algebraic multiplicity 3."
-    },
-    {
-      "prompt": "Find the eigenspace for $\\lambda = 2$ by solving $(A - 2I)\\mathbf{v} = \\mathbf{0}$.",
-      "hint": "$A - 2I$ is strictly upper-triangular with rank 2. Use row reduction or back-substitution. The null space is 1-dimensional.",
-      "answer": "$E_2 = \\text{span}\\{(1, 0, 0)^T\\}$. There is only 1 independent eigenvector, so the matrix is defective."
-    },
-    {
-      "prompt": "Compute $(A - 2I)^2$ and determine the size of the largest Jordan block.",
-      "hint": "$(A - 2I)^2$ has rank 1. The geometric multiplicity is 1 (one Jordan block), and the algebraic multiplicity is 3, so the block has size 3.",
-      "answer": "$(A - 2I)^2$ has rank 1, confirming one Jordan block of size 3 for $\\lambda = 2$."
-    }
-  ],
-  "caption": "The Jordan form of a defective matrix records one large block for the repeated eigenvalue."
-}
-```
+$$A-3I=\begin{pmatrix}1&1\\-1&-1\end{pmatrix},\quad v_1+v_2=0 \Rightarrow v=(1,-1)$$
+
+Rank of $A-3I$ is $1$: only one independent eigenvector exists.
+
+---
+
+**Step 4 — Find the chain vector $w$, solving $(A-3I)w=v$.**
+
+$$w_1+w_2=1 \Rightarrow w=(1,0)$$
+
+---
+
+**Step 5 — Check and assemble.**
+
+$$Aw=\begin{pmatrix}4\\-1\end{pmatrix}=3w+v \ \checkmark$$
+
+$$\boxed{J=\begin{pmatrix}3&1\\0&3\end{pmatrix}}$$

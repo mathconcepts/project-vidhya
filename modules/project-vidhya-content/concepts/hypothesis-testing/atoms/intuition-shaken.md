@@ -1,12 +1,7 @@
 ---
-# Alternative body for hypothesis-testing-intuition, served when the
+# Alternative body for hypothesis-testing.intuition, served when the
 # learner stance is `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
-#
-# Note: the base atom's own id is `hypothesis-testing-intuition` (no dot),
-# a legacy naming drift check-content-integrity.ts tolerates. variant_of
-# points at that exact id; this file's own id follows the normal convention
-# instead of propagating the drift.
 #
 # Written for a student who is low on this concept and low on confidence:
 # smallest true first step, concrete numbers before symbols, picture before
@@ -20,7 +15,7 @@ bloom_level: 2
 difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
-variant_of: hypothesis-testing-intuition
+variant_of: hypothesis-testing.intuition
 for_stance: shaken
 ---
 

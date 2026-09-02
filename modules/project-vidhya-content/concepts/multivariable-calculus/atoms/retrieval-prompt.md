@@ -1,31 +1,19 @@
 ---
-id: multivariable-calculus.retrieval-prompt
+id: multivariable-calculus.retrieval_prompt
 concept_id: multivariable-calculus
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.2
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["partial-derivative", "freeze-the-other-variable", "gradient-components"]
 ---
 
-For $f(x, y) = x^2 + 3xy + y^2$, find the critical points by solving $\nabla f = 0$.
-
-- **(A)** $(0, 0)$
-- **(B)** $(1, -1)$
-- **(C)** $(0, 1)$
-- **(D)** No critical points
+Before checking: for the same $f(x,y)=3x^2y-y^3$, what is $\partial f/\partial y$ (not $x$) at $(1,2)$?
 
 <details>
 <summary>Answer</summary>
 
-**A**. $\frac{\partial f}{\partial x} = 2x + 3y = 0$
-$\frac{\partial f}{\partial y} = 3x + 2y = 0$
-
-From first: $2x + 3y = 0 \Rightarrow 2x = -3y$
-From second: $3x + 2y = 0$
-
-Substitute: $3(-3y/2) + 2y = 0 \Rightarrow -9y/2 + 2y = 0 \Rightarrow -5y/2 = 0 \Rightarrow y = 0$
-
-Then $x = 0$. Critical point: $(0, 0)$.
+$\partial f/\partial y=3x^2-3y^2$. At $(1,2)$: $3(1)-3(4)=3-12=-9$.
 
 </details>

@@ -1,58 +1,24 @@
 ---
-id: ode-second-order-nonhomo-intuition
+id: ode-second-order-nonhomo.intuition
 concept_id: ode-second-order-nonhomo
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
+difficulty: 0.1
+exam_ids: ["*"]
 ---
 
-## Second-Order Non-Homogeneous ODEs: Structure of the Solution
+## Two Jobs, Added Together
 
-The general second-order linear non-homogeneous ODE is:
+Every solution of $ay''+by'+cy=f(x)$ splits into two separate jobs. The **homogeneous solution** $y_h$ (from setting $f(x)=0$) is the system's own free response — it carries the two arbitrary constants. The **particular solution** $y_p$ is any single function that satisfies the full equation with $f(x)$ present — no constants needed, since $y_h$ already supplies both. Add them: $y=y_h+y_p$.
 
-$$y'' + p(x)\,y' + q(x)\,y = f(x)$$
-
-**The fundamental structure theorem** says that the general solution is always:
-
-$$\boxed{y = y_h + y_p}$$
-
-where $y_h$ is the **complementary (homogeneous) solution** and $y_p$ is any **particular integral**.
-
----
-
-### The Complementary Function $y_h$
-
-Solve $y'' + py' + qy = 0$ using the **characteristic equation**:
-
-$$r^2 + pr + q = 0$$
-
-| Roots | $y_h$ |
-|---|---|
-| Two distinct real $r_1, r_2$ | $C_1 e^{r_1 x} + C_2 e^{r_2 x}$ |
-| Repeated real $r_1 = r_2 = r$ | $(C_1 + C_2 x)\,e^{rx}$ |
-| Complex $r = \alpha \pm i\beta$ | $e^{\alpha x}(C_1\cos\beta x + C_2\sin\beta x)$ |
-
----
-
-### The Particular Integral $y_p$
-
-**Method of undetermined coefficients** (constant-coefficient ODEs, structured $f$):
+Finding $y_p$ by **undetermined coefficients** means guessing a trial form that matches $f(x)$'s own "family" and solving for its coefficients:
 
 | $f(x)$ | Trial $y_p$ |
 |---|---|
-| $e^{ax}$ | $Ae^{ax}$ (use $Axe^{ax}$ if $a$ is a root) |
-| $\sin(bx)$ or $\cos(bx)$ | $A\cos(bx) + B\sin(bx)$ |
-| Polynomial $x^n$ | $A_n x^n + \cdots + A_0$ |
-| Product (e.g. $e^{ax}\sin(bx)$) | Product of the corresponding trials |
+| Polynomial, degree $n$ | Polynomial, degree $n$ |
+| $e^{kx}$ | $Ae^{kx}$ |
+| $\sin(kx)$ or $\cos(kx)$ | $A\cos(kx)+B\sin(kx)$ |
 
-**Variation of parameters** works for any $f(x)$ when $y_h$ is known:
+For $y''-y=x^2$: trial $y_p=Ax^2+Bx+C$. Substituting, $2A-(Ax^2+Bx+C)=x^2$ forces $A=-1,\,B=0,\,C=-2$, so $y_p=-x^2-2$ — a clean check by direct substitution, no guesswork about constants left over.
 
-$$y_p = -y_1\int\frac{y_2 f}{W}\,dx + y_2\int\frac{y_1 f}{W}\,dx$$
-
-where $W = y_1 y_2' - y_2 y_1'$ is the **Wronskian**.
-
----
-
-**Key insight.** The homogeneous solution captures the system's *natural* behaviour (decay, oscillation). The particular integral captures the *forced* response. The two are independent — adding them satisfies the full equation by linearity.
+The one case the table above doesn't cover directly is when the trial form already solves the homogeneous equation — then the trial needs an extra factor of $x$ (or $x^2$ for a repeated homogeneous root), which is worth its own separate rule.

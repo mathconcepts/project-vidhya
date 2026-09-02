@@ -4,10 +4,14 @@ concept_id: jordan-normal-form
 atom_type: visual_analogy
 bloom_level: 2
 difficulty: 0.2
-modality: visual
 exam_ids: ["*"]
+modality: visual
 ---
 
-Imagine defective matrices as a "corruption" of the ideal diagonal form. Diagonalization says: "This matrix is secretly a stack of independent 1D scales." Jordan form says: "If the matrix is defective, some scales are coupled — they're no longer independent, so we link them with a superdiagonal of 1's. The 1 in position $(i, i+1)$ means the $(i+1)$-th component is 'dragged along' by the $i$-th component, since there aren't enough eigenvectors to decouple them."
+A diagonalizable matrix with eigenvalue $\lambda$ just scales by $\lambda^n$ under repeated multiplication — clean exponential growth, nothing else. A Jordan block hides an extra term. For $J=\begin{pmatrix}2&1\\0&2\end{pmatrix}$, the off-diagonal entry of $J^n$ works out to $n\cdot2^{n-1}$ — not a pure power of $2$, but $n$ *times* a power of $2$.
 
-A $2 \times 2$ defective matrix with one repeated eigenvalue $\lambda$ (and only one eigenvector) is similar to $\begin{pmatrix} \lambda & 1 \\ 0 & \lambda \end{pmatrix}$: both components scale by $\lambda$, but the second also picks up a contribution from the first. It's the minimal "corruption" you need to tolerate when the matrix refuses to diagonalize.
+That polynomial-times-exponential shape is the signature of a genuine chain: the generalized eigenvector keeps picking up a fresh contribution from the eigenvector on every application, and the contributions accumulate instead of just compounding. The bars below are that entry at $n=1$ through $n=5$ — watch how fast it outruns pure exponential growth.
+
+```gif-scene
+{"type": "discrete-bars", "values": [1, 4, 12, 32, 80], "labels": ["n=1", "n=2", "n=3", "n=4", "n=5"]}
+```

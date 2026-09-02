@@ -22,7 +22,7 @@ $f(0)=2=f(3)$ signals Rolle's theorem on sight: the average slope is automatical
 
 $f'(x)=3x^2-6x=3x(x-2)=0$ gives $c=0$ or $c=2$.
 
-**Answer:** $c=2$, since $c=0$ sits at the excluded left endpoint, outside the open interval $(0,3)$ MVT actually promises the point in.
+**Answer:** $\boxed{c=2}$, since $c=0$ sits at the excluded left endpoint, outside the open interval $(0,3)$ MVT actually promises the point in.
 
 The mark-loser on Rolle's-theorem-in-disguise problems: reporting *every* root of $f'(c)=0$ without filtering for the open interval, or worse, reporting the endpoint root as if it counted — MVT's guarantee is specifically about the *interior*, and a root sitting exactly at $a$ or $b$ is not evidence the theorem applies there; it happens to coincide with an endpoint, which is a different and unremarkable fact.
 

@@ -3,34 +3,12 @@ id: differentiability.intuition
 concept_id: differentiability
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 ---
 
-# Differentiability: When a Function is "Smooth Enough"
+A derivative is the slope of the single straight line that best hugs a curve at one exact point — zoom in far enough on a differentiable curve and it starts looking indistinguishable from that line. Differentiability is the promise that this zoomed-in line is genuinely unique: however you approach the point, from the left or the right, the local slope settles on the same number.
 
-Differentiability is about whether a function is **smooth enough to have a tangent line** at every point in an interval. While continuity asks "can you draw the curve without lifting your pen?", differentiability asks "can you draw a straight line that just touches the curve at each point?"
+A corner breaks that promise directly. Zoom in on $|x|$ at $x=0$ and no amount of zooming smooths it out — the left half keeps sloping down at $-1$, the right half keeps sloping up at $+1$, forever, no matter how close you look. There is no single "the" tangent line, only two candidates that disagree.
 
-## The Key Insight
-
-A function is **differentiable at a point** if:
-1. It is continuous at that point (no jumps or gaps)
-2. It has a well-defined slope (derivative) at that point
-
-The crucial difference: **continuity doesn't guarantee differentiability**. A continuous function can still have a sharp corner or cusp where the slope changes abruptly.
-
-## Sharp Corners vs. Smooth Curves
-
-- **Smooth curve** (like $y = x^2$): The slope changes gradually. No matter how close you zoom in, the curve looks like a nearly straight line. This is differentiable.
-- **Sharp corner** (like $y = |x|$): At the corner (x = 0), the slope jumps from −1 to +1 instantly. The function is continuous but NOT differentiable there.
-
-## Why This Matters for GATE
-
-In GATE, differentiability questions often appear when dealing with **piecewise-defined functions**. The tricky part is at the junction points where the formula changes. You must check:
-- Do the pieces connect without a gap? (Continuity)
-- Do the pieces have the same slope as you approach from both sides? (Differentiability)
-
-If either fails, the function is not differentiable at that point.
-
----
+This is stricter than continuity, which only asks the curve to have no gaps — it says nothing about the *rate* the curve is climbing or falling at. A curve can be perfectly unbroken and still refuse to commit to one slope at a point: a sharp corner, a vertical tangent where the slope itself blows up to infinity, or (rarer, but real) a derivative that exists but oscillates too wildly to be continuous itself. Differentiability asks a genuinely harder question than continuity does, and a "yes" to one is never automatically a "yes" to the other.

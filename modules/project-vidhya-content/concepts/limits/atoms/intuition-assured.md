@@ -1,25 +1,17 @@
 ---
 # Alternative body for limits.intuition, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# `assured`. Assumes the one-sided-limits picture; spends words on the
+# distinction that costs marks.
 id: limits.intuition.assured
 concept_id: limits
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: limits-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: limits.intuition
 for_stance: assured
 ---
 
-The composition law, $\lim_{x\to a}g(f(x))=g(L)$, needs $g$ continuous *at $L$*, not merely well-defined there — swap in a $g$ with a removable discontinuity at $L$ and the identity fails even though $g(L)$ exists. Verifying continuity at the limit point is the step skipped under pressure.
+The distinction worth the marks: "the limit exists" and "the function is continuous there" are not the same claim, and treating them as interchangeable costs marks on classification questions specifically. A removable hole has a perfectly real, finite limit — the graph's two sides genuinely agree — while the function itself is discontinuous at that exact point, because $f(a)$ is either undefined or set to the wrong value.
 
-The squeeze theorem's inequality only needs to hold in a punctured neighborhood of $a$, never everywhere: $g(x)\le f(x)\le h(x)$ can fail far from $a$ and the theorem is unaffected, since a limit is a statement about behavior arbitrarily close to $a$, nowhere else.
-
-L'Hôpital's rule must be re-checked for indeterminacy before every repeated application, not applied mechanically until the algebra runs out: differentiate once, substitute again, and if the new form is no longer $\frac00$ or $\frac\infty\infty$, stop — differentiating a determinate expression again gives a number with no relationship to the original limit.
+So a limit question and a continuity question can share every piece of algebra and still have different answers: "find $\lim_{x\to a}f(x)$" only ever needs the two one-sided approaches to agree; "is $f$ continuous at $a$" additionally needs that shared value to equal $f(a)$ itself — a separate check the limit computation alone never performs.

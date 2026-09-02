@@ -3,20 +3,12 @@ id: definite-integrals.intuition
 concept_id: definite-integrals
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.15
 exam_ids: ["*"]
-scaffold_fade: true
 ---
 
-Definite integrals measure the **net accumulation** of a quantity over an interval. Think of it as answering "if I sum up infinitely many infinitesimal slices, what's the total?" In GATE mathematics, definite integrals appear everywhere: computing areas, volumes, work done by forces, and moments of inertia.
+Split $\int_0^2 x^2\,dx$ into thin rectangles: use $4$ strips of width $0.5$ and the running sum is $1.75$; use $8$ strips and it creeps to $2.1875$; keep shrinking the strips and the running sum closes in on a single exact number: $\tfrac83$. That limiting process — sum infinitely many infinitesimal slices — is what a definite integral literally is.
 
-The **Fundamental Theorem of Calculus (FTC)** bridges differentiation and integration: 
-$$\int_a^b f(x) \, dx = F(b) - F(a)$$
-where $F$ is any antiderivative of $f$. This means you don't actually need to think about "infinite slices"—you just find the antiderivative and evaluate it at the bounds.
+There is a shortcut that skips the slicing entirely. Find any antiderivative $F$ of the integrand, and just subtract: $F(b)-F(a)$. For $\int_0^2 x^2\,dx$, $F(x)=\tfrac{x^3}{3}$, so $F(2)-F(0)=\tfrac83-0=\tfrac83$ — the same number the strips were converging to. That agreement is the **Fundamental Theorem of Calculus**, and it means you almost never need to think about slicing directly on an exam.
 
-Key properties save calculation time on exams:
-- **Linearity:** $\int_a^b [cf(x) + g(x)] \, dx = c\int_a^b f(x) \, dx + \int_a^b g(x) \, dx$
-- **Additivity:** $\int_a^b f(x) \, dx + \int_b^c f(x) \, dx = \int_a^c f(x) \, dx$
-- **Symmetry:** Odd and even functions simplify integrals dramatically
-
-These aren't just algebra—they're shortcuts that compress 10-minute problems into 2 minutes during the exam. The definite integral is **path-independent**: the value depends only on the function and the bounds, not on intermediate steps.
+A few properties turn ten-minute problems into two-minute ones: linearity lets a sum split apart term by term; additivity lets an interval split at any point $c$, in or out of $[a,b]$; and symmetry over $[-a,a]$ collapses an odd integrand's answer to $0$ and doubles an even one's — reading the integrand's parity before computing anything is often the fastest first move on this topic.

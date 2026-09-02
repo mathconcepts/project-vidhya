@@ -8,20 +8,10 @@ modality: visual
 exam_ids: ["*"]
 ---
 
-# Gram-Schmidt Process: Visual Analogy
+The first vector becomes a fixed rail — the line $y=x$ traced below is $u_1=(1,1)$'s direction, untouched by the whole process. Every later vector gets its shadow along that rail measured and cut away, the way a carpenter squares a second board against one already clamped level: the reference board never moves, only the new one gets trimmed until it sits at a true right angle to it.
 
-**Building a tilted tower with perpendicular levels:**
+Add a third vector and the rail set grows by one — the new board now gets squared against *both* earlier ones before it counts as done. Nothing about the earlier rails changes; only the newcomer is ever adjusted.
 
-Imagine you have a stack of building blocks leaning in various directions. You want to rearrange them so each block is perpendicular to all the blocks below it, and all blocks have the same height (unit length). Here's how:
-
-Start with the first block, tip it upright (normalize). Place the second block on top, but notice it's tilted — part of it leans in the same direction as the first block. Shave off that lean (subtract the projection), then tip the remainder upright. Now the second block is perpendicular to the first. Repeat for the third block: it leans toward both the first and second blocks, so you shave those off, then tip it upright. 
-
-Each block, after cleaning away all projections onto lower blocks and normalizing, becomes a "pure" new direction. The result is an orthonormal scaffold where you can navigate with perfectly perpendicular axes — just like latitude, longitude, and altitude, no redundancy or correlation.
-
-**The process as a diagram (conceptually):**
-
-In 2D, if you start with two non-perpendicular vectors $v_1$ and $v_2$, Gram-Schmidt:
-- Keeps $v_1$ (normalized to $e_1$)
-- Removes $v_2$'s projection onto $e_1$, leaving a perpendicular component, then normalizes to get $e_2$
-
-The result: two orthogonal unit vectors spanning the same plane.
+```gif-scene
+{"type":"function-trace","expression":"x","x_range":[-2,2],"y_range":[-2,2],"frames":24,"fps":12}
+```

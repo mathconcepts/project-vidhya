@@ -1,31 +1,18 @@
 ---
 # Alternative body for quadratic-forms.worked_example, served when the
 # learner stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence.
-# The scaffolding is REAL but it is not on the page: prose is held at or below
-# the base atom's length, because a screen that is visibly longer than the one
-# that already defeated this reader signals difficulty no matter how kindly it
-# is written. The extra steps live in the walkthrough below, where they unfold
-# one at a time when the student asks for them.
-#
-# The walkthrough may carry MORE steps than the base's, but every answer the
-# base asserts survives here in order and the final answer is identical —
-# scripts/check-variant-agreement.ts enforces that. Prompts and hints are the
-# part that may differ, and they are where the gentler register lives.
 id: quadratic-forms.worked-example.shaken
 concept_id: quadratic-forms
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.25
-scaffold_fade: true
 exam_ids: ["*"]
+scaffold_fade: true
 variant_of: quadratic-forms.worked_example
 for_stance: shaken
 ---
 
-**Problem:** Classify $f(x,y) = 2x^2 + 4xy + 5y^2$, and write its canonical form.
+**Problem.** Classify $f(x,y) = 2x^2 + 4xy + 5y^2$, and write its canonical form.
 
 **Build the matrix.** Diagonal entries are the $x^2$ and $y^2$ coefficients: $2$ and $5$. The off-diagonal entry is *half* the $xy$ coefficient: $4/2=2$.
 

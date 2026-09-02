@@ -1,20 +1,19 @@
 ---
-# Alternative body for propositional-logic.hook, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
+# Alternative body for propositional-logic.hook, served when the learner
+# stance is `assured`. See src/content/stance-variants.ts for selection.
 #
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# Terse, assumes the vocabulary, spends its words on the one distinction
+# that costs marks rather than re-teaching the mechanics.
 id: propositional-logic.hook.assured
 concept_id: propositional-logic
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: propositional-logic.hook
 for_stance: assured
 ---
 
-Implication and equivalence read as interchangeable under exam pressure and are not: $p\to q$ is true on three of the four rows and false only when $p$ is true and $q$ is false, while $p\leftrightarrow q$ is true only on the two rows where $p$ and $q$ match. Treating "$p$ implies $q$" as "$p$ and $q$ mean the same thing" turns a contingent formula into a tautology on the page. The converse $q\to p$ and the contrapositive $\neg q\to\neg p$ split the same way — the contrapositive shares $p\to q$'s truth table exactly, the converse generally does not.
+You know $P\to Q$ is false only when $P$ is true and $Q$ is false. The distinction worth a mark: $P\to Q$ is a claim about truth values, not causation — a vacuously true implication ($P$ false) carries zero information about $Q$, so "assume the antecedent held anyway" is the error that turns a valid inference into an invalid one.
+
+Watch for it in indirect proofs: proving $\neg Q \to \neg P$ is a legitimate route to $P\to Q$ (the contrapositive), but assuming $\neg P \to \neg Q$ (the inverse) proves nothing about the original — the inverse is not equivalent to it.

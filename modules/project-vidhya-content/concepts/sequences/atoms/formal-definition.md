@@ -1,15 +1,16 @@
 ---
-id: sequences.formal-definition
+id: sequences.formal_definition
 concept_id: sequences
 atom_type: formal_definition
 bloom_level: 2
-difficulty: 0.24
+difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-**Sequence**: A function $a: \mathbb{N} \to \mathbb{R}$ is called a sequence, denoted as $\{a_n\}_{n=1}^{\infty}$ or $(a_n)$, where $a_n$ is the $n$-th term. A sequence is called **convergent** if $\lim_{n \to \infty} a_n = L$ for some finite $L \in \mathbb{R}$, otherwise it is **divergent**.
+**Convergence of a sequence.** A sequence $(a_n)$ **converges** to $L$ if for every $\epsilon>0$ there exists $N\in\mathbb{N}$ such that $|a_n-L|<\epsilon$ for all $n>N$. We write $\lim_{n\to\infty}a_n=L$. If no such $L$ exists, $(a_n)$ **diverges**.
 
-**Monotonic Sequences**: A sequence $(a_n)$ is:
-- **Monotone increasing** if $a_n \leq a_{n+1}$ for all $n$
-- **Monotone decreasing** if $a_n \geq a_{n+1}$ for all $n$
-- **Bounded** if $\exists M, m \in \mathbb{R}$ such that $m \leq a_n \leq M$ for all $n$
+$(a_n)$ is **bounded** if $|a_n|\le M$ for some $M$ and all $n$; it is **monotonic** if it is non-decreasing throughout, or non-increasing throughout.
+
+**Monotone Convergence Theorem:** every bounded monotonic sequence converges.
+
+**Method selector:** reach for the Monotone Convergence Theorem when boundedness and monotonicity are both easy to show but the limit's exact value is hard to name directly (a recursively defined sequence, say) — not the raw $\epsilon$–$N$ definition, which some students try to invoke from scratch even when monotonicity is the faster route; the theorem proves a limit *exists* without ever computing it.

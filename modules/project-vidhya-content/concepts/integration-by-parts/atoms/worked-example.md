@@ -40,7 +40,7 @@ $$\int x^2 e^x \, dx = x^2 e^x - 2(x e^x - e^x)$$
 
 $$= x^2 e^x - 2x e^x + 2e^x$$
 
-$$= e^x(x^2 - 2x + 2) + C$$
+$$\boxed{\int x^2 e^x\,dx = e^x(x^2 - 2x + 2) + C}$$
 
 ## Verification
 

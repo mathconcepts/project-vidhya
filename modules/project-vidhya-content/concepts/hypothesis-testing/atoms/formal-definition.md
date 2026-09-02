@@ -16,6 +16,8 @@ $$Z = \frac{\bar{X} - \mu_0}{\sigma / \sqrt{n}} \quad \text{(for normal with kno
 
 $$t = \frac{\bar{X} - \mu_0}{S / \sqrt{n}} \quad \text{(for normal with unknown } \sigma \text{)}$$
 
+**Which statistic to reach for.** Use the $t$-statistic whenever $\sigma$ is unknown and only the sample $s$ is available — regardless of $n$. A GATE student often reaches for the $z$-statistic instead whenever $n$ "looks large enough" ($n>30$), on the reasoning that large samples make the normal approximation safe; but the honest trigger is what you *know*, not how many observations you have. With $\sigma$ unknown, $t_{n-1}$ is always the correct family, and it only happens to look numerically close to $z$ once $n$ is large.
+
 **P-value**: The probability of observing a test statistic as extreme (or more extreme) than the one computed, assuming $H_0$ is true.
 
 **Significance Level ($\alpha$)**: The threshold for rejecting $H_0$. Common choice: $\alpha = 0.05$ (5%).

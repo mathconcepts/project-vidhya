@@ -1,33 +1,14 @@
 ---
-id: series.retrieval-prompt
+id: series.retrieval_prompt
 concept_id: series
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.15
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["ratio-test", "series-convergence"]
 ---
 
-Test the convergence of $\sum_{n=1}^{\infty} \frac{3n + 1}{n^3 + 2n}$ using the limit comparison test with $\frac{1}{n^2}$.
+Before checking, try to recall from memory: what does the ratio test conclude when $L=\lim|a_{n+1}/a_n|$ comes out to exactly $1$?
 
-- **(A)** The series diverges because the limit is 0
-- **(B)** The series converges because the limit is finite and positive
-- **(C)** The series diverges because the limit is infinite
-- **(D)** The test is inconclusive
-
-<details>
-<summary>Answer</summary>
-
-**B**. Apply the **Limit Comparison Test** with comparison series $b_n = 1/n^2$ (which converges).
-
-Compute:
-$$\lim_{n \to \infty} \frac{a_n}{b_n} = \lim_{n \to \infty} \frac{\frac{3n+1}{n^3+2n}}{\frac{1}{n^2}} = \lim_{n \to \infty} \frac{3n+1}{n^3+2n} \cdot n^2$$
-
-$$= \lim_{n \to \infty} \frac{(3n+1)n^2}{n^3+2n} = \lim_{n \to \infty} \frac{3n^3 + n^2}{n^3 + 2n}$$
-
-Divide by $n^3$:
-$$= \lim_{n \to \infty} \frac{3 + 1/n}{1 + 2/n^2} = \frac{3}{1} = 3$$
-
-Since the limit is finite and positive ($L = 3$), and $\sum 1/n^2$ converges, the original series also converges.
-
-</details>
+<details><summary>Answer</summary>Nothing — the test is inconclusive at $L=1$. Both $\sum\frac1n$ (diverges) and $\sum\frac1{n^2}$ (converges) give $L=1$, so a different test is needed whenever the ratio lands here.</details>

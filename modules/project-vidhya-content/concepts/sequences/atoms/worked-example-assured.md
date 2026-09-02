@@ -1,37 +1,28 @@
 ---
 # Alternative body for sequences.worked_example, served when the learner
-# stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# stance is `assured`. The fenced walkthrough is copied verbatim from the
+# base atom so the widget cannot drift between variants.
 id: sequences.worked_example.assured
 concept_id: sequences
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
-variant_of: sequences.worked-example
+variant_of: sequences.worked_example
 for_stance: assured
 ---
 
-For a rational sequence with numerator and denominator of equal degree, the limit is just the ratio of leading coefficients — $\frac31=3$ here, no division-by-$n^2$ bookkeeping needed once the degrees are compared.
+Same proof, tightened to the one distinction worth remembering: the Monotone Convergence Theorem is **sufficient, not necessary**. Plenty of convergent sequences aren't monotonic at all — $a_n=(-1)^n/n$ flips sign every step and still converges to $0$, since $|a_n-0|\to 0$ regardless of sign. Monotonicity is a *route* to proving convergence when the limit can't be guessed in advance; it is not a requirement convergence itself imposes.
 
-**Answer (a):** the limit is $3$.
+For $a_n=\dfrac{n}{n+1}$: increasing (the numerator of $a_{n+1}-a_n$ collapses to $1$) and bounded above by $1$ $\Rightarrow$ converges, by MCT, before the value is even known.
 
-Boundedness above by $4$ reduces to one inequality, $n^2+18n+13>0$, true for every $n\ge1$ since all three terms are positive there — no case analysis needed.
+$$
+a_n = \frac{n}{n+1} = \frac{1}{1+\frac{1}{n}} \;\Rightarrow\; \boxed{\lim_{n\to\infty}\frac{n}{n+1}=1}
+$$
 
-**Answer (b):** bounded above by $4$ (and below by $a_1=\frac49>0$).
-
-Checking $a_1<a_2$ numerically is a hint the sequence increases, never a proof — the actual argument needs $a_{n+1}-a_n>0$ established algebraically for *every* $n$, which is exactly what the sign of the combined numerator being positive for all $n\ge1$ establishes.
-
-**Answer (c):** monotonically increasing.
-
-The shortcut in (a) only survives equal degrees: if the denominator's degree exceeded the numerator's, the limit would be $0$ regardless of leading coefficients; if the numerator's degree were higher, the sequence would diverge to $\pm\infty$. Comparing degrees first is what makes the leading-coefficient trick valid at all, not a universal property of rational sequences.
+The trap this problem sets: computing a handful of terms and eyeballing "looks like it's heading to $1$" is not a proof — MCT, or the algebraic rewrite above, is what earns the mark.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Limit of a rational sequence","steps":[{"prompt":"Step 1: To find the limit of $a_n = \\frac{3n^2 + 2n - 1}{n^2 + 5n + 3}$, divide numerator and denominator by the highest power of $n$ present. What is the highest power?","hint":"Look at both the numerator and denominator. The highest power in both is...?","answer":"$n^2$"},{"prompt":"Step 2: Rewrite the sequence as $\\frac{n^2(3 + \\frac{2}{n} - \\frac{1}{n^2})}{n^2(1 + \\frac{5}{n} + \\frac{3}{n^2})}$. Cancel the $n^2$ terms to get $\\frac{3 + \\frac{2}{n} - \\frac{1}{n^2}}{1 + \\frac{5}{n} + \\frac{3}{n^2}}$. As $n \\to \\infty$, what happens to fractions like $\\frac{1}{n}$ and $\\frac{1}{n^2}$?","hint":"What is $\\lim_{n \\to \\infty} \\frac{1}{n}$? What is $\\lim_{n \\to \\infty} \\frac{1}{n^2}$?","answer":"They both approach 0."},{"prompt":"Step 3: Apply the limit to the simplified expression: $\\lim_{n \\to \\infty} \\frac{3 + \\frac{2}{n} - \\frac{1}{n^2}}{1 + \\frac{5}{n} + \\frac{3}{n^2}} = \\frac{3 + 0 - 0}{1 + 0 + 0}$. What is this limit?","hint":"Substitute the limiting values of the fractional terms.","answer":"The limit is $\\frac{3}{1} = 3$. The sequence converges to 3."}],"caption":"Rational sequences converge to the ratio of leading coefficients. This trick works for all polynomial quotients where the numerator and denominator have the same degree."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: does a_n = n/(n+1) converge?","steps":[{"prompt":"Is a_n = n/(n+1) bounded? Find the bounds.","hint":"Compare n against n+1.","answer":"Yes: 0 < a_n < 1 for every n, since n < n+1."},{"prompt":"Is a_n increasing? Compute a_{n+1} - a_n.","hint":"Combine over the common denominator (n+1)(n+2).","answer":"a_{n+1} - a_n = 1/[(n+1)(n+2)] > 0, so the sequence is strictly increasing."},{"prompt":"Bounded above and increasing — what does the Monotone Convergence Theorem give, and what is the limit?","hint":"Rewrite a_n as 1/(1 + 1/n) and let n go to infinity.","answer":"The sequence converges by the Monotone Convergence Theorem, and the limit is \\boxed{1}."}]}
 ```

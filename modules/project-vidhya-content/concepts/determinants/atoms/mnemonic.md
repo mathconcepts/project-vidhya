@@ -14,10 +14,10 @@ modality: mnemonic
 
 - **SWAP** two rows → determinant **flips sign**
 - **SCALE** a row by $k$ → determinant **multiplies by $k$**
-- **ADD** a multiple of one row to another → determinant **unchanged** (free — use this one relentlessly to manufacture zeros)
+- **ADD** a multiple of one row to another → determinant **unchanged** (free — use this relentlessly to manufacture zeros)
 
-Then: for any triangular matrix, $\det = $ product of the diagonal entries. Nothing else to compute.
+Then: for any triangular matrix, $\det =$ product of the diagonal entries.
 
-**What the number means:** $\det$ is the signed volume scale factor. $|\det| = 3$ means volumes triple; a negative sign means orientation flipped (a reflection); $\det = 0$ means the columns collapsed into a lower dimension — which is exactly why $\det = 0 \iff$ singular.
+**What the number means:** $\det$ is the signed volume scale factor. $|\det|=3$ means volumes triple; a negative sign means orientation flipped; $\det=0$ means the columns collapsed into a lower dimension.
 
-**Do not extend Sarrus.** The criss-cross diagonal trick works for $3\times3$ and is **wrong** for $4\times4$ and up. A $4\times4$ has 24 terms, not 8. Row-reduce instead — it is the only method whose cost stays sane as $n$ grows.
+**Do not extend Sarrus.** The criss-cross diagonal trick works for $3\times3$ and is **wrong** for $4\times4$ and up — a $4\times4$ has $24$ terms, not $8$. Row-reduce instead.

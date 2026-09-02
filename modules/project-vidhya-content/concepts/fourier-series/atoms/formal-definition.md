@@ -22,3 +22,5 @@ $$b_n = \frac{2}{T} \int_0^T f(t) \sin\left(\frac{2\pi n t}{T}\right) dt \quad \
 The fundamental frequency is $f_1 = \frac{1}{T}$ (or $\omega_1 = \frac{2\pi}{T}$ in radians/sec). Higher harmonics oscillate at $nf_1, 2nf_1, \ldots$
 
 **Geometric interpretation**: Each integral $a_n$ (or $b_n$) is a projection of $f(t)$ onto the basis function $\cos(n\omega_1 t)$ (or $\sin(n\omega_1 t)$). Orthogonality of sines and cosines ensures that each harmonic captures exactly one frequency component, with no interference. The process is like taking snapshots of $f(t)$ at all possible pure-tone frequencies and measuring how much of each tone is present.
+
+**When to reach for it:** check the parity of $f$ before writing a single integral — even needs only $a_0$ and $a_n$, odd needs only $b_n$. The tempting shortcut that costs marks is computing the general $a_n$ and $b_n$ integrals from scratch regardless of symmetry; it reaches the same final series, but on a timed paper it means grinding through integrals that a ten-second parity check would have eliminated outright.

@@ -22,30 +22,15 @@ variant_of: matrix-operations.intuition
 for_stance: shaken
 ---
 
-## Adding: match position by position
+Same-size matrices add entry by entry: $(A+B)_{ij} = A_{ij} + B_{ij}$. Nothing more.
 
-Same-size matrices add entry by entry: $(A+B)_{ij} = A_{ij} + B_{ij}$. Nothing more than that.
+To find $(AB)_{ij}$: take row $i$ of $A$, take column $j$ of $B$, multiply matching pairs, add. Repeat for every row-column pair to fill in $AB$.
 
-## Multiplying: row against column
+Compute $AB$, then compute $BA$. They can come out different — matrix multiplication does not let you swap the order the way ordinary number multiplication does.
 
-To find $(AB)_{ij}$, take row $i$ of $A$ and column $j$ of $B$, multiply the matching pairs, and add. Do that for every row-column pair to fill in the whole matrix $AB$.
+Transpose: swap rows and columns, $A^T_{ij} = A_{ji}$. Row 1 of $A$ becomes column 1 of $A^T$.
 
-## Order matters here
-
-Compute $AB$, then compute $BA$. They can come out different. Multiplication of matrices is not like multiplication of numbers — you cannot swap the order and expect the same answer.
-
-## Transpose: flip across the diagonal
-
-Swap rows and columns: $A^T_{ij} = A_{ji}$. Row 1 of $A$ becomes column 1 of $A^T$.
-
-## What GATE checks
-
-- Multiply two given matrices, entry by entry, without a slip
-- Check the product is even defined: columns of the first must match rows of the second
-- Use the identity matrix as a shortcut — multiplying by it changes nothing
-- Confirm $(A+B)^T = A^T+B^T$ and $(AB)^T = B^TA^T$ on a small example
-
-Practice the entry-by-entry multiplication slowly until it stops needing thought — every later topic assumes you can already do it.
+What GATE checks: multiplying two matrices entry by entry without a slip, checking a product is even defined (columns of the first must match rows of the second), and confirming $(A+B)^T = A^T+B^T$ and $(AB)^T = B^TA^T$ on a small example.
 
 ```interactive-spec
 {

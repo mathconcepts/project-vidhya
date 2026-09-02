@@ -30,7 +30,7 @@ $$\int x(x^2 + 1)^5 \, dx = \int u^5 \cdot \frac{1}{2} \, du = \frac{1}{2} \int 
 $$\frac{1}{2} \int u^5 \, du = \frac{1}{2} \cdot \frac{u^6}{6} + C = \frac{u^6}{12} + C$$
 
 **Step 5: Substitute back**
-$$\frac{(x^2+1)^6}{12} + C$$
+$$\boxed{\int x(x^2+1)^5\,dx = \frac{(x^2+1)^6}{12} + C}$$
 
 **Verification:** Differentiate: $\frac{d}{dx}\left[\frac{(x^2+1)^6}{12}\right] = \frac{1}{12} \cdot 6(x^2+1)^5 \cdot 2x = x(x^2+1)^5$ ✓
 

@@ -1,28 +1,26 @@
 ---
-# Alternative body for jordan-normal-form.intuition, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
+# Alternative body for jordan-normal-form.intuition, served when the learner
+# stance is `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# smallest true first step, concrete numbers before symbols, the arithmetic
+# done in full, and an explicit check. No praise, no reassurance.
 id: jordan-normal-form.intuition.shaken
 concept_id: jordan-normal-form
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.15
-modality: visual
 exam_ids: ["*"]
+modality: visual
 variant_of: jordan-normal-form.intuition
 for_stance: shaken
 ---
 
-$A = \begin{pmatrix} 3 & 1 \\ 0 & 3 \end{pmatrix}$. Only one eigenvalue, $\lambda=3$, and only one independent eigenvector — a second attempt just gives a multiple of the first.
+Take $J=\begin{pmatrix}2&1\\0&2\end{pmatrix}$.
 
-Diagonalization needs two independent eigenvectors here; there's only one, so it fails.
+$Jv$ where $v=(1,0)$: gives $(2,0)=2v$. Ordinary eigenvector.
 
-$A$ itself is the fallback: diagonal entries $3, 3$, plus a single $1$ above the diagonal — a superdiagonal entry, the whole difference from a true diagonal matrix.
+$Jw$ where $w=(0,1)$: gives $(1,2)=2w+v$. Not a clean scale — $w$ picks up a copy of $v$.
 
-Stack blocks like this — one per eigenvalue short on eigenvectors — and you get Jordan form. Every square matrix has one.
+That extra $+v$ is the whole idea. One eigenvector ($v$), one *generalized* eigenvector ($w$) chained to it by $(A-2I)w=v$. Together they fill the two slots a $2\times2$ block needs, even though only one of them is a genuine eigenvector.

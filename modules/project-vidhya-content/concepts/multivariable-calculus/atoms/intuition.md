@@ -3,23 +3,12 @@ id: multivariable-calculus.intuition
 concept_id: multivariable-calculus
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
-scaffold_fade: true
 ---
 
-## Partial Derivatives: Taking One Step at a Time
+Treat $z=f(x,y)$ as the height of a landscape over the $(x,y)$ ground plane. Cutting a vertical slice through that landscape along a fixed value of $y$ turns the surface back into an ordinary single-variable curve — and the slope of THAT curve is $\partial f/\partial x$. Cut along a fixed $x$ instead and you get $\partial f/\partial y$. Every partial derivative is secretly an ordinary derivative, just applied after freezing every other input.
 
-In single-variable calculus, the derivative $\frac{df}{dx}$ measures how a function changes as you move along the x-axis. But what happens when a function depends on multiple variables?
+The gradient $\nabla f=\left(\dfrac{\partial f}{\partial x},\dfrac{\partial f}{\partial y}\right)$ bundles both slices into one vector, pointing in the direction the landscape climbs fastest at that exact point.
 
-Imagine you're standing on a hillside at position $(x, y)$ with elevation $z = f(x, y)$. The slope you feel depends on which direction you walk:
-- If you walk east (increasing $x$ while holding $y$ constant), you experience a certain steepness.
-- If you walk north (increasing $y$ while holding $x$ constant), the slope might be completely different.
-
-**Partial derivatives** measure these directional slopes separately. The **partial derivative with respect to $x$**, written $\frac{\partial f}{\partial x}$, shows how the function changes when only $x$ varies—as if you froze $y$ in place. Similarly, $\frac{\partial f}{\partial y}$ shows change along the $y$ direction.
-
-The **Jacobian** takes this further: it collects all partial derivatives into a matrix that fully describes how a multivariable function changes near a point. It's the multivariable equivalent of a single derivative—a complete snapshot of the rate of change in every direction.
-
-For exam problems, you'll compute partial derivatives by treating all variables except one as constants, then differentiate normally. The Jacobian appears in transformation problems and when analyzing how functions behave near critical points.
-
----
+When BOTH $x$ and $y$ move together along a path $\big(x(t),y(t)\big)$, tracking the total rate of change needs both slopes at once — that is the multivariable chain rule, $\dfrac{dz}{dt}=\dfrac{\partial z}{\partial x}\dfrac{dx}{dt}+\dfrac{\partial z}{\partial y}\dfrac{dy}{dt}$ — and dropping either term silently assumes the other variable never moved.

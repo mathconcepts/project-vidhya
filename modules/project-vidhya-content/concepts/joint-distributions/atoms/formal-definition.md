@@ -26,6 +26,8 @@ $$\text{Cov}(X, Y) = E[(X - \mu_X)(Y - \mu_Y)] = E[XY] - E[X]E[Y]$$
 **Correlation Coefficient**: Covariance standardized to the range $[-1, 1]$.
 $$\rho = \frac{\text{Cov}(X, Y)}{\sigma_X \sigma_Y}$$
 
-**Independence**: Two random variables are independent if $p(x, y) = p_X(x) \cdot p_Y(y)$ (or $f(x, y) = f_X(x) \cdot f_Y(y)$ for continuous), equivalently $\text{Cov}(X, Y) = 0$.
+**Independence**: Two random variables are independent if $p(x, y) = p_X(x) \cdot p_Y(y)$ (or $f(x, y) = f_X(x) \cdot f_Y(y)$ for continuous) at **every** point in their support.
+
+**Which test to reach for.** Certify independence with the factoring test above, checked against the support region — not with $\text{Cov}(X,Y)=0$, which a GATE student reaches for because it's a single number to compute. Zero covariance only rules out *linear* association; $X$ and $Y$ can be tightly (nonlinearly) dependent — even a deterministic function of one another — and still show $\text{Cov}(X,Y)=0$. Independence forces $\text{Cov}=0$; the converse never holds.
 
 Geometric interpretation: the joint PDF is a surface over the $(x, y)$ plane. The height at each point represents the probability density. Integrating over a region gives the probability of that region. The marginal PDF is the "shadow" of this surface projected onto the $x$-axis or $y$-axis.

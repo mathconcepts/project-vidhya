@@ -11,15 +11,12 @@ id: definite-integrals.intuition.assured
 concept_id: definite-integrals
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.15
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: definite-integrals.intuition
 for_stance: assured
 ---
 
-Odd/even symmetry only fires over an interval **symmetric about the origin** — $\int_{-a}^{a}$, not $\int_0^{a}$ shifted to look similar. An odd integrand needs the true $[-a,a]$ bound to vanish; applying the shortcut to $\int_{-a}^{b}$ with $b\neq a$ is a fabricated shortcut, not the real one.
+The Riemann-sum limit isn't just a definition to cite — it's the fallback when no elementary antiderivative exists, such as $\int_0^1 e^{-x^2}\,dx$. There the FTC shortcut is unavailable, and a GATE-style question instead expects a numerical estimate (trapezoidal or Simpson's) built directly from the slicing idea, not a closed form.
 
-Additivity, $\int_a^b f+\int_b^c f=\int_a^c f$, holds even when $b$ does not sit between $a$ and $c$: the identity is algebraic, following from $\int_a^b f=-\int_b^a f$, not geometric. Treating it as valid only for an "in-between" $b$ throws away legitimate splitting points.
-
-Path-independence is real but narrow: the value depends only on $f$, $a$, $b$ — not on which antiderivative $F$ is chosen, since any two differ by a constant that cancels in $F(b)-F(a)$. It says nothing about the *technique* used to reach $F$; a wrong antiderivative still returns a wrong number regardless of how cleanly the bounds are handled.
+Symmetry only fires over an interval genuinely centered at the origin: $\int_{-a}^{a}$, not a shifted interval that merely looks balanced. And "additivity holds for any $c$" is stronger than it sounds — $\int_a^b f=\int_a^c f+\int_c^b f$ remains true even when $c$ sits outside $[a,b]$, since it follows from $\int_x^y f=-\int_y^x f$ algebraically rather than from a picture of $c$ sitting "in between."

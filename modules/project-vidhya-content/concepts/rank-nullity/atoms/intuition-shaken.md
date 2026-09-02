@@ -21,17 +21,12 @@ for_stance: shaken
 
 Take $A=\begin{pmatrix}1&2\\2&4\end{pmatrix}$. Row 2 is $2\times$ row 1 — no new information. Only **one** row is genuinely independent, so $\text{rank}(A)=1$.
 
-$A$ has $2$ columns. One dimension is "used" by the rank; the other is "lost" — that's the **nullity**: $\text{nullity}(A)=2-1=1$. Check it directly: $A\begin{pmatrix}2\\-1\end{pmatrix}=\begin{pmatrix}0\\0\end{pmatrix}$, so that direction carries no signal through the matrix at all.
+$A$ has $2$ columns. One dimension is "used" by the rank; the other is "lost" — the **nullity**: $\text{nullity}(A)=2-1=1$. Check directly: $A\begin{pmatrix}2\\-1\end{pmatrix}=\begin{pmatrix}0\\0\end{pmatrix}$, so that direction carries no signal through the matrix.
 
-## The theorem in one line
+The theorem in one line:
 
 $$\text{rank}(A)+\text{nullity}(A)=n$$
 
-where $n$ is the number of columns. Every column either adds a genuinely new output direction (counted by rank) or gets absorbed into the null space (counted by nullity) — there's nowhere else for a dimension to go.
+where $n$ is the number of columns. Every column either adds a new output direction (rank) or gets absorbed into the null space (nullity) — nowhere else for a dimension to go.
 
-## Why GATE cares
-
-- Rank tells you whether $Ax=b$ has a solution at all
-- Full rank ($\text{rank}=n$) means $A$ is invertible
-- Rank-nullity tells you immediately how many free variables a solution set has
-- It links row reduction, independence, and system consistency into one fact
+Why GATE cares: rank tells you whether $Ax=b$ has a solution at all; full rank ($\text{rank}=n$) means $A$ is invertible; rank-nullity tells you immediately how many free variables a solution set has; it links row reduction, independence, and system consistency into one fact.

@@ -16,3 +16,5 @@ exam_ids: ["*"]
 3. There exists an orthonormal basis of eigenvectors; equivalently, $A = Q\Lambda Q^T$ where $Q$ is an orthogonal matrix and $\Lambda$ is diagonal.
 
 **Consequence:** Symmetric matrices are precisely those that can be diagonalized by an orthogonal transformation, making them fundamental in both theory and computation.
+
+**Method Selector.** Reach for the spectral theorem's orthogonal diagonalization the moment $A = A^T$ is confirmed — it guarantees real eigenvalues and full diagonalizability with no further check. Don't fall back on general Jordan-form machinery, built for possibly-defective matrices: a real symmetric matrix is never defective, so hunting for generalized eigenvectors here chases a case that cannot occur.

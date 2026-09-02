@@ -3,13 +3,32 @@ id: gram-schmidt.intuition
 concept_id: gram-schmidt
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.15
+difficulty: 0.1
 modality: visual
 exam_ids: ["*"]
 ---
 
-# Gram-Schmidt Process: Intuition
+Picture $v_1$ as a fixed rail and $v_2$ as an arrow leaning against it. Some of $v_2$ points along the rail — that part is its **projection** onto $v_1$ — and some of it points away from the rail. Gram-Schmidt keeps only the "away" part: $u_2 = v_2 - \text{proj}_{u_1}v_2$.
 
-Imagine building a coordinate system vector by vector. You start with your first vector and normalize it (make it unit length). Then, for the next vector, you notice it has a "shadow" or component pointing in the direction of the first vector — that component doesn't help you explore new directions. So you subtract it away, leaving only the orthogonal part. Normalize that remainder, and you have your second basis vector. Repeat: each new vector gets cleaned of all its projections onto the previous (already-clean) vectors, then normalized.
+That leftover $u_2$ is orthogonal to $u_1$ by construction, no matter what $v_2$ was. Try it yourself below: drag $v_2$ anywhere and the "check" output stays at zero every time — subtracting the exact projection always removes the *entire* along-$u_1$ component, never more, never less.
 
-This process guarantees that the resulting vectors are all perpendicular to each other and have unit length — a property called **orthonormality** — and they span the same subspace as the originals.
+With three or more vectors, the process repeats: each new $u_i$ has the projection onto *every* earlier $u_j$ stripped out, one at a time, before it's declared orthogonal to the whole set built so far.
+
+```interactive-spec
+{
+  "v": 1,
+  "kind": "manipulable",
+  "title": "Drag v2 and watch its orthogonal leftover against a fixed u1 = (1,1)",
+  "inputs": [
+    {"id": "v2x", "label": "v2 (x)", "min": -3, "max": 3, "step": 0.5, "initial": 2},
+    {"id": "v2y", "label": "v2 (y)", "min": -3, "max": 3, "step": 0.5, "initial": 0}
+  ],
+  "outputs": [
+    {"label": "projection coefficient c = (v2·u1)/(u1·u1)", "formula": "(v2x + v2y) / 2", "digits": 2},
+    {"label": "u2 (x) = v2x − c", "formula": "v2x - (v2x + v2y) / 2", "digits": 2},
+    {"label": "u2 (y) = v2y − c", "formula": "v2y - (v2x + v2y) / 2", "digits": 2},
+    {"label": "check: u1 · u2 (always 0)", "formula": "1 * (v2x - (v2x + v2y) / 2) + 1 * (v2y - (v2x + v2y) / 2)", "digits": 4}
+  ],
+  "caption": "u1 = (1,1) is fixed. Wherever you drag v2, the check stays 0 — subtracting the exact projection guarantees orthogonality, not an approximation of it."
+}
+```

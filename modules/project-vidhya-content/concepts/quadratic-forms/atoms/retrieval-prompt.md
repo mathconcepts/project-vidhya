@@ -4,16 +4,14 @@ concept_id: quadratic-forms
 atom_type: retrieval_prompt
 bloom_level: 1
 difficulty: 0.3
-estimated_minutes: 1
 exam_ids: ["*"]
+estimated_minutes: 1
+retention_tags: ["definiteness", "Sylvester-criterion"]
 ---
 
-**Recall Question:** State the condition for a symmetric matrix $A$ to be positive definite in terms of its eigenvalues.
+From memory: what condition on a symmetric matrix's eigenvalues makes it positive definite, and what's the determinant-only equivalent?
 
 <details><summary>Answer</summary>
 
-A symmetric matrix $A$ is positive definite if and only if **all of its eigenvalues are strictly positive** (i.e., $\lambda_i > 0$ for all $i = 1, 2, \ldots, n$).
-
-Equivalently (by Sylvester's criterion): $A$ is positive definite iff all leading principal minors are positive.
-
+Positive definite $\iff$ every eigenvalue $\lambda_i>0$. Equivalently, by Sylvester's criterion, every leading principal minor $D_k>0$ for $k=1,\dots,n$.
 </details>

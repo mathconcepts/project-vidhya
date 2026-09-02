@@ -12,17 +12,17 @@ id: change-of-basis.intuition.shaken
 concept_id: change-of-basis
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.15
+difficulty: 0.1
 modality: visual
 exam_ids: ["*"]
 variant_of: change-of-basis.intuition
 for_stance: shaken
 ---
 
-Picture a point on the floor, $(3, 1)$ against the room's ordinary $x$-$y$ grid.
+$v_1=(1,1)$ and $v_2=(1,-1)$ form a basis $B$.
 
-Now tilt your head $45°$. The point hasn't moved. But read its coordinates off your tilted view and you get different numbers — about $(2.83, 1.41)$.
+$x=(3,1)$ in standard coordinates. Write $x=a\,v_1+b\,v_2$: $a+b=3$, $a-b=1$. Solving: $a=2$, $b=1$.
 
-One point. Two number-pairs. The change-of-basis matrix $P$ is the translator: feed it coordinates in one basis, it hands back coordinates in the other.
+So $[x]_B=(2,1)$.
 
-Check it: run $P^{-1}$ on $(2.83, 1.41)$ and you land back on $(3, 1)$.
+The matrix $P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$ does this conversion in one multiplication instead of solving equations each time: $P^{-1}x = [x]_B$.

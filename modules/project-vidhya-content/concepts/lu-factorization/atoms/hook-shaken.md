@@ -4,10 +4,8 @@
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# smallest true first step, concrete numbers before symbols, and the check
+# made explicit. No praise, no reassurance, no mention of feelings.
 id: lu-factorization.hook.shaken
 concept_id: lu-factorization
 atom_type: hook
@@ -18,4 +16,4 @@ variant_of: lu-factorization.hook
 for_stance: shaken
 ---
 
-Solving $Ax=b$ over and over with different $b$'s? Split $A=LU$ once. Then each new $b$ takes two fast steps — solve $Ly=b$, then $Ux=y$ — instead of full elimination every time.
+A matrix has a shape before you compute anything: elimination always zeroes the same positions below the diagonal, whatever $b$ turns out to be. Do that elimination once. Save the multipliers as $L$. Save the result as $U$. For any new $b$, two easy triangular solves replace the whole elimination. Check: multiply $L$ and $U$ back together — you must get $A$ exactly.

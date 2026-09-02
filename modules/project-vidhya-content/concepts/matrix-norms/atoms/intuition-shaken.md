@@ -4,25 +4,23 @@
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# smallest true first step, concrete numbers before symbols, the arithmetic
+# done in full, and an explicit check. No praise, no reassurance.
 id: matrix-norms.intuition.shaken
 concept_id: matrix-norms
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.15
-modality: visual
 exam_ids: ["*"]
+modality: visual
 variant_of: matrix-norms.intuition
 for_stance: shaken
 ---
 
-Feed a unit-length vector into $A$. The output's length depends on which direction you fed in.
+Take $A=\begin{pmatrix}4&0\\0&3\end{pmatrix}$.
 
-$\|A\|$ is the *biggest* output length over every possible unit input — the maximum stretch.
+Feed in $v=(1,0)$: $Av=(4,0)$ — stretched by $4$.
 
-Feed a unit vector into $A^{-1}$ too. $\kappa(A) = \|A\|\cdot\|A^{-1}\|$ multiplies the two biggest stretches together.
+Feed in $v=(0,1)$: $Av=(0,3)$ — stretched by $3$.
 
-Check: stretch the same amount everywhere and $\kappa(A)$ sits near $1$. Stretch one direction hard and barely touch another, and $\kappa(A)$ grows large.
+No other direction stretches more than $4$ or less than $3$ here, so $\|A\|_2=4$, and $\kappa_2(A)=4/3\approx1.33$: every direction gets stretched within a factor of $1.33$ of every other. That closeness is what "well-conditioned" means.

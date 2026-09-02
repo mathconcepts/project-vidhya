@@ -18,3 +18,5 @@ This is a subspace of $\mathbb{R}^m$, and its dimension is the **rank** of $A$.
 **Rank-Nullity Theorem:** For any $A \in \mathbb{R}^{m \times n}$:
 $$\text{rank}(A) + \text{nullity}(A) = n$$
 In other words, the dimension of column space plus dimension of null space equals the number of columns. This reflects the fundamental split: columns are partitioned into pivot columns (spanning column space) and free variables (generating null space basis vectors).
+
+**Method Selector.** Use rank–nullity directly ($\text{nullity} = n - \text{rank}$) when the question only asks for a *dimension*; row-reduce to build an explicit basis only when one is actually requested. A tempting shortcut — reading the column-space basis off the *reduced* matrix instead of the original $A$ — fails because row operations preserve $\text{Null}(A)$ but change $\text{Col}(A)$.

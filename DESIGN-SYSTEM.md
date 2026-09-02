@@ -50,7 +50,13 @@ Two accents, both semantic; everything else is grey.
 Content backed by a receipt object sits on a white surface with a 1px
 `rgba(52,199,89,.45)` inset border, radius 12, and a small ✓ disc caption reading
 "Verified · <source>". **No receipt object, no border.** Enforced by construction in
-`frontend/src/components/ui/ReceiptBorder.tsx`, whose props are unchanged.
+`frontend/src/components/ui/ReceiptBorder.tsx`. An optional `tone` prop
+(`'positive'` default, `'neutral'`) exists for exactly one case: a receipt
+nested inside a wrong-answer card, where the usual green ink/mark/border
+would read as a correctness signal it isn't meant to send. `'neutral'`
+keeps the same "Verified · <source>" claim in `--text-secondary` /
+`--text-tertiary` / `--separator` instead of green — it never changes
+whether the border renders, only its color when it does.
 
 ## Spacing & shape
 - 4px base: 4 · 8 · 12 · 16 · 20 · 24 · 32 · 40 · 48 · 64.

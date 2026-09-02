@@ -166,6 +166,14 @@ describe('the 5 opt-in modifiers (visual_first / simple_words / exam_timed / pre
     expect(out).toContain('आव्यूह');
   });
 
+  it('modifier.hindi_glossary carries distinct entries for eigenvalue and eigenvector (regression: a 4-term sample previously let a generator guess eigenvector\'s gloss from eigenvalue\'s, see docs/designs/2026-09-02-modifier-demonstration-samples.md row 5)', () => {
+    const r = resourceById('modifier.hindi_glossary');
+    const out = r.build({ ...baseArgs, active_modifiers: ['modifier.hindi_glossary'] });
+    expect(out).toContain('"eigenvalue" -> आइगेन मान (eigen maan)');
+    expect(out).toContain('"eigenvector" -> आइगेन सदिश (eigen sadish)');
+    expect(out.toLowerCase()).toContain('different words with different glosses');
+  });
+
   it('every one of the 5 passes its own contract at pilot state', async () => {
     ensureBuiltInPromptResourcesRegistered();
     const { runPromptResourceContract } = await import('../contract');

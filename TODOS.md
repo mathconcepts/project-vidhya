@@ -50,15 +50,28 @@ unchanged, same trap/step count, no fabricated claims) — for the next
 Vector Calculus (11 concepts) is the natural next slice, matching this
 pass's atom_type before moving to a new atom_type on Linear Algebra.
 
-**Also still open:** the 5 modifiers the uploaded Wolfram-inspired registry
-names but Vidhya has no implementation for (`modifier.visual_first`,
-`modifier.simple_words`, `modifier.exam_timed`,
-`modifier.prerequisite_repair`, `modifier.hindi_glossary` — registered at
-`approval_state: 'draft'` in `src/content/prompt-registry/resources/
-modifiers.ts`, never resolved into a live prompt). Each is its own scoped
-project: `modifier.hindi_glossary` in particular would need a real
-Hindi-English glossary decision (translation source, review process)
-before any code.
+**Resolved separately, same day:** the 5 modifiers the uploaded
+Wolfram-inspired registry named but Vidhya had no implementation for are
+now real (`src/content/prompt-registry/resources/modifiers.ts`), promoted
+from `approval_state: 'draft'` to `'pilot'` — opt-in via a new
+`active_modifiers`/`prerequisite_gap` field threaded through
+`OrchestratorOptions`. `modifier.hindi_glossary` uses a new curated
+NCERT-vocabulary data file (`src/content/prompt-registry/data/hindi-math-
+glossary.ts`, ~30 Linear Algebra terms) rather than inventing translations
+inline. A demonstration pack (`docs/designs/2026-09-02-modifier-
+demonstration-samples.md`) shows each modifier applied to real Linear
+Algebra content for review before any modifier graduates to `'released'`
+or gets applied at scale — none has been exercised by a live generation
+run yet (still the same missing-provider-key constraint as the tone-
+directive pass above), so `'pilot'` — not `'released'` — is the honest
+state until real usage evidence exists. The demo pass itself caught a real
+bug before any wider rollout: `modifier.hindi_glossary`'s directive text
+originally showed the generator only 4 sample terms (not `eigenvector`),
+and applying it to real content produced eigenvalue's gloss on the word
+"eigenvectors" — a value/vector mismatch. Fixed by putting the FULL
+curated table in the directive instead of a 4-term sample, with an
+explicit "match the exact term, not the nearest one" instruction, plus a
+regression test locking both distinct glosses in the output.
 
 **Effort:** M per additional (atom_type, topic) slice (~this pass's size),
 L+ for the full remaining corpus.

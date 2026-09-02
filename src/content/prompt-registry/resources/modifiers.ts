@@ -28,7 +28,7 @@
 
 import type { Modifier, PromptResourceBuildArgs } from '../types';
 import { registerPromptResource } from '../registry';
-import { lookupHindiGloss, formatHindiGloss } from '../data/hindi-math-glossary';
+import { formatHindiGloss, LINEAR_ALGEBRA_HINDI_GLOSSARY } from '../data/hindi-math-glossary';
 
 const TONE_REGISTER_BLOCK = `Register: write for a student who gets anxious about this exam and needs the plainest possible path in. ELI5 the reasoning — explain WHY a step happens, not just that it happens. The first time you use a technical term (e.g. "Hermitian", "eigenbasis", "orthonormal"), gloss it in plain words in the same sentence before using it bare again; never introduce two new terms back to back without grounding the first one. Default to Indian English: familiar Indian-classroom phrasing and idiom (e.g. "sums" for practice problems is fine), not translated-from-American phrasing. Short sentences. No word the student would have to look up.
 
@@ -214,16 +214,17 @@ export const hindiGlossaryModifier: Modifier = {
   ],
   build(args: PromptResourceBuildArgs): string {
     if (!isActive(args, 'modifier.hindi_glossary')) return '';
-    // A representative sample from the curated glossary relevant to
-    // Linear Algebra — the instruction below tells the generator HOW to
-    // use entries like these, not to invent glosses for terms outside
-    // the curated list.
-    const sample = ['matrix', 'eigenvalue', 'determinant', 'orthogonal']
-      .map((t) => lookupHindiGloss(t))
-      .filter((e): e is NonNullable<typeof e> => e != null)
-      .map((e) => `"${e.english}" -> ${formatHindiGloss(e)}`)
-      .join('; ');
-    return `Modifier: Hindi glossary. The first time you introduce a technical term that has a standard Hindi-medium equivalent, add it in parentheses right after the English term — e.g. ${sample}. Only use a Hindi gloss for a term you are confident is standard NCERT vocabulary; when unsure, leave the term in English rather than guessing a translation. Never translate the surrounding sentence into Hindi — the base language stays English (per the default Indian-English register); this modifier adds bridging glosses only, it does not change the language of instruction.\n\n`;
+    // The FULL curated table, not a sample — a generator shown only a few
+    // example terms (e.g. "eigenvalue" but not "eigenvector") has been
+    // observed guessing the nearest shown gloss by analogy, which is
+    // exactly the wrong-translation failure this modifier exists to
+    // prevent (see docs/designs/2026-09-02-modifier-demonstration-samples.md
+    // row 5: "eigenvalue"'s gloss misapplied to "eigenvectors"). Giving the
+    // real lookup table removes the need to guess at all — every term this
+    // modifier is allowed to gloss is listed here with its real, distinct
+    // entry.
+    const table = LINEAR_ALGEBRA_HINDI_GLOSSARY.map((e) => `"${e.english}" -> ${formatHindiGloss(e)}`).join('; ');
+    return `Modifier: Hindi glossary. The first time you introduce a technical term that has a standard Hindi-medium equivalent, add it in parentheses right after the English term, using ONLY this exact curated table — never a lookalike or a gloss borrowed from a similarly-named term (e.g. "eigenvalue" and "eigenvector" are DIFFERENT words with DIFFERENT glosses; match the exact term you are glossing, not the nearest one in the list):\n${table}\nA term not in this table has no gloss — leave it in plain English rather than guessing a translation. Never translate the surrounding sentence into Hindi — the base language stays English (per the default Indian-English register); this modifier adds bridging glosses only, it does not change the language of instruction.\n\n`;
   },
 };
 

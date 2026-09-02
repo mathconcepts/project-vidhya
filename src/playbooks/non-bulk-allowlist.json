@@ -29,5 +29,6 @@
   "verify:teaching",
   "verify:budget",
   "content:bundle",
-  "content:verification-report"
+  "content:verification-report",
+  "content:registry-audit"
 ]

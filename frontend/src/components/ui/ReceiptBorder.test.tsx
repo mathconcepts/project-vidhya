@@ -78,6 +78,17 @@ describe('ReceiptBorder', () => {
     expect(label.getAttribute('style')).toContain('--green-ink');
   });
 
+  it("tone='neutral' also drops the checkmark disc's own green background (--receipt-mark), not just the label ink", () => {
+    render(
+      <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }} tone="neutral">
+        <span>Not this time</span>
+      </ReceiptBorder>,
+    );
+    const mark = screen.getByText('✓');
+    expect(mark.getAttribute('style')).not.toContain('--receipt-mark');
+    expect(mark.getAttribute('style')).toContain('--text-tertiary');
+  });
+
   it('reads border color from the DESIGN-SYSTEM CSS custom properties, not a hardcoded class', () => {
     const { container } = render(
       <ReceiptBorder receipt={{ verified: true, source: 'cas_verifier' }}>

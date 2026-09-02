@@ -116,6 +116,8 @@ Walk back through predecessors: $E \leftarrow D \leftarrow B \leftarrow C \lefta
 
 $$\text{Path: } A \to C \to B \to D \to E \quad \text{(cost } 2+1+5+2 = 10\text{)}$$
 
+$$\boxed{d[E] = 10 \text{ via } A \to C \to B \to D \to E}$$
+
 ---
 
 ## GATE Trap

@@ -121,4 +121,56 @@ describe('SmartPracticePage — problem history (Previous / Next)', () => {
     await waitFor(() => expect(screen.getByText('Problem C')).toBeInTheDocument());
     expect(resolveMock).toHaveBeenCalledTimes(3);
   });
+
+  // Multi-specialist confirmed (/ship review army, 2026-09-02): switching
+  // topic or difficulty while sitting behind the frontier (after "Previous")
+  // must invalidate history — otherwise "Next problem" replays a stale entry
+  // fetched for the OLD topic instead of resolving fresh content for the
+  // newly selected one.
+  it('changing topic after Previous invalidates history — Next fetches fresh for the new topic instead of replaying a stale entry', async () => {
+    resolveMock
+      .mockResolvedValueOnce(problem('p-a', 'Problem A'))
+      .mockResolvedValueOnce(problem('p-b', 'Problem B'))
+      .mockResolvedValueOnce(problem('p-c', 'Problem C (calculus)'));
+    await renderPage();
+
+    fireEvent.click(screen.getByText('Get problem'));
+    await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Next problem'));
+    await waitFor(() => expect(screen.getByText('Problem B')).toBeInTheDocument());
+
+    // Step back — now sitting behind the frontier (history = [A, B], historyPos = 0).
+    fireEvent.click(screen.getByText('Previous'));
+    await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
+
+    // Switch topic while behind the frontier.
+    fireEvent.click(screen.getByText('calculus'));
+
+    // "Next problem" must NOT replay B (a stale, wrong-topic history entry)
+    // — it must resolve fresh content for the new topic selection.
+    fireEvent.click(screen.getByText('Next problem'));
+    await waitFor(() => expect(screen.getByText('Problem C (calculus)')).toBeInTheDocument());
+    expect(resolveMock).toHaveBeenCalledTimes(3);
+    expect(screen.queryByText('Problem B')).toBeNull();
+  });
+
+  it('changing difficulty after Previous invalidates history the same way', async () => {
+    resolveMock
+      .mockResolvedValueOnce(problem('p-a', 'Problem A'))
+      .mockResolvedValueOnce(problem('p-b', 'Problem B'))
+      .mockResolvedValueOnce(problem('p-c', 'Problem C (hard)'));
+    await renderPage();
+
+    fireEvent.click(screen.getByText('Get problem'));
+    await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Next problem'));
+    await waitFor(() => expect(screen.getByText('Problem B')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Previous'));
+    await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText('Hard'));
+    fireEvent.click(screen.getByText('Next problem'));
+    await waitFor(() => expect(screen.getByText('Problem C (hard)')).toBeInTheDocument());
+    expect(resolveMock).toHaveBeenCalledTimes(3);
+  });
 });

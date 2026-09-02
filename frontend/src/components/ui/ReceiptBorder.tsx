@@ -40,6 +40,10 @@ export function ReceiptBorder({ receipt, children, className, tone = 'positive' 
   if (!verified) return <>{children}</>;
   const inkColor = tone === 'neutral' ? 'var(--text-secondary)' : 'var(--green-ink)';
   const markBackground = tone === 'neutral' ? 'var(--text-tertiary)' : 'var(--receipt-mark)';
+  // `--receipt-line` is green — the outer card border must follow tone too,
+  // or a wrong-answer receipt still wears a green-bordered card even after
+  // the ink/mark stop being green (found by /ship's review army, 2026-09-02).
+  const borderColor = tone === 'neutral' ? 'var(--separator)' : 'var(--receipt-line)';
 
   return (
     <div
@@ -49,7 +53,7 @@ export function ReceiptBorder({ receipt, children, className, tone = 'positive' 
         borderRadius: 'var(--radius-sm)',
         padding: 14,
         background: 'var(--surface-card)',
-        boxShadow: 'inset 0 0 0 1px var(--receipt-line)',
+        boxShadow: `inset 0 0 0 1px ${borderColor}`,
       }}
     >
       <span

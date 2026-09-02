@@ -18,7 +18,7 @@
  * practice/retain action carries an objectId.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
@@ -86,6 +86,15 @@ const COMMON_MISTAKE_LABEL: Record<string, string> = {
   time_pressure: 'rushing under time pressure',
   risk_decision: 'a risky guess rather than a knowledge gap',
   prerequisite: 'a gap in an earlier concept, not this one',
+};
+
+// Shared base for the two post-wrong-answer CTA buttons below — only
+// background/border/color differ per button (indigo vs. green).
+const NEXT_MOVE_BUTTON_BASE: CSSProperties = {
+  flex: 1, minHeight: 44, padding: '0 12px', borderRadius: 'var(--radius-sm)',
+  fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
+  fontFamily: 'var(--font-sans)', cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
 };
 
 const fmt = (n: number) => {
@@ -504,11 +513,9 @@ export default function PracticeAttemptPage() {
                         type="button"
                         onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
                         style={{
-                          flex: 1, minHeight: 44, padding: '0 12px', borderRadius: 'var(--radius-sm)',
+                          ...NEXT_MOVE_BUTTON_BASE,
                           background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
-                          color: 'var(--indigo-ink)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
-                          fontFamily: 'var(--font-sans)', cursor: 'pointer',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          color: 'var(--indigo-ink)',
                         }}
                       >
                         <GraduationCap size={14} /> Explore this concept
@@ -517,11 +524,9 @@ export default function PracticeAttemptPage() {
                         type="button"
                         onClick={() => navigate(`/smart-practice?concept=${encodeURIComponent(item.node_id)}`)}
                         style={{
-                          flex: 1, minHeight: 44, padding: '0 12px', borderRadius: 'var(--radius-sm)',
+                          ...NEXT_MOVE_BUTTON_BASE,
                           background: 'var(--green)', border: 'none',
-                          color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
-                          fontFamily: 'var(--font-sans)', cursor: 'pointer',
-                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          color: 'var(--text-on-accent)',
                         }}
                       >
                         <Repeat size={14} /> Practice more like this

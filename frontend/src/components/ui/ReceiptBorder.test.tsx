@@ -102,4 +102,19 @@ describe('ReceiptBorder', () => {
     // the CSS var (rather than a literal color) keeps the two in sync.
     expect(wrapper.getAttribute('style')).toContain('--receipt-line');
   });
+
+  // /ship review-army (2026-09-02): tone='neutral' recolored the ink and
+  // checkmark disc but left this outer card border hardcoded to the green
+  // --receipt-line token, so a wrong-answer receipt still wore a
+  // green-bordered card — the exact collision the tone prop exists to remove.
+  it("tone='neutral' also swaps the outer card's border away from the green --receipt-line token", () => {
+    const { container } = render(
+      <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }} tone="neutral">
+        <span>Not this time</span>
+      </ReceiptBorder>,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.getAttribute('style')).not.toContain('--receipt-line');
+    expect(wrapper.getAttribute('style')).toContain('--separator');
+  });
 });

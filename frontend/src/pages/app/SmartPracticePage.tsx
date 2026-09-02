@@ -95,6 +95,15 @@ export default function SmartPracticePage() {
   const [history, setHistory] = useState<ResolvedContent[]>([]);
   const [historyPos, setHistoryPos] = useState(-1);
 
+  // Switching topic or difficulty invalidates the history stack — otherwise
+  // stepping "Previous" then picking a new topic and hitting "Next problem"
+  // replays a stale, wrong-topic entry instead of fetching fresh content for
+  // the new selection (found by /ship's review army, 2026-09-02).
+  const resetHistory = useCallback(() => {
+    setHistory([]);
+    setHistoryPos(-1);
+  }, []);
+
   useEffect(() => {
     trackEvent('page_view', { page: 'smart-practice' });
     warmContentBundle();
@@ -158,11 +167,12 @@ export default function SmartPracticePage() {
         } catch {}
       }
       setResolved(result);
-      setHistory(h => {
-        const next = [...h, result];
-        setHistoryPos(next.length - 1);
-        return next;
-      });
+      // nextProblem() is recreated whenever `history` changes (it's in this
+      // callback's own deps below), so the closed-over `history` here is
+      // always current — no need to read it back out of a setState updater.
+      const nextHistory = [...history, result];
+      setHistory(nextHistory);
+      setHistoryPos(nextHistory.length - 1);
       setStartedAt(Date.now());
       setSessionStats(s => ({
         problems_served: s.problems_served + 1,
@@ -244,7 +254,7 @@ export default function SmartPracticePage() {
             {examTopics.map(t => (
               <button
                 key={t}
-                onClick={() => setTopic(t)}
+                onClick={() => { setTopic(t); resetHistory(); }}
                 style={{
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-sm)',
@@ -271,7 +281,7 @@ export default function SmartPracticePage() {
             {DIFFICULTY_LABELS.map(d => (
               <button
                 key={d.value}
-                onClick={() => setDifficulty(d.value)}
+                onClick={() => { setDifficulty(d.value); resetHistory(); }}
                 style={{
                   flex: 1,
                   padding: '6px 0',

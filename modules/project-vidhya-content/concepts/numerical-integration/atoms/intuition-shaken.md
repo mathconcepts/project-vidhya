@@ -18,7 +18,7 @@ variant_of: numerical-integration.intuition
 for_stance: shaken
 ---
 
-## One strip, one number, before the general rule
+## One strip, one number, worked by hand first
 
 $\int_0^1\frac{dx}{1+x}$ has a closed form, $\ln2\approx0.6931$, but set that aside. Approximate the area with a single trapezoid, using only $f(0)=1$ and $f(1)=0.5$:
 

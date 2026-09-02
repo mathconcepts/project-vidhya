@@ -3,31 +3,24 @@ id: numerical-ode.intuition
 concept_id: numerical-ode
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 ---
 
-## Why Numerical Solvers?
+## Stepping along a slope you can only see locally
 
-Most differential equations encountered in engineering—modelling fluid dynamics, heat transfer, control systems, or circuit behavior—have **no closed-form solution**. You can write down $\frac{dy}{dt} = f(t, y)$, but algebra alone won't solve it. This is where **numerical ODE solvers** become essential.
+Given $y'=f(t,y)$, $y(t_0)=y_0$, the only tool available at each point is the slope $f$ evaluated there — no global formula.
 
-The fundamental insight is deceptively simple: *you can approximate the solution one small step at a time*. If you know the solution value $y_n$ at time $t_n$, you can use the **slope of the solution** (the derivative $f(t_n, y_n)$) to predict where it will be a tiny step $h$ later.
+**Euler's method** takes that single slope and commits fully to it for one whole step:
 
-### The Core Stepping Strategy
+$$y_{n+1}=y_n+h\,f(t_n,y_n)$$
 
-Imagine walking forward in a direction indicated by the terrain beneath your feet—that direction is the derivative at your location. You take a small step in that direction, arrive at a new point, check the new slope, adjust, and repeat. The smaller your steps, the more closely you follow the true path.
+This is first-order: the *global* error is $O(h)$, so halving $h$ only halves the error — twice the work for half the gain.
 
-This is **Euler's method**: 
-$$y_{n+1} = y_n + h \cdot f(t_n, y_n)$$
+**RK4** samples the slope four times per step — once at the start, twice near the midpoint (using two different trial estimates), once near the end — and combines them with fixed weights $1,2,2,1$ (divided by $6$):
 
-where $h$ is the step size.
+$$y_{n+1}=y_n+\frac{h}{6}(k_1+2k_2+2k_3+k_4)$$
 
-### Why It Matters for GATE
+The extra sampling buys fourth-order global accuracy, $O(h^4)$: halving $h$ cuts the error by roughly $16\times$, at the cost of four function evaluations per step instead of one.
 
-You'll encounter questions about:
-- **Truncation error vs. step size**: smaller $h$ gives accuracy but more work
-- **Stability analysis**: some methods blow up for large $h$; others remain stable
-- **Method comparison**: Runge-Kutta evaluates slopes more cleverly than Euler, reducing per-step error
-
-The ability to step forward along a slope—and understand the trade-offs—is the foundation of all numerical analysis.
+**Stability** is a separate concern from accuracy: a method can be mathematically higher-order and still blow up numerically if the step size is too large for how fast the true solution is decaying or oscillating — checking a method's stability region matters as much as checking its order.

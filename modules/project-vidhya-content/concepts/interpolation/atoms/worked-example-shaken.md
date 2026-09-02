@@ -19,7 +19,7 @@ variant_of: interpolation.worked-example
 for_stance: shaken
 ---
 
-Stop once all three basis values are found and combined — that is the whole computation.
+Stop once all three basis values are found and combined — nothing else is needed.
 
 $$L_1(1.5)=\frac{(1.5-2)(1.5-3)}{(1-2)(1-3)}=\frac{0.75}{2}=0.375$$
 

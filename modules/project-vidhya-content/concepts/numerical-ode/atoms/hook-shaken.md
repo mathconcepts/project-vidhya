@@ -12,10 +12,10 @@ id: numerical-ode.hook.shaken
 concept_id: numerical-ode
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: numerical-ode.hook
 for_stance: shaken
 ---
 
-$\frac{dy}{dx}=x^2+y^2$ with $y(0)=1$ cannot be written using ordinary functions. Take one small step anyway: the slope at the start is $0^2+1^2=1$, so with step size $0.1$, $y$ moves to $1+0.1(1)=1.1$. Repeat that same small step over and over and a curve with no formula becomes a table of numbers.
+$\frac{dy}{dt}=-2y$, $y(0)=1$. You don't need the formula for $y(t)$ to take one step: the slope right now is $-2\times1=-2$. Move forward by $h=0.1$ along that slope: $y(0.1)\approx1+0.1\times(-2)=0.8$. One slope, one small step, one new value — that step, repeated, is the entire method.

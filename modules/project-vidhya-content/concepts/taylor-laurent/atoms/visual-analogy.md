@@ -1,23 +1,17 @@
 ---
-id: taylor-laurent.visual-analogy
+id: taylor-laurent.visual_analogy
 concept_id: taylor-laurent
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.3
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## The Zoom-In Principle
+A Laurent series doesn't converge everywhere — only in an **annulus**, a ring between two radii. For $f(z)=\dfrac{z}{(z-1)(z-2)}$ the relevant ring is $1<|z|<2$: inner radius set by the pole at $z=1$, outer radius set by the pole at $z=2$.
 
-Imagine a complex landscape viewed from an airplane. The farther you zoom in with a microscope, the flatter it looks—eventually just a linear slope, then polynomial curves. **Taylor series does exactly this**: zooming into an analytic function near a point reveals polynomial behavior at every scale.
-
-But what if your microscope hits a hole (singularity)? **Laurent series is the zoom-in that accommodates the hole**. It describes both the polynomial surroundings AND the asymptotic behavior spiraling into the singularity—the "negative power" terms capture the divergence.
-
-The key exam insight: singularities are *visible in the series*. Poles show finitely many negative powers; essential singularities show infinitely many—a tell-tale sign in the formula that transcends any graph.
+Sweep a growing circle $|z|^2=c$ from $c=1$ out to $c=4$ (that is, $|z|$ from $1$ to $2$) and you're filling in exactly this annulus — the region where the one Laurent series from this concept's worked example is valid. Step outside either radius and a *different* series (a different choice of which term expands which way) takes over.
 
 ```gif-scene
-{"type":"function-trace","expression":"1/(1-x)","x_range":[-0.5,0.8],"y_range":[-10,10],"frames":30,"fps":12}
+{"type":"level-set","expression":"x^2+y^2","c_range":[1,4],"x_range":[-2.5,2.5],"y_range":[-2.5,2.5],"title":"Annulus 1 < |z| < 2 where this Laurent series converges"}
 ```
-
-The vertical asymptote at $x=1$ is the pole—exactly where the Laurent series principal part reveals an isolated singularity.

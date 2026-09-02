@@ -11,10 +11,10 @@ id: numerical-ode.hook.assured
 concept_id: numerical-ode
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: numerical-ode.hook
 for_stance: assured
 ---
 
-Euler's accuracy bound says nothing about stability — that's a separate condition: for $y'=\lambda y$, the iterates stay bounded only while $|1+h\lambda|<1$, i.e. $h<2/|\lambda|$ for real negative $\lambda$. Take $y'=-100y,\,y(0)=1$: the true solution decays smoothly to $0$, yet Euler with $h=0.1$ amplifies by $1-100(0.1)=-9$ each step — sign-alternating and growing, even though nothing about the equation itself looks unstable.
+"Higher order" describes *local* accuracy per step, not automatic safety. Explicit Euler on $y'=-2y$ with a step size too large relative to the coefficient doesn't just lose accuracy — the numerical solution oscillates and grows without bound, a stability failure entirely separate from truncation error. RK4's larger stability region delays this, but does not remove it: every explicit method has a step-size threshold past which the discrete solution diverges even though the true solution decays smoothly to zero.

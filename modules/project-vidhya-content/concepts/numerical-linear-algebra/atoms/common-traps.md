@@ -7,6 +7,8 @@ difficulty: 0.3
 exam_ids: ["*"]
 ---
 
-- **LU multiplier sign flip**: When forming the multiplier $m = a_{j1} / a_{11}$, the sign goes into the $L$ matrix as-is, NOT negated. A question asks "find $L$ such that $A = LU$"; many students write $L$ with flipped signs, getting the wrong result. Double-check: $L_{i,1} = m_{i,1}$ exactly, not $-m$.
-- **Forgetting to update both sides**: In Gaussian elimination on an augmented matrix $[A | b]$, the right-hand side $b$ must be updated in lockstep with $A$. A student might correctly eliminate the left side but forget to subtract from $b$, leading to the wrong solution.
-- **Matrix norm confusion**: There are many norms: $L_1$ (max column sum), $L_\infty$ (max row sum), $L_2$ (largest singular value), Frobenius. A question says "compute the matrix norm"; students may compute the wrong one. Read carefully: if it says $\|A\|_2$, that's the spectral norm; if it gives a formula like $\sqrt{\sum a_{ij}^2}$, that's Frobenius.
+**Trap 1 — Multiplier sign.** $L_{i1}=m_{i1}=a_{i1}/a_{11}$ goes into $L$ as-is, never negated. Writing $-m$ into $L$ is a common reflex from remembering "subtract the multiple," but the *subtraction* already happened in forming $U$ — $L$ just records what was subtracted.
+
+**Trap 2 — Forgetting to update $b$.** On an augmented matrix $[A\,|\,b]$, every row operation on $A$ must apply to $b$ too. Eliminating only the left side and forgetting the right gives a $U$ that's correct but a $y$ or $x$ that isn't.
+
+**Trap 3 — Matrix norm confusion.** $\|A\|_1$ (max column sum), $\|A\|_\infty$ (max row sum), $\|A\|_2$ (largest singular value), and the Frobenius norm are all different numbers. A question that gives a formula like $\sqrt{\sum a_{ij}^2}$ means Frobenius, not $\|A\|_2$.

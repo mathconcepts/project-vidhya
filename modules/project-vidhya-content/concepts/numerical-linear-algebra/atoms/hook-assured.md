@@ -11,10 +11,10 @@ id: numerical-linear-algebra.hook.assured
 concept_id: numerical-linear-algebra
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: numerical-linear-algebra.hook
 for_stance: assured
 ---
 
-Jacobi and Gauss-Seidel converge only when $A$ is strictly diagonally dominant — a property of how the equations are written, not of whether the system has a solution. Reorder $4x+y=6,\ x+3y=5$ as $x+3y=5,\ 4x+y=6$ and dominance is gone: the identical, perfectly solvable system, run through the same Jacobi update from $0,0$, produces $5,6$ then $-13,-14$, while direct elimination on those same equations still gives $x=13/11$ in one pass.
+A clean elimination with no arithmetic slips can still hand back a solution that's practically meaningless: if $\kappa(A)=\|A\|\|A^{-1}\|$ is large, a tiny perturbation in $b$ (rounding, measurement noise) amplifies into a large error in $x$, regardless of how carefully $L$ and $U$ were computed. Pivoting fixes a different problem — numerical instability *during* elimination — and does nothing for a matrix that is simply, structurally, close to singular.

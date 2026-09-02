@@ -1,25 +1,13 @@
 ---
-# Alternative body for ode-second-order-nonhomo-intuition, served when the
-# learner stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# for_stance: assured — the one distinction that costs marks: check the WHOLE trial polynomial for overlap, not just whether f(x) itself is a homogeneous solution.
 id: ode-second-order-nonhomo.intuition.assured
 concept_id: ode-second-order-nonhomo
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: ode-second-order-nonhomo-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: ode-second-order-nonhomo.intuition
 for_stance: assured
 ---
 
-The undetermined-coefficients trial gets bumped by $x^k$, where $k$ is how many times the forcing rate already appears as a root of the characteristic equation — a single collision needs $\times x$, a double root at that same rate needs $\times x^2$. Missing that bump, not a coefficient-algebra slip, is the standard resonance error.
-
-For $f(x)=\sin(bx)$ alone, the trial still needs both $A\cos(bx)$ and $B\sin(bx)$: differentiating $\sin$ produces $\cos$, so a one-term trial can never balance the equation no matter how carefully $A$ is solved for.
-
-Reach for variation of parameters only once $f(x)$ falls outside the polynomial/exponential/sinusoid catalogue undetermined coefficients handles — not as a longer default replacing the shorter route when the shorter one would have worked.
+The undetermined-coefficients table assumes no overlap between $f(x)$'s trial family and $y_h$ — check that first, not just whether $f(x)$ itself is a homogeneous solution. For $y''-y'=x$ (roots $r=0,1$), the naive trial $y_p=Ax+B$ has a constant term $B$ that duplicates the $r=0$ solution $C_1$, even though $f(x)=x$ itself isn't a homogeneous solution. The fix is the same $x$-multiplication rule: try $y_p=x(Ax+B)=Ax^2+Bx$ instead. A tempting-but-wrong shortcut is checking overlap only at $f(x)$'s own degree or frequency, when the whole trial polynomial — every lower-degree term it drags in — needs the check.

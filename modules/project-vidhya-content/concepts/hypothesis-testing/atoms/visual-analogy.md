@@ -35,7 +35,7 @@ A court sets a *high* standard ("beyond reasonable doubt") to protect the innoce
 Under $H_0$, the test statistic follows a known curve — the standard normal below. The shaded tails beyond $\pm 1.96$ are the rejection region at $\alpha=0.05$: land there, and the "verdict" is reject $H_0$.
 
 ```gif-scene
-{"type":"function-trace","expression":"exp(-(x*x)/2)","x_range":[-4,4],"y_range":[0,1.1],"title":"The standard normal curve under H0 — tails past ±1.96 are the rejection region"}
+{"type":"function-trace","expression":"exp(-(x*x)/2)","x_range":[-4,4],"y_range":[0,1.1],"title":"Standard normal under H0: tails past ±1.96 rejected"}
 ```
 
 ## Remember

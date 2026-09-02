@@ -11,11 +11,11 @@ id: vector-algebra-basics.intuition.assured
 concept_id: vector-algebra-basics
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.15
+difficulty: 0.10
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: vector-algebra-basics.intuition
 for_stance: assured
 ---
 
-$\vec a\times\vec b=-(\vec b\times\vec a)$: order matters, and swapping it flips the sign but not the magnitude — the parallelogram's area does not care which vector comes first, but the direction of the resulting normal does, and that direction feeds directly into any later triple product or torque calculation. For the triple product $[\vec a\,\vec b\,\vec c]$, only whether it equals $0$ signals coplanarity; its sign separately reports orientation, right-handed if positive, left-handed if negative, and carries no information about how flat or spread out the three vectors are. Reading a negative triple product as less coplanar than a positive one of the same magnitude is treating a handedness label as a magnitude.
+A sharper check than most students reach for: $\vec a\times\vec b=\vec 0$ only tests whether $\vec a$ and $\vec b$ are parallel to **each other**. It says nothing about a third vector $\vec c$ — checking whether $\vec c$ lies in the plane spanned by $\vec a,\vec b$ needs the scalar triple product, $\vec a\cdot(\vec b\times\vec c)=0$, not a second cross product. GATE MSQs exploit exactly this: three vectors are given, two of them parallel, and the question asks whether all three are coplanar — computing only $\vec a\times\vec b$ answers a different question than the one asked. Coplanarity of three vectors is a volume-zero statement, not a direction-zero statement, and volume needs all three vectors inside one product.

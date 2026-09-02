@@ -3,21 +3,15 @@ id: boolean-algebra.micro-exercise
 concept_id: boolean-algebra
 atom_type: micro_exercise
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.35
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-Apply De Morgan's law to simplify $\overline{A+B}$.
-
-- **(A)** $\bar{A} + \bar{B}$
-- **(B)** $\bar{A} \cdot \bar{B}$
-- **(C)** $A \cdot B$
-- **(D)** $A + B$
+Simplify the Boolean expression $F = A'B + AB$ using the algebraic laws directly, not a K-map.
 
 <details>
 <summary>Answer</summary>
 
-**B**. De Morgan's first law: $\overline{A+B} = \bar{A} \cdot \bar{B}$. The complement of a sum equals the product of the complements. Option A incorrectly distributes the complement over OR (that would need the law to flip the operator too). Option C drops the complement entirely. Option D is the original expression unchanged.
-
+$F = B(A'+A) = B\cdot1 = B$ — factoring out $B$, then using the complement law $A'+A=1$.
 </details>

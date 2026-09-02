@@ -3,28 +3,13 @@ id: discrete-distributions.visual-analogy
 concept_id: discrete-distributions
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.2
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## The Coin Flip Hierarchy
-
-Imagine flipping a fair coin over and over. Three questions naturally arise:
-
-**"How many heads in 10 flips?"** → **Binomial distribution**. You fix the number of trials ($n=10$), each trial has probability $p=0.5$, and you count successes. The probability peaks at 5 heads, but 4, 6, or 3 are all plausible.
-
-**"How long until my first heads?"** → **Geometric distribution**. You keep flipping until success, asking "Did I get heads on flip 1? On flip 2? On flip 3?" The probability drops sharply—getting heads on the first flip is much more likely than on the 50th.
-
-**"I have 100 biased coins: 40 are fair, 60 are rigged (always heads). I grab 10 randomly. How many fair coins did I grab?"** → **Hypergeometric distribution**. You're sampling *without replacement* from a finite pool, so each draw changes the pool's composition.
+Six bars, one per possible count of successes out of 5 trials at $p=0.3$: the tallest sits at $k=1$, not $k=2$ or $k=3$ — because with $p<0.5$, the most likely outcome tilts toward fewer successes, not the middle. The bars' heights sum to exactly 1, and the whole shape shifts right as $p$ grows past $0.5$ and left as it shrinks further below it. Watching where the peak sits is a faster sanity check than computing every term: a peak far from $np$ signals an arithmetic slip somewhere in the six terms.
 
 ```gif-scene
-{
-  "type": "discrete-bars",
-  "values": [0.0009765625, 0.009765625, 0.0439453125, 0.1171875, 0.205078125, 0.24609375, 0.205078125, 0.1171875, 0.0439453125, 0.009765625, 0.0009765625],
-  "labels": ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-  "title": "Binomial: Heads in 10 Fair Coin Flips"
-}
+{"type":"discrete-bars","values":[0.16807,0.36015,0.3087,0.1323,0.02835,0.00243],"labels":["k=0","k=1","k=2","k=3","k=4","k=5"]}
 ```
-
-Each story (fixed trials vs. time-to-first vs. sampling without replacement) unlocks a different formula. Learn to **see the coin flip story** in your problem, and the distribution follows automatically.

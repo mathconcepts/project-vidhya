@@ -4,8 +4,8 @@ concept_id: spectral-theorem
 atom_type: interleaved_drill
 bloom_level: 4
 difficulty: 0.60
-exam_ids: ["*"]
 modality: drill
+exam_ids: ["*"]
 tested_by_atom: spectral-theorem.micro-exercise
 ---
 
@@ -25,4 +25,4 @@ $$A^3 = 27\,\mathbf{q}_1\mathbf{q}_1^{\mathrm{T}} + 343\,\mathbf{q}_2\mathbf{q}_
 
 *Answer:* Eigenvectors are $(1,0)^{\mathrm{T}}$ for $\lambda = 3$ and $(1,4)^{\mathrm{T}}$ for $\lambda = 7$ (verified). Their dot product is $1 \neq 0$ — **not orthogonal**. So $C = PDP^{-1}$ exists, but $P^{-1} \neq P^{\mathrm{T}}$: you must genuinely invert $P$. And no other eigenbasis fixes this — the eigenvectors are determined up to scaling, and scaling cannot make a nonzero dot product vanish. $C$ is not symmetric, so it does not get the strong guarantee.
 
-**Why this drill exists:** the misconception is "distinct eigenvalues ⇒ orthogonally diagonalizable." Distinct eigenvalues buy you a *basis* of eigenvectors — that is all. Only symmetry buys you an **orthonormal** one, and that is precisely what turns the expensive $P^{-1}$ into a free $Q^{\mathrm{T}}$. Symmetry is the hypothesis doing the work in every spectral shortcut you will use in the exam.
+**Why this drill exists:** the misconception is "distinct eigenvalues ⇒ orthogonally diagonalizable." Distinct eigenvalues buy you a *basis* of eigenvectors — that is all. Only symmetry buys you an **orthonormal** one, and that is precisely what turns the expensive $P^{-1}$ into a free $Q^{\mathrm{T}}$.

@@ -4,8 +4,8 @@ concept_id: svd
 atom_type: mnemonic
 bloom_level: 2
 difficulty: 0.20
-exam_ids: ["*"]
 modality: mnemonic
+exam_ids: ["*"]
 ---
 
 **"Rotate — Stretch — Rotate."** Read $A = U\Sigma V^T$ right to left, the way it acts on a vector: $V^T$ rotates, $\Sigma$ stretches along the axes, $U$ rotates again. Every matrix on earth is exactly those three moves. That's why SVD exists for *any* $A$ — even non-square, even singular.

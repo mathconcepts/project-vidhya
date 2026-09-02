@@ -1,30 +1,79 @@
 ---
-# Alternative body for vector-fields.worked-example, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
-id: vector-fields.worked_example.shaken
+# Alternative body for vector-fields.worked-example, served when the learner
+# stance is `shaken`. Prose held at or below the base atom's length; the
+# extra steps live in the walkthrough below.
+id: vector-fields.worked-example.shaken
 concept_id: vector-fields
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: vector-fields-worked-example
+difficulty: 0.20
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: vector-fields.worked-example
 for_stance: shaken
 ---
 
-$\mathbf F=(2xy,\,x^2-y^2)$. First the check: $P=2xy,\,Q=x^2-y^2$. $\partial Q/\partial x=2x$. $\partial P/\partial y=2x$. Equal, so $\mathbf F$ is conservative on all of $\mathbb R^2$, a domain with no holes to worry about.
+**Problem:** $\mathbf F(x,y)=(3x^2y,\ x^3+3y^2)$. Find its scalar potential $\phi$ and evaluate $\phi(2,1)-\phi(0,0)$.
 
-Build $\phi$ one piece at a time. Integrate $\partial\phi/\partial x=2xy$ over $x$: $\phi=x^2y+g(y)$. Differentiate that with respect to $y$: $x^2+g'(y)$, and match it to $\partial\phi/\partial y=x^2-y^2$, giving $g'(y)=-y^2$, so $g(y)=-\frac{y^3}{3}$. So $\phi=x^2y-\frac{y^3}{3}$.
+---
 
-Evaluate along $y=x$ from $(0,0)$ to $(1,1)$: since $\mathbf F$ is conservative, the path itself does not matter — $\int_C\mathbf F\cdot d\mathbf r=\phi(1,1)-\phi(0,0)=\left(1-\frac13\right)-0=\frac23$.
+**Step 1 — Name $P$ and $Q$.** $P=3x^2y$, $Q=x^3+3y^2$.
+
+---
+
+**Step 2 — Compare $\partial Q/\partial x$ and $\partial P/\partial y$.** $\partial Q/\partial x=3x^2$. $\partial P/\partial y=3x^2$. Equal, so $\mathbf F$ is conservative and a potential exists.
+
+---
+
+**Step 3 — Integrate $P$ in $x$.** $\phi = \int 3x^2y\,dx = x^3y + g(y)$.
+
+---
+
+**Step 4 — Match $\partial\phi/\partial y$ to $Q$.** $x^3+g'(y)=x^3+3y^2 \Rightarrow g'(y)=3y^2 \Rightarrow g(y)=y^3$.
+
+$$\phi(x,y)=x^3y+y^3$$
+
+---
+
+**Step 5 — Evaluate.** $\phi(2,1)=8+1=9$. $\phi(0,0)=0$.
+
+$$\boxed{\phi(2,1)-\phi(0,0)=9}$$
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: is F = (2xy, x²-y²) conservative? Evaluate ∫_C F·dr","steps":[{"prompt":"For F = (2xy, x² − y²), compute ∂Q/∂x where Q = x² − y².","hint":"Differentiate x² − y² with respect to x, treating y as constant.","answer":"∂Q/∂x = 2x"},{"prompt":"Now compute ∂P/∂y where P = 2xy, and state whether F is conservative.","hint":"Differentiate 2xy with respect to y, treating x as constant. Then compare with ∂Q/∂x.","answer":"∂P/∂y = 2x. Since ∂Q/∂x = ∂P/∂y = 2x, F is conservative."},{"prompt":"Using the scalar potential φ = x²y − y³/3, evaluate ∫_C F·dr from (0,0) to (1,1).","hint":"For a conservative field, ∫_C F·dr = φ(endpoint) − φ(startpoint). Plug in (1,1) and (0,0).","answer":"φ(1,1) − φ(0,0) = (1 − 1/3) − 0 = 2/3"}]}
+{
+  "v": 1,
+  "kind": "guided_walkthrough",
+  "title": "Walk through: potential of F = (3x²y, x³+3y²)",
+  "steps": [
+    {
+      "prompt": "Step 1: Name P and Q from F = (3x²y, x³+3y²).",
+      "hint": "F = (P, Q), so P is the first component and Q is the second.",
+      "answer": "P = 3x²y, Q = x³+3y²"
+    },
+    {
+      "prompt": "Step 2: Test whether F is conservative. What do you compare?",
+      "hint": "Compute ∂Q/∂x and ∂P/∂y and check whether they match.",
+      "answer": "∂Q/∂x = 3x² and ∂P/∂y = 3x² — equal, so F is conservative.",
+      "eqn": "∂Q/∂x = ∂/∂x(x³+3y²) = 3x²;  ∂P/∂y = ∂/∂y(3x²y) = 3x²"
+    },
+    {
+      "prompt": "Step 3: Integrate P = 3x²y with respect to x to start building φ.",
+      "hint": "Treat y as constant while integrating in x, and add an unknown function g(y).",
+      "answer": "φ = x³y + g(y)",
+      "eqn": "∫ 3x²y dx = x³y + g(y)"
+    },
+    {
+      "prompt": "Step 4: Differentiate this φ in y and match it to Q = x³+3y² to find g(y).",
+      "hint": "∂φ/∂y = x³ + g'(y). Set this equal to Q, solve for g'(y), then integrate.",
+      "answer": "g'(y) = 3y² ⟹ g(y) = y³, so φ(x,y) = x³y + y³",
+      "eqn": "x³ + g'(y) = x³ + 3y² ⟹ g'(y) = 3y² ⟹ g(y) = y³"
+    },
+    {
+      "prompt": "Step 5: Evaluate φ(2,1) − φ(0,0).",
+      "hint": "Substitute both points into φ = x³y + y³ and subtract.",
+      "answer": "φ(2,1) − φ(0,0) = 9 − 0 = 9"
+    }
+  ],
+  "caption": "The last line is only valid because Step 2 confirmed F is conservative — for a non-conservative field the path itself would matter."
+}
 ```

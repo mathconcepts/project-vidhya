@@ -15,7 +15,7 @@ for_stance: assured
 
 $f(x)=x^2$ ($x<1$), $ax+b$ ($x\ge1$), differentiable at $x=1$: continuity gives $a+b=1$; matching slopes ($2x$ at $x=1$ versus constant $a$) gives $a=2$, so $b=-1$ — mechanical once both conditions are written down.
 
-The distinction worth the marks: **two** equations are required, not one. A student who only imposes continuity gets a family of valid-looking $(a,b)$ pairs and stops one condition short of pinning down a unique answer; a student who only imposes matching slopes never checks whether the pieces even meet at $x=1$ at all. Both conditions are independent constraints — neither implies the other.
+What actually costs marks: **two** equations are required, not one. A student who only imposes continuity gets a family of valid-looking $(a,b)$ pairs and stops one condition short of pinning down a unique answer; a student who only imposes matching slopes never checks whether the pieces even meet at $x=1$ at all. Both conditions are independent constraints — neither implies the other.
 
 $$
 \boxed{a=2,\ b=-1}

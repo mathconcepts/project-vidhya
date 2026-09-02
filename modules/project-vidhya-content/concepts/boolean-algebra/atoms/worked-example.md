@@ -1,115 +1,31 @@
 ---
-id: boolean-algebra-worked-example
+id: boolean-algebra.worked-example
 concept_id: boolean-algebra
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
+difficulty: 0.25
+exam_ids: ["*"]
+scaffold_fade: true
 ---
 
-# Boolean Algebra — Worked Examples
-
-## Problem 1: K-Map Simplification (GATE Style)
-
-**Question:** Simplify $F = A'BC + AB'C + ABC' + ABC$ using a K-map.
-
-**Step 1 — Identify the minterms.**
-
-Convert each term to minterm numbers (A is MSB, C is LSB):
-
-| Term | A B C | Minterm |
-|---|---|---|
-| $A'BC$ | 0 1 1 | $m_3$ |
-| $AB'C$ | 1 0 1 | $m_5$ |
-| $ABC'$ | 1 1 0 | $m_6$ |
-| $ABC$ | 1 1 1 | $m_7$ |
-
-**Step 2 — Plot the K-map (3 variables).**
-
-```
-         C:  0    1
-   AB: 00 |  0  |  0  |
-       01 |  0  |  1  |  ← m3
-       11 |  1  |  1  |  ← m6, m7
-       10 |  0  |  1  |  ← m5
-```
-
-**Step 3 — Group the 1s.**
-
-Group 1: $m_6$ and $m_7$ (adjacent in AB=11 row) → $AB$ (C dropped)
-
-Group 2: $m_5$ and $m_7$ (AB=10 and AB=11, both $C=1$) → $AC$ (B dropped)
-
-Group 3: $m_3$ and $m_7$ (both have $B=1, C=1$, A differs) → $BC$ (A dropped)
-
-**Step 4 — Write the minimal SOP.**
-
-$$\boxed{F = AB + AC + BC}$$
-
-**Verification:** Check all minterms are covered. Check no minterm of $F'$ is included.
+**Problem:** Minimize $F(A,B,C)=\Sigma m(1,3,5,6,7)$ using a Karnaugh map.
 
 ---
 
-## Problem 2: Algebraic Simplification (GATE Style)
-
-**Simplify $F = AB + AB' + A'B$ algebraically.**
-
-$$F = AB + AB' + A'B$$
-$$= A(B + B') + A'B \qquad \text{(factor A from first two terms)}$$
-$$= A \cdot 1 + A'B \qquad \text{(complement law: } B + B' = 1)$$
-$$= A + A'B \qquad \text{(Boolean identity: } A \cdot 1 = A)$$
-$$= A + B \qquad \text{(absorption variant: } A + A'B = A + B) \checkmark$$
-
-**Result:** $F = A + B$
+**Step 1 — Write each minterm in binary $(A,B,C)$.** $1{=}001,\ 3{=}011,\ 5{=}101,\ 6{=}110,\ 7{=}111$.
 
 ---
 
-## Problem 3: De Morgan's Application (GATE Style)
-
-**Question:** Express $F = \overline{(A + B) \cdot C}$ in SOP form.
-
-**Step 1 — Apply De Morgan's to the outer bar.**
-
-$$F = (A + B)' + C'$$
-
-**Step 2 — Apply De Morgan's to $(A + B)'$.**
-
-$$(A + B)' = A' \cdot B'$$
-
-**Step 3 — Expand.**
-
-$$F = A'B' + C'$$
-
-This is already in SOP form. Optionally expand further:
-
-$$F = A'B'C + A'B'C' + AC' + A'C' + BC'$$
-
-But $A'B' + C'$ is the minimal SOP.
+**Step 2 — Place the $1$s on a $3$-variable K-map.** Rows $AB\in\{00,01,11,10\}$, column $C\in\{0,1\}$. $1$s land at $(AB{=}00,C{=}1)$, $(AB{=}01,C{=}1)$, $(AB{=}10,C{=}1)$, $(AB{=}11,C{=}0)$, $(AB{=}11,C{=}1)$.
 
 ---
 
-## Problem 4: Minterm Count (GATE Style)
+**Step 3 — Find the largest valid groups.** The entire $C=1$ column has all four $1$s ($m1,3,5,7$): one $4$-cell group $\Rightarrow$ literal $C$. The $AB{=}11$ row has both cells filled ($m6,7$): one $2$-cell group $\Rightarrow$ literal $AB$ (dropping $C$, since both values of $C$ appear).
 
-**Question:** A 3-variable Boolean function $F$ has the truth table below. How many minterms does $F$ have?
+---
 
-| A | B | C | F |
-|---|---|---|---|
-| 0 | 0 | 0 | 1 |
-| 0 | 0 | 1 | 0 |
-| 0 | 1 | 0 | 1 |
-| 0 | 1 | 1 | 0 |
-| 1 | 0 | 0 | 0 |
-| 1 | 0 | 1 | 1 |
-| 1 | 1 | 0 | 0 |
-| 1 | 1 | 1 | 1 |
+**Step 4 — Combine the groups with OR.** Every minterm is covered by exactly one of the two groups ($m7$ is covered by both, and overlap is allowed).
 
-**Answer:** Rows where $F = 1$: rows 0, 2, 5, 7 → **4 minterms** → $F' $ has $8 - 4 = 4$ minterms also.
+$$\boxed{F = C + AB}$$
 
-$$F = m_0 + m_2 + m_5 + m_7 = \Sigma(0,2,5,7)$$
-
-K-map simplification gives: $F = B'C' + BC = \overline{B \oplus C}$ (XNOR of B and C — a clean result!).
-
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: De Morgan's theorem and absorption law simplification","steps":[{"prompt":"Using De Morgan's theorem, simplify (A·B)'. Which law applies and what is the result?","hint":"'Break the bar, change the operation': (A·B)' → split the bar across both variables and flip AND to OR.","answer":"A' + B'"},{"prompt":"Simplify F = A + A'B using absorption. What is the result?","hint":"The absorption variant states A + A'B = A + B. Verify: if A=1, F=1=A+B. If A=0, F=B=A+B.","answer":"A + B"}]}
-```
+Check: evaluate $F=C+AB$ at each minterm — $m6=110$: $C=0,AB=1\cdot1=1$, sum $=1$ ✓. $m1=001$: $C=1$ ✓. All five minterms confirmed, and $m4=100$ (not in the list) gives $C=0,AB=0$, sum$=0$, correctly excluded.

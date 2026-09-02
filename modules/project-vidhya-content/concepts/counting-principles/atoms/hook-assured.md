@@ -16,4 +16,4 @@ variant_of: counting-principles.hook
 for_stance: assured
 ---
 
-You already multiply choices per stage without a second thought. The one place that habit misfires: when the "stages" aren't independent draws from a fixed set — sampling without replacement shrinks the count at each step ($10\times9\times8\times7$ for a 4-digit code with no repeated digit, not $10^4$). Read a counting problem for exactly one signal before reaching for a formula: does an earlier choice change what's available next? If yes, the count is a falling product, not a power.
+You already multiply choices per stage on autopilot. The one place that habit misfires: when the "stages" aren't independent draws from a fixed set — sampling without replacement shrinks the count at each step ($10\times9\times8\times7$ for a 4-digit code with no repeated digit, not $10^4$). Read a counting problem for exactly one signal before reaching for a formula: does an earlier choice change what's available next? If yes, the count is a falling product, not a power.

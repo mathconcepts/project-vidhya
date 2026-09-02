@@ -1,5 +1,5 @@
 ---
-# Alternative body for sampling-distributions.worked_example, served when
+# Alternative body for sampling-distributions.worked-example, served when
 # the learner stance is `assured`. The base file is what a steady student
 # reads. See src/content/stance-variants.ts for how this is selected.
 #
@@ -10,7 +10,7 @@
 #
 # The fenced interactive block below is copied verbatim from the base
 # atom so the widget cannot drift between variants; only prose differs.
-id: sampling-distributions.worked_example.assured
+id: sampling-distributions.worked-example.assured
 concept_id: sampling-distributions
 atom_type: worked_example
 bloom_level: 3

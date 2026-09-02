@@ -3,51 +3,37 @@ id: graph-basics.worked-example
 concept_id: graph-basics
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.20
 exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-## GATE Problem: Degree Sequence Consistency
-
-**Problem:**
-
-A simple undirected graph has 5 vertices and 7 edges. Four of its vertices have degrees 2, 3, 2 and 4. What is the degree of the fifth vertex?
-
-(A) 1
-(B) 2
-(C) 3
-(D) 5
+**Problem:** A graph $G$ has vertex set $\{A,B,C,D,E\}$ and edge set $\{AB, AC, AD, BC, BD, CE\}$. Verify the handshaking lemma on $G$ and confirm the odd-degree-vertex corollary.
 
 ---
 
-## Solution
+**Step 1 — Tally each vertex's degree directly from the edge list.**
 
-By the **handshaking lemma**, the degrees sum to $2|E|$.
-
-$$\sum_{i=1}^{5} d_i = 2|E| = 2(7) = 14$$
-
-Sum of the four known degrees: $2 + 3 + 2 + 4 = 11$.
-
-$$11 + d_5 = 14 \quad\Longrightarrow\quad d_5 = 3$$
-
-**Answer: (C) 3**
+$A$ appears in $AB, AC, AD$ $\Rightarrow$ $\deg(A)=3$. $B$ appears in $AB, BC, BD$ $\Rightarrow$ $\deg(B)=3$. $C$ appears in $AC, BC, CE$ $\Rightarrow$ $\deg(C)=3$. $D$ appears in $AD, BD$ $\Rightarrow$ $\deg(D)=2$. $E$ appears in $CE$ $\Rightarrow$ $\deg(E)=1$.
 
 ---
 
-## Why the edge count is in the question
+**Step 2 — Sum the degrees.**
 
-Parity alone would not have finished this. Without $|E|$, all you get from the handshaking lemma is that $11 + d_5$ is even, so $d_5$ is odd — which leaves both (A) 1 and (C) 3 standing, and both are genuinely realisable:
+$3+3+3+2+1=12$.
 
-- $d_5 = 1$ gives degree sum 12, so $|E| = 6$
-- $d_5 = 3$ gives degree sum 14, so $|E| = 7$
+---
 
-Run Havel–Hakimi on either and you get a real graph. A question that stopped at parity would have two correct answers.
+**Step 3 — Compare against $2|E|$.**
 
-So parity is a **filter**, not a solver. It kills (B) 2 outright — even, wrong parity — and (D) 5 is dead for a separate reason worth keeping distinct: in a simple graph on 5 vertices no vertex can exceed degree 4, since it has only 4 possible neighbours and no repeated edges or self-loops.
+$G$ has 6 edges, so $2|E|=12$. The two numbers match: $12=12$ ✓.
 
-Two independent constraints, two different eliminations. Reach for the degree bound when parity leaves more than one option alive.
+---
 
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Handshaking Lemma in 5-Vertex Graph","steps":[{"prompt":"Step 1: The graph has 7 edges. What must the five degrees sum to?","hint":"The handshaking lemma: the degrees sum to 2|E|, because every edge contributes 1 to each of its two endpoints.","answer":"2(7) = 14"},{"prompt":"Step 2: What do the four known degrees add up to?","hint":"Add 2 + 3 + 2 + 4.","answer":"11"},{"prompt":"Step 3: Find the fifth degree.","hint":"Subtract the known sum from the total: d5 = 14 - 11.","answer":"d5 = 3, which is option (C)"},{"prompt":"Step 4: Suppose the edge count had been left out. What would the handshaking lemma alone tell you?","hint":"11 is odd, and the total must be even. odd + odd = even.","answer":"Only that d5 is odd. That leaves both (A) 1 and (C) 3 alive, and both are genuinely realisable graphs -- parity narrows the field without picking a winner."},{"prompt":"Step 5: Options (B) 2 and (D) 5 are both impossible, but for different reasons. Name each.","hint":"One fails the parity test. The other fails a bound that has nothing to do with parity.","answer":"(B) 2 is even, so 11 + 2 = 13 is odd and cannot equal 2|E|. (D) 5 exceeds the maximum degree in a simple graph on 5 vertices, which is 4 -- a vertex has only 4 other vertices available and cannot repeat an edge or loop to itself."}],"caption":"Parity filters the candidates; the edge count or the degree bound is what finally picks one."}
-```
+**Step 4 — Apply the corollary.**
+
+Odd-degree vertices here: $A(3), B(3), C(3), E(1)$ — four of them. Four is even, exactly as the corollary demands (an odd count of odd terms would force an odd sum, contradicting Step 3).
+
+$$\boxed{\sum\deg(v)=12=2|E|,\quad 4\text{ odd-degree vertices (even, as required)}}$$
+
+**Sanity check:** if any single tally in Step 1 were off by one, Step 3's equality would break immediately — the handshaking lemma is a built-in arithmetic check on your own edge-counting, not just a theorem to quote.

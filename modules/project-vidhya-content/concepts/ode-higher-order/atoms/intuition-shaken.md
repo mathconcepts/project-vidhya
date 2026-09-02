@@ -1,34 +1,20 @@
 ---
-# Alternative body for ode-higher-order-intuition, served when the learner
-# stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# for_stance: shaken — one concrete triple-root example, full arithmetic, explicit check.
 id: ode-higher-order.intuition.shaken
 concept_id: ode-higher-order
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: ode-higher-order-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: ode-higher-order.intuition
 for_stance: shaken
 ---
 
-## A small case first
+$y'''-3y''+3y'-y=0$. Start by writing down the auxiliary equation: $r^3-3r^2+3r-1=0$.
 
-Take $y''-4y'+4y=0$. Guess $y=e^{rx}$: then $y'=re^{rx}$ and $y''=r^2e^{rx}$, and substituting gives $e^{rx}(r^2-4r+4)=0$. Since $e^{rx}$ is never zero, $r^2-4r+4=0$, which factors as $(r-2)^2=0$. One repeated root, $r=2$.
+Recognize the pattern: $(r-1)^3=r^3-3r^2+3r-1$, so the equation is $(r-1)^3=0$ — one root, $r=1$, multiplicity $3$.
 
-A single root can only supply one basis function, $e^{2x}$, but a second-order equation needs two independent ones. The second is $xe^{2x}$ — checking it directly: $(xe^{2x})''-4(xe^{2x})'+4(xe^{2x})=0$ holds, so it genuinely solves the equation.
+A repeated root of multiplicity $m$ contributes $(C_1+C_2x+\cdots+C_mx^{m-1})e^{rx}$; here $m=3$:
+$$y=(C_1+C_2x+C_3x^2)e^{x}$$
 
-$$y=(C_1+C_2x)e^{2x}$$
-
-## The same idea at any order
-
-An $n$th-order equation $a_ny^{(n)}+\cdots+a_0y=0$ turns into one polynomial, $a_nr^n+\cdots+a_0=0$, by the same substitution. A root repeated $m$ times contributes $e^{rx},xe^{rx},\ldots,x^{m-1}e^{rx}$ — one extra factor of $x$ each time the root repeats, exactly as it did above. A complex pair $\alpha\pm i\beta$ contributes $e^{\alpha x}\cos(\beta x)$ and $e^{\alpha x}\sin(\beta x)$ instead of exponentials in $r$.
-
-Count the basis functions before writing the final answer: an $n$th-order equation needs exactly $n$ of them.
+Check: this is three arbitrary constants for a third-order equation — matches the count required.

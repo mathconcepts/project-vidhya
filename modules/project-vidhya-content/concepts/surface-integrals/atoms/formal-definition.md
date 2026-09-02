@@ -16,3 +16,5 @@ where $\mathbf{n} = \frac{\partial \mathbf{r}}{\partial u} \times \frac{\partial
 $$\iint_S \mathbf{F} \cdot \mathbf{n} \, dS = \iint_D \left(-P \frac{\partial g}{\partial x} - Q \frac{\partial g}{\partial y} + R\right) dx \, dy$$
 
 where $\mathbf{F} = P\mathbf{i} + Q\mathbf{j} + R\mathbf{k}$.
+
+**Method selector.** When $S$ is a closed surface, compute $\iiint_V \nabla\cdot\mathbf{F}\,dV$ instead of parameterizing $S$ directly — the divergence theorem turns a two-parameter surface integral into a three-variable volume integral that is usually the shorter route. The tempting-but-wrong alternative is parameterizing the closed surface in pieces (say, a sphere's northern and southern hemispheres separately) and adding the results — correct in principle, but it multiplies the chances of a sign or normal-orientation slip at every seam, for no gain once the surface is confirmed closed.

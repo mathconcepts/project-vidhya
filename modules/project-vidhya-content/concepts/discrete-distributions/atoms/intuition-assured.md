@@ -1,31 +1,14 @@
 ---
 # Alternative body for discrete-distributions.intuition, served when the
-# learner stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# learner stance is `assured`. See src/content/stance-variants.ts.
 id: discrete-distributions.intuition.assured
 concept_id: discrete-distributions
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.15
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: discrete-distributions.intuition
 for_stance: assured
 ---
 
-## The one axis that separates all four
-
-Fixed trials, constant $p$, with replacement → binomial. No fixed trial count, a rate instead → Poisson. Waiting for a first success → geometric. Finite population, no replacement → hypergeometric. Three of the four assume trials don't change the odds; hypergeometric is the exception, and the one most often mis-modeled as binomial when a sample is drawn from a small finite pool.
-
-## The convergence worth knowing cold
-
-As $n\to\infty$ and $p\to0$ with $np=\lambda$ held fixed, Binomial$(n,p)\to$Poisson$(\lambda)$. Separately, as the population grows large relative to the sample, Hypergeometric $\to$ Binomial, since "without replacement" stops mattering once the pool barely shrinks per draw.
-
-## Where marks are lost
-
-Plugging hypergeometric $n$ and $p$ straight into the binomial PMF ignores that each draw changes the remaining composition — valid only in the large-population limit above, never as a default.
+Poisson isn't a separate family invented from scratch — it's the limit of Binomial as $n\to\infty$, $p\to0$, holding $np=\lambda$ fixed: rephrase "rate $\lambda$ per unit time" as "infinitely many infinitesimal sub-intervals, each with a tiny, near-constant success chance." That's why Poisson is the right approximation for Binomial when $n$ is large and $p$ is small (a common rule of thumb: $n\ge20$, $p\le0.05$) — using the exact Binomial formula there isn't wrong, just needlessly heavy, and using Poisson when $p$ isn't actually small (say $p=0.3$) silently drops the accuracy the limit requires.

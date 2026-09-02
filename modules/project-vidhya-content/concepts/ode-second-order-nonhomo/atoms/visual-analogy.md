@@ -1,39 +1,19 @@
 ---
-id: ode-second-order-nonhomo-visual-analogy
+id: ode-second-order-nonhomo.visual-analogy
 concept_id: ode-second-order-nonhomo
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
-exam_ids: [gate-ma]
-scaffold_fade: 0
+difficulty: 0.3
+exam_ids: ["*"]
+modality: visual
 ---
 
-## The Car on a Bumpy Road
+## The Radio-Tuning Picture
 
-Imagine driving a car along a road:
+Think of $y_h$ and $y_p$ as two signals riding on the same wire. $y_h$ is whatever the system was doing on its own before anyone forced it — if the system is damped (its roots have negative real part), that signal fades out, the way static fades once a station locks in. $y_p$ is the forced response, driven entirely by $f(x)$, and it never fades: as long as the push continues, the response continues.
 
-- The **car's suspension** has a natural oscillation frequency — how it bounces when you hit a pothole and then let go. That free oscillation is the **complementary function** $y_h$. Without any ongoing input, it decays: the suspension dampens out over time.
-
-- The **road itself has bumps** — a periodic forcing function $f(x)$. The car is constantly pushed up and down by the road surface. Its steady response to those bumps — after the initial transient dies away — is the **particular integral** $y_p$.
-
-- The **total position** of the car at any moment is $y = y_h + y_p$: the natural oscillation *plus* the forced response.
-
-**Why they add linearly.** The ODE is linear — superposition holds. The "car" can simultaneously be oscillating naturally and responding to bumps; both effects co-exist without interfering.
-
-**Resonance.** If the bump frequency matches the car's natural frequency, $y_p$ grows unboundedly (you must multiply the trial solution by $x$). This is the mathematical signature of resonance.
-
----
-
-The animation below shows a damped natural oscillation $y_h = e^{-0.5x}\cos(2x)$ (dying out) superimposed with a forced response $y_p = \sin(x)$ (steady, sustained):
+For $y''+2y'+5y=10\cos t$, the homogeneous roots are $-1\pm2i$ — decaying and oscillatory — so $y_h=e^{-t}(C_1\cos2t+C_2\sin2t)$ dies out, while $y_p=2\cos t+\sin t$ persists forever at the forcing frequency. Watch the curve below: an early wobble from $y_h$ settles into a clean, unchanging oscillation — the **steady state** — once the transient has burned off.
 
 ```gif-scene
-{
-  "type": "function-trace",
-  "expression": "exp(-x * 0.5) * cos(2*x) + sin(x)",
-  "x_range": [0, 10],
-  "y_range": [-2, 2],
-  "label": "y = y_h (damped) + y_p (forced)"
-}
+{"type": "function-trace", "expression": "exp(-x)*cos(2*x) + 2*cos(x) + sin(x)", "x_range": [0, 10], "y_range": [-2.5, 3.5]}
 ```
-
-**Reading the plot.** For small $x$ (left), the damped oscillation dominates — the curve looks "wiggly." For large $x$ (right), $y_h \to 0$ and the pure sinusoidal $y_p = \sin(x)$ takes over. This is exactly the transient-vs-steady-state split you see in engineering systems.

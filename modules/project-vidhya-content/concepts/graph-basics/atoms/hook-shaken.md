@@ -4,18 +4,19 @@
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# smallest true first step, concrete numbers before symbols, arithmetic done
+# in full, explicit check at the end. No reassurance language, no mention of
+# how the reader might be feeling.
 id: graph-basics.hook.shaken
 concept_id: graph-basics
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: graph-basics.hook
 for_stance: shaken
 ---
 
-Take 4 cities joined by 5 highways. Erase the city names — what's left is 4 dots and 5 lines: vertices and edges. Servers and cables, or atoms and bonds, leave the same 4 dots and 5 lines. One structure, different labels: one theorem about it pays off everywhere it appears.
+Take a graph on 4 vertices with degrees $3, 1, 1, 1$. Add them: $3+1+1+1=6$. Divide by 2: $6/2=3$. This graph has exactly 3 edges — check it by drawing one center vertex with edges to each of the remaining three.
+
+Every graph works this way: add every vertex's degree, divide by 2, get the edge count. Try it on any graph before reading further — sum the degrees, halve the result, that number is $|E|$.

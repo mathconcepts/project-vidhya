@@ -12,17 +12,18 @@ id: multiple-integrals.intuition.shaken
 concept_id: multiple-integrals
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.3
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: multiple-integrals.intuition
 for_stance: shaken
 ---
 
-Take $f(x,y)=xy$ over the rectangle $0\le x\le1,\,0\le y\le2$. Split it into tiny rectangles of area $dA=dx\,dy$. Over each one, stand up a pillar of height $f(x,y)=xy$ — near $(1,2)$ the pillars are tall (height near $2$); near the origin they shrink to nothing.
+$\int_0^1\int_0^2 xy\,dy\,dx$.
 
-Add every pillar's volume: $\iint_R xy\,dA=\int_0^1\int_0^2 xy\,dy\,dx$. Do the inner sum first, treating $x$ as fixed: $\int_0^2 xy\,dy=x\cdot\frac{y^2}{2}\Big|_0^2=2x$. Then the outer sum: $\int_0^1 2x\,dx=x^2\Big|_0^1=1$. Total volume: $1$.
+Inner (over $y$, $x$ frozen): $\int_0^2 xy\,dy=x\left[\tfrac{y^2}2\right]_0^2=2x$.
 
-A triple integral does the same thing one dimension up: instead of area elements $dA$, it sums volume elements $dV=dx\,dy\,dz$, useful for total mass or charge packed into a solid region.
+Outer (over $x$): $\int_0^1 2x\,dx=[x^2]_0^1=1$.
 
-When the integrand or region involves $x^2+y^2$, switching to polar coordinates ($x=r\cos\theta$, $y=r\sin\theta$, $dA=r\,dr\,d\theta$) turns a circular region into a plain rectangle in $(r,\theta)$ — often the difference between a hard integral and an easy one.
+Check by swapping the order: inner over $x$ now, $y$ frozen: $\int_0^1 xy\,dx=y\left[\tfrac{x^2}2\right]_0^1=\tfrac{y}2$. Outer over $y$: $\int_0^2 \tfrac{y}2\,dy=\left[\tfrac{y^2}4\right]_0^2=1$.
+
+Same answer, $1$, both orders — confirms the computation.

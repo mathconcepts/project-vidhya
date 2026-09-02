@@ -3,16 +3,14 @@ id: functions-combinatorics.formal-definition
 concept_id: functions-combinatorics
 atom_type: formal_definition
 bloom_level: 2
-difficulty: 0.32
+difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-**Function**: A relation $f: A \to B$ is a function if every element $a \in A$ is paired with exactly one element $f(a) \in B$.
-- **Injective (one-to-one)**: If $f(a) = f(b)$, then $a = b$. No two inputs map to the same output.
-- **Surjective (onto)**: For every $b \in B$, there exists $a \in A$ such that $f(a) = b$. Every output is "covered."
-- **Bijective**: Both injective and surjective. There is a perfect one-to-one pairing between $A$ and $B$.
+A function $f:A\to B$ is **injective** if distinct inputs give distinct outputs, **surjective** if every element of $B$ is hit, and **bijective** if both. Counting formulas:
 
-**Combinatorial Fundamentals**:
-- **Permutation**: An ordered arrangement of $n$ distinct objects. $P(n) = n! = n \cdot (n-1) \cdot \ldots \cdot 1$.
-- **Combination**: An unordered selection of $k$ objects from $n$ objects. $\binom{n}{k} = \frac{n!}{k!(n-k)!}$.
-- **Binomial Theorem**: $(a + b)^n = \sum_{k=0}^{n} \binom{n}{k} a^{n-k} b^k$.
+$$P(n,k)=\frac{n!}{(n-k)!} \qquad \binom{n}{k}=\frac{n!}{k!(n-k)!}$$
+
+$P(n,k)$ counts ordered selections (arrangements, injections into an $n$-set); $\binom{n}{k}$ counts unordered selections (subsets). The number of **surjections** from a $k$-set onto an $n$-set uses inclusion-exclusion: $\sum_{i=0}^{n}(-1)^i\binom{n}{i}(n-i)^k$.
+
+**Method selector.** Ask whether the $k$ chosen elements receive distinguishable roles (positions, an ordered sequence, an injective mapping) — if yes, use $P(n,k)$; if the chosen elements form an unordered group, use $\binom{n}{k}$. Applying $\binom{n}{k}$ to a problem that secretly assigns roles (e.g. "first, second, third prize") undercounts by a factor of $k!$ — the single most common combinatorics slip on this topic.

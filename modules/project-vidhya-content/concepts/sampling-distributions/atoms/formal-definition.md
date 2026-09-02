@@ -19,4 +19,6 @@ a $t$-distribution with $n-1$ degrees of freedom. The $t$-distribution is symmet
 
 **Chi-squared ($\chi^2$) distribution**: If $Z_1, \ldots, Z_k$ are i.i.d. $N(0,1)$, then $\chi^2_k = \sum_{i=1}^{k} Z_i^2$ follows a chi-squared distribution with $k$ degrees of freedom, with $E[\chi^2_k] = k$ and $\mathrm{Var}(\chi^2_k) = 2k$. For a sample of size $n$ from $N(\mu, \sigma^2)$,
 $$\frac{(n-1)s^2}{\sigma^2} \sim \chi^2_{n-1}$$
-which underlies confidence intervals and hypothesis tests **about the population variance**, as distinct from the $t$-distribution, which is used for inference about the **mean**.
+which underlies confidence intervals and hypothesis tests **about the population variance**.
+
+**Which distribution to reach for.** Use $\chi^2_{n-1}$ when the target of inference is the population **variance** — not Student's $t$, which a GATE student often reaches for on autopilot any time a problem mentions "unknown parameter" and a small sample, even though $t$ is built specifically for inference about the **mean**. A question asking for a confidence interval "for $\sigma^2$" or testing a claimed variance value needs $\chi^2_{n-1}=(n-1)s^2/\sigma^2$; a question about $\mu$ with $\sigma$ unknown needs $t_{n-1}$. The two are never interchangeable, whatever the sample size.

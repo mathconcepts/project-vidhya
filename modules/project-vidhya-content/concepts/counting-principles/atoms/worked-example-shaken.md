@@ -36,4 +36,4 @@ for_stance: shaken
 
 **Step 5 — Subtract.** $126 - 1 - 20 = \boxed{105}$.
 
-**Check.** Count the 3 allowed cases directly: 2 women ($C(5,2)C(4,2)=10\times6=60$), 3 women ($C(5,3)C(4,1)=10\times4=40$), 4 women ($C(5,4)=5$). $60+40+5=105$ — same answer both ways.
+**Check.** Count the 3 allowed cases directly: 2 women ($C(5,2)C(4,2)=10\times6=60$), 3 women ($C(5,3)C(4,1)=10\times4=40$), 4 women ($C(5,4)=5$). $60+40+5=105$ — matches the direct count.

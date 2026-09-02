@@ -1,25 +1,16 @@
 ---
-# Alternative body for recurrence-relations.intuition, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# Alternative body for recurrence-relations.intuition, stance `assured`.
 id: recurrence-relations.intuition.assured
 concept_id: recurrence-relations
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 variant_of: recurrence-relations.intuition
 for_stance: assured
 ---
 
-A linear recurrence's general solution is homogeneous-plus-particular, and both parts are required whenever $f(n)\ne0$ — reporting only the homogeneous root sum is an incomplete answer, not a simplified one. The particular guess must match $f(n)$'s form (polynomial degree for a polynomial $f(n)$, matching base for an exponential $f(n)$), and gets multiplied by $n$ (or $n^2$) exactly when the naive guess collides with a homogeneous root — skipping that collision check is the standard failure mode.
+A linear homogeneous recurrence of order $2$ needs exactly two independent solutions to match two initial conditions. Distinct roots $r_1,r_2$ give $a_n=c_1r_1^n+c_2r_2^n$ directly. The distinction that costs marks: a **repeated** root $r$ (discriminant zero) does NOT give two copies of $r^n$ — the second independent solution is $n\cdot r^n$, so $a_n=(c_1+c_2n)r^n$.
 
-Order is how many steps back the rule reaches, fixed by the recurrence itself, and the number of initial conditions needed equals the order exactly — a second-order recurrence needs two starting values, not one, to pin a unique sequence out of the whole family the characteristic equation allows.
-
-Distinct real roots, repeated roots, and complex roots each change the general solution's shape: a repeated root $r$ contributes $(A+Bn)r^n$, not $Ar^n$ counted twice — treating a repeated root as two distinct ones under-determines the solution.
+Reaching for $a_n=c_1r^n+c_2r^n$ (which collapses to a single constant) on a repeated-root recurrence leaves one initial condition unsatisfiable — the telltale sign the root was repeated and the $nr^n$ term was skipped.

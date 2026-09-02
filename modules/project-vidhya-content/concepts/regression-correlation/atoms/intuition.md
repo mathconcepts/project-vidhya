@@ -1,5 +1,5 @@
 ---
-id: regression-correlation-intuition
+id: regression-correlation.intuition
 concept_id: regression-correlation
 atom_type: intuition
 bloom_level: 2
@@ -8,7 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
 
-# Regression and Correlation — What Is the Relationship?
+## Regression and Correlation — What Is the Relationship?
 
 When two variables $x$ and $y$ move together, we want to **measure** how strongly they are linked (correlation) and **predict** one from the other (regression).
 

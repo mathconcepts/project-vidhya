@@ -3,40 +3,21 @@ id: ode-higher-order.micro-exercise
 concept_id: ode-higher-order
 atom_type: micro_exercise
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.4
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-Find the characteristic roots of $\frac{d^3y}{dx^3} - 6\frac{d^2y}{dx^2} + 11\frac{dy}{dx} - 6y = 0$.
+The general solution of $y'''-3y''+3y'-y=0$ is:
 
-- **(A)** $r = 1, 2, 3$
-- **(B)** $r = -1, -2, -3$
-- **(C)** $r = 0, 1, 2$
-- **(D)** $r = 1, 2, 2$ (repeated)
+- **(A)** $y=(C_1+C_2x+C_3x^2)e^{x}$
+- **(B)** $y=C_1e^{x}+C_2e^{2x}+C_3e^{3x}$
+- **(C)** $y=(C_1+C_2x+C_3x^2)e^{-x}$
+- **(D)** $y=C_1e^{x}+C_2xe^{x}$
 
 <details>
 <summary>Answer</summary>
 
-**A**. The characteristic equation is:
-$$r^3 - 6r^2 + 11r - 6 = 0$$
-
-Try rational root theorem: possible rational roots are $\pm 1, \pm 2, \pm 3, \pm 6$.
-
-Test $r = 1$:
-$$1 - 6 + 11 - 6 = 0 \checkmark$$
-
-Factor out $(r - 1)$:
-$$r^3 - 6r^2 + 11r - 6 = (r - 1)(r^2 - 5r + 6)$$
-
-Factor the quadratic:
-$$r^2 - 5r + 6 = (r - 2)(r - 3)$$
-
-So:
-$$r^3 - 6r^2 + 11r - 6 = (r - 1)(r - 2)(r - 3) = 0$$
-
-Roots: $r = 1, 2, 3$ (all distinct and real).
-
-Geometrically, these represent three independent exponential growth rates.
+**A**. Auxiliary equation $r^3-3r^2+3r-1=0$ is exactly $(r-1)^3=0$ — a single root $r=1$ with multiplicity $3$. A real root of multiplicity $m$ contributes $(C_1+C_2x+\cdots+C_mx^{m-1})e^{rx}$, so $m=3$ gives $(C_1+C_2x+C_3x^2)e^{x}$ — three constants for a third-order equation.
 
 </details>

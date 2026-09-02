@@ -23,4 +23,4 @@ Fix dial 1: 10 choices. Fix dial 2: 10 choices. Same for dials 3 and 4.
 
 Total codes: $10\times10\times10\times10=10{,}000$.
 
-That is the whole idea: multiply the choices at each independent stage. Every probability question later divides by a count exactly like this one — get this number right first.
+That is the whole idea: multiply the choices at each independent stage. Every probability question later divides by a count built the same way — get this number right first.

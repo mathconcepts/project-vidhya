@@ -15,7 +15,7 @@ for_stance: assured
 
 Ratio test on $a_n=\dfrac{n}{2^n}$: $\dfrac{a_{n+1}}{a_n}=\dfrac{n+1}{2n}\to\dfrac12<1\Rightarrow$ converges absolutely — routine so far.
 
-The one distinction worth the marks: the ratio test's $L$ only ever certifies convergence; it never hands over the sum. Getting the value needs a **separate** closed-form identity, here $\sum n x^n=\dfrac{x}{(1-x)^2}$ for $|x|<1$:
+What the ratio test never gives you: its $L$ only ever certifies convergence; it never hands over the sum. Getting the value needs a **separate** closed-form identity, here $\sum n x^n=\dfrac{x}{(1-x)^2}$ for $|x|<1$:
 
 $$
 \sum_{n=1}^{\infty}\frac{n}{2^n}=\frac{1/2}{(1/2)^2}=\boxed{2}

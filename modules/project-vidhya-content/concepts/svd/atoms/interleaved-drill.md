@@ -4,8 +4,8 @@ concept_id: svd
 atom_type: interleaved_drill
 bloom_level: 4
 difficulty: 0.60
-exam_ids: ["*"]
 modality: drill
+exam_ids: ["*"]
 tested_by_atom: svd.micro_exercise
 ---
 

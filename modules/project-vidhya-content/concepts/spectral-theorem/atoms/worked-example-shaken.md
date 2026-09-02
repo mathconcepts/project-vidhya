@@ -1,23 +1,13 @@
 ---
 # Alternative body for spectral-theorem.worked-example, served when the learner
 # stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence.
-# The prose is held at or below the base atom's length — a screen visibly
-# longer than the one that already defeated this reader signals difficulty
-# no matter how kindly it is written. No praise, no reassurance, and no
-# mention of how the reader might be feeling.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
 id: spectral-theorem.worked-example.shaken
 concept_id: spectral-theorem
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.25
-scaffold_fade: true
 exam_ids: ["*"]
+scaffold_fade: true
 variant_of: spectral-theorem.worked-example
 for_stance: shaken
 ---
@@ -26,19 +16,13 @@ for_stance: shaken
 
 ---
 
-**Step 1 — eigenvalues.**
-
-$$(2-\lambda)^2 - 1 = 0 \;\Rightarrow\; \lambda^2 - 4\lambda + 3 = 0 \;\Rightarrow\; (\lambda-1)(\lambda-3) = 0$$
+**Step 1 — eigenvalues.** $(2-\lambda)^2 - 1 = 0 \;\Rightarrow\; \lambda^2 - 4\lambda + 3 = 0 \;\Rightarrow\; (\lambda-1)(\lambda-3) = 0$
 
 $$\boxed{\lambda_1 = 1, \quad \lambda_2 = 3}$$
 
 ---
 
-**Step 2 — orthonormal eigenvectors.**
-
-$\lambda_1=1$: $(A-I)\mathbf{v}=0 \Rightarrow v_1+v_2=0 \Rightarrow \mathbf{q}_1 = \frac{1}{\sqrt2}\begin{pmatrix}1\\-1\end{pmatrix}$
-
-$\lambda_2=3$: $(A-3I)\mathbf{v}=0 \Rightarrow v_1=v_2 \Rightarrow \mathbf{q}_2 = \frac{1}{\sqrt2}\begin{pmatrix}1\\1\end{pmatrix}$
+**Step 2 — eigenvectors.** $\lambda_1=1$: $(A-I)\mathbf{v}=0 \Rightarrow v_1+v_2=0 \Rightarrow \mathbf{q}_1 = \frac{1}{\sqrt2}\begin{pmatrix}1\\-1\end{pmatrix}$. $\lambda_2=3$: $(A-3I)\mathbf{v}=0 \Rightarrow v_1=v_2 \Rightarrow \mathbf{q}_2 = \frac{1}{\sqrt2}\begin{pmatrix}1\\1\end{pmatrix}$.
 
 $$Q = \frac{1}{\sqrt2}\begin{pmatrix}1&1\\-1&1\end{pmatrix}, \qquad \Lambda = \begin{pmatrix}1&0\\0&3\end{pmatrix}$$
 
@@ -46,13 +30,9 @@ Check: $Q^TQ = I$ ✓
 
 ---
 
-**Step 3 — $\sqrt{A}$.**
+**Step 3 — $\sqrt{A}$.** Root only $\Lambda$, entry by entry:
 
-Take the square root entry by entry, only on $\Lambda$:
-
-$$\sqrt{A} = Q\sqrt{\Lambda}Q^T = Q\begin{pmatrix}1&0\\0&\sqrt3\end{pmatrix}Q^T$$
-
-$$= \frac{1}{2}\begin{pmatrix}1+\sqrt3 & \sqrt3-1 \\ \sqrt3-1 & 1+\sqrt3\end{pmatrix}$$
+$$\sqrt{A} = Q\sqrt{\Lambda}Q^T = \frac{1}{2}\begin{pmatrix}1+\sqrt3 & \sqrt3-1 \\ \sqrt3-1 & 1+\sqrt3\end{pmatrix}$$
 
 Check: square it back and you should land on $A$. $(\sqrt{A})^2 = A$ ✓
 

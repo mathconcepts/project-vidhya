@@ -3,38 +3,15 @@ id: recurrence-relations.intuition
 concept_id: recurrence-relations
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-# Recurrence Relations: The Domino Effect
+Start from a guess: maybe the closed form is just one geometric term, $a_n = c\cdot r^n$. Test it against $a_n=5a_{n-1}-6a_{n-2}$, $a_0=2,a_1=5$.
 
-Imagine building a staircase where each step's height depends on the previous steps. That's the essence of a **recurrence relation** — a rule that defines each term of a sequence in terms of one or more preceding terms.
+If $r=2$ alone: $a_0=c=2$ forces $c=2$, giving $a_1=2\cdot2=4$. But $a_1$ is actually $5$. Contradiction — a single term with $r=2$ can't match both initial conditions.
 
-## What Makes Them Powerful?
+The recurrence's characteristic equation $x^2-5x+6=0$ actually has **two** roots, $2$ and $3$. The general solution needs both: $a_n=c_1 2^n+c_2 3^n$. Two unknowns, two initial conditions — solve $c_1+c_2=2$ and $2c_1+3c_2=5$ to get $c_1=1,c_2=1$, giving $a_n=2^n+3^n$.
 
-In GATE exams, recurrence relations are everywhere:
-- **Counting problems**: "How many binary strings of length $n$ have no two consecutive 1s?"
-- **Algorithmic analysis**: Divide-and-conquer recursion always satisfies a recurrence (like the Master Theorem)
-- **Optimization**: Dynamic programming is built on solving recurrences
-
-## The Pattern
-
-A linear recurrence takes the form:
-$$a_n = c_1 a_{n-1} + c_2 a_{n-2} + \cdots + c_k a_{n-k} + f(n)$$
-
-where:
-- $a_n$ is the $n$-th term you want to find
-- $c_i$ are **constant coefficients**
-- $f(n)$ is the **non-homogeneous part** (absent if homogeneous)
-- The **initial conditions** (base cases) anchor the sequence
-
-## Why Solve Them?
-
-Instead of computing each term iteratively, we find a **closed-form formula** — a direct expression for $a_n$. This is exam gold because:
-1. You avoid loops and recursion
-2. You can evaluate $a_n$ for any $n$ instantly
-3. Asymptotic analysis becomes tractable
-
-The methodology is rigid and algorithmic: identify the recurrence's order, classify it (homogeneous/non-homogeneous), solve the characteristic equation, apply initial conditions. Master the pattern, and you unlock entire problem categories.
+Check: $a_2 = 4+9=13$, matching the direct computation from the recurrence. One geometric term was never enough because the recurrence has two independent roots, each contributing its own mode of growth.

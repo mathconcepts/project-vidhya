@@ -12,31 +12,22 @@ id: multiple-integrals.worked_example.shaken
 concept_id: multiple-integrals
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.35
 exam_ids: ["*"]
 scaffold_fade: true
-variant_of: multiple-integrals.worked-example
+variant_of: multiple-integrals.worked_example
 for_stance: shaken
 ---
 
-**Given:** $\iint_R e^{-(x^2+y^2)}\,dA$, $R$ the unit disk $x^2+y^2\le1$.
+**Problem.** $\int_0^1\int_0^2 xy\,dy\,dx$.
 
-**Step 1.** Notice the integrand depends only on $r=\sqrt{x^2+y^2}$ — switch to polar.
+**Step 1.** Inner, over $y$: $\int_0^2 xy\,dy=x\cdot\tfrac{y^2}{2}\Big|_0^2=x\cdot2=2x$.
 
-**Step 2.** Substitute $x^2+y^2=r^2$ and $dA=r\,dr\,d\theta$.
+**Step 2.** Outer, over $x$: $\int_0^1 2x\,dx=x^2\Big|_0^1=1$.
 
-**Step 3.** Rewrite the region: the disk becomes $0\le r\le1$, $0\le\theta\le2\pi$.
+**Answer.**
+$$
+\boxed{1}
+$$
 
-**Step 4.** Set up the new integral: $\int_0^{2\pi}\int_0^1 e^{-r^2}\cdot r\,dr\,d\theta$.
-
-**Step 5.** Do the inner integral only. Let $u=-r^2$, $du=-2r\,dr$: $\int_0^1 re^{-r^2}dr=\frac12(1-e^{-1})$.
-
-**Step 6.** Do the outer integral: $\int_0^{2\pi}\frac12(1-e^{-1})\,d\theta=\frac12(1-e^{-1})\cdot2\pi=\pi(1-e^{-1})$.
-
-**Answer:** $\pi(1-e^{-1})$.
-
-**Check it:** $e^{-1}\approx0.368$, so the answer is about $\pi(0.632)\approx1.98$ — less than the disk's own area $\pi\approx3.14$, which makes sense since the pillars shrink toward the edge.
-
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Double integral in polar coordinates","steps":[{"prompt":"Step 1: What symmetry do you notice in $e^{-(x^2+y^2)}$?","hint":"The exponent involves $x^2 + y^2$. What does this quantity represent geometrically?","answer":"The integrand depends only on distance from the origin: $r = \\sqrt{x^2+y^2}$. This suggests using polar coordinates."},{"prompt":"Step 2: Write the Jacobian for the transformation from Cartesian to polar coordinates.","hint":"Remember: $x = r\\cos\\theta$, $y = r\\sin\\theta$. The area element changes by a factor equal to the absolute value of the determinant of the Jacobian matrix.","answer":"$dA = r \\, dr \\, d\\theta$ (the Jacobian factor is $r$)"},{"prompt":"Step 3: Set up the bounds. For the unit disk $x^2+y^2 \\leq 1$, what are the limits on $r$ and $\\theta$?","hint":"The radius ranges from the center to the boundary circle. The angle sweeps all the way around.","answer":"$0 \\leq r \\leq 1$ and $0 \\leq \\theta \\leq 2\\pi$"}],"caption":"Master polar coordinates: the key to solving radially symmetric integrals efficiently."}
-```
+**Check.** Swap order: inner over $x$: $\int_0^1 xy\,dx=y\cdot\tfrac{x^2}2\Big|_0^1=\tfrac{y}2$. Outer over $y$: $\int_0^2\tfrac{y}2\,dy=\tfrac{y^2}4\Big|_0^2=1$. Same answer both ways.

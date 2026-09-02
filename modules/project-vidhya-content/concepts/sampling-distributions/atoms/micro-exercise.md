@@ -18,12 +18,6 @@ A researcher wants a confidence interval for the mean of a normal population usi
 <details>
 <summary>Answer</summary>
 
-**B**. Whenever the population standard deviation $\sigma$ is unknown and must be estimated by the sample standard deviation $s$, the standardized statistic $T = \frac{\bar{X}-\mu}{s/\sqrt{n}}$ follows **Student's $t$-distribution**, not the standard normal — option A ignores the extra uncertainty that comes from estimating $\sigma$.
-
-The degrees of freedom for a one-sample $t$-statistic are always $n - 1$: here $n = 10$, so $df = 9$. Option C uses $n$ instead of $n-1$ — a very common off-by-one error.
-
-Option D is wrong for a different reason: the chi-squared distribution governs inference **about variance**, not about the mean — it isn't the right family here at all, regardless of degrees of freedom.
-
-The correct answer is B.
+**B**. Whenever $\sigma$ is unknown and estimated by $s$, the statistic $T=\frac{\bar{X}-\mu}{s/\sqrt{n}}$ follows Student's $t$-distribution, not the standard normal (rules out A). Degrees of freedom for a one-sample $t$ are always $n-1=9$ (rules out C, which uses $n$ instead). Chi-squared governs inference about variance, not the mean, so it isn't the right family here regardless of $df$ (rules out D).
 
 </details>

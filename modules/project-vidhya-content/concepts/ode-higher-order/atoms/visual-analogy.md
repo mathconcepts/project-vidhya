@@ -1,47 +1,19 @@
 ---
-id: ode-higher-order-visual-analogy
+id: ode-higher-order.visual-analogy
 concept_id: ode-higher-order
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
-exam_ids: [gate-ma]
-scaffold_fade: 0
+difficulty: 0.3
+exam_ids: ["*"]
+modality: visual
 ---
 
-## The Multi-Story Building Analogy
+## A Polynomial Riding an Exponential
 
-Picture a tall building shaking during an earthquake. A building does not vibrate at one single frequency — it has **multiple resonant modes**, one for each "degree of freedom":
+A repeated root doesn't just repeat the same curve — it multiplies in a polynomial passenger. $(C_1+C_2x+C_3x^2)e^{rx}$ is an exponential envelope $e^{rx}$ carrying a degree-$2$ polynomial along for the ride; for $r>0$ the polynomial briefly matters near the origin, but the exponential factor eventually wins by so much that the whole curve still looks purely exponential from far enough away — the polynomial only reshapes the near term.
 
-- The **ground floor** sways at the lowest, slowest frequency.
-- The **mid floors** rock at intermediate frequencies.
-- The **top floors** whip at the fastest, shortest-period frequency.
-
-This is exactly what the roots of the characteristic equation encode.
-
-**The mapping:**
-
-| Building physics | ODE mathematics |
-|---|---|
-| Degree of freedom (number of independent modes) | Order $n$ of the ODE → $n$ independent solutions |
-| Each resonant mode frequency | Each root $r_k$ of the auxiliary equation |
-| A purely oscillating mode | Complex root $\alpha \pm i\beta$ → $e^{\alpha x}\cos(\beta x)$ |
-| A critically damped mode | Repeated real root $r$ → $e^{rx}$ and $xe^{rx}$ |
-| A strongly damped mode | Large negative real root → fast-decaying exponential |
-
-**Repeated roots = degenerate modes.** Two floors with *identical* stiffness and mass have the same resonant frequency — they form a degenerate pair. The ODE needs $xe^{rx}$ (the "slowly growing envelope") to capture the second independent motion in the same frequency bin.
-
----
-
-The animation below shows the envelope behaviour of a complex root solution $e^{-0.3x}\cos(3x)$ — a damped oscillation corresponding to one complex-root pair $\alpha = -0.3$, $\beta = 3$:
+Below is $(1+x+x^2)e^{x}$, the triple-root solution with $C_1=C_2=C_3=1$: notice it's not a straight exponential curve near $x=0$, where the polynomial passenger still has a say.
 
 ```gif-scene
-{
-  "type": "function-trace",
-  "expression": "exp(-x * 0.3) * cos(3*x)",
-  "x_range": [0, 10],
-  "y_range": [-1.5, 1.5],
-  "label": "Higher-order ODE: complex root solution e^αx·cos(βx)"
-}
+{"type": "function-trace", "expression": "(1+x+x**2)*exp(x)", "x_range": [0, 2], "y_range": [0, 55]}
 ```
-
-**Reading the plot.** The amplitude of the cosine oscillation decays exponentially. If $\alpha = 0$ (purely imaginary root, undamped system), the oscillation would have constant amplitude forever — a pure sinusoid. If $\alpha > 0$ (positive real part), the oscillation would grow without bound, signalling instability.

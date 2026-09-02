@@ -11,10 +11,10 @@ id: vector-algebra-basics.hook.assured
 concept_id: vector-algebra-basics
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: vector-algebra-basics.hook
 for_stance: assured
 ---
 
-$\vec a\cdot\vec b=0$ means perpendicular; $\vec a\times\vec b=\vec 0$ means parallel, or one vector is $\vec 0$ — opposite geometric conditions, both written with a zero on the right, and setting the wrong product to zero answers the wrong question entirely. $\vec a=(1,0,0)$ and $\vec b=(0,1,0)$ give $\vec a\cdot\vec b=0$, perpendicular, but $\vec a\times\vec b=(0,0,1)\ne\vec 0$, not parallel — both statements true about the same pair, at once.
+Two vectors of equal magnitude never combine to more than twice that magnitude, and only reach that ceiling when they point the same way — governed by $|\vec a+\vec b|^2=|\vec a|^2+|\vec b|^2+2\vec a\cdot\vec b$. The distinction worth marks: $\vec a\cdot\vec b=0$ tests **perpendicularity**, but $\vec a\times\vec b=\vec 0$ tests **parallelism** — they are not two routes to the same fact, and GATE options routinely swap one condition for the other to catch a guess.

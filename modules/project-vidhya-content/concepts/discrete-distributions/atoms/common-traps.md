@@ -2,11 +2,15 @@
 id: discrete-distributions.common-traps
 concept_id: discrete-distributions
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 3
+difficulty: 0.5
 exam_ids: ["*"]
 ---
 
-- **Confusing Binomial and Poisson**: Binomial requires a **fixed number of trials** $n$, while Poisson models **rare events over an interval** with no fixed $n$. Red flag: if the problem says "in a 5-minute window" or "over a region," it's likely Poisson, not Binomial.
-- **Forgetting the binomial coefficient**: Students compute $p^k(1-p)^{n-k}$ but forget to multiply by $\binom{n}{k}$, leading to massive undercounting. The binomial coefficient accounts for different orderings of $k$ successes among $n$ trials.
-- **Using binomial when applying Poisson approximation**: When $n$ is large and $p$ is small (e.g., $n = 1000, p = 0.001$), the binomial becomes hard to compute directly. Poisson with $\lambda = np$ is much simpler. But students sometimes force the binomial formula anyway, computing $0.999^{999}$ by hand — impractical.
+**Trap 1 — Binomial where Hypergeometric belongs.** Sampling without replacement from a small, finite population changes the success probability every draw; using the Binomial formula there is a genuinely different (and wrong) computation, not just an approximation.
+
+**Trap 2 — Off-by-one in Geometric.** $(1-p)^{k-1}p$ counts trials *up to and including* the first success ($k\ge1$); some sources define it as failures *before* the first success ($k\ge0$, exponent $k$) — check which convention a problem uses before substituting.
+
+**Trap 3 — Poisson approximation misapplied.** Using $\lambda=np$ as a Poisson stand-in for Binomial only holds up when $n$ is large and $p$ is small; for moderate $p$ (like $0.3$), the two distributions diverge and the approximation silently loses accuracy.
+
+**Trap 4 — Mean and variance mixed up.** Binomial's mean is $np$; its variance is $np(1-p)$ — not $np$ again. Confusing the two under time pressure produces a variance that's too large.

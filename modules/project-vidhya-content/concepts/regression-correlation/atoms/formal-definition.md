@@ -12,7 +12,7 @@ $$r = \frac{\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})}{\sqrt{\sum_{i=1}^n (x_i
 
 where $s_{xy}$ is the sample covariance and $s_x, s_y$ are the sample standard deviations.
 
-**Properties**: $-1 \le r \le 1$. 
+**Properties**: $-1 \le r \le 1$.
 - $r = 1$: Perfect positive linear relationship.
 - $r = -1$: Perfect negative linear relationship.
 - $r = 0$: No linear relationship.
@@ -23,6 +23,8 @@ where $s_{xy}$ is the sample covariance and $s_x, s_y$ are the sample standard d
 $$b = \frac{\sum_{i=1}^n (x_i - \bar{x})(y_i - \bar{y})}{\sum_{i=1}^n (x_i - \bar{x})^2} = r \frac{s_y}{s_x}$$
 
 $$a = \bar{y} - b\bar{x}$$
+
+**Which number to report.** Use the least-squares slope $b=S_{xy}/S_{xx}$ when a question asks for the regression coefficient predicting $y$ from $x$ — not the correlation coefficient $r$ itself, which a GATE student sometimes reports instead because it shares $b$'s sign and shares $S_{xy}$ in its numerator. $r$ and $b$ are the same number only in the special case $s_x=s_y$; in general $b=r\cdot(s_y/s_x)$, a rescaling by how the two variables' spreads compare.
 
 **Coefficient of Determination ($R^2$)**: The proportion of variance in $Y$ explained by $X$.
 $$R^2 = r^2$$

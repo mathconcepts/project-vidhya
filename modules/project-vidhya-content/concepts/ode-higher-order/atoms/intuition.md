@@ -1,54 +1,25 @@
 ---
-id: ode-higher-order-intuition
+id: ode-higher-order.intuition
 concept_id: ode-higher-order
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
+difficulty: 0.1
+exam_ids: ["*"]
 ---
 
-## Higher-Order Linear ODEs with Constant Coefficients
+## The Second-Order Rule, Extended
 
-An $n$th-order linear ODE with constant coefficients:
+Nothing new happens conceptually going from order $2$ to order $n$ — substituting $y=e^{rx}$ still turns the ODE into one polynomial, now of degree $n$:
+$$a_nr^n+a_{n-1}r^{n-1}+\cdots+a_1r+a_0=0$$
+An $n$-th degree polynomial has $n$ roots (counted with multiplicity), and the general solution always needs exactly $n$ arbitrary constants — one contribution per root, according to the same rules as before, just applied root-by-root instead of once:
 
-$$a_n y^{(n)} + a_{n-1}y^{(n-1)} + \cdots + a_1 y' + a_0 y = 0$$
-
-has a general solution that is a linear combination of $n$ independent solutions, each of the form $e^{rx}$ (or its modification). Finding those solutions requires only **solving one polynomial equation**.
-
----
-
-### The Auxiliary (Characteristic) Equation
-
-Substitute $y = e^{rx}$ to obtain:
-
-$$a_n r^n + a_{n-1}r^{n-1} + \cdots + a_1 r + a_0 = 0$$
-
-This degree-$n$ polynomial has exactly $n$ roots (counting multiplicity, over $\mathbb{C}$). Each root type contributes basis functions as follows:
-
-| Root type | Basis functions contributed |
+| Root type | Contribution to $y$ |
 |---|---|
-| Distinct real $r$ | $e^{rx}$ |
-| Real root of multiplicity $m$ | $e^{rx},\; xe^{rx},\; x^2 e^{rx},\; \ldots,\; x^{m-1}e^{rx}$ |
-| Complex pair $\alpha \pm i\beta$ (simple) | $e^{\alpha x}\cos(\beta x),\; e^{\alpha x}\sin(\beta x)$ |
-| Complex pair of multiplicity $m$ | Each of the two real functions multiplied by $1, x, x^2, \ldots, x^{m-1}$ |
+| Simple real $r$ | $Ce^{rx}$ |
+| Real $r$, multiplicity $m$ | $(C_1+C_2x+\cdots+C_mx^{m-1})e^{rx}$ |
+| Simple complex pair $\alpha\pm i\beta$ | $e^{\alpha x}(A\cos\beta x+B\sin\beta x)$ |
+| Complex pair, multiplicity $m$ | $e^{\alpha x}\big[(A_1+\cdots+A_mx^{m-1})\cos\beta x+(B_1+\cdots+B_mx^{m-1})\sin\beta x\big]$ |
 
-The **general solution** is always:
+For $y'''-3y''+3y'-y=0$: the auxiliary equation is $(r-1)^3=0$ — one root, multiplicity $3$. Following the second row of the table: $y=(C_1+C_2x+C_3x^2)e^{x}$, three constants for a third-order equation, exactly as required.
 
-$$y = \sum_{k=1}^{n} C_k\, \phi_k(x)$$
-
-where $\{\phi_k\}$ are the $n$ basis functions assembled from the table above.
-
----
-
-### Why Repeated Roots Produce $x^k e^{rx}$
-
-If $r$ is a double root, two trial solutions $e^{rx}$ are the same function — they cannot form an independent pair. The **reduction-of-order** argument shows that $xe^{rx}$ is also a solution, providing the needed second independent function.
-
----
-
-**GATE focus.** The exam typically tests:
-- Writing the auxiliary equation from the ODE.
-- Factoring or recognising the roots (integer roots are common).
-- Assembling $y_h$ correctly for each root type, especially repeated and complex cases.
-- For non-homogeneous versions: appending $y_p$ found by undetermined coefficients or operator methods.
+The only genuinely new bookkeeping is tracking multiplicity correctly when factoring a degree-$n$ polynomial — the root-to-solution translation itself never changes.

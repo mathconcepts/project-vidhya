@@ -4,6 +4,48 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.49.0] — 2026-09-02 — Six live-QA fixes on the practice flow, and a session-ownership gap closed
+
+Six issues reported from a live pass on the Render demo, root-caused via
+`/investigate` before any fix landed:
+
+- **Anytime Studymate served MCQ questions with no options shown.** The
+  question bank is 100% multiple-choice, but the free-text session flow
+  never rendered them — a wrong answer's feedback was a bare option letter
+  ("Expected: B") with nothing to compare it against. The session now shows
+  the real option buttons whenever a problem has them, and the option text
+  alongside the letter in the "Expected" line.
+- **"Generating insight…" could spin forever with nothing to show for it.**
+  A generated explanation for a wrong answer was silently discarded on
+  every deploy without a database — the spinner just ran out and vanished.
+  The insight now saves correctly on both storage backends, and if one
+  genuinely isn't available, the session says so instead of going quiet.
+- **A green "Verified" checkmark sat inside a red "wrong answer" card,**
+  reading as a correctness signal it was never meant to be — the checkmark
+  attests that the grade is real, not that the answer was right. It now
+  switches to a neutral tone whenever it's wrapping a miss.
+- **"Study this concept" could overflow its card** on narrow screens when
+  paired with a long topic name. Fixed.
+- **No way back to the previous practice problem** — only forward. Smart
+  Practice now remembers what you've seen and lets you step back and
+  forward through it without re-fetching, and correctly starts fresh the
+  moment you switch topic or difficulty.
+- **A wrong answer only offered a generic "what's next" link.** Practice
+  attempts now offer two concrete next moves on a miss: explore the
+  concept, or practice another question like it.
+
+Also closed, found while reviewing the fixes above: a session could write
+an answer, or mark a session complete, on behalf of another anonymous
+session by supplying its id directly — the practice API now verifies a
+session actually owns the one it's acting on before writing to it.
+
+### For contributors
+
+31 new/extended tests across the session-store abstraction, the practice
+pages, and the studymate API. `SessionStore` gained `updateGapText()` and
+`getSession()`, both implemented on the Postgres and flat-file (DB-less
+demo) backends alike.
+
 ## [4.48.0] — 2026-09-02 — Content strategy: research integration, second pass (P4–P7)
 
 **Operator action:** migration `057_custom_source_ingestion.sql`

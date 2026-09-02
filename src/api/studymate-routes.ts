@@ -11,12 +11,18 @@
  * All endpoints are anonymous-first: session_id comes from the request body or
  * X-Session-Id header (the same anonymous localStorage key used throughout the app).
  * Optional auth: if the user is logged in, user_id is attached for teacher dashboard.
+ *
+ * /answer and /complete take a studymateId from the URL path — a value the
+ * client fully controls — and REQUIRE session_id so isSessionOwner()
+ * (session-engine.ts) can verify the caller's anonymous session actually
+ * owns that studymateId before writing to it. /resume never needs this: it
+ * only ever looks up sessions belonging to the caller's own session_id.
  */
 
 import type { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
-import { buildSession, resumeSession, recordAnswer, completeSession } from '../sessions/session-engine';
+import { buildSession, resumeSession, recordAnswer, completeSession, isSessionOwner } from '../sessions/session-engine';
 import { attachThinkingGap } from '../sessions/thinking-gap-service';
 import { getAuth } from '../api/auth-middleware';
 
@@ -88,10 +94,18 @@ async function h_answer(req: ParsedRequest, res: ServerResponse): Promise<void> 
   const studymateId = req.params?.id;
   if (!studymateId) return sendError(res, 400, 'studymate session id required');
 
-  // Anonymous session key — same header/body convention as the other handlers.
-  // Optional here: a missing id costs the explanation its personalisation, not
-  // the answer its recording.
+  // Anonymous session key — same header/body convention as the other
+  // handlers. REQUIRED here (not merely for personalisation): studymateId
+  // comes from a URL path segment the client fully controls, so without
+  // proving which anonymous session actually owns it, any caller could
+  // record an answer — or, since thinking-gap persistence started actually
+  // writing on the flat-file backend, set gap_text — on someone else's
+  // session (/ship review army, 2026-09-02).
   const sessionId = extractSessionId(req);
+  if (!sessionId) return sendError(res, 400, 'session_id required (body or X-Session-Id header)');
+  if (!(await isSessionOwner(studymateId, sessionId))) {
+    return sendError(res, 403, 'session_id does not own this studymate session');
+  }
 
   const body = (req.body ?? {}) as {
     problem_id?: string;
@@ -142,6 +156,12 @@ async function h_answer(req: ParsedRequest, res: ServerResponse): Promise<void> 
 async function h_complete(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const studymateId = req.params?.id;
   if (!studymateId) return sendError(res, 400, 'studymate session id required');
+
+  const sessionId = extractSessionId(req);
+  if (!sessionId) return sendError(res, 400, 'session_id required (body or X-Session-Id header)');
+  if (!(await isSessionOwner(studymateId, sessionId))) {
+    return sendError(res, 403, 'session_id does not own this studymate session');
+  }
 
   try {
     const stat = await completeSession(studymateId);

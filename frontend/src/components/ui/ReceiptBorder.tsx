@@ -19,11 +19,31 @@ interface ReceiptBorderProps {
   receipt: Receipt | null | undefined;
   children: ReactNode;
   className?: string;
+  /**
+   * 'positive' (default): the established green tick — for a receipt that
+   * sits on its own or beside a correct/neutral result. 'neutral': for a
+   * receipt nested inside a wrong-answer card. `receiptFromServerGrade`
+   * deliberately attests the GRADE, not correctness — "this mark is real",
+   * not "you did well" — but a green checkmark reads as a correctness
+   * signal to a reader regardless of what the code comment says, and
+   * inside a red "wrong answer" card that collision is exactly the
+   * confusion /investigate found (2026-09-02). 'neutral' keeps the
+   * "Verified · {source}" claim (still real, still shown) but stops
+   * dressing it in the color that means "correct" everywhere else in the
+   * app.
+   */
+  tone?: 'positive' | 'neutral';
 }
 
-export function ReceiptBorder({ receipt, children, className }: ReceiptBorderProps) {
+export function ReceiptBorder({ receipt, children, className, tone = 'positive' }: ReceiptBorderProps) {
   const verified = !!(receipt?.verified);
   if (!verified) return <>{children}</>;
+  const inkColor = tone === 'neutral' ? 'var(--text-secondary)' : 'var(--green-ink)';
+  const markBackground = tone === 'neutral' ? 'var(--text-tertiary)' : 'var(--receipt-mark)';
+  // `--receipt-line` is green — the outer card border must follow tone too,
+  // or a wrong-answer receipt still wears a green-bordered card even after
+  // the ink/mark stop being green (found by /ship's review army, 2026-09-02).
+  const borderColor = tone === 'neutral' ? 'var(--separator)' : 'var(--receipt-line)';
 
   return (
     <div
@@ -33,7 +53,7 @@ export function ReceiptBorder({ receipt, children, className }: ReceiptBorderPro
         borderRadius: 'var(--radius-sm)',
         padding: 14,
         background: 'var(--surface-card)',
-        boxShadow: 'inset 0 0 0 1px var(--receipt-line)',
+        boxShadow: `inset 0 0 0 1px ${borderColor}`,
       }}
     >
       <span
@@ -45,7 +65,7 @@ export function ReceiptBorder({ receipt, children, className }: ReceiptBorderPro
           fontFamily: 'var(--font-sans)',
           fontSize: 'var(--text-caption)',
           fontWeight: 'var(--weight-semibold)',
-          color: 'var(--green-ink)',
+          color: inkColor,
         }}
       >
         <span
@@ -54,7 +74,7 @@ export function ReceiptBorder({ receipt, children, className }: ReceiptBorderPro
             width: 15,
             height: 15,
             borderRadius: 'var(--radius-capsule)',
-            background: 'var(--receipt-mark)',
+            background: markBackground,
             color: 'var(--text-on-accent)',
             fontSize: 10,
             display: 'inline-flex',

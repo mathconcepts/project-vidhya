@@ -31,7 +31,7 @@ import { InteractiveSidecar } from '@/components/lesson/interactives/Interactive
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 import { preserveHardBreaks } from '@/lib/preserveHardBreaks';
 import {
-  Sparkles, Zap, Database, CheckCircle2, XCircle, Loader2, ArrowRight,
+  Sparkles, Zap, Database, CheckCircle2, XCircle, Loader2, ArrowRight, ArrowLeft,
   BookOpen, Target, GraduationCap,
 } from 'lucide-react';
 
@@ -87,6 +87,23 @@ export default function SmartPracticePage() {
   const [startedAt, setStartedAt] = useState<number>(0);
   const [sessionStats, setSessionStats] = useState({ problems_served: 0, total_cost_usd: 0, avg_latency_ms: 0 });
 
+  // Problem history — nothing tracked "what came before" so there was no way
+  // back to the previous problem, only forward (/investigate, 2026-09-02).
+  // `historyPos` points at the currently-shown entry in `history`; stepping
+  // back re-shows a past entry without a new resolve() call, stepping
+  // forward past the end of history triggers a fresh fetch same as before.
+  const [history, setHistory] = useState<ResolvedContent[]>([]);
+  const [historyPos, setHistoryPos] = useState(-1);
+
+  // Switching topic or difficulty invalidates the history stack — otherwise
+  // stepping "Previous" then picking a new topic and hitting "Next problem"
+  // replays a stale, wrong-topic entry instead of fetching fresh content for
+  // the new selection (found by /ship's review army, 2026-09-02).
+  const resetHistory = useCallback(() => {
+    setHistory([]);
+    setHistoryPos(-1);
+  }, []);
+
   useEffect(() => {
     trackEvent('page_view', { page: 'smart-practice' });
     warmContentBundle();
@@ -108,6 +125,21 @@ export default function SmartPracticePage() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextProblem = useCallback(async () => {
+    // Already sitting behind the frontier (arrived here via "Previous
+    // problem") — step forward through history instead of re-resolving, so
+    // "Next" after "Previous" retraces the same problem rather than serving
+    // a third, unrelated one.
+    if (historyPos >= 0 && historyPos < history.length - 1) {
+      const pos = historyPos + 1;
+      setHistoryPos(pos);
+      setResolved(history[pos]);
+      setSubmitted(false);
+      setWasCorrect(null);
+      setAnswer('');
+      setStartedAt(Date.now());
+      return;
+    }
+
     setLoading(true);
     setSubmitted(false);
     setWasCorrect(null);
@@ -135,6 +167,12 @@ export default function SmartPracticePage() {
         } catch {}
       }
       setResolved(result);
+      // nextProblem() is recreated whenever `history` changes (it's in this
+      // callback's own deps below), so the closed-over `history` here is
+      // always current — no need to read it back out of a setState updater.
+      const nextHistory = [...history, result];
+      setHistory(nextHistory);
+      setHistoryPos(nextHistory.length - 1);
       setStartedAt(Date.now());
       setSessionStats(s => ({
         problems_served: s.problems_served + 1,
@@ -147,7 +185,18 @@ export default function SmartPracticePage() {
     } finally {
       setLoading(false);
     }
-  }, [topic, difficulty]);
+  }, [topic, difficulty, history, historyPos]);
+
+  const previousProblem = useCallback(() => {
+    if (historyPos <= 0) return;
+    const pos = historyPos - 1;
+    setHistoryPos(pos);
+    setResolved(history[pos]);
+    setSubmitted(false);
+    setWasCorrect(null);
+    setAnswer('');
+    setStartedAt(Date.now());
+  }, [history, historyPos]);
 
   const handleSubmit = async () => {
     if (!resolved?.problem) return;
@@ -205,7 +254,7 @@ export default function SmartPracticePage() {
             {examTopics.map(t => (
               <button
                 key={t}
-                onClick={() => setTopic(t)}
+                onClick={() => { setTopic(t); resetHistory(); }}
                 style={{
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-sm)',
@@ -232,7 +281,7 @@ export default function SmartPracticePage() {
             {DIFFICULTY_LABELS.map(d => (
               <button
                 key={d.value}
-                onClick={() => setDifficulty(d.value)}
+                onClick={() => { setDifficulty(d.value); resetHistory(); }}
                 style={{
                   flex: 1,
                   padding: '6px 0',
@@ -252,29 +301,56 @@ export default function SmartPracticePage() {
           </div>
         </div>
 
-        <button
-          onClick={nextProblem}
-          disabled={loading}
-          style={{
-            width: '100%',
-            padding: '10px 0',
-            borderRadius: 'var(--radius-sm)',
-            background: loading ? 'var(--surface-fill)' : 'var(--green)',
-            color: loading ? 'var(--text-tertiary)' : '#fff',
-            border: 'none',
-            fontFamily: 'var(--font-sans)',
-            fontWeight: 'var(--weight-semibold)',
-            fontSize: 'var(--text-body)',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-          }}
-        >
-          {loading ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
-          {loading ? 'Resolving...' : resolved ? 'Next problem' : 'Get problem'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {historyPos > 0 && (
+            <button
+              onClick={previousProblem}
+              disabled={loading}
+              style={{
+                minWidth: 44,
+                minHeight: 44,
+                padding: '10px 14px',
+                borderRadius: 'var(--radius-sm)',
+                background: 'var(--surface-fill)',
+                color: loading ? 'var(--text-tertiary)' : 'var(--text-secondary)',
+                border: 'var(--hairline) solid var(--separator)',
+                fontFamily: 'var(--font-sans)',
+                fontWeight: 'var(--weight-semibold)',
+                fontSize: 'var(--text-body)',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+              }}
+            >
+              <ArrowLeft size={14} /> Previous
+            </button>
+          )}
+          <button
+            onClick={nextProblem}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '10px 0',
+              borderRadius: 'var(--radius-sm)',
+              background: loading ? 'var(--surface-fill)' : 'var(--green)',
+              color: loading ? 'var(--text-tertiary)' : '#fff',
+              border: 'none',
+              fontFamily: 'var(--font-sans)',
+              fontWeight: 'var(--weight-semibold)',
+              fontSize: 'var(--text-body)',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6,
+            }}
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <ArrowRight size={14} />}
+            {loading ? 'Resolving...' : resolved ? 'Next problem' : 'Get problem'}
+          </button>
+        </div>
       </div>
 
       {/* Resolved problem */}
@@ -337,8 +413,8 @@ export default function SmartPracticePage() {
 
             {resolved.problem && (
               <div style={{ padding: 16, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', boxShadow: 'var(--shadow-raise)', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', minWidth: 0, flexWrap: 'wrap' }}>
                     <Target size={10} />
                     {resolved.problem.topic?.replace(/-/g, ' ')}
                     <span>·</span>

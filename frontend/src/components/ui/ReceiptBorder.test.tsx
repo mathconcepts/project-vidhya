@@ -51,6 +51,44 @@ describe('ReceiptBorder', () => {
     expect(screen.getByText('✓')).toBeInTheDocument();
   });
 
+  // /investigate (2026-09-02): PracticeAttemptPage nests a green-tick
+  // ReceiptBorder inside a red "wrong answer" card. receiptFromServerGrade
+  // deliberately attests the GRADE not the correctness, but a green
+  // checkmark still reads as "you got it right" to a student regardless of
+  // that distinction, colliding with the red card right next to it.
+  it("tone='neutral' drops the green ink so a receipt inside a wrong-answer card doesn't read as a correctness signal", () => {
+    render(
+      <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }} tone="neutral">
+        <span>Not this time</span>
+      </ReceiptBorder>,
+    );
+    // The checkmark's parent is the styled "Verified · {source}" label span.
+    const label = screen.getByText('✓').parentElement as HTMLElement;
+    expect(label.textContent).toContain('Verified · gate_deterministic_scorer');
+    expect(label.getAttribute('style')).not.toContain('--green-ink');
+  });
+
+  it("tone defaults to 'positive' (unchanged green ink) when omitted", () => {
+    render(
+      <ReceiptBorder receipt={{ verified: true, source: 'cas_verifier' }}>
+        <span>Verified answer</span>
+      </ReceiptBorder>,
+    );
+    const label = screen.getByText('✓').parentElement as HTMLElement;
+    expect(label.getAttribute('style')).toContain('--green-ink');
+  });
+
+  it("tone='neutral' also drops the checkmark disc's own green background (--receipt-mark), not just the label ink", () => {
+    render(
+      <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }} tone="neutral">
+        <span>Not this time</span>
+      </ReceiptBorder>,
+    );
+    const mark = screen.getByText('✓');
+    expect(mark.getAttribute('style')).not.toContain('--receipt-mark');
+    expect(mark.getAttribute('style')).toContain('--text-tertiary');
+  });
+
   it('reads border color from the DESIGN-SYSTEM CSS custom properties, not a hardcoded class', () => {
     const { container } = render(
       <ReceiptBorder receipt={{ verified: true, source: 'cas_verifier' }}>
@@ -63,5 +101,20 @@ describe('ReceiptBorder', () => {
     // that token is ever re-themed. Asserting the inline style references
     // the CSS var (rather than a literal color) keeps the two in sync.
     expect(wrapper.getAttribute('style')).toContain('--receipt-line');
+  });
+
+  // /ship review-army (2026-09-02): tone='neutral' recolored the ink and
+  // checkmark disc but left this outer card border hardcoded to the green
+  // --receipt-line token, so a wrong-answer receipt still wore a
+  // green-bordered card — the exact collision the tone prop exists to remove.
+  it("tone='neutral' also swaps the outer card's border away from the green --receipt-line token", () => {
+    const { container } = render(
+      <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }} tone="neutral">
+        <span>Not this time</span>
+      </ReceiptBorder>,
+    );
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.getAttribute('style')).not.toContain('--receipt-line');
+    expect(wrapper.getAttribute('style')).toContain('--separator');
   });
 });

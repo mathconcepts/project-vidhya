@@ -35,6 +35,8 @@ async function renderPage() {
     <MemoryRouter initialEntries={['/attempt/obj-1']}>
       <Routes>
         <Route path="/attempt/:objectId" element={<Page />} />
+        <Route path="/lesson/:conceptId" element={<div>LESSON PAGE: matrix-operations</div>} />
+        <Route path="/smart-practice" element={<div>SMART PRACTICE PAGE</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -187,5 +189,105 @@ describe('PracticeAttemptPage — common-mistake callout', () => {
     fireEvent.click(screen.getByText('Submit'));
 
     await waitFor(() => expect(screen.getByText(/Common trap: some_future_tag/)).toBeInTheDocument());
+  });
+});
+
+// Regression (/investigate, 2026-09-02): a wrong answer left the student
+// with only a generic "What's next for me?" link — no concrete path to
+// either re-learn the concept or try another problem on it.
+describe('PracticeAttemptPage — post-wrong-answer next-move CTAs', () => {
+  it('shows Explore this concept + Practice more like this on a wrong answer, routing both by node_id', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    expect(screen.getByText('Explore this concept')).toBeInTheDocument();
+    expect(screen.getByText('Practice more like this')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Explore this concept'));
+    await waitFor(() => expect(screen.getByText('LESSON PAGE: matrix-operations')).toBeInTheDocument());
+  });
+
+  it('"Practice more like this" routes to /smart-practice scoped to the concept', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Practice more like this'));
+    await waitFor(() => expect(screen.getByText('SMART PRACTICE PAGE')).toBeInTheDocument());
+  });
+
+  it('does not show either CTA on a correct answer', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 1, max: 1, correct: true, feedback: 'Nice work.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: 1,
+        failure_tag: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[1]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
+    expect(screen.queryByText('Explore this concept')).toBeNull();
+    expect(screen.queryByText('Practice more like this')).toBeNull();
+  });
+
+  it("gives the receipt neutral tone on a wrong answer so its checkmark doesn't read as correctness", async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    const receiptLabel = screen.getByText('✓').parentElement as HTMLElement;
+    expect(receiptLabel.getAttribute('style')).not.toContain('--green-ink');
   });
 });

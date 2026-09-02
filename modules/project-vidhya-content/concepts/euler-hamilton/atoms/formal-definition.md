@@ -16,3 +16,5 @@ exam_ids: ["*"]
 **Hamiltonian Existence**: No simple characterization. Checking whether a Hamiltonian path exists is NP-complete (computationally hard). However, sufficient conditions exist:
 - **Dirac's Theorem**: If every vertex in a graph $G$ with $n \geq 3$ vertices has degree $\geq \frac{n}{2}$, then $G$ has a Hamiltonian circuit.
 - **Ore's Theorem**: If for every pair of non-adjacent vertices $u, v$: $\deg(u) + \deg(v) \geq n$, then $G$ has a Hamiltonian circuit.
+
+**Method selector.** For Eulerian existence, the degree-parity check (count odd-degree vertices: $0$ for a circuit, $2$ for a path, otherwise neither) is decisive and instant — always use it first, never reach for Dirac's or Ore's theorem here, since those are Hamiltonian-only tools with no bearing on edge-traversal questions. For Hamiltonian existence, Dirac's and Ore's are *sufficient* conditions only: a graph failing both may still have a Hamiltonian circuit, so a failed check should route you to constructing one directly on a small graph, not to concluding "no Hamiltonian circuit exists" — that conclusion needs an actual proof of non-existence, not a missed sufficient condition.

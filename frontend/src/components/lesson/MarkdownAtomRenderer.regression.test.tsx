@@ -85,11 +85,11 @@ describe('MarkdownAtomRenderer — regression on seed atoms', () => {
     expect(CONCEPTS.length).toBe(101);
   });
 
-  it('loads all 1079 base seed atoms', () => {
+  it('loads all 1105 base seed atoms', () => {
     // Pinned so a seed atom cannot silently disappear. Recompute and update
     // deliberately when base content is genuinely added or removed; a change
     // here should always be something an author meant to do.
-    expect(atoms.filter((a) => !a.isVariant).length).toBe(1079);
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(1105);
   });
 
   it('loads the authored stance variants too', () => {

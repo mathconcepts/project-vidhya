@@ -16,3 +16,5 @@ The right-hand side is the integral of the $z$-component of curl (the "swirl den
 $$\oint_C P \, dy - Q \, dx = \iint_D \left(\frac{\partial P}{\partial x} + \frac{\partial Q}{\partial y}\right) dA$$
 
 The right-hand side is the integral of divergence (the "expansion density"). Here, the line integral is taken with outward normal.
+
+**Method selector.** Reach for Green's Theorem the moment $C$ is a simple closed curve bounding a planar region $D$ — trading the line integral for $\iint_D(\partial_xQ-\partial_yP)\,dA$ is almost always less arithmetic than parametrizing $C$ piece by piece, especially once $C$ has corners. Direct parametrization is the tempting alternative when $C$ looks easy (a circle, an ellipse), but it re-derives the whole integral by hand where Green's Theorem needs only two partial derivatives — and it is the only option left the instant $C$ is not simple (self-intersecting) or not closed, cases where Green's Theorem does not apply at all.

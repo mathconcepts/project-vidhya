@@ -6,24 +6,13 @@ bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
 estimated_minutes: 3
+retention_tags: ["cauchy-riemann", "harmonic-conjugate"]
 ---
 
-Let $f(z) = u(x,y) + iv(x,y)$ be analytic. If $u(x,y) = x^2 - y^2$, what is $v(x,y)$ (up to an additive constant)?
-
-- **(A)** $v(x,y) = 2xy + C$
-- **(B)** $v(x,y) = x^2 + y^2 + C$
-- **(C)** $v(x,y) = 2xy$
-- **(D)** $v(x,y) = -2xy + C$
+From memory, before checking: if $f=u+iv$ is analytic and $u(x,y)=x^2-y^2$, what is $v(x,y)$, up to a constant?
 
 <details>
 <summary>Answer</summary>
 
-**A**. Given $u(x,y) = x^2 - y^2$, we use the Cauchy-Riemann equations to find $v$.
-From $\frac{\partial u}{\partial x} = \frac{\partial v}{\partial y}$: $\frac{\partial u}{\partial x} = 2x$, so $\frac{\partial v}{\partial y} = 2x$.
-Integrate with respect to $y$: $v(x,y) = 2xy + g(x)$, where $g(x)$ is an arbitrary function of $x$ alone.
-From $\frac{\partial u}{\partial y} = -\frac{\partial v}{\partial x}$: $\frac{\partial u}{\partial y} = -2y$, so $-\frac{\partial v}{\partial x} = -2y$, which gives $\frac{\partial v}{\partial x} = 2y$.
-Differentiate $v(x,y) = 2xy + g(x)$ with respect to $x$: $\frac{\partial v}{\partial x} = 2y + g'(x)$.
-For this to equal $2y$, we need $g'(x) = 0$, so $g(x) = C$ (a constant).
-Therefore, $v(x,y) = 2xy + C$. Note: $u + iv = x^2 - y^2 + i(2xy + C) = (x+iy)^2 + iC = z^2 + iC$, which is indeed analytic.
-
+$v(x,y)=2xy+C$. From $v_y=u_x=2x$, integrate to get $v=2xy+g(x)$; from $v_x=-u_y=2y$, differentiate to get $g'(x)=0$, so $g(x)=C$. Check: $u+iv=x^2-y^2+i(2xy+C)=z^2+iC$, analytic.
 </details>

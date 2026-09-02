@@ -1,75 +1,29 @@
 ---
-id: analytic-functions-worked-example
+id: analytic-functions.worked-example
 concept_id: analytic-functions
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
+difficulty: 0.4
+exam_ids: ["*"]
+scaffold_fade: true
 ---
 
-# Worked Example — Verifying Analyticity of $f(z) = z^2$ (GATE Style)
-
-## Problem
-
-Show that $f(z) = z^2$ is analytic everywhere, and verify the Cauchy-Riemann equations.
+**Problem:** Given $u(x,y) = e^x\cos y$, find the harmonic conjugate $v(x,y)$ so that $f=u+iv$ is analytic, and write $f$ as a function of $z$.
 
 ---
 
-## Step 1 — Write $f$ in Terms of $u$ and $v$
-
-Let $z = x + iy$. Then:
-
-$$f(z) = z^2 = (x + iy)^2 = x^2 - y^2 + 2ixy$$
-
-So:
-
-$$u(x,y) = x^2 - y^2, \qquad v(x,y) = 2xy$$
-
-## Step 2 — Compute the Partial Derivatives
-
-$$\frac{\partial u}{\partial x} = 2x, \qquad \frac{\partial v}{\partial y} = 2x$$
-
-$$\frac{\partial u}{\partial y} = -2y, \qquad \frac{\partial v}{\partial x} = 2y$$
-
-## Step 3 — Check the Cauchy-Riemann Equations
-
-**First CR equation:**
-$$\frac{\partial u}{\partial x} = \frac{\partial v}{\partial y} \implies 2x = 2x \checkmark$$
-
-**Second CR equation:**
-$$\frac{\partial u}{\partial y} = -\frac{\partial v}{\partial x} \implies -2y = -(2y) = -2y \checkmark$$
-
-Both equations hold for **all** $(x, y) \in \mathbb{R}^2$, and the partial derivatives are continuous everywhere.
-
-**Conclusion:** $f(z) = z^2$ is analytic everywhere — it is an entire function.
+**Step 1 — Confirm $u$ is harmonic.** $u_x=e^x\cos y$, $u_{xx}=e^x\cos y$; $u_y=-e^x\sin y$, $u_{yy}=-e^x\cos y$. Sum: $u_{xx}+u_{yy}=0$ ✓ — a conjugate can exist.
 
 ---
 
-## Step 4 — Find the Derivative
-
-Since the CR equations hold:
-
-$$f'(z) = \frac{\partial u}{\partial x} + i\frac{\partial v}{\partial x} = 2x + i(2y) = 2(x + iy) = 2z$$
-
-This matches the result from direct complex differentiation: $\dfrac{d}{dz}z^2 = 2z$. Consistent.
+**Step 2 — Use the first CR equation.** $v_y=u_x=e^x\cos y$. Integrate with respect to $y$: $v = e^x\sin y + g(x)$, for some function $g$ of $x$ alone.
 
 ---
 
-## Contrast: $g(z) = |z|^2$ is NOT Analytic
-
-For $g = x^2 + y^2 + i\cdot 0$, we have $u = x^2 + y^2$, $v = 0$.
-
-$$\frac{\partial u}{\partial x} = 2x, \quad \frac{\partial v}{\partial y} = 0$$
-
-The first CR equation $2x = 0$ holds only on the line $x = 0$. So $g$ is not analytic at any point — it is **nowhere analytic**, even though it is continuous and real-differentiable everywhere.
+**Step 3 — Use the second CR equation to pin down $g$.** $v_x=-u_y \Rightarrow e^x\sin y + g'(x) = e^x\sin y \Rightarrow g'(x)=0 \Rightarrow g(x)=C$.
 
 ---
 
-## GATE Tip
+**Step 4 — Assemble $f$.** $f(z)=u+iv=e^x\cos y+i(e^x\sin y+C)=e^x(\cos y+i\sin y)+iC=e^{x+iy}+iC$. Taking $C=0$: $\boxed{f(z)=e^z}$. Sanity check: $f'(z)=u_x+iv_x=e^x\cos y+ie^x\sin y=e^z$, matching $\frac{d}{dz}e^z=e^z$ directly.
 
-When the problem says "find the analytic function $f = u + iv$ given $u$," use the CR equations to reconstruct $v$: integrate $\partial v/\partial y = \partial u/\partial x$ with respect to $y$, then fix the constant using $\partial v/\partial x = -\partial u/\partial y$.
-
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: verifying Cauchy-Riemann equations for f(z) = e^z","steps":[{"prompt":"For f(z) = e^z, write u and v in terms of x and y, then state ∂u/∂x.","hint":"e^z = e^(x+iy) = e^x · e^(iy) = e^x(cos y + i sin y). So u = e^x cos y and v = e^x sin y. Differentiate u with respect to x.","answer":"∂u/∂x = e^x cos y"},{"prompt":"Now verify the first Cauchy-Riemann equation ∂u/∂x = ∂v/∂y for e^z.","hint":"Compute ∂v/∂y = ∂(e^x sin y)/∂y = e^x cos y.","answer":"∂u/∂x = e^x cos y = ∂v/∂y ✓. The CR equation holds for all (x,y), confirming e^z is entire."}]}
-```
+**Method note.** Integrate $v_y=u_x$ to reconstruct $v$, then fix the leftover function of $x$ with $v_x=-u_y$ — this always produces $v$ directly. Guessing a $v$ that "looks harmonic" and checking it afterward wastes time searching when the two-equation integration hands you the unique answer (up to the additive constant CR always leaves free) in two lines.

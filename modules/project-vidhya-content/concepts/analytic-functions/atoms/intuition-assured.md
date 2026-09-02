@@ -5,16 +5,15 @@
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# marks rather than re-teaching what they can already do.
 id: analytic-functions.intuition.assured
 concept_id: analytic-functions
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: analytic-functions-intuition
+exam_ids: ["*"]
+modality: visual
+variant_of: analytic-functions.intuition
 for_stance: assured
 ---
 

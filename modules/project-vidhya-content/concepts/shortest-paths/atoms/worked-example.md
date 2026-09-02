@@ -1,5 +1,5 @@
 ---
-id: shortest-paths-worked-example
+id: shortest-paths.worked-example
 concept_id: shortest-paths
 atom_type: worked_example
 bloom_level: 3
@@ -8,9 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 1
 ---
 
-# Worked Example: Dijkstra on a 5-Vertex Graph
-
-## Problem (GATE Style)
+## Problem (GATE Style): Dijkstra on a 5-Vertex Graph
 
 Apply Dijkstra's algorithm on the directed graph below with source vertex $s = A$.
 Find the shortest distance from $A$ to every other vertex and the order in which vertices are settled.

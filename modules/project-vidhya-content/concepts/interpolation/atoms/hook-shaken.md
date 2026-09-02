@@ -12,7 +12,7 @@ id: interpolation.hook.shaken
 concept_id: interpolation
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: interpolation.hook
 for_stance: shaken

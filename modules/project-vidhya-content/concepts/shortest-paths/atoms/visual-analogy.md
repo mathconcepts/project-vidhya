@@ -1,5 +1,5 @@
 ---
-id: shortest-paths-visual-analogy
+id: shortest-paths.visual-analogy
 concept_id: shortest-paths
 atom_type: visual_analogy
 bloom_level: 2
@@ -8,9 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
 
-# Shortest Paths as GPS Navigation
-
-## The Analogy
+## The Analogy: Shortest Paths as GPS Navigation
 
 Your smartphone's GPS must find the fastest route from your current location to every other city on the map. Road lengths are travel times in minutes.
 
@@ -90,3 +88,15 @@ Floyd-Warshall fills in a complete $V \times V$ distance table — shortest path
 Strategy: consider each city $k$ as a possible **waypoint**. For each pair $(i, j)$, ask: "Is going through $k$ faster than the currently known route?" Repeat for all $k$ in order.
 
 This is $O(V^3)$ — acceptable for small $V$, impractical for GPS across millions of intersections.
+
+---
+
+## Distances Settle in a Fixed Order, Never Out of Order
+
+Dijkstra's own settlement order proves its correctness: run on the earlier 5-vertex example (source $A$), the confirmed distances only ever grow as more vertices settle —
+
+```gif-scene
+{"type": "discrete-bars", "values": [0, 2, 3, 8, 10], "labels": ["A", "C", "B", "D", "E"], "title": "Settlement order and locked-in distance from source A"}
+```
+
+That the bars never dip is not a coincidence of this graph — it is the reason Dijkstra is allowed to lock in a distance the moment a vertex is extracted. Every edge weight is non-negative, so nothing extracted later can ever offer a shortcut back to something already settled.

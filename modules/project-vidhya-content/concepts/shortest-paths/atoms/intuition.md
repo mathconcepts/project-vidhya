@@ -1,5 +1,5 @@
 ---
-id: shortest-paths-intuition
+id: shortest-paths.intuition
 concept_id: shortest-paths
 atom_type: intuition
 bloom_level: 2
@@ -7,8 +7,6 @@ difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
-
-# Shortest Paths — The Three Algorithms
 
 ## The Core Problem
 
@@ -84,15 +82,6 @@ $\pi[v]$ is the **predecessor** of $v$ in the shortest-path tree. Walk back thro
 
 ---
 
-## GATE Exam Signals
+## Reading the Distance Array Mid-Algorithm
 
-| Scenario | Use |
-|---|---|
-| Non-negative weights, single source | Dijkstra |
-| Negative weights or detect neg. cycle | Bellman-Ford |
-| All-pairs shortest paths | Floyd-Warshall |
-| Sparse graph, fast single-source | Dijkstra + heap |
-| Dense graph, all-pairs | Floyd-Warshall |
-
-- GATE often asks for the **number of iterations** Bellman-Ford needs, or the **state of the distance array** after $k$ relaxation passes.
-- Dijkstra questions often ask for the order in which vertices are settled.
+A question can stop an algorithm partway through and ask what the distance array looks like at that instant — for Bellman-Ford, that means the array after exactly $k$ relaxation passes (holding shortest paths using at most $k$ edges); for Dijkstra, that means which vertices are already settled and what their locked-in distances are. Neither question needs the algorithm run to completion.

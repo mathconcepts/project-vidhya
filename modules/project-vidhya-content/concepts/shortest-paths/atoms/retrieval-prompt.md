@@ -5,7 +5,8 @@ atom_type: retrieval_prompt
 bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["negative-cycle", "bellman-ford"]
 ---
 
 A graph has a negative-weight cycle reachable from source vertex S. What can be said about shortest paths from S?

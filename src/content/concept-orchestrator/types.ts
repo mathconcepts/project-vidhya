@@ -132,6 +132,23 @@ export interface OrchestratorOptions {
    * validation alone cannot catch well-formed but wrong mathematics.
    */
   generation_context?: 'batch' | 'personalized';
+  /**
+   * Prompt-resource-registry opt-in modifier list (src/content/prompt-
+   * registry/, plan: docs/designs/2026-09-02-wolfram-prompt-resource-
+   * registry.md) — resource_ids of OPTIONAL modifiers this run should
+   * apply (e.g. 'modifier.exam_timed'). The baseline tone modifier fires
+   * regardless of this field; everything else is opt-in only, so absent
+   * means "no optional modifiers," never "all of them."
+   */
+  active_modifiers?: readonly string[];
+  /**
+   * Input for modifier.prerequisite_repair — the specific upstream
+   * concept a diagnostic signal flagged as weak for this student. Only
+   * meaningful together with `active_modifiers` including
+   * 'modifier.prerequisite_repair'; the modifier itself refuses to
+   * fabricate a bridge when this is absent.
+   */
+  prerequisite_gap?: { concept_id: string; label?: string };
 }
 
 export interface ProgressEvent {

@@ -107,3 +107,28 @@ describe('buildPrompt — the literal prompt-cap carve-out (eng review: two trut
     expect(prompt).not.toContain('Keep total length under 400 words.');
   });
 });
+
+describe('buildPrompt — tone/register directive (/investigate, 2026-09-02)', () => {
+  it('every prompt opens with the ELI5/anxious-student/Indian-English register block', () => {
+    const prompt = buildPrompt(baseArgs({ atom_type: 'hook' }));
+    expect(prompt.startsWith('Register: write for a student who gets anxious')).toBe(true);
+    expect(prompt).toContain('ELI5');
+    expect(prompt).toContain('gloss it in plain words');
+    expect(prompt).toContain('Indian English');
+  });
+
+  it('the register block applies to every atom type, not just hook/intuition', () => {
+    for (const atom_type of ['formal_definition', 'common_traps', 'worked_example', 'exam_pattern'] as const) {
+      const prompt = buildPrompt(baseArgs({ atom_type: atom_type as any }));
+      expect(prompt).toContain('Indian English');
+    }
+  });
+
+  it('the register block precedes every other block (student context, pain-point, resonance)', () => {
+    const prompt = buildPrompt(baseArgs({ atom_type: 'hook' }));
+    const registerIdx = prompt.indexOf('Register: write for a student');
+    const generateIdx = prompt.indexOf('Generate the "hook" atom');
+    expect(registerIdx).toBe(0);
+    expect(registerIdx).toBeLessThan(generateIdx);
+  });
+});

@@ -474,17 +474,35 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
       // the caption's own paragraphs in instead — same CSS-only, entry-
       // once, prefers-reduced-motion-collapsing stagger already used for
       // structured (exam_pattern/common_traps) rows. See
-      // .vidhya-atom-body--progressive in globals.css. `mnemonic` gets the
-      // same treatment (device-then-explanation prose, the same shape as a
-      // visual_analogy caption); `formal_definition` deliberately does NOT
-      // — a definition's job is to be instantly whole and referenceable,
-      // and pacing THAT in would fight the one atom type where "convey more
-      // with less" means less decoration, not more motion (see the
-      // definition/mnemonic engagement-framework proposal doc).
+      // .vidhya-atom-body--progressive in globals.css. `mnemonic` got the
+      // same treatment immediately (device-then-explanation prose, the same
+      // shape as a visual_analogy caption).
+      //
+      // Widened (/investigate, 2026-09-02, "just static text is provided...
+      // needs to be resonant... using motion, animation, transition"):
+      // every other DefaultAtomCard type — hook, intuition (outside the
+      // resonance-beat scenes, which still only cover 24-26 concepts),
+      // micro_exercise, retrieval_prompt, interleaved_drill — rendered with
+      // zero motion at all, not because of a design decision but because
+      // nobody had extended the mechanism past the two types above. Applied
+      // by atom_type in code (not per-content), so it reaches every
+      // existing concept AND every concept the generator produces from here
+      // on, with no content rewrite required.
+      //
+      // `formal_definition` is the one deliberate holdout, unchanged: a
+      // definition's job is to be instantly whole and referenceable, and
+      // pacing THAT in would fight the one atom type where "convey more
+      // with less" means less decoration, not more motion (Sweller's
+      // split-attention effect — see the definition/mnemonic
+      // engagement-framework proposal doc). `exam_pattern` is excluded here
+      // too, not as a holdout but because it already animates via
+      // `structured` above (list-row stagger) — `progressive` targets `> p`
+      // direct children, which its bullet-list markup has none of, so
+      // adding it would be a no-op, not a second animation.
       className={
-        atom.atom_type === 'visual_analogy' || atom.atom_type === 'mnemonic'
-          ? 'vidhya-atom-body--progressive'
-          : undefined
+        atom.atom_type === 'formal_definition' || atom.atom_type === 'exam_pattern'
+          ? undefined
+          : 'vidhya-atom-body--progressive'
       }
     />
   );

@@ -499,27 +499,35 @@ export default function PracticeAttemptPage() {
                       ))}
                     </ol>
                   )}
-                  {/* Two concrete next moves on a miss, not just the generic
-                      "What's next for me?" system link below — a student who
-                      just got this wrong is choosing between "I don't
-                      understand this concept" (go learn it) and "I get it,
-                      let me try another" (go practice it), and neither path
-                      existed here before (/investigate, 2026-09-02). Wrong
-                      answers only — a correct answer doesn't need this
-                      fork. */}
-                  {!result.grade.correct && item?.node_id && (
+                  {/* Two concrete next moves, not just the generic "What's
+                      next for me?" system link below. A wrong answer is
+                      choosing between "I don't understand this concept" (go
+                      learn it) and "I get it, let me try another" (go
+                      practice it); a correct answer only needs the second —
+                      offering "Explore this concept" as remediation for
+                      something the student just proved they know would be
+                      backwards. (/investigate, 2026-09-02 first added this
+                      for wrong answers only; a follow-up the same day found
+                      the row was unconditionally hidden after a correct
+                      answer too — "Smart Practice gives no way to keep
+                      practicing after getting it right" — so the row now
+                      always renders, and only the remediation button is
+                      gated on the miss.) */}
+                  {item?.node_id && (
                     <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
-                        style={{
-                          ...NEXT_MOVE_BUTTON_BASE,
-                          background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
-                          color: 'var(--indigo-ink)',
-                        }}
-                      >
-                        <GraduationCap size={14} /> Explore this concept
-                      </button>
+                      {!result.grade.correct && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
+                          style={{
+                            ...NEXT_MOVE_BUTTON_BASE,
+                            background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
+                            color: 'var(--indigo-ink)',
+                          }}
+                        >
+                          <GraduationCap size={14} /> Explore this concept
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => navigate(`/smart-practice?concept=${encodeURIComponent(item.node_id)}`)}

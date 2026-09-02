@@ -4,6 +4,83 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Existing content corpus mostly not reprocessed against the ELI5/Indian-English register directive
+
+**Trigger:** an operator wants to spend agent time/budget on the next wave,
+or a fresh live-QA report surfaces another unglossed-jargon instance
+outside Linear Algebra `common_traps`.
+
+**What:** `/investigate` (2026-09-02) added an unconditional
+`TONE_REGISTER_BLOCK` to `orchestrator.ts`'s `buildPrompt()` — ELI5
+reasoning, gloss any technical term on first use, default to Indian
+English, written for an anxious exam student. `/autoplan` (2026-09-02, same
+day) closed the pilot slice: all 26 GATE Linear Algebra concepts'
+`common_traps` atoms were rewritten via 5 parallel subagents against this
+directive, verified against `ci:katex-fences`, `ci:content-integrity`,
+`ci:la-walkthrough`, `ci:template-coverage`, `ci:variant-agreement`, and the
+frontend's full atom-render regression suite — all clean. The confirmed
+instance that surfaced the gap (`symmetric-matrices/atoms/common-traps.md`
+Trap 1's ungossed "Hermitian matrix") is fixed.
+
+This closed one (atom_type, topic) slice out of many. NOT touched: every
+other atom_type (`hook`, `intuition`, `formal_definition`, `worked_example`,
+`micro_exercise`, `retrieval_prompt`, `visual_analogy`, `mnemonic`,
+`exam_pattern`, `interleaved_drill`) across all 101 concepts, and
+`common_traps` itself on the other 9 topics beyond Linear Algebra. The
+880+ base atoms this pass didn't touch keep whatever register they were
+originally written in.
+
+**Why the rest isn't done here too:** no LLM provider key is configured in
+this environment for the LIVE generation path (`GEMINI_API_KEY`/
+`ANTHROPIC_API_KEY`/etc. all unset), so `generateConcept()` itself can't
+run — but the pilot proved the workaround (Claude Sonnet subagents doing
+the rewrite directly, bypassing the app's runtime LLM client) works and
+produces real, CI-clean output. The remaining scope is ~9x this pilot's
+size for `common_traps` alone across the other 9 topics, and roughly
+10x again per additional atom_type — a real cost that deserves batching
+in deliberate, human-checkpointed waves (mirroring this repo's own Wave
+1-13 FSRS precedent and the 24-of-26 resonance-beats rollout), not one
+unattended mega-run.
+
+**Where to start:** repeat this pass's exact pattern — 5-6 concepts per
+subagent batch, dispatched in parallel via the Agent tool, each given the
+verbatim tone directive + hard constraints (frontmatter untouched, math
+unchanged, same trap/step count, no fabricated claims) — for the next
+(atom_type, topic) slice. `common_traps` on Calculus (22 concepts) or
+Vector Calculus (11 concepts) is the natural next slice, matching this
+pass's atom_type before moving to a new atom_type on Linear Algebra.
+
+**Resolved separately, same day:** the 5 modifiers the uploaded
+Wolfram-inspired registry named but Vidhya had no implementation for are
+now real (`src/content/prompt-registry/resources/modifiers.ts`), promoted
+from `approval_state: 'draft'` to `'pilot'` — opt-in via a new
+`active_modifiers`/`prerequisite_gap` field threaded through
+`OrchestratorOptions`. `modifier.hindi_glossary` uses a new curated
+NCERT-vocabulary data file (`src/content/prompt-registry/data/hindi-math-
+glossary.ts`, ~30 Linear Algebra terms) rather than inventing translations
+inline. A demonstration pack (`docs/designs/2026-09-02-modifier-
+demonstration-samples.md`) shows each modifier applied to real Linear
+Algebra content for review before any modifier graduates to `'released'`
+or gets applied at scale — none has been exercised by a live generation
+run yet (still the same missing-provider-key constraint as the tone-
+directive pass above), so `'pilot'` — not `'released'` — is the honest
+state until real usage evidence exists. The demo pass itself caught a real
+bug before any wider rollout: `modifier.hindi_glossary`'s directive text
+originally showed the generator only 4 sample terms (not `eigenvector`),
+and applying it to real content produced eigenvalue's gloss on the word
+"eigenvectors" — a value/vector mismatch. Fixed by putting the FULL
+curated table in the directive instead of a 4-term sample, with an
+explicit "match the exact term, not the nearest one" instruction, plus a
+regression test locking both distinct glosses in the output.
+
+**Effort:** M per additional (atom_type, topic) slice (~this pass's size),
+L+ for the full remaining corpus.
+**Priority:** P2 (real but not urgent — new content already gets the
+register automatically; this is a backfill).
+
+**Deferred from:** `/autoplan` 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
 ## "Concept learning" room silently bounces students with no knowledge track
 
 **Trigger:** the next time someone touches `RoomsPage`, `KnowledgeHomePage`,

@@ -1,0 +1,149 @@
+version: gate_prompt_os_v1
+purpose: composable, typed, verifiable prompt-resource registry for GATE Engineering Mathematics
+principles:
+  - stable_canonical_base
+  - smallest_evidence_supported_delta
+  - independent_verification
+  - explicit_provenance
+  - reversible_release
+  - provider_portability
+resource_defaults:
+  required_metadata:
+    - resource_id
+    - version
+    - category
+    - topics
+    - input_schema
+    - output_schema
+    - examples
+    - test_fixtures
+    - evidence_requirements
+    - compatibility
+    - approval_state
+    - rollback_target
+  approval_states: [draft, benchmarked, pilot, released, deprecated, blocked]
+  output_policy: structured_first
+  fail_closed_on_missing_required_slot: true
+categories:
+  - persona
+  - research_function
+  - teaching_function
+  - assessment_function
+  - diagnosis_function
+  - modifier
+  - verifier
+  - renderer
+  - governance
+resources:
+  - resource_id: scope.resolve
+    version: 1.0.0
+    category: research_function
+    topics: [scope, GATE, syllabus]
+    required_inputs: [atomic_id, paper, year, official_source_bundle]
+    outputs: [scope_statement, active_scope, out_of_scope, scope_conflicts]
+    must_not: [invent_scope, universalize_branch_dependent_topic]
+  - resource_id: research.claims
+    version: 1.0.0
+    category: research_function
+    topics: [claims, provenance, evidence]
+    required_inputs: [research_bundle, scope_statement]
+    outputs: [claim_ledger, source_register, unresolved_claims]
+    must_not: [promote_hypothesis_to_fact]
+  - resource_id: diagnose.prerequisite_probe
+    version: 1.0.0
+    category: diagnosis_function
+    topics: [prerequisites, knowledge_graph, root_cause]
+    required_inputs: [target_topic, graph_subgraph, learner_evidence]
+    outputs: [candidate_hypotheses, discriminating_probes, next_probe]
+    policy: require_two_converging_signals_for_automatic_route
+  - resource_id: teach.hook
+    version: 1.0.0
+    category: teaching_function
+    topics: [attention, intuition, engagement]
+    required_inputs: [topic_recipe, learner_state, time_budget]
+    outputs: [hook, predicted_question, representation_choice]
+    must_not: [use_unverified_weightage_claim, use_manipulative_fear]
+  - resource_id: teach.checked_example
+    version: 1.0.0
+    category: teaching_function
+    topics: [worked_examples, mathematics]
+    required_inputs: [formal_anchor, objective, difficulty, source_bundle]
+    outputs: [example, solution_trace, verification_request]
+    release_requires: [symbolic_or_numeric_check, boundary_check]
+  - resource_id: assess.mcq
+    version: 1.0.0
+    category: assessment_function
+    topics: [MCQ, GATE]
+    required_inputs: [objective, scope, difficulty, marking_contract]
+    outputs: [stem, options, answer_key_candidate, rationale]
+    release_requires: [independent_answer_audit, marking_contract_check]
+  - resource_id: assess.msqaudit
+    version: 1.0.0
+    category: verifier
+    topics: [MSQ, answer_keys]
+    required_inputs: [item, options, intended_truth_set]
+    outputs: [truth_table, defect_list, audit_status]
+    must_not: [assume_single_correct_option]
+  - resource_id: assess.nat
+    version: 1.0.0
+    category: assessment_function
+    topics: [NAT, numerical_answer]
+    required_inputs: [objective, scope, tolerance_contract]
+    outputs: [stem, numeric_answer, tolerance, entry_guidance]
+    release_requires: [numeric_recompute, rounding_check]
+  - resource_id: verify.symbolic
+    version: 1.0.0
+    category: verifier
+    topics: [symbolic_math, Wolfram, algebra]
+    required_inputs: [claim_or_expression, assumptions, computation_provider]
+    outputs: [exact_result, equivalence_check, warnings, provenance]
+    provider_portability: true
+  - resource_id: verify.scope
+    version: 1.0.0
+    category: verifier
+    topics: [official_scope, paper, year]
+    required_inputs: [content_claims, official_scope_bundle]
+    outputs: [scope_pass, mismatches, review_queue]
+  - resource_id: delta.select
+    version: 1.0.0
+    category: diagnosis_function
+    topics: [personalization, base_delta]
+    required_inputs: [base_package, learner_state, evidence_window, graph_subgraph]
+    outputs: [selected_deltas, rationale, expected_signal]
+    policy: smallest_delta_that_addresses_supported_failure
+  - resource_id: improve.variant_compare
+    version: 1.0.0
+    category: governance
+    topics: [experiments, improvement]
+    required_inputs: [variant_manifests, outcome_events, guardrail_metrics]
+    outputs: [comparison, confidence_limits, release_recommendation]
+    release_requires: [predeclared_metric, regression_suite, rollback_target]
+modifiers:
+  - id: visual_first
+    allowed_changes: [representation_order, asset_choice, example_surface]
+    forbidden_changes: [canonical_formula, scope, marking_rule, answer_key]
+  - id: simple_words
+    allowed_changes: [lexical_complexity, sentence_length, glossary]
+    forbidden_changes: [mathematical_precision, conditions]
+  - id: exam_timed
+    allowed_changes: [sequence_compression, time_budget, checkpoint_frequency]
+    forbidden_changes: [omit_required_conditions, suppress_uncertainty]
+  - id: prerequisite_repair
+    allowed_changes: [attach_bridge, add_probe, reorder_scaffold]
+    forbidden_changes: [rewrite_graph_edge_automatically]
+  - id: hindi_glossary
+    allowed_changes: [translation, glossary, examples]
+    forbidden_changes: [change_symbolic_notation_or_answer]
+external_computation:
+  required_metadata: [provider, provider_version, query_or_code, inputs, assumptions, output, warnings, retrieved_at, reproducibility_status]
+  accepted_roles: [verification, counterexample_search, representation_generation, question_variation, learner_exploration]
+  not_sufficient_for: [unreviewed_lesson_interpretation, official_scope, answer_key_authority]
+release_gates:
+  canonical_content: [scope_pass, claim_ledger_complete, mathematics_pass, assessment_pass, accessibility_pass]
+  personalized_delta: [evidence_linked, smallest_delta, no_base_conflict, outcome_event_enabled]
+  prompt_resource: [schema_valid, fixtures_pass, benchmarked, changelog_present, rollback_target_present]
+monitoring:
+  source: [freshness, hash_change, extraction_quality, conflict_count]
+  content: [citation_completeness, verifier_pass_rate, unresolved_claim_rate, defect_rate]
+  learning: [immediate_accuracy, delayed_retrieval, transfer, error_recurrence, time_to_method]
+  operations: [cost, latency, review_burden, rollback_frequency]

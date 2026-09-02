@@ -4,6 +4,55 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.50.0] — 2026-09-02 — Five live-QA fixes + a Wolfram-inspired prompt resource registry with 5 real modifiers
+
+No new env vars, no migrations.
+
+Two pieces of work landed together:
+
+**Part 1 — five live-QA issues (`/investigate`), each root-caused before any
+fix.** No motion on prose sections outside `visual_analogy`/`mnemonic` (now
+extended to every `DefaultAtomCard` type except two deliberate holdouts —
+`formal_definition`, `exam_pattern`); the interactive control sat below the
+narration caption instead of next to the figure it drives (`Simulation.tsx`
+reordered: SVG → controls → caption → trap row); no tone directive for an
+anxious exam student (`orchestrator.ts`'s `buildPrompt()` gained an
+unconditional ELI5/Indian-English register block); a failed error
+classification rendered as if it were a real diagnosis (`ErrorDiagnosis.tsx`'s
+placeholder guard now checks both failure markers, not one); and a correct
+answer in Smart Practice gave no way to keep practicing (the "practice more"
+CTA no longer hides on a correct answer).
+
+**Part 2 — a typed prompt resource registry** (`src/content/prompt-registry/`,
+plan: `docs/designs/2026-09-02-wolfram-prompt-resource-registry.md`), built
+from 9 uploaded research files after finding 8 of the 9 were already
+committed verbatim by a same-day prior pass — the only genuinely new idea was
+the registry layer itself. `orchestrator.ts`'s `buildPrompt()` now composes
+from the registry instead of 4 hardcoded calls (behavior-preserving —
+`resonance-prompt.test.ts` passes unmodified). All 26 GATE Linear Algebra
+`common_traps` atoms were rewritten against the new tone directive via
+parallel Claude Sonnet subagents (per explicit direction, since no LLM
+provider key is configured in this environment).
+
+**Same-day follow-up: the 5 modifiers the registry named but Vidhya had no
+implementation for are now real**, not stubs — `modifier.visual_first`,
+`modifier.simple_words`, `modifier.exam_timed`, `modifier.prerequisite_repair`,
+`modifier.hindi_glossary` (`src/content/prompt-registry/resources/
+modifiers.ts`), promoted to `approval_state: 'pilot'` and opt-in via a new
+`active_modifiers`/`prerequisite_gap` field threaded through
+`OrchestratorOptions`. `modifier.hindi_glossary` draws on a new curated
+NCERT-vocabulary data file (`src/content/prompt-registry/data/hindi-math-
+glossary.ts`, ~30 Linear Algebra terms) rather than inventing translations.
+A demonstration pack (`docs/designs/2026-09-02-modifier-demonstration-
+samples.md`) applied all 5 to real, committed Linear Algebra content for
+review before any wider rollout — and caught a real bug in the process:
+`hindi_glossary`'s directive only showed the generator 4 sample terms,
+so "eigenvector" got mistranslated using "eigenvalue"'s gloss. Fixed by
+putting the full curated table in the directive with an explicit
+"match the exact term" instruction, plus a regression test. None of the 5
+has been exercised by a live generation run yet, so `'pilot'` — not
+`'released'` — stays the honest state.
+
 ## [4.49.0] — 2026-09-02 — Six live-QA fixes on the practice flow, and a session-ownership gap closed
 
 Six issues reported from a live pass on the Render demo, root-caused via

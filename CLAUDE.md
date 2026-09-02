@@ -1763,6 +1763,189 @@ that already ships), a concrete `CustomSourceExtractor` adapter (needs an
 OCR/storage product decision), and wiring the remaining 8 unwired
 `DeltaKind` values to real trigger detectors (each its own scoped project).
 
+### Five live-QA fixes: motion framework, control placement, tone directive, error-diagnosis leak, correct-answer CTA (2026-09-02)
+
+Second live-QA `/investigate` pass the same day as the seven-fix pass
+above, on five issues reported with screenshots. All five root-caused
+before any fix, per the skill's Iron Law; three land as code-level
+framework changes so they reach every concept and topic — existing and
+future — without a content rewrite.
+
+1. **"Just static text" (motion/animation for prose, not just images).**
+   `.vidhya-atom-body--progressive` (the paragraph-stagger CSS class from
+   the earlier attention-span pass) only ever reached `visual_analogy` and
+   `mnemonic` atoms — every other `DefaultAtomCard` type (`hook`,
+   `intuition` outside the resonance-beat scenes, `micro_exercise`,
+   `retrieval_prompt`, `interleaved_drill`) rendered with zero motion, not
+   by design but because the mechanism had never been extended past the
+   first two types. `AtomCardRenderer.tsx`'s `DefaultAtomCard` now applies
+   it to every type except two deliberate holdouts: `formal_definition`
+   (Sweller's split-attention effect — see the definition/mnemonic
+   engagement-framework doc, v4.45.0 section above) and `exam_pattern`
+   (already animates via the `structured` list-row stagger; `progressive`
+   targets `> p` and would be an inert no-op on its bullet-list markup).
+   Gated by `atom_type` in code, so it applies to every existing concept
+   and every concept the generator produces from here on — no content
+   edits needed. Self-disables under `prefers-reduced-motion` via the
+   existing `--dur-base` token collapse, same as `--structured`.
+
+2. **Interactive control too far from the image (`/design-review`
+   finding).** `Simulation.tsx`'s beat-bar + play/pause/reset + scrub
+   slider used to render below the narration caption and the trap row, so
+   reaching the control that changes what the SVG shows meant scrolling
+   past a paragraph of text first. Reordered: SVG → controls (beat bar +
+   buttons + scrub slider) → caption → trap row. The caption still updates
+   live as the student scrubs (`activeBeatIndex`'s "last beat whose
+   `at_progress` ≤ progress" rule, unchanged) — it now reads as a caption
+   for the control just touched instead of a paragraph to read before
+   touching anything.
+
+3. **Tone: ELI5 + anxious-student register + Indian English by default.**
+   `orchestrator.ts`'s `buildPrompt()` gained an unconditional
+   `TONE_REGISTER_BLOCK` — the first thing in every generation prompt,
+   every atom type, not just hook/intuition: write for an anxious exam
+   student, ELI5 the reasoning, gloss any technical term in plain words
+   the first time it appears, default to Indian English (every exam pack
+   Vidhya ships — GATE, BITSAT, NEET, civil services — is an Indian
+   competitive exam, so that's the region-appropriate default for "all
+   exams" as the platform stands today; there's no per-exam locale field
+   yet, so a genuinely non-Indian exam pack would need one, not a special
+   case bolted onto this block). This is a generation-time fix, not a
+   content rewrite: no LLM provider key is configured in this environment
+   (same "known-unrun" constraint noted elsewhere in this doc — see
+   v4.33.0), so the existing 505+ committed practice items and 880+ base
+   atoms were NOT reprocessed against the new register. The dense-jargon
+   example that surfaced this (a `common_traps` atom naming "Hermitian
+   matrix"/"symmetric matrix" with no gloss) is real content debt on the
+   existing corpus, tracked in TODOS.md, not silently fixed by this prompt
+   change alone.
+
+4. **"Conceptual gap unavailable" leaking as if it were real analysis.**
+   `classifyError` (`src/gbrain/error-taxonomy.ts`) has three fallback
+   paths that all return filler shaped like a diagnosis: no LLM configured
+   (marker `unclassified`), the LLM returning no text, and the LLM
+   returning unparseable JSON (the latter two both set marker
+   `classification-failed`, diagnosis text "The answer was incorrect.
+   Error classification unavailable."). `ErrorDiagnosis.tsx`'s
+   render-nothing guard was added in an earlier pass but only checked
+   `unclassified` — so a real LLM hiccup or bad JSON parse on a live-LLM
+   deploy still rendered "Conceptual Gap — Error classification
+   unavailable" under headings like "Why this was tempting" as if it were
+   a genuine analysis. The guard now keys on both markers
+   (`PLACEHOLDER_MISCONCEPTION_IDS`).
+
+5. **Smart Practice gave no way to keep practicing after a correct
+   answer.** `PracticeAttemptPage.tsx`'s post-answer CTA row ("Explore
+   this concept" / "Practice more like this") was gated on
+   `!result.grade.correct` — added in the earlier same-day pass for wrong
+   answers, but the guard hid BOTH buttons on a correct answer too, so a
+   student who answered right had no path to another problem on the same
+   concept short of navigating away and re-searching. "Explore this
+   concept" stays wrong-answer-only (remediation framing is backwards for
+   an answer the student just proved they know); "Practice more like
+   this" now always renders when the item carries a `node_id`, correct or
+   not.
+
+### Wolfram-inspired prompt resource registry (2026-09-02)
+
+`/autoplan` on 9 uploaded research files (a Wolfram Prompt Repository
+design study, a prompt-resource registry YAML, a 116-topic atomic mapping,
+research notes, and their validator/generator scripts). Full plan:
+`docs/designs/2026-09-02-wolfram-prompt-resource-registry.md`.
+
+**Scope-defining fact found before any design work:** 8 of the 9 uploaded
+files were already committed verbatim by the SAME-DAY prior pass
+(`docs/designs/2026-09-02-content-strategy-research-integration-plan.md`)
+— `diff` confirmed byte-identical content for the first 928 of 942 lines
+of the shared design doc. The only genuinely new idea across all 9 files
+was a typed, versioned **prompt resource registry** layer — this pass
+built that, not a from-scratch "10000x" system. The source document's own
+closing section is explicit that "10000x" is an operational-leverage
+hypothesis (reuse, consistency, production speed), not a content-quality
+claim measured or promised by this pass.
+
+**`src/content/prompt-registry/`** — `PromptResource`/`Modifier` types
+across the uploaded registry's 9 categories (`persona`,
+`research_function`, `teaching_function`, `assessment_function`,
+`diagnosis_function`, `modifier`, `verifier`, `renderer`, `governance`),
+an approval-state lifecycle (`draft`/`benchmarked`/`pilot`/`released`/
+`deprecated`/`blocked` — only `released`/`pilot` resources ever resolve
+into a live prompt, mirroring `pain-points.ts`'s reviewed-only discipline)
+and `runPromptResourceContract()` every resource must pass (mirrors
+`marking-strategy-contract.ts`'s pattern). Registered as the
+`prompt-resource-registry` seam in `seam-registry.json`.
+
+**Deliberately does NOT duplicate what already exists.** The registry's
+`verifier` category REGISTERS the existing `AnswerVerifier`/
+`ContentVerifier` cascade, never reimplements it. Resource-approval-state
+(is this PROMPT RESOURCE safe to use) is kept as a separate axis from
+`content_gate_ledger` (is this GENERATED ITEM safe to serve) — the
+uploaded registry's own `release_gates` block conflated the two, which
+this plan corrected before building rather than shipping a duplicate gate.
+
+**`orchestrator.ts`'s `buildPrompt()` now composes from the registry**
+instead of 4 hardcoded function calls (pain-point/pattern/resonance/tone
+blocks — each wrapped as a registered resource in `src/content/prompt-
+registry/resources/`, not rewritten). Behavior-preserving: the existing
+`resonance-prompt.test.ts`, which asserts on exact prompt-string output,
+passes unmodified.
+
+**Named-but-unimplemented is honest, not silently absent.** The uploaded
+registry names 5 modifiers Vidhya has no implementation for
+(`visual_first`, `simple_words`, `exam_timed`, `prerequisite_repair`,
+`hindi_glossary`) — registered at `approval_state: 'draft'`, which the
+registry's own `resolvePromptResources()` never returns, so they can never
+silently ship in a real prompt. `npm run content:registry-audit` (new,
+zero-LLM-call) reports them explicitly rather than pretending 10-for-10
+coverage.
+
+**`src/content/wolfram-content-family.ts`** classifies all 116 GATE-EM
+atomic topics into 14 Wolfram content families (matrix/eigen/limit/
+derivative/integral/optimization/vector/ode/pde/complex/probability/
+statistics/numerical/discrete — the uploaded generator script's own
+keyword-matching `classify()` ported verbatim, quirks included: e.g. any
+domain containing "differential equations" classifies as `derivative`,
+never `ode`, because the `derivative` keyword check runs first in the
+source script's own precedence and "differential" is a substring match —
+faithfully reproduced, not fixed, since the ask was to adapt the uploaded
+framework, not silently correct its internals), joined via the existing
+`atomic-concept-map.ts` crosswalk.
+
+**Regeneration: the user explicitly redirected the "no provider key"
+premise.** This session flagged that literal corpus regeneration was
+blocked on a missing `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`/etc. — the same
+"known-unrun" wall documented throughout this doc. The user's answer:
+"Use claude sonnet subagents from here to generate the materials" — i.e.
+bypass the app's runtime LLM client entirely and use this session's own
+Claude Sonnet model access (the Agent tool) to do real content rewrites
+directly. This is the same mechanism the "21 batch subagents, 101
+concepts" precedent used earlier in this repo's history, and it worked
+again here: **all 26 GATE Linear Algebra concepts' `common_traps` atoms**
+were rewritten against the ELI5/Indian-English tone directive via 5
+parallel subagent batches (5-6 concepts each), each under hard
+constraints (frontmatter byte-identical, every math/LaTeX expression
+unchanged, same trap count/order/underlying mistake, no fabricated
+claims, no emoji). The confirmed jargon gap that motivated this pilot —
+`symmetric-matrices/atoms/common-traps.md` Trap 1's ungossed "Hermitian
+matrix" — is fixed; every rewrite glosses each technical term on first
+use. Validated clean against `ci:katex-fences`, `ci:content-integrity`,
+`ci:la-walkthrough`, `ci:template-coverage`, `ci:variant-agreement`, and
+the frontend's 1726-assertion `MarkdownAtomRenderer.regression.test.tsx`.
+
+**What this pilot does NOT claim:** it covers exactly one (atom_type,
+topic) slice — `common_traps` on Linear Algebra. Every other atom_type
+across all 101 concepts, and `common_traps` on the other 9 topics, is
+untouched and tracked in TODOS.md as the next wave, with the exact
+pattern (5-6 concepts per subagent batch) that worked here as the
+template to repeat.
+
+**This framework is also the one future content handling should use.**
+Every new prompt-shaping block (a new modifier, a new teaching_function)
+should register through `src/content/prompt-registry/` and pass
+`runPromptResourceContract()` rather than being added as a fifth
+hardcoded call inside `buildPrompt()` — the whole point of this pass was
+to stop that pattern from compounding.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

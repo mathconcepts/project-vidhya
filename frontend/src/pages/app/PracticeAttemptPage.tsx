@@ -19,12 +19,12 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import {
   CheckCircle2, XCircle, Loader2, ArrowLeft, SkipForward,
-  Target, AlertTriangle, Compass, RefreshCw,
+  Target, AlertTriangle, Compass, RefreshCw, GraduationCap, Repeat,
 } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import { Card } from '@/components/ui/Card';
@@ -95,6 +95,7 @@ const fmt = (n: number) => {
 
 export default function PracticeAttemptPage() {
   const { objectId } = useParams<{ objectId: string }>();
+  const navigate = useNavigate();
 
   const [item, setItem] = useState<PracticeItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -455,7 +456,7 @@ export default function PracticeAttemptPage() {
                       server from the canonical answer key, which the client
                       never sees. That's a real backing verification, not a
                       client-side string match — earns the receipt border. */}
-                  <ReceiptBorder receipt={receiptFromServerGrade(result.grade)}>
+                  <ReceiptBorder receipt={receiptFromServerGrade(result.grade)} tone={result.grade.correct ? 'positive' : 'neutral'}>
                     <p style={{ margin: 0, fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>
                       {result.grade.correct ? 'Correct' : 'Not this time'} — {fmt(result.grade.earned)} / {fmt(result.grade.max)} marks
                     </p>
@@ -488,6 +489,44 @@ export default function PracticeAttemptPage() {
                         <li key={i} style={{ fontSize: 'var(--text-body)', lineHeight: 1.45, color: 'var(--text-secondary)' }}>{s}</li>
                       ))}
                     </ol>
+                  )}
+                  {/* Two concrete next moves on a miss, not just the generic
+                      "What's next for me?" system link below — a student who
+                      just got this wrong is choosing between "I don't
+                      understand this concept" (go learn it) and "I get it,
+                      let me try another" (go practice it), and neither path
+                      existed here before (/investigate, 2026-09-02). Wrong
+                      answers only — a correct answer doesn't need this
+                      fork. */}
+                  {!result.grade.correct && item?.node_id && (
+                    <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
+                        style={{
+                          flex: 1, minHeight: 44, padding: '0 12px', borderRadius: 'var(--radius-sm)',
+                          background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
+                          color: 'var(--indigo-ink)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
+                          fontFamily: 'var(--font-sans)', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                      >
+                        <GraduationCap size={14} /> Explore this concept
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/smart-practice?concept=${encodeURIComponent(item.node_id)}`)}
+                        style={{
+                          flex: 1, minHeight: 44, padding: '0 12px', borderRadius: 'var(--radius-sm)',
+                          background: 'var(--green)', border: 'none',
+                          color: 'var(--text-on-accent)', fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
+                          fontFamily: 'var(--font-sans)', cursor: 'pointer',
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        }}
+                      >
+                        <Repeat size={14} /> Practice more like this
+                      </button>
+                    </div>
                   )}
                   {!result.recorded && (
                     <p style={{ margin: 0, color: 'var(--orange)', paddingTop: 4 }}>

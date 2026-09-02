@@ -51,6 +51,33 @@ describe('ReceiptBorder', () => {
     expect(screen.getByText('✓')).toBeInTheDocument();
   });
 
+  // /investigate (2026-09-02): PracticeAttemptPage nests a green-tick
+  // ReceiptBorder inside a red "wrong answer" card. receiptFromServerGrade
+  // deliberately attests the GRADE not the correctness, but a green
+  // checkmark still reads as "you got it right" to a student regardless of
+  // that distinction, colliding with the red card right next to it.
+  it("tone='neutral' drops the green ink so a receipt inside a wrong-answer card doesn't read as a correctness signal", () => {
+    render(
+      <ReceiptBorder receipt={{ verified: true, source: 'gate_deterministic_scorer' }} tone="neutral">
+        <span>Not this time</span>
+      </ReceiptBorder>,
+    );
+    // The checkmark's parent is the styled "Verified · {source}" label span.
+    const label = screen.getByText('✓').parentElement as HTMLElement;
+    expect(label.textContent).toContain('Verified · gate_deterministic_scorer');
+    expect(label.getAttribute('style')).not.toContain('--green-ink');
+  });
+
+  it("tone defaults to 'positive' (unchanged green ink) when omitted", () => {
+    render(
+      <ReceiptBorder receipt={{ verified: true, source: 'cas_verifier' }}>
+        <span>Verified answer</span>
+      </ReceiptBorder>,
+    );
+    const label = screen.getByText('✓').parentElement as HTMLElement;
+    expect(label.getAttribute('style')).toContain('--green-ink');
+  });
+
   it('reads border color from the DESIGN-SYSTEM CSS custom properties, not a hardcoded class', () => {
     const { container } = render(
       <ReceiptBorder receipt={{ verified: true, source: 'cas_verifier' }}>

@@ -39,6 +39,16 @@ beforeEach(() => {
           source: 'bundle',
         },
         {
+          id: 'p-mcq-1',
+          concept_id: 'complex-integration',
+          topic: 'complex-variables',
+          difficulty: 0.25,
+          question_text: 'The value of the integral is:',
+          expected_answer: 'B',
+          options: { A: '0', B: '2*pi*i', C: 'pi', D: 'pi*i' },
+          source: 'official_pyq',
+        },
+        {
           id: 'p-derivative-mid-1',
           concept_id: 'derivatives-basic',
           topic: 'calculus',
@@ -133,6 +143,41 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     const problem = await store.fetchProblemsForConcept('determinants', 1.0, new Set());
     expect(problem).not.toBeNull();
     expect(problem!.problem_id).toBe('p-singular-matrix-1');
+  });
+
+  it('threads the MCQ options map through fetchProblemsForConcept (/investigate, 2026-09-02)', async () => {
+    // pyq_questions.options is NOT NULL — every row is MCQ-format, but the
+    // field was never selected/returned, so the Studymate free-text session
+    // served MCQ questions with no options shown and a bare option letter
+    // ("Expected: B") as the only feedback.
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+    const problem = await store.fetchProblemsForConcept('complex-integration', 1.0, new Set());
+    expect(problem).not.toBeNull();
+    expect(problem!.options).toEqual({ A: '0', B: '2*pi*i', C: 'pi', D: 'pi*i' });
+  });
+
+  it('updateGapText persists into the flat-file store and survives a fresh store instance', async () => {
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+
+    const studymateId = await store.createSession('user-1', 'gate-ma', 'daily', [{
+      problem_id: 'p1', concept_id: 'c1', topic: 't', difficulty: 0.5,
+      question: 'q', expected_answer: 'a', source: 's',
+    }]);
+    await store.recordAnswer(studymateId, 'p1', 'wrong', false);
+
+    await store.updateGapText(studymateId, 'p1', 'You mixed up the sign.');
+
+    const problems = await store.getSessionProblems(studymateId);
+    expect(problems[0].gap_text).toBe('You mixed up the sign.');
+
+    _resetSessionStoreForTests();
+    const store2 = getSessionStore();
+    const reread = await store2.getSessionProblems(studymateId);
+    expect(reread[0].gap_text).toBe('You mixed up the sign.');
   });
 
   it('returns null for concept with no problems', async () => {

@@ -27,6 +27,7 @@ interface SessionProblem {
   expected_answer: string;
   source: string;
   source_url?: string;
+  options?: Record<string, string> | null;
   user_answer?: string;
   was_correct?: boolean;
   gap_text?: string;
@@ -106,6 +107,7 @@ export default function StudymateSessionPage() {
   const [userAnswer, setUserAnswer] = useState('');
   const [wasCorrect, setWasCorrect] = useState<boolean | null>(null);
   const [gapText, setGapText] = useState<string | null>(null);
+  const [gapUnavailable, setGapUnavailable] = useState(false);
   const [statLine, setStatLine] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pollGap, setPollGap] = useState(false);
@@ -181,10 +183,12 @@ export default function StudymateSessionPage() {
       });
 
       if (!correct) {
+        setGapUnavailable(false);
         setPollGap(true);
         setPageState('answered');
       } else {
         setGapText(null);
+        setGapUnavailable(false);
         setPageState('answered');
       }
     } catch (err: unknown) {
@@ -217,8 +221,17 @@ export default function StudymateSessionPage() {
           }
         }
       } catch {}
-      if (attempts < MAX) setTimeout(poll, 1500);
-      else setPollGap(false);
+      if (attempts < MAX) {
+        setTimeout(poll, 1500);
+      } else {
+        // Exhausted every poll with no gap_text — say so instead of silently
+        // vanishing. Previously this branch just cleared `pollGap` with no
+        // other state change, so the "Generating insight…" spinner
+        // disappeared and left nothing behind, indistinguishable from the
+        // insight never having been requested (/investigate, 2026-09-02).
+        setPollGap(false);
+        setGapUnavailable(true);
+      }
     };
 
     setTimeout(poll, 1000);
@@ -249,6 +262,7 @@ export default function StudymateSessionPage() {
       setUserAnswer('');
       setWasCorrect(null);
       setGapText(null);
+      setGapUnavailable(false);
       setPollGap(false);
       setPageState('answering');
     }
@@ -451,25 +465,54 @@ export default function StudymateSessionPage() {
           {/* Answer input */}
           {!isAnswered ? (
             <div className="flex flex-col gap-3">
-              <textarea
-                value={userAnswer}
-                onChange={e => setUserAnswer(e.target.value)}
-                placeholder="Your answer…"
-                rows={3}
-                className="w-full px-4 py-3 resize-none focus:outline-none transition-colors"
-                style={{
-                  background: 'var(--surface-fill)',
-                  border: 'var(--hairline) solid var(--separator)',
-                  color: 'var(--text-primary)',
-                  borderRadius: 'var(--radius-sm)',
-                }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey && userAnswer.trim()) {
-                    e.preventDefault();
-                    submitAnswer();
-                  }
-                }}
-              />
+              {currentProblem.options && Object.keys(currentProblem.options).length > 0 ? (
+                // MCQ (pyq_questions.options is NOT NULL — every row this
+                // session serves is MCQ-format). Previously this always
+                // rendered a free-text box even for these, so a student
+                // typed a guess with no options ever shown, then saw
+                // "Expected: B" — a bare option letter with nothing to
+                // compare it to (/investigate, 2026-09-02).
+                <div className="flex flex-col gap-2" role="radiogroup" aria-label="Answer options">
+                  {Object.entries(currentProblem.options).map(([key, text]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="radio"
+                      aria-checked={userAnswer === key}
+                      onClick={() => setUserAnswer(key)}
+                      className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-colors flex items-start gap-3"
+                      style={
+                        userAnswer === key
+                          ? { background: 'rgba(52,199,89,.08)', border: '2px solid var(--green)', color: 'var(--text-primary)' }
+                          : { background: 'var(--surface-fill)', border: '2px solid var(--separator)', color: 'var(--text-primary)' }
+                      }
+                    >
+                      <span className="font-mono font-semibold flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>{key}.</span>
+                      <span>{text}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <textarea
+                  value={userAnswer}
+                  onChange={e => setUserAnswer(e.target.value)}
+                  placeholder="Your answer…"
+                  rows={3}
+                  className="w-full px-4 py-3 resize-none focus:outline-none transition-colors"
+                  style={{
+                    background: 'var(--surface-fill)',
+                    border: 'var(--hairline) solid var(--separator)',
+                    color: 'var(--text-primary)',
+                    borderRadius: 'var(--radius-sm)',
+                  }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey && userAnswer.trim()) {
+                      e.preventDefault();
+                      submitAnswer();
+                    }
+                  }}
+                />
+              )}
               <motion.button
                 onClick={submitAnswer}
                 disabled={!userAnswer.trim() || pageState === 'checking'}
@@ -514,6 +557,9 @@ export default function StudymateSessionPage() {
                     {!wasCorrect && (
                       <span className="text-xs opacity-75">
                         Expected: <span className="font-mono">{currentProblem.expected_answer}</span>
+                        {currentProblem.options?.[currentProblem.expected_answer] && (
+                          <> — {currentProblem.options[currentProblem.expected_answer]}</>
+                        )}
                       </span>
                     )}
                   </div>
@@ -545,6 +591,19 @@ export default function StudymateSessionPage() {
                       >
                         <Loader2 className="w-3 h-3 animate-spin" />
                         Generating insight…
+                      </motion.div>
+                    ) : gapUnavailable ? (
+                      // Previously this branch was implicit — the spinner just
+                      // vanished with nothing in its place, indistinguishable
+                      // from an insight never having been requested at all
+                      // (/investigate, 2026-09-02).
+                      <motion.div
+                        className="text-xs"
+                        style={{ color: 'var(--text-tertiary)' }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        No extra insight available for this one — the expected answer above is what we've got.
                       </motion.div>
                     ) : null}
                   </AnimatePresence>

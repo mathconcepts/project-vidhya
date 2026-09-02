@@ -35,6 +35,15 @@ export interface SessionProblemRow {
   expected_answer: string;
   source: string;
   source_url?: string;
+  /**
+   * MCQ option map (e.g. {A: "...", B: "..."}), present whenever the
+   * source row is MCQ-format — which is every row in pyq_questions (its
+   * `options` column is NOT NULL). Null/absent means expected_answer is a
+   * free-form value, not an option letter. Without this, the client has no
+   * way to tell "B" is an option key rather than the actual answer
+   * (/investigate, 2026-09-02).
+   */
+  options?: Record<string, string> | null;
 }
 
 export interface StoredSession {
@@ -60,6 +69,7 @@ export interface StoredProblem {
   was_correct: boolean | null;
   gap_text: string | null;
   answered_at: string | null;
+  options?: Record<string, string> | null;
 }
 
 /**
@@ -105,6 +115,15 @@ export interface SessionStore {
 
   /** Mark session complete + write the stat line. */
   markCompleted(studymateId: string, stat: string): Promise<void>;
+
+  /**
+   * Persist a generated thinking-gap insight for one answered problem.
+   * Previously inlined as a raw `pool.query` in thinking-gap-service.ts,
+   * which only worked on the Postgres backend — a DB-less demo generated
+   * the insight and then threw it away, so the "Generating insight…"
+   * spinner ran until it timed out (/investigate, 2026-09-02).
+   */
+  updateGapText(studymateId: string, problemId: string, gapText: string): Promise<void>;
 }
 
 // ─── Difficulty bucket mapping (T3 / A2) ───────────────────────────────────
@@ -163,8 +182,9 @@ class PostgresStore implements SessionStore {
     const { rows } = await this.pool.query<{
       id: string; topic: string; difficulty: string;
       question_text: string; correct_answer: string; source: string; source_url?: string;
+      options: Record<string, string> | null;
     }>(
-      `SELECT id, topic, difficulty, question_text, correct_answer, source, source_url
+      `SELECT id, topic, difficulty, question_text, correct_answer, source, source_url, options
        FROM pyq_questions
        WHERE (concept_id = $1 OR $1 = ANY(concept_ids))
          AND difficulty = ANY($2::text[])
@@ -184,6 +204,14 @@ class PostgresStore implements SessionStore {
       expected_answer: r.correct_answer,
       source: r.source,
       source_url: r.source_url,
+      // pyq_questions.options is NOT NULL (001_rag_schema.sql) — every row
+      // is MCQ-format. Threaded through so the client can render option
+      // buttons instead of comparing free text against a bare letter.
+      // `?? undefined` (not `null`): the field is genuinely absent on a
+      // pre-fix mocked row rather than a real null, and toEqual's
+      // ignore-undefined-properties behavior keeps older exact-match tests
+      // (session-store-postgres-fetch.test.ts) passing unmodified.
+      options: r.options ?? undefined,
     };
   }
 
@@ -285,6 +313,21 @@ class PostgresStore implements SessionStore {
       [stat, studymateId],
     );
   }
+
+  async updateGapText(studymateId: string, problemId: string, gapText: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE studymate_session_problems
+       SET gap_text = $1
+       WHERE studymate_id = $2 AND problem_id = $3`,
+      [gapText, studymateId, problemId],
+    );
+    await this.pool.query(
+      `UPDATE studymate_sessions
+       SET state = 'THINKING_GAP_SHOWN', updated_at = NOW()
+       WHERE id = $1 AND state = 'PROBLEM_ANSWERED'`,
+      [studymateId],
+    );
+  }
 }
 
 // ─── Flat-file backend (for free-tier demos without Postgres) ─────────────
@@ -379,6 +422,7 @@ class FlatFileStore implements SessionStore {
       expected_answer: r.expected_answer ?? r.answer ?? '',
       source: r.source ?? 'bundle',
       source_url: r.source_url,
+      options: r.options ?? null,
     };
   }
 
@@ -413,6 +457,7 @@ class FlatFileStore implements SessionStore {
           expected_answer: p.expected_answer,
           source: p.source,
           source_url: p.source_url,
+          options: p.options ?? null,
         }),
       );
     });
@@ -481,6 +526,18 @@ class FlatFileStore implements SessionStore {
         sess.completed_at = new Date().toISOString();
         sess.session_stat = stat;
         sess.updated_at = sess.completed_at;
+      }
+    });
+  }
+
+  async updateGapText(studymateId: string, problemId: string, gapText: string): Promise<void> {
+    this.store.update((s) => {
+      const p = s.problems.find((x) => x.studymate_id === studymateId && x.problem_id === problemId);
+      if (p) p.gap_text = gapText;
+      const sess = s.sessions.find((x) => x.id === studymateId);
+      if (sess && sess.state === 'PROBLEM_ANSWERED') {
+        sess.state = 'THINKING_GAP_SHOWN';
+        sess.updated_at = new Date().toISOString();
       }
     });
   }

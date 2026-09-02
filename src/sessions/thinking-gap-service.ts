@@ -44,6 +44,7 @@
 import crypto from 'crypto';
 import pg from 'pg';
 import { getLlmForRole } from '../llm/runtime';
+import { getSessionStore } from './session-store';
 import {
   deriveFraming,
   framingSignature,
@@ -256,25 +257,15 @@ export async function attachThinkingGap(
   const result = await getThinkingGap({ ...input, framing });
   if (!result.text) return;
 
-  // Without a database there is no session row to update. The text is still
-  // generated above so an in-memory/demo caller can use the return value;
-  // persisting is simply not possible, which is not an error.
-  const pool = getPool();
-  if (!pool) return;
-
+  // Persisted through the SAME session-store abstraction studymate-routes.ts
+  // reads back from on poll — Postgres AND flat-file (DB-less demo) both
+  // implement it. Previously this reached around the abstraction with a raw
+  // `pool.query` and returned early when there was no Postgres pool, so a
+  // successfully generated insight was silently discarded on every DB-less
+  // deploy and the "Generating insight…" spinner ran until it gave up
+  // (/investigate, 2026-09-02).
   try {
-    await pool.query(
-      `UPDATE studymate_session_problems
-       SET gap_text = $1
-       WHERE studymate_id = $2 AND problem_id = $3`,
-      [result.text, studymateId, problemId],
-    );
-    await pool.query(
-      `UPDATE studymate_sessions
-       SET state = 'THINKING_GAP_SHOWN', updated_at = NOW()
-       WHERE id = $1 AND state = 'PROBLEM_ANSWERED'`,
-      [studymateId],
-    );
+    await getSessionStore().updateGapText(studymateId, problemId, result.text);
   } catch (err) {
     console.warn(`[thinking-gap] persist skipped: ${(err as Error).message}`);
   }

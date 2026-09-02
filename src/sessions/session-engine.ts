@@ -33,6 +33,7 @@ export interface SessionProblem {
   expected_answer: string;
   source: string;
   source_url?: string;
+  options?: Record<string, string> | null;
 }
 
 export interface StudymateSession {
@@ -192,6 +193,7 @@ export async function resumeSession(
       expected_answer: p.expected_answer,
       source: p.source,
       source_url: p.source_url,
+      options: p.options ?? null,
       user_answer: p.user_answer,
       was_correct: p.was_correct,
       gap_text: p.gap_text,

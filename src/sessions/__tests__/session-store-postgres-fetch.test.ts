@@ -118,6 +118,27 @@ describe('PostgresStore.fetchProblemsForConcept — fixed query shape', () => {
     });
   });
 
+  it('selects and returns options — pyq_questions.options is NOT NULL, every row is MCQ-format (/investigate, 2026-09-02)', async () => {
+    mockQuery.mockResolvedValueOnce({
+      rows: [{
+        id: 'uuid-2', topic: 'complex-variables', difficulty: 'easy',
+        question_text: 'The value of the integral is:', correct_answer: 'B',
+        source: 'official_pyq', source_url: null,
+        options: { A: '0', B: '2*pi*i', C: 'pi', D: 'pi*i' },
+      }],
+    });
+    vi.resetModules();
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+
+    const result = await store.fetchProblemsForConcept('complex-integration', 0.4, new Set());
+
+    const [sql] = mockQuery.mock.calls[0];
+    expect(sql).toContain('options');
+    expect(result!.options).toEqual({ A: '0', B: '2*pi*i', C: 'pi', D: 'pi*i' });
+  });
+
   it('matches the array too: WHERE (concept_id = $1 OR $1 = ANY(concept_ids))', async () => {
     mockQuery.mockResolvedValueOnce({ rows: [] });
     vi.resetModules();
@@ -139,5 +160,23 @@ describe('PostgresStore.fetchProblemsForConcept — fixed query shape', () => {
     const store = getSessionStore();
     const result = await store.fetchProblemsForConcept('eigenvalues', 1.0, new Set());
     expect(result).toBeNull();
+  });
+
+  it('updateGapText issues the same UPDATE previously inlined in thinking-gap-service.ts', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+    vi.resetModules();
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+
+    await store.updateGapText('sm-1', 'p-1', 'You mixed up the sign.');
+
+    expect(mockQuery).toHaveBeenCalledTimes(2);
+    const [sql1, params1] = mockQuery.mock.calls[0];
+    expect(sql1).toContain('UPDATE studymate_session_problems');
+    expect(sql1).toContain('gap_text');
+    expect(params1).toEqual(['You mixed up the sign.', 'sm-1', 'p-1']);
+    const [sql2] = mockQuery.mock.calls[1];
+    expect(sql2).toContain("state = 'THINKING_GAP_SHOWN'");
   });
 });

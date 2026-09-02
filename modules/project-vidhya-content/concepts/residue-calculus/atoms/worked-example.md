@@ -1,75 +1,29 @@
 ---
-id: residue-calculus-worked-example
+id: residue-calculus.worked-example
 concept_id: residue-calculus
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
+difficulty: 0.4
+exam_ids: ["*"]
+scaffold_fade: true
 ---
 
-# Worked Example — Residue Theorem with Two Poles (GATE Style)
-
-## Problem
-
-Evaluate $\displaystyle\oint_C \frac{1}{(z-1)(z+2)}\,dz$ where $C$ is the circle $|z| = 3$ traversed counterclockwise.
+**Problem:** Evaluate $\displaystyle\oint_C \frac{e^z}{z^2}\,dz$ where $C$ is $|z|=2$, counterclockwise.
 
 ---
 
-## Step 1 — Find the Singularities
-
-The integrand $f(z) = \dfrac{1}{(z-1)(z+2)}$ has simple poles at:
-
-- $z_1 = 1$
-- $z_2 = -2$
-
-## Step 2 — Determine Which Poles Are Inside $C$
-
-The contour is $|z| = 3$ (radius 3).
-
-- $|z_1| = |1| = 1 < 3$ $\Rightarrow$ $z_1 = 1$ is **inside** $C$.
-- $|z_2| = |-2| = 2 < 3$ $\Rightarrow$ $z_2 = -2$ is **inside** $C$.
-
-Both poles lie inside $C$.
-
-## Step 3 — Compute the Residues
-
-**Residue at $z_1 = 1$** (simple pole):
-
-$$\operatorname{Res}_{z=1} f(z) = \lim_{z\to 1}(z-1)\cdot\frac{1}{(z-1)(z+2)} = \lim_{z\to 1}\frac{1}{z+2} = \frac{1}{1+2} = \frac{1}{3}$$
-
-**Residue at $z_2 = -2$** (simple pole):
-
-$$\operatorname{Res}_{z=-2} f(z) = \lim_{z\to -2}(z+2)\cdot\frac{1}{(z-1)(z+2)} = \lim_{z\to -2}\frac{1}{z-1} = \frac{1}{-2-1} = -\frac{1}{3}$$
-
-## Step 4 — Apply the Residue Theorem
-
-$$\oint_C f(z)\,dz = 2\pi i \sum \operatorname{Res} = 2\pi i\left(\frac{1}{3} + \left(-\frac{1}{3}\right)\right) = 2\pi i \cdot 0 = 0$$
-
-$$\boxed{\oint_C \frac{1}{(z-1)(z+2)}\,dz = 0}$$
+**Step 1 — Identify the pole and its order.** The only singularity is $z=0$, where the denominator vanishes to order $2$: a **pole of order 2**. $|0|=0<2$, so it's inside $C$.
 
 ---
 
-## Interpretation
-
-The two residues are equal in magnitude and opposite in sign. The "whirlpools" at $z=1$ and $z=-2$ spin with equal strength but in opposite senses — they cancel exactly. The net circulation is zero, even though the integrand is not analytic inside $C$.
+**Step 2 — Apply the order-2 residue formula.** $\text{Res}_{z=0}f(z)=\frac1{(2-1)!}\lim_{z\to0}\frac{d}{dz}\left[z^2\cdot\frac{e^z}{z^2}\right]=\lim_{z\to0}\frac{d}{dz}\left[e^z\right]=\lim_{z\to0}e^z=e^0=1$.
 
 ---
 
-## Verification via Partial Fractions
-
-$$\frac{1}{(z-1)(z+2)} = \frac{1/3}{z-1} - \frac{1/3}{z+2}$$
-
-$$\oint_C f\,dz = \frac{1}{3}\oint_C\frac{dz}{z-1} - \frac{1}{3}\oint_C\frac{dz}{z+2} = \frac{1}{3}(2\pi i) - \frac{1}{3}(2\pi i) = 0 \checkmark$$
+**Step 3 — Apply the residue theorem.** $\oint_C\frac{e^z}{z^2}\,dz=2\pi i\cdot\text{Res}_{z=0}f(z)=2\pi i\cdot1=\boxed{2\pi i}$.
 
 ---
 
-## Common GATE Traps
+**Step 4 — Verify with the generalized Cauchy integral formula.** $f(z)=e^z$ is entire, so $f^{(n)}(0)=\frac{n!}{2\pi i}\oint_C\frac{f(z)}{z^{n+1}}\,dz$. With $n+1=2\Rightarrow n=1$: $f'(0)=\frac{1!}{2\pi i}\oint_C\frac{e^z}{z^2}\,dz$, so $\oint_C\frac{e^z}{z^2}\,dz=2\pi i\,f'(0)=2\pi i\,e^0=2\pi i$ — matches.
 
-- **Contour too small to include both poles**: if $C$ were $|z| = 1.5$, only $z = 1$ would be inside (since $|-2| = 2 > 1.5$), giving $2\pi i \times \frac{1}{3} = \frac{2\pi i}{3}$.
-- **Higher-order poles**: for $f = 1/(z-1)^2(z+2)$, the residue at $z=1$ requires the order-2 formula: $\dfrac{d}{dz}\dfrac{1}{z+2}\big|_{z=1} = -\frac{1}{9}$.
-- **Poles on the contour**: not defined — always check that poles are strictly inside or outside, never exactly on $C$.
-
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: residue theorem for 1/[(z−1)(z+2)] on |z|=1.5","steps":[{"prompt":"For f(z) = 1/[(z−1)(z+2)], which poles lie inside the contour |z|=1.5?","hint":"Check |1|=1 vs 1.5, and |−2|=2 vs 1.5. A pole is inside if its modulus is strictly less than the radius.","answer":"Only z=1 is inside |z|=1.5, since |1|=1 < 1.5 but |−2|=2 > 1.5."},{"prompt":"Compute the residue at z=1 and then evaluate ∮_{|z|=1.5} f(z) dz.","hint":"Res at simple pole z₀ of 1/[(z−1)(z+2)] is lim_{z→1}(z−1)·f(z) = 1/(1+2) = 1/3. Then apply the residue theorem.","answer":"Res = 1/3. The integral = 2πi × (1/3) = 2πi/3."}]}
-```
+**Method note.** Use the order-$m$ derivative formula when the denominator's zero order at $z_0$ is finite and known (here $m=2$, from $z^2$) — not the simple-pole limit $\lim_{z\to z_0}(z-z_0)f(z)$, which for this integrand gives $\lim_{z\to0}z\cdot e^z/z^2=\lim_{z\to0}e^z/z$, a limit that doesn't exist. The simple-pole shortcut only applies when $m=1$; using it here silently produces nonsense instead of a residue.

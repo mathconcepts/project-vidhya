@@ -7,14 +7,10 @@ difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-# LU Factorization: Definition and Existence
+A square matrix $A \in \mathbb{R}^{n\times n}$ has an **LU factorization** if there exist a lower triangular $L$ and upper triangular $U$ with $A = LU$. In **Doolittle form**, $L$ has 1s on its diagonal; in **Crout form**, $U$ does instead — the two give different numeric factors for the same $A$.
 
-**Definition:** An $m \times n$ matrix $A$ has an **LU factorization** if there exist a lower triangular matrix $L$ and an upper triangular matrix $U$ such that $A = LU$.
+**Theorem (existence without pivoting).** If every leading principal minor of $A$ is nonzero, $A$ has a unique Doolittle factorization, and Gaussian elimination with no row swaps completes successfully.
 
-For a square matrix $A \in \mathbb{R}^{n \times n}$, the **Doolittle form** assumes $L$ has 1s on its diagonal, while $U$ is upper triangular with arbitrary diagonal entries. The **Crout form** swaps this convention: $U$ has 1s on the diagonal, and $L$ is arbitrary.
+Once $A=LU$, solving $Ax=b$ reduces to forward substitution ($Ly=b$) then back substitution ($Ux=y$).
 
-**Theorem (Existence without pivoting):** If all leading principal minors of $A$ are nonzero, then $A$ admits a unique LU factorization in Doolittle form. Equivalently, Gaussian elimination without row swaps completes successfully if and only if the factorization exists.
-
-**Key property:** Once $A = LU$, solving $Ax = b$ reduces to two triangular solves:
-- Forward substitution: solve $Ly = b$ for $y$
-- Back substitution: solve $Ux = y$ for $x$
+**Method selector.** Reach for LU whenever the same $A$ meets *several* right-hand sides — factor once, then each solve costs two cheap triangular passes instead of a fresh elimination. The tempting-but-wrong alternative is computing $A^{-1}$ once and multiplying it by each $b$: it looks equally reusable, but forming $A^{-1}$ explicitly costs the same $O(n^3)$ as LU *and* amplifies rounding error that triangular solves avoid.

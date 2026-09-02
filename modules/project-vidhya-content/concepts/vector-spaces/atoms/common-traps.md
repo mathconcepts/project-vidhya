@@ -5,8 +5,13 @@ atom_type: common_traps
 bloom_level: 2
 difficulty: 0.3
 exam_ids: ["*"]
+tested_by_atom: vector-spaces.micro-exercise
 ---
 
-- **Confusing subspace conditions**: Students forget that a subspace MUST contain the zero vector and must be closed under both addition AND scalar multiplication. Missing any one condition disqualifies it.
-- **Assuming non-zero implies subspace**: A set like $\{(x, y) : x + y = 1\}$ contains non-zero vectors but is NOT a subspace because it doesn't contain $(0, 0)$.
-- **Counting basis vectors incorrectly**: Students sometimes think the dimension equals the number of non-zero components in vectors, rather than the cardinality of a minimal spanning set.
+**Trap 1 — Skipping a subspace condition.** A subspace must contain the zero vector AND be closed under both addition and scalar multiplication. Missing any one disqualifies it.
+
+**Trap 2 — Assuming "has non-zero vectors" implies subspace.** $\{(x,y):x+y=1\}$ contains plenty of vectors but is not a subspace because $(0,0)\notin$ it.
+
+**Trap 3 — Miscounting dimension.** Dimension is the size of a minimal spanning set (a basis) — not the number of non-zero components in some vector you happen to look at.
+
+**Trap 4 — Union confused with intersection.** The intersection of two subspaces is always a subspace; the union almost never is (the $x$-axis and $y$-axis are each subspaces of $\mathbb{R}^2$, but their union isn't closed under addition).

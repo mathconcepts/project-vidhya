@@ -1,20 +1,16 @@
 ---
-# Alternative body for divergence-curl.hook, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# Alternative body for divergence-curl.hook, served when the learner stance
+# is `assured`.
 id: divergence-curl.hook.assured
 concept_id: divergence-curl
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: divergence-curl.hook
 for_stance: assured
 ---
 
-Two independent properties get run together under pressure: $\nabla\cdot\mathbf F=0$ (solenoidal) says nothing about $\nabla\times\mathbf F=0$ (irrotational), and neither implies the other. $\mathbf F=(-y,x,0)$ is solenoidal — $\nabla\cdot\mathbf F=0$ — yet has curl $2\hat k$ everywhere. $\mathbf F=(x,y,0)$ is irrotational — curl $0$ — yet has divergence $2$. A field can be neither, either, or both; exam options exploit exactly this independence.
+Divergence and curl are **local, pointwise** numbers, built from partial derivatives at a point — not a visual read of how large the arrows look nearby in a plotted field. A field can carry huge arrow magnitudes everywhere and still have zero divergence (arrows all parallel, none spreading apart), or small arrows packed into a region of large divergence.
+
+For $\mathbf F(x,y)=(x,y)$: arrow length keeps growing with distance from the origin, yet $\operatorname{div}\mathbf F=2$ is the same constant everywhere. Growing arrow magnitude is not what divergence measures — the rate of outward spreading per unit area is, and that rate can be perfectly uniform on a field whose arrows are not.

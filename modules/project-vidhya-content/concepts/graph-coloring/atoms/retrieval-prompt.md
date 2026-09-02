@@ -5,7 +5,8 @@ atom_type: retrieval_prompt
 bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["bipartite", "chromatic-number"]
 ---
 
 A bipartite graph with vertex sets $V_1$ and $V_2$ can be properly colored with at least how many colors?

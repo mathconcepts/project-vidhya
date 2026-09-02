@@ -2,11 +2,15 @@
 id: probability-basics.common-traps
 concept_id: probability-basics
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 3
+difficulty: 0.5
 exam_ids: ["*"]
 ---
 
-- **Confusing "or" with addition rule for non-mutually-exclusive events**: Students often write $P(A \cup B) = P(A) + P(B)$ even when $A$ and $B$ overlap. The correct formula is $P(A \cup B) = P(A) + P(B) - P(A \cap B)$. Red flag: if the student adds two probabilities and gets > 1, they have overlap!
-- **Forgetting to use the complement for "at least one" problems**: Many students try to enumerate all cases for "at least one success in $n$ trials," which is tedious. The complement rule $P(A) = 1 - P(A^c)$ is faster: find the probability of zero successes, then subtract from 1.
-- **Treating dependent events as independent**: When drawing cards without replacement from a deck, each draw changes the sample space. Students write $P(A \text{ then } B) = P(A) \times P(B)$ when they should use conditional probability, $P(A \text{ then } B) = P(A) \times P(B|A)$.
+**Trap 1 — The prosecutor's fallacy.** Treating $P(\text{pos}\mid D)$ (test accuracy) as if it were $P(D\mid\text{pos})$ (what you actually want). They're equal only in special cases, and confusing them is the single most common Bayes' theorem error.
+
+**Trap 2 — Forgetting the base rate.** A 99%-accurate test on a rare condition can still produce mostly false positives. Skipping $P(D)$ in the calculation silently assumes the condition is common.
+
+**Trap 3 — Independence assumed from "unrelated-sounding" events.** $P(A\cap B)=P(A)P(B)$ only holds when independence is actually established — never assume it from wording alone.
+
+**Trap 4 — Double-counting the overlap.** $P(A\cup B)=P(A)+P(B)-P(A\cap B)$ for events that *can* both happen; dropping the $-P(A\cap B)$ term overcounts the intersection.

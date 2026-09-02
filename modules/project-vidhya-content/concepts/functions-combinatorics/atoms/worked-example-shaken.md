@@ -1,40 +1,38 @@
 ---
-# Alternative body for functions-combinatorics.worked_example, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
-id: functions-combinatorics.worked_example.shaken
+# Alternative body for functions-combinatorics.worked-example, stance `shaken`.
+id: functions-combinatorics.worked-example.shaken
 concept_id: functions-combinatorics
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.4
-exam_ids: ["gate-ma"]
-scaffold_fade: 1
-variant_of: functions-combinatorics-worked-example
+difficulty: 0.25
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: functions-combinatorics.worked-example
 for_stance: shaken
 ---
 
-Seat $8$ people so that three of them, $A,B,C$, sit together.
+**Problem:** How many surjective (onto) functions are there from a $4$-element set $\{1,2,3,4\}$ to a $2$-element set $\{a,b\}$?
 
-Bundle $A,B,C$ into one unit: that turns $8$ people into $8-3+1=6$ items.
+---
 
-Arrange the $6$ items: $6!=720$.
+**Step 1 — Count all functions.** Each of $4$ elements picks $a$ or $b$ independently: $2\times2\times2\times2=16$.
 
-Arrange $A,B,C$ inside the bundle: $3!=6$.
+---
 
-Multiply: $720\times6=4320$.
+**Step 2 — Ask which of these 16 are NOT onto.** A function misses being onto only if every element lands on the same single output.
 
-Second question. Find the coefficient of $x^5y^3$ in $(x+y)^8$. Match the exponent: $x^k$ needs $k=5$. Write the term: $\binom{8}{5}$. Evaluate: $\binom{8}{5}=\frac{8!}{5!\,3!}=\frac{8\times7\times6}{3\times2\times1}=56$.
+---
 
-Third question. Count injective functions from $\{1,2,3\}$ to a $4$-element set. $f(1)$ has $4$ options. $f(2)$ has $3$ remaining. $f(3)$ has $2$ remaining. Multiply: $4\times3\times2=24$.
+**Step 3a — Count "all map to $a$."** That's $1$ function.
 
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: adjacent-seating count and a binomial coefficient","steps":[{"prompt":"How many ways can 5 people be seated in a row such that 2 specific people (X and Y) are always adjacent?","hint":"Treat X and Y as one unit → 4 entities. Arrange in 4! ways, then multiply by the number of ways X,Y can be ordered within the unit.","answer":"48"},{"prompt":"What is the coefficient of x³y⁵ in (x+y)⁸?","hint":"Use C(8,3) = 8!/(3!·5!). The exponents must sum to 8.","answer":"56"}]}
-```
+---
 
-The number of choices shrinks by exactly one at each step precisely because injectivity forbids repeats.
+**Step 3b — Count "all map to $b$."** That's also $1$ function. These two don't overlap.
+
+---
+
+**Step 4 — Subtract.** $16-1-1=14$.
+
+$$\boxed{14 \text{ surjective functions}}$$
+
+Check: $\binom{2}{0}2^4-\binom{2}{1}1^4=16-2=14$ ✓, the same answer from the general inclusion-exclusion formula.

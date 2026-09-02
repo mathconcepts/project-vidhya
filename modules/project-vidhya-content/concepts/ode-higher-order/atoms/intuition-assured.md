@@ -1,25 +1,13 @@
 ---
-# Alternative body for ode-higher-order-intuition, served when the learner
-# stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# for_stance: assured — the one distinction that costs marks: a repeated complex root needs the x^k multiplier on BOTH trig terms, not just one.
 id: ode-higher-order.intuition.assured
 concept_id: ode-higher-order
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: ode-higher-order-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: ode-higher-order.intuition
 for_stance: assured
 ---
 
-The false generalisation that costs marks: a root repeated $m$ times does **not** just multiply its coefficient, it forces $m$ distinct basis functions, $e^{rx},xe^{rx},\ldots,x^{m-1}e^{rx}$. $c_1e^{2x}+c_2e^{2x}$ is one function wearing two names, not two independent solutions — the extra factor of $x$ is what actually buys independence, and reduction of order is the reason it's a genuine solution rather than a guess.
-
-Complex roots come in conjugate pairs by construction (real coefficients), so $\alpha\pm i\beta$ always contributes the real pair $e^{\alpha x}\cos\beta x$, $e^{\alpha x}\sin\beta x$ together — never one without the other, and never the complex exponentials themselves in a real-valued answer.
-
-Before writing the final $y$, count basis functions against the equation's order: an $n$th-order equation that produces fewer than $n$ independent solutions has a root-finding error upstream, not a legitimately smaller answer.
+A repeated complex pair needs the $x^k$ multiplier on both trig terms, not just one — a natural-looking wrong guess is $e^{\alpha x}(A\cos\beta x+Bx\sin\beta x)$ for a double complex root, tacking $x$ onto only the $\sin$ term because it "looks like the newer piece." The correct pair is $e^{\alpha x}\big[(A_1+A_2x)\cos\beta x+(B_1+B_2x)\sin\beta x\big]$ — both families need the same power of $x$ at the same multiplicity, since the multiplicity describes the root, not either trig function individually. Undercounting one side silently loses an arbitrary constant, leaving an $n$-th order equation with fewer than $n$ free parameters.

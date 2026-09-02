@@ -12,10 +12,10 @@ id: root-finding.hook.shaken
 concept_id: root-finding
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: root-finding.hook
 for_stance: shaken
 ---
 
-$x^3-x-1=0$ has no algebraic formula for its root — no combination of radicals lands on it exactly. Type it into a calculator anyway and the root sits near $x\approx1.3247$. Root-finding is the process that walks you from nothing to that number, one corrected guess at a time.
+$f(x)=x^3-x-1$ equals $0$ somewhere between $x=1$ and $x=2$: $f(1)=-1$, $f(2)=5$ — opposite signs. Check the midpoint, $x=1.5$: $f(1.5)=0.875$, positive. So the root is between $1$ and $1.5$ now, not $1$ and $2$ — the search space just cut in half from one sign check. Repeating this — check the sign at the midpoint, keep the half that changed sign, discard the other — is the entire bisection method.

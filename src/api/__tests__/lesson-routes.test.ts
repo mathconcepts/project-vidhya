@@ -304,6 +304,14 @@ describe('ALLOWED_MOTIVATION_STATES', () => {
   });
 });
 
+describe('ALLOWED_SESSION_MODES (P5, 2026-09-02 content-strategy plan)', () => {
+  it('matches SessionMode exactly', () => {
+    expect([...__testing.ALLOWED_SESSION_MODES].sort()).toEqual(
+      ['exam-prep', 'knowledge', 'micro_sprint', 'revision'].sort(),
+    );
+  });
+});
+
 describe('stanceForSnapshot — motivation vocabulary', () => {
   it('anxious drives a shaken stance', () => {
     const stance = stanceForSnapshot(

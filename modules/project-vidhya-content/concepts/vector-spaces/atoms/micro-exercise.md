@@ -18,14 +18,6 @@ Which of the following is a subspace of $\mathbb{R}^2$?
 <details>
 <summary>Answer</summary>
 
-**C**. A subspace must: (1) contain $(0, 0)$, (2) be closed under addition, (3) be closed under scalar multiplication.
-
-A: $(0, 0)$ gives $0 + 0 = 0 \neq 1$, so $(0, 0) \notin W$. Not a subspace.
-
-B: $(1, 0) \in W$ (since $1 \cdot 0 = 0$) and $(0, 1) \in W$, but $(1, 0) + (0, 1) = (1, 1) \notin W$ (since $1 \cdot 1 \neq 0$). Not closed under addition.
-
-C: $x - y = 0 \implies y = x$. Contains $(0, 0)$ ✓. For $(a, a)$ and $(b, b)$: $(a, a) + (b, b) = (a+b, a+b)$, which satisfies the condition. For scalar $c$: $c(a, a) = (ca, ca)$, which also satisfies. This is the line $y = x$, a valid subspace.
-
-D: $(0, 0)$ gives $0 + 0 = 0 \neq 1$, not on the unit circle. Not a subspace.
+**C**. A: $(0,0)$ gives $0\neq1$ — fails Test 1. B: $(1,0)$ and $(0,1)$ are each in the set, but their sum $(1,1)$ has $1\cdot1\neq0$ — fails closure under addition. D: $(0,0)$ isn't on the unit circle — fails Test 1. C: $x-y=0$ is the line $y=x$; contains $(0,0)$, and both $(a,a)+(b,b)=(a+b,a+b)$ and $c(a,a)=(ca,ca)$ stay on the line. Valid subspace.
 
 </details>

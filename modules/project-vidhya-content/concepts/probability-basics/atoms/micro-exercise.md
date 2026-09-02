@@ -2,28 +2,16 @@
 id: probability-basics.micro-exercise
 concept_id: probability-basics
 atom_type: micro_exercise
-bloom_level: 3
-difficulty: 0.25
+bloom_level: 2
+difficulty: 0.3
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-A fair coin is tossed once. What is the probability of getting a tail?
-
-- **(A)** 0
-- **(B)** 0.5
-- **(C)** 0.75
-- **(D)** 1
+$A$ and $B$ are independent, $P(A)=0.4$, $P(B)=0.5$. Find $P(A\cup B)$.
 
 <details>
 <summary>Answer</summary>
 
-**B**. For a fair coin, the sample space is $S = \{\text{Head}, \text{Tail}\}$, so $|S| = 2$.
-
-The favorable outcome is tail: $A = \{\text{Tail}\}$, so $|A| = 1$.
-
-$$P(\text{Tail}) = \frac{|A|}{|S|} = \frac{1}{2} = 0.5$$
-
-Because the coin is fair, each outcome (Head or Tail) has equal probability of $\frac{1}{2}$.
-
+$P(A\cap B)=P(A)P(B)=0.2$ (independence). $P(A\cup B)=0.4+0.5-0.2=0.7$.
 </details>

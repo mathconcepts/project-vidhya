@@ -3,88 +3,34 @@ id: propositional-logic.worked-example
 concept_id: propositional-logic
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-## Worked Example: Simplify a Boolean Expression
-
-**Problem (GATE-style):**
-
-Simplify the boolean expression:
-$$((p \to q) \land (q \to r)) \to (p \to r)$$
-
-Determine whether this is a tautology, contradiction, or contingent. If contingent, identify the truth assignment(s) that make it false.
+**Problem:** Determine whether $(P \to Q) \to (\neg Q \to \neg P)$ is a tautology.
 
 ---
 
-### Solution
-
-**Step 1: Convert implications to OR**
-
-Recall that $p \to q \equiv \neg p \lor q$. Apply this to each implication:
-
-- $(p \to q) \equiv (\neg p \lor q)$
-- $(q \to r) \equiv (\neg q \lor r)$
-- $(p \to r) \equiv (\neg p \lor r)$
-
-The expression becomes:
-$$((\neg p \lor q) \land (\neg q \lor r)) \to (\neg p \lor r)$$
-
-**Step 2: Convert the outer implication**
-
-The main connective is an implication. Apply $A \to B \equiv \neg A \lor B$:
-
-$$\neg((\neg p \lor q) \land (\neg q \lor r)) \lor (\neg p \lor r)$$
-
-**Step 3: Apply De Morgan's law**
-
-$$\neg((\neg p \lor q) \land (\neg q \lor r)) \equiv \neg(\neg p \lor q) \lor \neg(\neg q \lor r)$$
-
-$$\equiv (p \land \neg q) \lor (q \land \neg r)$$
-
-So the full expression is:
-$$(p \land \neg q) \lor (q \land \neg r) \lor (\neg p \lor r)$$
-
-**Step 4: Rearrange and simplify**
-
-$$(p \land \neg q) \lor (q \land \neg r) \lor \neg p \lor r$$
-
-- When $\neg p$ is true, the whole expression is true.
-- When $r$ is true, the whole expression is true.
-- When both $p$ and $r$ are false: we need $(p \land \neg q) \lor (q \land \neg r)$ to be true. But $p$ is false, so the first term is false. And $r$ is false, so $\neg r$ is true, meaning the second term requires $q$ to be true. If $q$ is true, the second term $(q \land \neg r)$ is true.
-
-By exhaustive case analysis, this expression is **a tautology**—it is true for all truth assignments of $p$, $q$, $r$.
-
-**Key insight:** This is the transitive property of implication: if $p$ implies $q$ and $q$ implies $r$, then $p$ implies $r$. It's a logical law, so the formula always evaluates to true.
+**Step 1 — List all four assignments.** Two variables give $2^2 = 4$ rows: $(P,Q) \in \{(T,T),(T,F),(F,T),(F,F)\}$.
 
 ---
 
-### Interactive Walkthrough
+**Step 2 — Evaluate the inner pieces.** For each row compute $P\to Q$ and $\neg Q \to \neg P$ separately.
 
-```interactive-spec
-{
-  "v": 1,
-  "kind": "guided_walkthrough",
-  "title": "Simplify: ((p → q) ∧ (q → r)) → (p → r)",
-  "steps": [
-    {
-      "prompt": "Step 1: Convert all three implications using p → q ≡ ¬p ∨ q. What does (p → q) become?",
-      "hint": "Replace the arrow with OR and negate the antecedent: ¬p ∨ q",
-      "answer": "(p → q) ≡ (¬p ∨ q)"
-    },
-    {
-      "prompt": "Step 2: Now convert the outer implication of the whole formula. A → B ≡ ¬A ∨ B, where A is the antecedent ((p → q) ∧ (q → r)). What is ¬A using De Morgan's law?",
-      "hint": "¬(X ∧ Y) ≡ ¬X ∨ ¬Y. Negate each part: ¬(¬p ∨ q) ∨ ¬(¬q ∨ r). Then simplify each: (p ∧ ¬q) ∨ (q ∧ ¬r)",
-      "answer": "¬((¬p ∨ q) ∧ (¬q ∨ r)) ≡ (p ∧ ¬q) ∨ (q ∧ ¬r)"
-    },
-    {
-      "prompt": "Step 3: The full formula is now [(p ∧ ¬q) ∨ (q ∧ ¬r)] ∨ (¬p ∨ r). Test all 8 truth assignments for p, q, r. Does this ever evaluate to false?",
-      "hint": "When p=F, (¬p ∨ r) is true, so the whole disjunction is true. When r=T, the same term is true. When p=T and r=F, check if (p ∧ ¬q) ∨ (q ∧ ¬r) is true. With r=F, ¬r=T, so (q ∧ ¬r) is true iff q=T. But then (p ∧ ¬q) is false. Sum: it's always true.",
-      "answer": "No. The formula is a tautology (always true). This reflects the transitivity law of implication."
-    }
-  ],
-  "caption": "Exam insight: Recognize tautologies by converting to normal form and testing systematically. Implication chains always preserve truth."
-}
-```
+$(T,T)$: $P\to Q = T$; $\neg Q\to\neg P = F\to F = T$.
+$(T,F)$: $P\to Q = F$; $\neg Q\to\neg P = T\to F = F$.
+$(F,T)$: $P\to Q = T$; $\neg Q\to\neg P = F\to T = T$.
+$(F,F)$: $P\to Q = T$; $\neg Q\to\neg P = T\to T = T$.
+
+---
+
+**Step 3 — Combine each row with the outer $\to$.** $(T,T)$: $T\to T = T$. $(T,F)$: $F\to F = T$ (antecedent false — vacuously true). $(F,T)$: $T\to T = T$. $(F,F)$: $T\to T = T$.
+
+---
+
+**Step 4 — Read off the result.** All four rows evaluate to $T$.
+
+$$\boxed{(P\to Q)\to(\neg Q\to\neg P) \text{ is a tautology}}$$
+
+Check: this is the identity $P\to Q \equiv \neg Q\to\neg P$ (a conditional and its contrapositive), written as a single two-way implication — an equivalence, stated this way, always yields a tautology.

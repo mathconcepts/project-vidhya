@@ -1,88 +1,68 @@
 ---
-id: divergence-curl-worked-example
+id: divergence-curl.worked-example
 concept_id: divergence-curl
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
+difficulty: 0.25
+exam_ids: ["*"]
+scaffold_fade: true
 ---
 
-# Worked Example — GATE Style
-
-**Problem:** Given $\mathbf{F} = xy^2\,\hat{i} + yz^2\,\hat{j} + zx^2\,\hat{k}$, compute:
-
-**(a)** $\nabla \cdot \mathbf{F}$ at the point $(1, 2, 3)$.
-
-**(b)** $\nabla \times \mathbf{F}$ at the point $(1, 2, 3)$.
-
-**(c)** Verify that $\nabla \cdot (\nabla \times \mathbf{F}) = 0$.
+**Problem:** For $\mathbf F(x,y,z)=(xy,\ yz,\ zx)$, find $\operatorname{div}\mathbf F$ and $\operatorname{curl}\mathbf F$ at $(1,2,3)$, then verify $\operatorname{div}(\operatorname{curl}\mathbf F)=0$.
 
 ---
 
-## Step 1 — Identify Components
+**Step 1 — Divergence, general.** $P=xy,\ Q=yz,\ R=zx$.
 
-$$F_x = xy^2, \qquad F_y = yz^2, \qquad F_z = zx^2$$
-
----
-
-## Step 2 — Compute Divergence
-
-$$\nabla \cdot \mathbf{F} = \frac{\partial F_x}{\partial x} + \frac{\partial F_y}{\partial y} + \frac{\partial F_z}{\partial z}$$
-
-$$\frac{\partial}{\partial x}(xy^2) = y^2, \qquad \frac{\partial}{\partial y}(yz^2) = z^2, \qquad \frac{\partial}{\partial z}(zx^2) = x^2$$
-
-$$\nabla \cdot \mathbf{F} = y^2 + z^2 + x^2$$
-
-At $(1, 2, 3)$:
-
-$$\boxed{\nabla \cdot \mathbf{F}\big|_{(1,2,3)} = 4 + 9 + 1 = 14}$$
+$$\operatorname{div}\mathbf F=\frac{\partial P}{\partial x}+\frac{\partial Q}{\partial y}+\frac{\partial R}{\partial z}=y+z+x$$
 
 ---
 
-## Step 3 — Compute Curl
-
-$$\nabla \times \mathbf{F} = \begin{vmatrix} \hat{i} & \hat{j} & \hat{k} \\ \partial_x & \partial_y & \partial_z \\ xy^2 & yz^2 & zx^2 \end{vmatrix}$$
-
-**$\hat{i}$ component:**
-
-$$\frac{\partial(zx^2)}{\partial y} - \frac{\partial(yz^2)}{\partial z} = 0 - 2yz$$
-
-**$\hat{j}$ component** (note the minus sign):
-
-$$-\left[\frac{\partial(zx^2)}{\partial x} - \frac{\partial(xy^2)}{\partial z}\right] = -\left[2xz - 0\right] = -2xz$$
-
-**$\hat{k}$ component:**
-
-$$\frac{\partial(yz^2)}{\partial x} - \frac{\partial(xy^2)}{\partial y} = 0 - 2xy$$
-
-$$\nabla \times \mathbf{F} = (-2yz)\,\hat{i} + (-2xz)\,\hat{j} + (-2xy)\,\hat{k}$$
-
-At $(1, 2, 3)$:
-
-$$\boxed{\nabla \times \mathbf{F}\big|_{(1,2,3)} = -12\,\hat{i} - 6\,\hat{j} - 4\,\hat{k}}$$
+**Step 2 — Divergence at the point.** At $(1,2,3)$: $\operatorname{div}\mathbf F=1+2+3=6$.
 
 ---
 
-## Step 4 — Verify $\nabla \cdot (\nabla \times \mathbf{F}) = 0$
+**Step 3 — Curl, general.**
 
-Let $\mathbf{G} = \nabla \times \mathbf{F} = (-2yz,\, -2xz,\, -2xy)$.
-
-$$\nabla \cdot \mathbf{G} = \frac{\partial(-2yz)}{\partial x} + \frac{\partial(-2xz)}{\partial y} + \frac{\partial(-2xy)}{\partial z}$$
-
-$$= 0 + 0 + 0 = 0 \checkmark$$
-
-The identity holds as expected — this is always true for any smooth vector field.
+$$\operatorname{curl}\mathbf F=\left(\frac{\partial R}{\partial y}-\frac{\partial Q}{\partial z},\ \frac{\partial P}{\partial z}-\frac{\partial R}{\partial x},\ \frac{\partial Q}{\partial x}-\frac{\partial P}{\partial y}\right)=(0-y,\ 0-z,\ 0-x)=(-y,-z,-x)$$
 
 ---
 
-## GATE Exam Strategy
+**Step 4 — Curl at the point, and the identity check.** At $(1,2,3)$:
 
-1. **Divergence is scalar; curl is vector.** Never mix them up in answer format.
-2. **The $\hat{j}$ component of curl has a minus sign** in the determinant expansion — the most common calculation error.
-3. **Plug in coordinates last.** Compute the general expression first, then substitute.
-4. **Identity MCQs:** $\nabla \cdot (\nabla \times \mathbf{F}) = 0$ and $\nabla \times (\nabla f) = \mathbf{0}$ are always true — instant marks.
+$$\boxed{\operatorname{div}\mathbf F=6,\quad \operatorname{curl}\mathbf F=(-2,-3,-1)}$$
+
+$\operatorname{curl}\mathbf F=(-y,-z,-x)$ is itself a field; its divergence is $\partial_x(-y)+\partial_y(-z)+\partial_z(-x)=0+0+0=0$. **Check.** $\operatorname{div}(\operatorname{curl}\mathbf F)=0$ — the identity holds, as it must for any twice-differentiable $\mathbf F$.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: divergence and curl of F = (xy², yz², zx²)","steps":[{"prompt":"For F = (xy², yz², zx²), write down ∂F_x/∂x, ∂F_y/∂y, ∂F_z/∂z and sum them to get div F.","hint":"Differentiate xy² w.r.t. x, yz² w.r.t. y, and zx² w.r.t. z. Each is a straightforward partial.","answer":"y² + z² + x²; at (1,2,3): 4 + 9 + 1 = 14"},{"prompt":"Compute the k̂ component of curl F = ∂F_y/∂x − ∂F_x/∂y for F = (xy², yz², zx²).","hint":"∂(yz²)/∂x = 0, and ∂(xy²)/∂y = 2xy. The k̂ component is the difference.","answer":"0 − 2xy = −2xy. At (1,2,3): −2(1)(2) = −4"},{"prompt":"State the identity that guarantees div(curl F) = 0 for any smooth field, and confirm it for G = (−2yz, −2xz, −2xy).","hint":"Compute ∂(−2yz)/∂x + ∂(−2xz)/∂y + ∂(−2xy)/∂z.","answer":"The identity is ∇·(∇×F) = 0 always. Each partial is 0, confirming 0+0+0 = 0."}]}
+{
+  "v": 1,
+  "kind": "guided_walkthrough",
+  "title": "Walk through: div and curl of F = (xy, yz, zx) at (1,2,3)",
+  "steps": [
+    {
+      "prompt": "Step 1: Write down P, Q, R for F = (xy, yz, zx).",
+      "hint": "F = (P, Q, R) component by component.",
+      "answer": "P = xy, Q = yz, R = zx"
+    },
+    {
+      "prompt": "Step 2: Compute div F in general, then at (1,2,3).",
+      "hint": "div F = ∂P/∂x + ∂Q/∂y + ∂R/∂z.",
+      "answer": "div F = x+y+z; at (1,2,3): div F = 6",
+      "eqn": "∂(xy)/∂x + ∂(yz)/∂y + ∂(zx)/∂z = y + z + x"
+    },
+    {
+      "prompt": "Step 3: Compute curl F in general.",
+      "hint": "curl F = (∂R/∂y − ∂Q/∂z, ∂P/∂z − ∂R/∂x, ∂Q/∂x − ∂P/∂y).",
+      "answer": "curl F = (-y, -z, -x)",
+      "eqn": "(∂(zx)/∂y − ∂(yz)/∂z, ∂(xy)/∂z − ∂(zx)/∂x, ∂(yz)/∂x − ∂(xy)/∂y) = (0-y, 0-z, 0-x)"
+    },
+    {
+      "prompt": "Step 4: Evaluate curl F at (1,2,3) and check div(curl F) = 0.",
+      "hint": "Substitute (1,2,3) into (-y,-z,-x), then take the divergence of the general curl expression.",
+      "answer": "curl F at (1,2,3) = (-2,-3,-1); div(curl F) = 0"
+    }
+  ],
+  "caption": "div(curl F) = 0 is a fixed identity — it must come out exactly zero for any twice-differentiable F, so a nonzero result here always means an arithmetic slip upstream."
+}
 ```

@@ -5,17 +5,13 @@ atom_type: visual_analogy
 bloom_level: 2
 difficulty: 0.20
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-# Dot Product as a Flashlight, Cross Product as a Wrench
+Fix two unit vectors and swing the angle between them from $0$ to $\pi$. The parallelogram they span starts flat — zero area, vectors parallel — grows to a full unit square at a right angle, then shrinks back to zero as the vectors close up again, now pointing opposite ways. The curve below traces exactly that area: $|\vec a\times\vec b|=\sin\theta$ for unit vectors, starting at $0$, peaking at $1$ when $\theta=90^\circ$, and returning to $0$ at $\theta=180^\circ$.
 
-Point a flashlight beam ($\vec{a}$) at a wall, then tilt a second stick ($\vec{b}$) into that beam. The **shadow** the stick casts along the beam's direction is exactly the projection $\frac{\vec{a}\cdot\vec{b}}{|\vec{a}|}$. If the stick is perpendicular to the beam, it casts *no* shadow along it — the dot product is zero. If the stick lies exactly along the beam, the shadow is the stick's full length — the dot product is maximal. The dot product is a "how much overlap" measurement; it collapses two directions into a single number.
+Read that curve like a dial — the height at any angle tells you how much cross-product "push" two unit vectors deliver at that separation, and the dot product $\cos\theta$ would trace the mirror-image story: maximal overlap at $\theta=0$, zero at $\theta=90^\circ$.
 
-The cross product behaves completely differently — it's a wrench, not a flashlight. When you turn a wrench ($\vec{b}$) with a push ($\vec{a}$), the resulting twisting effect (torque) doesn't point along either $\vec{a}$ or $\vec{b}$ — it points perpendicular to the plane they define, along the bolt's axis. That's exactly what $\vec{a} \times \vec{b}$ does: it manufactures a brand-new direction, perpendicular to both inputs, whose length tells you how "twisty" (how non-parallel) the two original vectors are. Two parallel vectors can't turn a wrench at all — their cross product is the zero vector.
-
-Stack a third vector on top ($\vec{c}$, out of the plane of $\vec{a}$ and $\vec{b}$) and you get a genuine 3D box — a parallelepiped. The scalar triple product $\vec{a}\cdot(\vec{b}\times\vec{c})$ measures that box's volume. Flatten the box — push $\vec{c}$ into the same plane as $\vec{a}$ and $\vec{b}$ — and the volume collapses to zero. That's the coplanarity test: zero volume means zero "3D-ness."
-
-This geometric reading — dot product as overlap, cross product as a perpendicular "twist," triple product as enclosed volume — is what should flash into your mind before you ever touch a formula.
-
----
+```gif-scene
+{"type":"function-trace","expression":"sin(x)","x_range":[0,3.14159],"y_range":[-0.2,1.2]}
+```

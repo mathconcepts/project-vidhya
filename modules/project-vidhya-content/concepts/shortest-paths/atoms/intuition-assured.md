@@ -14,7 +14,7 @@ bloom_level: 2
 difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
-variant_of: shortest-paths-intuition
+variant_of: shortest-paths.intuition
 for_stance: assured
 ---
 

@@ -5,15 +5,14 @@
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# marks rather than re-teaching what they can already do.
 id: conformal-mapping.intuition.assured
 concept_id: conformal-mapping
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 variant_of: conformal-mapping.intuition
 for_stance: assured
 ---

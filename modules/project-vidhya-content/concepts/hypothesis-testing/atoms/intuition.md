@@ -1,5 +1,5 @@
 ---
-id: hypothesis-testing-intuition
+id: hypothesis-testing.intuition
 concept_id: hypothesis-testing
 atom_type: intuition
 bloom_level: 2
@@ -8,7 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
 
-# Hypothesis Testing — What Is It?
+## Hypothesis Testing — What Is It?
 
 Statistical hypothesis testing is a formal procedure to decide whether sample data provides enough evidence to reject a stated claim about a population.
 

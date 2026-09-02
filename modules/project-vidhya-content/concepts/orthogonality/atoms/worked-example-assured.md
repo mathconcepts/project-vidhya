@@ -23,7 +23,7 @@ for_stance: assured
 
 ## Gram–Schmidt on $\{(1,1,0),(1,0,1),(0,1,1)\}$
 
-$$\mathbf{q}_1 = \tfrac{1}{\sqrt2}(1,1,0), \qquad \mathbf{q}_2 = \tfrac{1}{\sqrt6}(1,-1,2), \qquad \mathbf{q}_3 = \tfrac{1}{\sqrt3}(-1,1,1)$$
+$$\boxed{\mathbf{q}_1 = \tfrac{1}{\sqrt2}(1,1,0), \quad \mathbf{q}_2 = \tfrac{1}{\sqrt6}(1,-1,2), \quad \mathbf{q}_3 = \tfrac{1}{\sqrt3}(-1,1,1)}$$
 
 The mechanics are $\mathbf{u}_k = \mathbf{v}_k - \sum_{j<k}\langle \mathbf{v}_k,\mathbf{q}_j\rangle \mathbf{q}_j$, then normalise. What follows is what makes it faster and what makes it wrong.
 

@@ -17,3 +17,5 @@ exam_ids: ["*"]
 **Image (Range)**: $\text{Im}(T) = \{T(\mathbf{v}) : \mathbf{v} \in V\}$
 
 **Rank-Nullity for Transformations**: $\dim(\text{Im}(T)) + \dim(\ker(T)) = \dim(V)$
+
+**Method selector.** Decide injectivity/surjectivity by actually computing $\ker(T)$ (solve $A\mathbf{x}=\mathbf{0}$) or $\text{rank}(A)$ — never by comparing $\dim(V)$ and $\dim(W)$ alone. Matching dimensions is the tempting shortcut, but it only rules out an isomorphism when the dimensions *disagree*; a square matrix with matching dimensions can still have a nontrivial kernel, so equal dimensions never by themselves certify injectivity or surjectivity.

@@ -4,18 +4,14 @@ concept_id: lu-factorization
 atom_type: mnemonic
 bloom_level: 2
 difficulty: 0.20
-exam_ids: ["*"]
 modality: mnemonic
+exam_ids: ["*"]
 ---
 
-**"$L$ = Left-over multipliers."** You are not doing new work to build $L$ — you are *writing down the elimination you already did*. Every time you clear an entry with $R_i \leftarrow R_i - m\,R_j$, the multiplier $m$ goes straight into slot $\ell_{ij}$. No sign flip. The elimination writes its own history into $L$; $U$ is just the wreckage it leaves behind.
+**"L keeps the Leftovers."** You do no new work building $L$ — you write down the elimination you already performed. Every time a row operation $R_i \leftarrow R_i - m\,R_j$ clears an entry, the multiplier $m$ goes straight into slot $\ell_{ij}$, no sign flip. $U$ is what's left standing after the clearing; $L$ is the receipt for how it got cleared.
 
-**Which letter sits where:** $L$ points **L**eft-and-down (the multipliers live *below* the diagonal), $U$ points **U**p-and-right. And in Doolittle form $L$ wears a **unit** diagonal — all 1s.
+**Where each letter sits:** $L$ owns **l**ower-left (the multipliers), $U$ owns **u**pper-right (the survivors). In Doolittle form $L$'s diagonal is fixed at 1 — free real estate, never a multiplier.
 
-**The one shortcut worth memorising:**
+**Worked micro-check:** for $A=\begin{pmatrix}2&1\\6&8\end{pmatrix}$, $\det A = 2\cdot8-1\cdot6=10$. Since $\det L=1$, $\det U$ must equal 10 too — and indeed $u_{11}u_{22}=2\cdot5=10$ from the micro-exercise above.
 
-$$\det L = 1 \quad \Rightarrow \quad \det A = \det U = u_{11}u_{22}\cdots u_{nn}$$
-
-Once you have $U$, the determinant is a product of $n$ numbers you can read off the diagonal — no cofactor expansion, ever.
-
-**Sanity-check reflex:** multiply your $L$ and $U$ back together and check the *first column* and *first row* against $A$. Those two are cheapest to check and catch most arithmetic slips immediately.
+**Sanity-check reflex:** multiply $L$ and $U$ back together and check the result against $A$'s first row and first column — cheapest to verify, and they catch nearly every arithmetic slip.

@@ -3,21 +3,13 @@ id: series.visual_analogy
 concept_id: series
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.15
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-# Visual Analogy: The Filling Glass
-
-Imagine pouring water into a glass, but each pour is half of the previous amount: first pour half-full, then a quarter more, then an eighth, and so on. Your glass never overflows—it approaches full capacity as the pours get infinitesimally small. This is the essence of a **converging series**.
-
-Each pour represents a term $a_n$ in the series. The total water level after $N$ pours is the partial sum $S_N$. As $N$ approaches infinity, the water level approaches the glass's capacity—the series sum $L$. The mathematical guarantee: $\lim_{N \to \infty} S_N = L$.
-
-For the geometric series $\sum_{n=1}^{\infty} r^n$ (where each term is $r$ times the previous), this works perfectly when $|r| < 1$: each term becomes negligible, yet their infinite sum is finite. The formula $\sum_{n=0}^{\infty} r^n = \frac{1}{1-r}$ captures exactly this principle—the infinite sum of infinitesimal contributions yields one definite value.
+Six bars, one per partial sum of $\sum \frac1{2^n}$: $S_1=0.5$, $S_2=0.75$, $S_3=0.875$, $S_4=0.9375$, $S_5=0.96875$, $S_6=0.984375$. Every bar is taller than the last, but the height gained per step keeps shrinking — the climb visibly flattens out as it approaches the ceiling at $1$, never quite reaching it in six steps and never crossing it in any number of steps. That flattening-toward-a-ceiling shape is what convergence looks like for a series of positive terms: not a running total that stalls outright, but one whose growth rate decays fast enough to stay trapped under a fixed bound forever.
 
 ```gif-scene
-{"type":"function-trace","expression":"exp(x)","x_range":[-2,2],"y_range":[-0.5,8],"frames":30,"fps":12}
+{"type":"discrete-bars","values":[0.5,0.75,0.875,0.9375,0.96875,0.984375],"labels":["S1","S2","S3","S4","S5","S6"]}
 ```
-
-This trace shows $e^x = \sum_{n=0}^{\infty} \frac{x^n}{n!}$—a real function built from an infinite series. The smooth curve is the *sum* of infinitely many polynomial terms, demonstrating that convergent series produce well-behaved functions GATE problems rely on.

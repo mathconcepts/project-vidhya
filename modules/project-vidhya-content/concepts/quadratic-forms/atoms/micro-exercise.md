@@ -4,31 +4,13 @@ concept_id: quadratic-forms
 atom_type: micro_exercise
 bloom_level: 3
 difficulty: 0.45
-estimated_minutes: 2
 exam_ids: ["*"]
+estimated_minutes: 2
 ---
 
-**Question:** The quadratic form $f(x, y, z) = x^2 + y^2 - z^2 + 2xy$ can be represented as $\mathbf{x}^T A \mathbf{x}$ where:
-
-$$(A) \quad A = \begin{pmatrix} 1 & 1 & 0 \\ 1 & 1 & 0 \\ 0 & 0 & -1 \end{pmatrix}$$
-
-$$(B) \quad A = \begin{pmatrix} 1 & 2 & 0 \\ 2 & 1 & 0 \\ 0 & 0 & -1 \end{pmatrix}$$
-
-$$(C) \quad A = \begin{pmatrix} 1 & 1 & 0 \\ 1 & 1 & 0 \\ 0 & 0 & 1 \end{pmatrix}$$
-
-$$(D) \quad A = \begin{pmatrix} 2 & 1 & 0 \\ 1 & 2 & 0 \\ 0 & 0 & 1 \end{pmatrix}$$
-
-What is the classification of this quadratic form?
+Classify $f(x,y,z)=x^2+y^2-z^2+2xy$.
 
 <details><summary>Answer</summary>
 
-The correct matrix is **(A)**. The symmetric matrix is:
-$$A = \begin{pmatrix} 1 & 1 & 0 \\ 1 & 1 & 0 \\ 0 & 0 & -1 \end{pmatrix}$$
-
-(Off-diagonal entries are half the cross-term coefficients: $2xy/2 = 1$.)
-
-To classify, find eigenvalues. The $3 \times 3$ form has eigenvalues $\lambda = 0, 2, -1$ (the $2 \times 2$ upper-left block $\begin{pmatrix} 1 & 1 \\ 1 & 1 \end{pmatrix}$ has eigenvalues 0 and 2; the bottom-right is $-1$).
-
-Since eigenvalues include both positive and negative, the form is **indefinite**.
-
+$A=\begin{pmatrix}1&1&0\\1&1&0\\0&0&-1\end{pmatrix}$ (cross-term $2xy$ halves to $a_{12}=a_{21}=1$). The upper-left block $\begin{pmatrix}1&1\\1&1\end{pmatrix}$ has eigenvalues $0,2$ (trace $2$, det $0$); the bottom-right block contributes $-1$. Eigenvalues $\{0,2,-1\}$ mix signs — **indefinite**.
 </details>

@@ -12,6 +12,7 @@ import { getErrorPatternReport } from '../error-taxonomy';
 import { generateAttemptSequence, generateScoreMaximizationPlan, EXAM_CONFIGS } from '../exam-strategy';
 import { CONCEPT_MAP, traceWeakestPrerequisite } from '../../constants/concept-graph';
 import { TOPIC_NAMES, MARKS_WEIGHTS } from '../../engine/priority-engine';
+import { diagnoseWrongAnswer, type DiagnosticProbeResult } from '../diagnostic-probe';
 
 export interface StudentAuditReport {
   session_id: string;
@@ -31,6 +32,16 @@ export interface StudentAuditReport {
     recommendations: string[];
   };
   prerequisite_alerts: Array<{ concept: string; shaky_prereqs: string[]; severity: string; fix_order: string[] }>;
+  /**
+   * P6 (2026-09-02 content-strategy plan) — ADDITIVE alongside
+   * prerequisite_alerts, never a replacement: the same live path
+   * (src/gbrain/student-model.ts's refreshPrerequisiteAlerts) still writes
+   * prerequisite_alerts and gates real interventions unchanged. This is a
+   * bounded-depth, ranked "smallest discriminating probe" view — see
+   * src/gbrain/diagnostic-probe.ts's module doc — for a coach/operator
+   * reading this report, not a signal any live system currently acts on.
+   */
+  diagnostic_probes: Array<{ concept: string; probe: DiagnosticProbeResult }>;
   cognitive_profile: {
     representation_mode: string;
     abstraction_comfort: number;
@@ -103,6 +114,13 @@ export async function auditStudent(sessionId: string): Promise<StudentAuditRepor
       };
     });
 
+    // P6: same alert set, bounded-depth ranked view — see the field's own
+    // doc comment on StudentAuditReport for why this is additive.
+    const diagnostic_probes = model.prerequisite_alerts.map(a => ({
+      concept: a.concept,
+      probe: diagnoseWrongAnswer(a.concept, model.mastery_vector),
+    }));
+
     // ── Cognitive Narrative ────────────────────────────────────
     const cognitiveNarrative = buildCognitiveNarrative(model);
     const motivationNarrative = buildMotivationNarrative(model);
@@ -131,6 +149,7 @@ export async function auditStudent(sessionId: string): Promise<StudentAuditRepor
         recommendations: errorReport.recommendations,
       },
       prerequisite_alerts,
+      diagnostic_probes,
       cognitive_profile: {
         representation_mode: model.representation_mode,
         abstraction_comfort: model.abstraction_comfort,
@@ -314,6 +333,17 @@ export function formatAuditMarkdown(r: StudentAuditReport): string {
   } else {
     for (const a of r.prerequisite_alerts) {
       md.push(`- **${a.concept}** (${a.severity}) — fix order: ${a.fix_order.slice(0, 3).join(' → ')}`);
+    }
+  }
+  md.push('');
+  md.push('## Diagnostic Probe (P6 — smallest discriminating next question)');
+  const withEvidence = r.diagnostic_probes.filter((d) => d.probe.evidence_sufficient);
+  if (withEvidence.length === 0) {
+    md.push('*No concept currently has converging evidence for a specific prerequisite-gap hypothesis — see individual reasons above (Prerequisite Alerts) for what evidence exists so far.*');
+  } else {
+    for (const d of withEvidence) {
+      const probe = d.probe.recommended_probe!;
+      md.push(`- **${d.concept}** → test **${probe.label}** (${probe.concept_id}, ${probe.distance} hop away, mastery ${Math.round(probe.mastery * 100)}%) next. ${d.probe.reason}`);
     }
   }
   md.push('');

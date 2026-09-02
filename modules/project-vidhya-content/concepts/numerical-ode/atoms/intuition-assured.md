@@ -11,15 +11,14 @@ id: numerical-ode.intuition.assured
 concept_id: numerical-ode
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: numerical-ode.intuition
 for_stance: assured
 ---
 
-## Two separate questions: how accurate, and does it survive at all
+## Local order vs. global order — GATE conflates them on purpose
 
-Euler's global error is $O(h)$ — that governs accuracy once the method is already behaving. Stability is a prior, independent question: for the linear test case $y'=\lambda y$, Euler stays bounded only while $|1+h\lambda|<1$, i.e. $h<2/|\lambda|$ for real negative $\lambda$.
+A question asking "which order is Euler's method?" is ambiguous unless you fix which error it means. The *local* truncation error per step is $O(h^2)$; accumulated over the $O(1/h)$ steps needed to reach a fixed endpoint, the *global* error is one power of $h$ worse, $O(h)$ — the number GATE means when it calls Euler "first-order."
 
-Choosing $h$ from an accuracy target alone, without checking that threshold, is the common failure here. $y'=-100y,\,y(0)=1$ decays smoothly to $0$; Euler with $h=0.1$ instead amplifies by $1+0.1(-100)=-9$ each step, alternating sign and growing without bound — not because the accuracy order was wrong, but because the stability threshold $h<0.02$ was never checked.
+The same shift applies to RK4: local error $O(h^5)$, global error $O(h^4)$. Whenever a question states a method's "order" without qualifying local vs. global, assume global — it's the one that determines how many correct decimal places a given step count actually buys.

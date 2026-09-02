@@ -1,5 +1,5 @@
 ---
-id: graph-coloring-intuition
+id: graph-coloring.intuition
 concept_id: graph-coloring
 atom_type: intuition
 bloom_level: 2
@@ -7,8 +7,6 @@ difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
-
-# Graph Coloring — What It Means
 
 ## The Core Idea
 
@@ -56,12 +54,4 @@ The **chromatic polynomial** $P(G, k)$ counts the number of proper colorings usi
 
 For a path $P_n$: $P(P_n, k) = k(k-1)^{n-1}$
 
-For a cycle $C_n$: $P(C_n, k) = (k-1)^n + (-1)^n (k-1)$
-
----
-
-## GATE Exam Signals
-
-- Expect questions on: finding $\chi(G)$ for small graphs, identifying bipartite graphs, applying the four-color bound for planar graphs.
-- Greedy coloring gives an **upper bound** — showing it is tight requires proof.
-- A lower bound on $\chi(G)$: any clique of size $\omega$ forces $\chi(G) \geq \omega$ (clique number).
+For a cycle $C_n$: $P(C_n, k) = (k-1)^n + (-1)^n (k-1)$ — for $C_4$ with $k=3$ this gives $2^4 + 2 = 18$ proper 3-colorings, matched by direct enumeration.

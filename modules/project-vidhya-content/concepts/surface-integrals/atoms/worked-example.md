@@ -52,6 +52,10 @@ $$= 8 \cdot 2\pi \cdot 2 = 32\pi$$
 
 **Answer:** The flux through the sphere is $32\pi$.
 
+$$
+\boxed{\text{flux} = 32\pi}
+$$
+
 ---
 
 ### Key Insight: Divergence Theorem Check

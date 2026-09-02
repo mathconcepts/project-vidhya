@@ -11,10 +11,10 @@ id: multiple-integrals.hook.assured
 concept_id: multiple-integrals
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: multiple-integrals.hook
 for_stance: assured
 ---
 
-Setting up the limits of integration is the real GATE test whenever the region is not a rectangle — describing the boundary correctly, not the integration mechanics, which are routine once the bounds are right. The reflex mistake: swapping the order of integration ($dx\,dy\to dy\,dx$) while keeping the *same numerical limits*. A non-rectangular region generally needs entirely different bounds re-derived from the boundary curves for the new order; reusing old limits under a swapped order integrates over the wrong shape entirely.
+Swapping $dx\,dy$ for $dy\,dx$ is free on a rectangle where both variables' bounds are constants — Fubini guarantees it. The moment the region is NOT a rectangle, the bounds themselves encode the region's shape, and swapping the differentials without re-deriving new bounds from that shape — not just copying the old numbers across — produces a double integral over the wrong region entirely, even though every symbol still looks correctly placed. The habit worth keeping from rectangular practice, "the two orders always agree," is true of the VALUE once bounds are correct, never an excuse to skip re-deriving the bounds themselves.

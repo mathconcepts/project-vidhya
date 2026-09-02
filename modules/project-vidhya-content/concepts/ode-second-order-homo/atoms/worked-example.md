@@ -3,64 +3,56 @@ id: ode-second-order-homo.worked-example
 concept_id: ode-second-order-homo
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-## Worked Example: Solve the Homogeneous ODE
-
-**Problem (GATE-style):**
-
-Solve the differential equation:
-$$y'' - 3y' + 2y = 0$$
-
-with general form of the solution.
+## Solve $y''+4y'+13y=0$, $\;y(0)=0,\;y'(0)=3$
 
 ---
 
-## Step-by-Step Solution
-
-**Step 1: Form the characteristic equation**
-
-Assume $y = e^{rx}$. Then:
-- $y' = re^{rx}$
-- $y'' = r^2e^{rx}$
-
-Substitute into the ODE:
-$$r^2e^{rx} - 3re^{rx} + 2e^{rx} = 0$$
-
-Factor out $e^{rx}$ (which is never zero):
-$$r^2 - 3r + 2 = 0$$
-
-This is the characteristic equation.
-
-**Step 2: Solve the characteristic equation**
-
-Factor the quadratic:
-$$r^2 - 3r + 2 = (r - 1)(r - 2) = 0$$
-
-Therefore: $r_1 = 1$ and $r_2 = 2$ (two distinct real roots)
-
-**Step 3: Write the general solution**
-
-When the characteristic equation has two distinct real roots $r_1$ and $r_2$, the general solution is:
-$$y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$$
-
-Substituting our roots:
-$$\boxed{y = c_1 e^x + c_2 e^{2x}}$$
-
-where $c_1$ and $c_2$ are arbitrary constants determined by initial conditions.
-
-**Verification:** Differentiate $y = c_1 e^x + c_2 e^{2x}$:
-- $y' = c_1 e^x + 2c_2 e^{2x}$
-- $y'' = c_1 e^x + 4c_2 e^{2x}$
-
-Check: $y'' - 3y' + 2y = (c_1 e^x + 4c_2 e^{2x}) - 3(c_1 e^x + 2c_2 e^{2x}) + 2(c_1 e^x + c_2 e^{2x})$
-$= c_1 e^x(1 - 3 + 2) + c_2 e^{2x}(4 - 6 + 2) = 0$ ✓
+**Step 1 — Method selector.** The equation is linear, homogeneous, constant-coefficient — the characteristic-equation method applies directly. A tempting-but-wrong move here is reaching for undetermined coefficients or variation of parameters because "second-order ODE" pattern-matches those names: both methods build a *particular* solution against a nonzero right-hand side, and this equation's right-hand side is identically $0$ — there is nothing to match, only the characteristic equation to solve.
 
 ---
+
+**Step 2 — Characteristic equation.**
+$$r^2+4r+13=0$$
+
+---
+
+**Step 3 — Solve for the roots.**
+$$r=\frac{-4\pm\sqrt{16-52}}{2}=\frac{-4\pm\sqrt{-36}}{2}=-2\pm3i$$
+
+Complex pair: $\alpha=-2$, $\beta=3$.
+
+---
+
+**Step 4 — Write the general solution.**
+$$y(x)=e^{-2x}\left(C_1\cos3x+C_2\sin3x\right)$$
+
+---
+
+**Step 5 — Apply $y(0)=0$.**
+$$y(0)=e^{0}(C_1\cos0+C_2\sin0)=C_1=0$$
+
+---
+
+**Step 6 — Apply $y'(0)=3$.** Differentiate first:
+$$y'(x)=e^{-2x}\big[-2(C_1\cos3x+C_2\sin3x)+(-3C_1\sin3x+3C_2\cos3x)\big]$$
+
+At $x=0$, with $C_1=0$:
+$$y'(0)=-2(0)+3C_2=3C_2=3\;\implies\;C_2=1$$
+
+---
+
+**Step 7 — Final answer.**
+$$\boxed{y(x)=e^{-2x}\sin(3x)}$$
+
+---
+
+**Step 8 — Check.** $y(0)=\sin0=0$ ✓. $y'(x)=e^{-2x}(3\cos3x-2\sin3x)$, so $y'(0)=3(1)-2(0)=3$ ✓. Both conditions hold, and substituting back confirms $y''+4y'+13y\equiv0$.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: y'' - 3y' + 2y = 0","steps":[{"prompt":"Step 1: Assume $y = e^{rx}$ and find $y'$ and $y''$.","hint":"Use the chain rule: if $y = e^{rx}$ then $y' = re^{rx}$ and $y'' = r^2 e^{rx}$.","answer":"$y' = re^{rx}$ and $y'' = r^2 e^{rx}$"},{"prompt":"Step 2: Substitute into $y'' - 3y' + 2y = 0$ and factor out $e^{rx}$.","hint":"You should get $e^{rx}(r^2 - 3r + 2) = 0$. Since $e^{rx} \\neq 0$, set the bracket to zero.","answer":"The characteristic equation is $r^2 - 3r + 2 = 0$."},{"prompt":"Step 3: Factor the quadratic $r^2 - 3r + 2 = 0$ to find both roots.","hint":"Look for two numbers that multiply to 2 and add to -3. They are -1 and -2.","answer":"$(r - 1)(r - 2) = 0$, so $r_1 = 1$ and $r_2 = 2$."},{"prompt":"Step 4: Write the general solution for two distinct real roots.","hint":"The formula is $y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$.","answer":"$y = c_1 e^x + c_2 e^{2x}$"}],"caption":"Key exam insight: characteristic equation → roots → general solution. The formula structure is the same for all second-order homogeneous ODEs."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: solving y'' + 4y' + 13y = 0 by characteristic roots","steps":[{"prompt":"Write the characteristic equation for $y''+4y'+13y=0$.","hint":"Replace $y''$ with $r^2$, $y'$ with $r$, $y$ with $1$.","answer":"$r^2+4r+13=0$."},{"prompt":"Solve for the roots using the quadratic formula.","hint":"Compute the discriminant $16-52$ first — it is negative, so expect a complex pair.","answer":"$r=\\\\dfrac{-4\\\\pm\\\\sqrt{-36}}{2}=-2\\\\pm3i$."},{"prompt":"Given $y(0)=0$ and $y'(0)=3$, find the particular solution.","hint":"General solution is $y=e^{-2x}(C_1\\\\cos3x+C_2\\\\sin3x)$. Use $y(0)=0$ first to get $C_1$, then differentiate for $y'(0)$.","answer":"$C_1=0$, then $y'(0)=3C_2=3$ gives $C_2=1$, so $y(x)=e^{-2x}\\\\sin(3x)$."}]}
 ```

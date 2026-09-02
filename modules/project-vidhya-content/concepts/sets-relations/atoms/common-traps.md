@@ -2,11 +2,15 @@
 id: sets-relations.common-traps
 concept_id: sets-relations
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 3
+difficulty: 0.5
 exam_ids: ["*"]
 ---
 
-- **Confusing antisymmetry with "not symmetric"**: Antisymmetric does NOT mean "not symmetric." A relation can be both symmetric and antisymmetric (e.g., the identity relation). Antisymmetry says: "if $(a,b)$ and $(b,a)$ are both in $R$, then $a=b$." **Test**: The divisibility relation $x|y$ on positive integers is antisymmetric but NOT symmetric.
-- **Assuming reflexivity without checking all elements**: Students often verify reflexivity on one or two examples and generalize. Always check that $(a, a) \in R$ for **every** $a$ in the set, not just a few. Similarly for other properties.
-- **Forgetting that $(x,x)$ pairs matter in symmetric relations**: When counting pairs in a symmetric relation, students often forget that diagonal pairs $(x,x)$ contribute 1 to the count (not 2, unlike off-diagonal symmetric pairs which come in pairs).
+**Trap 1 — Assuming symmetric relations are automatically equivalence relations.** Symmetry is one of three axioms; a relation can be reflexive and symmetric yet fail transitivity (e.g. "shares a common friend with").
+
+**Trap 2 — Confusing antisymmetric with asymmetric.** Antisymmetric permits $aRb$ and $bRa$ only when $a=b$; it does **not** forbid $aRb$ and $bRa$ from coexisting for equal elements, unlike asymmetric, which forbids both directions outright.
+
+**Trap 3 — Treating "reflexive + transitive" as sufficient.** That pair alone defines only a **preorder** — neither equivalence relation nor partial order is guaranteed without checking the third axiom.
+
+**Trap 4 — Miscounting equivalence classes.** Classes must partition the set exactly — every element in exactly one class. A "class" that overlaps another or omits an element signals a broken symmetry or transitivity check upstream.

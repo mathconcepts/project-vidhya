@@ -7,8 +7,10 @@ difficulty: 0.22
 exam_ids: ["*"]
 ---
 
-- **Confusing absolute error with relative/percentage error:** reporting the raw difference $|x_t - x_a|$ as "the error" without normalizing by the true value makes it impossible to judge whether the error is actually large or small — a 0.1 error on a value of 1000 is trivial, but on a value of 0.5 it's enormous.
-- **Confusing rounding error with truncation error:** rounding error comes from representing a number with finitely many digits (a representation limit); truncation error comes from stopping an infinite or iterative process early (an algorithmic limit, e.g., a truncated Taylor series). They have different causes and different fixes.
-- **Assuming errors partially cancel when combining measurements:** under worst-case (and GATE) analysis, absolute errors of a sum or difference **add**, even when subtracting two positive quantities — they never subtract away just because the operation is a subtraction.
-- **Forgetting that division still adds relative errors:** students sometimes expect division to "cancel out" error the way it can cancel common factors; instead, $E_r(x/y) \approx E_r(x) + E_r(y)$, exactly the same addition rule as for multiplication.
-- **Miscounting significant figures:** treating leading zeros (as in $0.0034$) as significant, or assuming trailing zeros in a whole number like $1200$ are always significant — both are wrong without more context (e.g., a stated decimal point or scientific notation).
+**Trap 1 — Reporting absolute error as "the" error.** $|x_t-x_a|$ alone can't say whether an error is large or small — a $0.1$ gap is trivial on a value of $1000$ but enormous on a value of $0.5$.
+
+**Trap 2 — Confusing rounding with truncation error.** Rounding comes from a representation limit (finitely many digits); truncation comes from an algorithmic limit (stopping an infinite or iterative process early). They have different causes and different fixes.
+
+**Trap 3 — Assuming errors partially cancel.** Under worst-case analysis, absolute errors of a sum or difference **add**, even when subtracting two positive quantities — they never partially cancel just because the operation is a subtraction.
+
+**Trap 4 — Forgetting division still adds relative errors.** $E_r(x/y)\approx E_r(x)+E_r(y)$, the same addition rule as multiplication — division does not "cancel out" error.

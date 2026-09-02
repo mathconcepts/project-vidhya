@@ -1,40 +1,54 @@
 ---
-# Alternative body for matrix-norms.worked_example, served when the learner
+# Alternative body for matrix-norms.worked-example, served when the learner
 # stance is `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who is low on this concept and low on confidence.
-# The scaffolding is REAL but it is not on the page: prose is held at or below
-# the base atom's length, because a screen that is visibly longer than the one
-# that already defeated this reader signals difficulty no matter how kindly it
-# is written. The extra steps live in the walkthrough below, where they unfold
-# one at a time when the student asks for them.
-#
-# The walkthrough may carry MORE steps than the base's, but every answer the
-# base asserts survives here in order and the final answer is identical —
-# scripts/check-variant-agreement.ts enforces that. Prompts and hints are the
-# part that may differ, and they are where the gentler register lives.
+# Prose is held at or below the base atom's length; every step is written
+# out in full with an explicit check, no praise, no reassurance.
 id: matrix-norms.worked-example.shaken
 concept_id: matrix-norms
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.25
-scaffold_fade: true
+difficulty: 0.2
 exam_ids: ["*"]
-variant_of: matrix-norms.worked_example
+scaffold_fade: true
+variant_of: matrix-norms.worked-example
 for_stance: shaken
 ---
 
-**Problem:** Frobenius norm, 1-norm, and condition number of $A = \begin{pmatrix} 4 & 1 \\ 0 & 2 \end{pmatrix}$.
+**Problem:** $\|A\|_F$, $\|A\|_1$, $\kappa_2(A)$ for $A=\begin{pmatrix}4&1\\0&2\end{pmatrix}$.
 
-**Frobenius — square every entry, add, root it.** $\|A\|_F = \sqrt{4^2+1^2+0^2+2^2} = \sqrt{21}$.
+---
 
-**1-norm — sum absolute values down each column, take the bigger sum.** Column 1: $4+0=4$. Column 2: $1+2=3$. So $\|A\|_1 = 4$.
+**Step 1 — square, add, root.**
 
-**Spectral norm — via $A^TA$.** $A^TA = \begin{pmatrix}16&4\\4&5\end{pmatrix}$, eigenvalues $\approx17.30, 3.70$, so $\sigma_1\approx4.16$, $\sigma_2\approx1.92$.
+$$\|A\|_F=\sqrt{4^2+1^2+0^2+2^2}=\sqrt{21}\approx4.58$$
 
-$$\boxed{\|A\|_F = \sqrt{21} \approx 4.58, \quad \|A\|_1 = 4, \quad \kappa_2(A) = \sigma_1/\sigma_2 \approx 2.16}$$
+---
+
+**Step 2 — column sums, take the max.**
+
+Column 1: $4+0=4$. Column 2: $1+2=3$. $\|A\|_1=\max(4,3)=4$.
+
+---
+
+**Step 3 — form $A^TA$, find eigenvalues.**
+
+$$A^TA=\begin{pmatrix}16&4\\4&5\end{pmatrix}, \quad (16-\lambda)(5-\lambda)-16=\lambda^2-21\lambda+64=0$$
+
+$$\lambda=\frac{21\pm\sqrt{185}}{2}\approx17.30,\ 3.70$$
+
+Check: $17.30+3.70=21=\operatorname{tr}(A^TA)$ ✓, $17.30\times3.70\approx64=\det(A^TA)$ ✓.
+
+---
+
+**Step 4 — root, divide.**
+
+$$\sigma_1\approx\sqrt{17.30}\approx4.16, \quad \sigma_2\approx\sqrt{3.70}\approx1.92$$
+
+$$\boxed{\|A\|_F\approx4.58,\ \|A\|_1=4,\ \kappa_2(A)=\sigma_1/\sigma_2\approx2.16}$$
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Compute matrix norms step-by-step","steps":[{"prompt":"Square each of the four entries — 4, 1, 0, 2 — and add them. Then take the square root. What do you get?","hint":"$4^2+1^2+0^2+2^2 = 16+1+0+4 = 21$.","answer":"$\\|A\\|_F = \\sqrt{21}$"},{"prompt":"Add absolute values down column 1 (entries 4 and 0), then down column 2 (entries 1 and 2). Which sum is bigger?","hint":"Column 1: $|4|+|0|$. Column 2: $|1|+|2|$.","answer":"Column 1 sum = 4, Column 2 sum = 3. Maximum = 4, so $\\|A\\|_1 = 4$."},{"prompt":"The larger eigenvalue of $A^TA$ is about 17.30. Take its square root — that's the spectral norm.","hint":"$\\|A\\|_2 = \\sigma_1 = \\sqrt{\\lambda_1}$.","answer":"$\\sigma_1 = \\sqrt{17.30} \\approx 4.16$, so $\\|A\\|_2 \\approx 4.16$."}],"caption":"Work through Frobenius, 1-norm, and spectral norm calculations."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: three different matrix norms, same matrix","steps":[{"prompt":"Why does computing $\\|A\\|_2$ and $\\kappa_2(A)$ require finding eigenvalues of $A^TA$ rather than eigenvalues of $A$ itself?","hint":"$\\|A\\|_2$ is defined via the singular values of $A$, not its eigenvalues — and singular values come from $A^TA$, a symmetric positive-semidefinite matrix even when $A$ itself isn't symmetric.","answer":"$A$ need not be symmetric, so its eigenvalues can be complex or fail to capture how much $A$ stretches vectors in any direction. $A^TA$ is always symmetric positive-semidefinite, so its eigenvalues $\\lambda_i\\geq0$ are real, and the singular values $\\sigma_i=\\sqrt{\\lambda_i}$ correctly measure the maximum and minimum stretch factors — that's exactly what $\\|A\\|_2$ and $\\kappa_2(A)=\\sigma_1/\\sigma_2$ need."},{"prompt":"$\\|A\\|_1=4$ but $\\|A\\|_F\\approx4.58$ and $\\|A\\|_2\\approx4.16$ — three different numbers for the same matrix. Which one should you report if a question just says \"the norm of $A$\" without specifying which?","hint":"There is no single \"the\" norm — each definition (max column sum, sum of squared entries, largest singular value) answers a different question about how $A$ acts.","answer":"None is more correct in general — always check which norm the question names. GATE questions specify explicitly (Frobenius, 1-norm, 2-norm/spectral, or condition number), precisely because these three numbers genuinely differ for the same matrix, as this example shows."}]}
 ```

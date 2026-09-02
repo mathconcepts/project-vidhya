@@ -28,6 +28,7 @@ import type {
   CatalogQuery,
 } from './learning-object-catalog';
 import type { ErrorTag, LearningObject, ObjectType } from '../core/interfaces';
+import type { SourceLocator } from '../content/source-locator';
 import { difficultyToElo, DEFAULT_EXAM_RELEVANCE } from './difficulty-elo';
 
 const ITEMS_DIR = path.join(process.cwd(), 'data', 'practice-items');
@@ -112,6 +113,19 @@ export interface AuthoredItem {
    *     evidenced — the honest default when no review has happened.
    */
   evidence_level?: 'official' | 'directly_reviewed' | 'pattern_supported' | 'design_hypothesis';
+  /**
+   * Optional — WHERE the `evidence_level` claim was verified: a source id,
+   * URL, official paper + year, question id, page or section
+   * (src/content/source-locator.ts's `SourceLocator`). Structural detail
+   * beneath `evidence_level`, same relationship `verification_method` has to
+   * `evidence_level` (D10) — never a rival, never a substitute. Required by
+   * `scripts/check-practice-items.ts` only for the one case that needs it:
+   * a `directly_reviewed` item whose text actually uses a phrase-rule-
+   * licensed claim ("high-yield" etc.) — every other combination is
+   * optional, since inventing a locator for a claim nobody actually
+   * pinpointed would be fabrication, not provenance.
+   */
+  source_locator?: SourceLocator;
 }
 
 /** Mirrors AuthoredItem.evidence_level — the closed enum, for validators. */

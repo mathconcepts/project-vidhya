@@ -3,21 +3,15 @@ id: matrix-norms.mnemonic
 concept_id: matrix-norms
 atom_type: mnemonic
 bloom_level: 2
-difficulty: 0.20
+difficulty: 0.2
 exam_ids: ["*"]
 modality: mnemonic
 ---
 
-**Read the subscript as a picture.** The single hardest thing here is remembering which of $\|A\|_1$ and $\|A\|_\infty$ sums columns and which sums rows. The symbols tell you:
+**Four norms, four instincts:** $\|A\|_1$ reads **down** columns (sum absolute values, take the largest column). $\|A\|_\infty$ reads **across** rows (sum absolute values, take the largest row). $\|A\|_F$ **flattens** the whole matrix into one long vector and takes its ordinary length. $\|A\|_2$ asks the real geometric question: the true worst-case stretch, $\sigma_{\max}$.
 
-- **"1" is a vertical stroke** → sum *down* the **columns**, take the max. $\|A\|_1 = \max_j \sum_i |a_{ij}|$
-- **"$\infty$" is a horizontal figure** → sum *across* the **rows**, take the max. $\|A\|_\infty = \max_i \sum_j |a_{ij}|$
+**Numeric shortcut:** for a diagonal (or triangular, using the diagonal) matrix, sanity-check $\|A\|_2$ against the largest $|d_i|$ on the diagonal — for a genuinely diagonal matrix they must be exactly equal, since the diagonal entries ARE the singular values there.
 
-One is tall, one is wide. That's the whole rule, and it never leaves once you've seen it.
+$$\kappa_2(A)=\frac{\sigma_{\max}}{\sigma_{\min}}\geq1$$
 
-**The other two, by cost:**
-
-- $\|A\|_F$ — flatten the matrix into one long vector and take its length. Cheapest of all four.
-- $\|A\|_2 = \sigma_{\max}(A)$ — the only expensive one, because it needs the eigenvalues of $A^TA$.
-
-**Sanity-check reflex:** every induced norm dominates the spectral radius, $\rho(A) \le \|A\|$. So compute the max row sum in five seconds and use it as a ceiling: if your $\|A\|_2$ came out *larger* than $\|A\|_\infty$ or $\|A\|_F$, you have made an arithmetic error, because $\|A\|_2 \le \|A\|_F$ always holds.
+**Sanity-check reflex:** after computing $\kappa_2$, confirm it's $\geq1$, and confirm the product of all singular values matches $|\det(A)|$ for a square matrix — a condition number under $1$, or a singular-value product missing $|\det(A)|$, means an arithmetic slip upstream.

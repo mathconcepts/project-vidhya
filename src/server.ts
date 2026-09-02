@@ -45,6 +45,7 @@ import { quizRoutes } from './api/quiz-routes';
 import { attemptSkipDrillRoutes } from './api/attempt-skip-drill-routes';
 import { fsrsShadowRoutes } from './api/fsrs-shadow-routes';
 import { pedagogyShadowRoutes } from './api/pedagogy-shadow-routes';
+import { sourceFreshnessRoutes } from './api/source-freshness-routes';
 import { getLearningObjectCatalog } from './scoring/learning-object-catalog-pg';
 import { adminPresetsRoutes } from './api/admin-presets-routes';
 import { chatRoutes, setChatVectorStore, setChatEmbedder } from './api/chat-routes';
@@ -281,6 +282,9 @@ for (const route of fsrsShadowRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of pedagogyShadowRoutes) {
+  registerRoute(route.method, route.path, route.handler);
+}
+for (const route of sourceFreshnessRoutes) {
   registerRoute(route.method, route.path, route.handler);
 }
 for (const route of adminPresetsRoutes) {

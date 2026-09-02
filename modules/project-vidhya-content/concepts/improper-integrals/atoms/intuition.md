@@ -5,21 +5,12 @@ atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
 exam_ids: ["*"]
-scaffold_fade: true
 ---
 
-# Understanding Improper Integrals
+An improper integral asks an ordinary definite-integral question at a boundary the Fundamental Theorem was never built for — an infinite endpoint, or a point where the integrand itself blows up. The fix is the same idea used everywhere in calculus when a value is undefined right at a point: back off to a nearby value, compute normally, then take a limit as that nearby value approaches the trouble spot.
 
-An improper integral is one where either the interval of integration is infinite, or the integrand becomes unbounded at some point within the interval. These pose a challenge: how can we define the "area" under a curve when it extends forever, or when the curve shoots up to infinity?
+For an infinite endpoint (**Type I**): $\int_a^\infty f\,dx=\lim_{N\to\infty}\int_a^N f\,dx$. Replace $\infty$ with a finite $N$, integrate as usual, then let $N$ grow without bound.
 
-The key insight is **limits**. Rather than trying to integrate directly to infinity, we define an improper integral as the limit of proper integrals:
+For a blow-up inside the domain (**Type II**): $\int_a^b f\,dx=\lim_{\varepsilon\to0^+}\int_{a+\varepsilon}^b f\,dx$ when $f$ is undefined at $x=a$. Back off from the bad point by a shrinking $\varepsilon$, integrate normally, then let $\varepsilon\to0$.
 
-$$\int_a^\infty f(x)\,dx = \lim_{R \to \infty} \int_a^R f(x)\,dx$$
-
-Similarly, if $f(x)$ has a singularity at $x = c$ within $[a,b]$:
-
-$$\int_a^b f(x)\,dx = \lim_{\epsilon \to 0^+} \int_a^{c-\epsilon} f(x)\,dx + \lim_{\epsilon \to 0^+} \int_{c+\epsilon}^b f(x)\,dx$$
-
-**Convergence is everything.** If the limit exists and is finite, the improper integral **converges**. If the limit is infinite or doesn't exist, it **diverges**. 
-
-For GATE, this matters because functions that decay fast enough (like $e^{-x}$ or $1/x^2$) can have finite area despite extending to infinity—a counterintuitive but foundational idea. The divergence tests you'll see (p-test, comparison test, limit comparison test) all formalize this notion: when does an integral to infinity actually compute to a real number?
+Both cases reduce to a question you already know how to answer — does an ordinary limit exist? — asked of a running total instead of a single number. The integral **converges** when that limit is finite, and **diverges** otherwise; there is no partial credit for "the antiderivative exists" if the limit itself does not.

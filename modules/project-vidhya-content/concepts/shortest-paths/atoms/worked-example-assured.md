@@ -14,7 +14,7 @@ bloom_level: 3
 difficulty: 0.40
 exam_ids: [gate-ma]
 scaffold_fade: 1
-variant_of: shortest-paths-worked-example
+variant_of: shortest-paths.worked-example
 for_stance: assured
 ---
 

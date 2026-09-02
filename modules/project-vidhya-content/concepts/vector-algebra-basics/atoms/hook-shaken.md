@@ -12,10 +12,10 @@ id: vector-algebra-basics.hook.shaken
 concept_id: vector-algebra-basics
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: vector-algebra-basics.hook
 for_stance: shaken
 ---
 
-Walk 3 km east, then 4 km north. Add the two distances as plain numbers: 7 km. But measure a straight arrow from your start to where you now stand, and it's only $\sqrt{3^2+4^2}=5$ km, pointing north-east of your start. That direction is the part a bare number never carries — a vector is the arrow, size and direction together.
+Two forces pull one ring: 5 N east, 5 N at 60° north of east. Step one: draw both as arrows from the same point. Step two: complete the parallelogram — the diagonal from that shared point is the net force. Step three: compute it. $|\vec F|=\sqrt{5^2+5^2+2(5)(5)\cos60^\circ}=\sqrt{25+25+25}=\sqrt{75}\approx8.66$ N. Check: this is less than $10$ N (same-direction sum) and more than $5$ N (either force alone) — it must land between those two bounds, and it does.

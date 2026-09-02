@@ -1,12 +1,7 @@
 ---
-# Alternative body for regression-correlation-intuition, served when the
+# Alternative body for regression-correlation.intuition, served when the
 # learner stance is `assured`. The base file is what a steady student
 # reads. See src/content/stance-variants.ts for how this is selected.
-#
-# Note: the base atom's own id is `regression-correlation-intuition` (no
-# dot), a legacy naming drift check-content-integrity.ts tolerates.
-# variant_of points at that exact id; this file's own id follows the
-# normal convention instead of propagating the drift.
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
@@ -19,7 +14,7 @@ bloom_level: 2
 difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
-variant_of: regression-correlation-intuition
+variant_of: regression-correlation.intuition
 for_stance: assured
 ---
 

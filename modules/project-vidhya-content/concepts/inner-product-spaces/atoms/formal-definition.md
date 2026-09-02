@@ -21,3 +21,5 @@ where $\|v\| := \sqrt{\langle v, v \rangle}$ is the **induced norm**. Equality h
 
 **Angle Formula:** The angle $\theta$ between two nonzero vectors $u$ and $v$ is given by
 $$\cos \theta = \frac{\langle u, v \rangle}{\|u\| \|v\|}$$
+
+**Method Selector.** Use Cauchy–Schwarz when you need to bound $|\langle u,v\rangle|$ against the norms alone — it needs nothing about $u+v$. A tempting substitute, the triangle inequality $\|u+v\|\le\|u\|+\|v\|$, bounds a different quantity (the length of a sum) and cannot be rearranged into a bound on the inner product itself.

@@ -1,55 +1,21 @@
 ---
-id: analytic-functions-intuition
+id: analytic-functions.intuition
 concept_id: analytic-functions
 atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
+exam_ids: ["*"]
+modality: visual
 ---
 
-# Analytic Functions — The Heart of Complex Analysis
+A function $f(z) = u(x,y) + iv(x,y)$ is **analytic** (holomorphic) at a point if it is complex-differentiable in a whole neighbourhood of that point — not just at the point itself. Complex differentiability turns out far stronger than real differentiability: it forces the **Cauchy-Riemann equations**,
 
-A function $f(z) = u(x,y) + i\,v(x,y)$ of a complex variable $z = x + iy$ is **analytic** (also called holomorphic) at a point if it is complex-differentiable in a neighbourhood of that point.
+$$u_x = v_y \qquad u_y = -v_x$$
 
-## The Cauchy-Riemann Equations
+to hold, with continuous partials, throughout that neighbourhood.
 
-Complex differentiability is far stronger than real differentiability. It requires:
+A function analytic **everywhere** in $\mathbb{C}$ is called **entire** — $e^z$, $\sin z$, $\cos z$, and every polynomial qualify. A point where $f$ fails to be analytic is a **singularity**: $1/z$ has one at $z=0$; $|z|^2$ is analytic *nowhere* at all, since CR fails at every point except the single origin.
 
-$$\frac{\partial u}{\partial x} = \frac{\partial v}{\partial y} \qquad \text{and} \qquad \frac{\partial u}{\partial y} = -\frac{\partial v}{\partial x}$$
+If $f=u+iv$ is analytic, both $u$ and $v$ satisfy Laplace's equation $\nabla^2u=0$ — they are **harmonic**, and **harmonic conjugates** of each other. That link is why analytic functions show up in electrostatics and fluid flow: solve one harmonic problem and its conjugate comes along for free.
 
-If these **CR equations** hold and the partial derivatives are continuous, then $f$ is analytic.
-
-This is both a necessary AND sufficient condition (with continuity of partials).
-
-## Entire Functions
-
-A function analytic **everywhere** in $\mathbb{C}$ is called **entire**:
-
-| Function | Why entire |
-|---|---|
-| $e^z = e^x\cos y + i\,e^x\sin y$ | CR equations hold everywhere |
-| $\sin z$, $\cos z$ | Defined via $e^{iz}$, CR verified |
-| Polynomials $p(z)$ | Differentiable everywhere |
-
-## Singular Points
-
-A point where $f$ fails to be analytic is a **singularity**. For example:
-- $f(z) = 1/z$ has a singularity at $z = 0$.
-- $f(z) = |z|^2$ is **nowhere analytic** (CR fails for $z \neq 0$).
-
-## Harmonic Functions
-
-If $f = u + iv$ is analytic, both $u$ and $v$ individually satisfy **Laplace's equation**:
-
-$$\nabla^2 u = \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} = 0, \qquad \nabla^2 v = 0$$
-
-We say $u$ and $v$ are **harmonic** and are **harmonic conjugates** of each other. This connection is enormously useful in physics (electrostatics, fluid flow).
-
-## Key Insight for GATE
-
-To check analyticity of $f = u + iv$:
-1. Write $u$ and $v$ as functions of $x$ and $y$.
-2. Compute all four partial derivatives.
-3. Check both CR equations.
-4. If they hold everywhere (with continuity) — $f$ is entire. If they hold only on a curve or at isolated points — $f$ is not analytic.
+The working method: write $u,v$ as functions of $x,y$, compute all four partials, check both CR equations. Hold everywhere with continuity — entire. Hold only on a curve or isolated points — not analytic there at all.

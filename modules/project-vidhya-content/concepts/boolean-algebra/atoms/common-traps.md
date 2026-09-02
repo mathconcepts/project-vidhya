@@ -2,11 +2,15 @@
 id: boolean-algebra.common-traps
 concept_id: boolean-algebra
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 3
+difficulty: 0.55
 exam_ids: ["*"]
 ---
 
-- **Misapplying De Morgan's Laws**: Students often write $\overline{A + B} = \overline{A} + \overline{B}$ (incorrect—should be $\overline{A} \cdot \overline{B}$). **Mnemonic**: "When you negate a sum, you flip the operator AND negate the terms: $\overline{A + B} = \overline{A} \cdot \overline{B}$ (AND replaces OR). Same rule with AND/OR swapped." Always **break the line, change the sign** (negate each term and flip the operator).
-- **Forgetting the complement law**: Students compute $X + X = X$ (correct, idempotence) but then assume $X + \overline{X} = \overline{X}$ (wrong—it's always 1). Similarly, $X \cdot X = X$ but $X \cdot \overline{X} = 0$ (always). **Double-check**: complementing a variable and ANDing/ORing it with the original always gives 0 or 1, not the variable itself.
-- **Not fully simplifying**: Students stop after one or two factoring steps. Always apply idempotence, absorption, and consensus repeatedly until no further reduction is possible. Test your result against the original with a truth table for small examples.
+**Trap 1 — Forgetting wraparound adjacency.** The leftmost and rightmost columns (and top/bottom rows) of a K-map are adjacent. A grouping that seems to need wrapping around the edge is still valid — missing it leaves a non-minimal expression.
+
+**Trap 2 — Grouping a non-power-of-2 number of cells.** Groups must be sized $1,2,4,8,\dots$. Three adjacent $1$s cannot form one term; cover them with overlapping valid-sized groups instead.
+
+**Trap 3 — Reading the minterm's binary code in the wrong bit order.** Minterm $6$ is $110$ in $(A,B,C)$ order — check which variable is the most significant bit before reading off a grouping.
+
+**Trap 4 — Forgetting overlap is allowed.** The same $1$-cell can belong to more than one group in the final cover; refusing to reuse a cell often blocks the truly minimal solution.

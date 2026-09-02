@@ -29,7 +29,7 @@ for_stance: shaken
 
 **Step 4.** Integrate: $\frac12\cdot\frac{u^6}{6}=\frac{u^6}{12}$.
 
-**Step 5.** Substitute back: $\frac{(x^2+1)^6}{12}+C$.
+**Step 5.** Substitute back: $\boxed{\frac{(x^2+1)^6}{12}+C}$.
 
 **Check:** $\frac{d}{dx}\left[\frac{(x^2+1)^6}{12}\right]=\frac{6(x^2+1)^5\cdot2x}{12}=x(x^2+1)^5$.
 

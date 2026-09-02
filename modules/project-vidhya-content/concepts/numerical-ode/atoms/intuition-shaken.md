@@ -12,19 +12,18 @@ id: numerical-ode.intuition.shaken
 concept_id: numerical-ode
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: numerical-ode.intuition
 for_stance: shaken
 ---
 
-## One step, before the name
+## One step, before the general rule
 
-$\frac{dy}{dx}=x^2+y^2$ with $y(0)=1$ has no solution expressible in ordinary functions. Take one step of size $h=0.1$ anyway: the slope at the start is $f(0,1)=0^2+1^2=1$, so
+$\frac{dy}{dt}=-2y$, $y(0)=1$, step $h=0.1$. The slope right now is $f(0,1)=-2(1)=-2$. Move forward using only that slope:
 
-$$y_1=y_0+h\cdot f(0,1)=1+0.1(1)=1.1$$
+$$y_1=y_0+h\cdot f(t_0,y_0)=1+0.1(-2)=0.8$$
 
-One number, computed from the slope at a single point, standing in for a curve with no formula behind it.
+One number in, one slope computed, one new number out. Repeat at the new point $t_1=0.1,\,y_1=0.8$: slope $f(0.1,0.8)=-2(0.8)=-1.6$, so $y_2=0.8+0.1(-1.6)=0.64$.
 
-Euler's method just repeats that same move: use the slope where you are, take a small step $h$ in that direction, land at a new point, find the new slope, repeat. A smaller $h$ hugs the true, unknown curve more closely, at the cost of needing more steps to cover the same distance — accuracy traded for computation, every time.
+That is Euler's method, in full: at each point, use the equation to find the slope, take a small step along it, land at a new point, repeat. RK4 improves on this by checking the slope a few more times *within* each step before committing to a direction — more work per step, a much smaller error.

@@ -8,31 +8,13 @@ estimated_minutes: 2
 exam_ids: ["*"]
 ---
 
-# Micro-Exercise: Inverse Relationship
-
-## Question
-
-If $P$ is the change-of-basis matrix from basis $B$ to basis $E$ (so that $[x]_E = P[x]_B$), then the change-of-basis matrix from basis $E$ to basis $B$ is:
-
-**(A)** $P$  
-**(B)** $P^T$  
-**(C)** $P^{-1}$  
-**(D)** $-P$  
-
-## Answer
+For basis $B=\{(1,1),(1,-1)\}$, find $[x]_B$ for $x=(5,1)$ in standard coordinates.
 
 <details>
-<summary>Show Answer</summary>
+<summary>Answer</summary>
 
-**Correct answer: (C) $P^{-1}$**
+Solve $a(1,1)+b(1,-1)=(5,1)$: $a+b=5$, $a-b=1$. Adding: $2a=6\Rightarrow a=3$; then $b=2$.
 
-**Explanation:**
-
-If $[x]_E = P[x]_B$, then multiplying both sides on the left by $P^{-1}$ gives:
-$$P^{-1}[x]_E = P^{-1}(P[x]_B) = [x]_B.$$
-
-So the change-of-basis matrix from $E$ to $B$ is $P^{-1}$.
-
-More generally: if $P_{B \to E}$ converts from $B$ to $E$, then $P_{E \to B} = (P_{B \to E})^{-1}$.
+$[x]_B=(3,2)$. Check: $3(1,1)+2(1,-1)=(3,3)+(2,-2)=(5,1)$ ✓.
 
 </details>

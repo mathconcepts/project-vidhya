@@ -11,17 +11,16 @@ id: interpolation.intuition.assured
 concept_id: interpolation
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: interpolation.intuition
 for_stance: assured
 ---
 
-## Where the formula quietly stops guaranteeing anything
+## Where the guarantee quietly stops
 
 Uniqueness needs only distinct nodes: exactly one degree-$(n-1)$ polynomial threads $n$ points with distinct $x$-values.
 
-Accuracy between the nodes is a separate, conditional matter, governed by how smooth the underlying $f$ is and how the nodes are spaced. Push a high-degree polynomial through equally spaced nodes and Runge's phenomenon shows up — oscillations near the edges of the interval that grow, not shrink, as more equally spaced points are added, even though every sample is still matched exactly. Chebyshev-spaced nodes avoid this; equal spacing does not, at any degree.
+Accuracy between the nodes is a separate, conditional matter. Push a high-degree polynomial through equally spaced nodes and Runge's phenomenon shows up — oscillations near the edges of the interval that grow, not shrink, as more equally spaced points are added, even though every sample is still matched exactly. Chebyshev-spaced nodes avoid this; equal spacing does not, at any degree.
 
-The costlier mistake is evaluating outside $[x_1,x_n]$. Nothing in the construction constrains the polynomial there — it was built to match points inside the interval, and beyond it the fitted curve and the true function can diverge arbitrarily fast, with none of the guarantee an interpolated value carries.
+The costlier mistake is evaluating outside $[x_1,x_n]$: nothing in the construction constrains the polynomial there, and the fitted curve can diverge from the true function arbitrarily fast, with none of the guarantee an interpolated value carries.

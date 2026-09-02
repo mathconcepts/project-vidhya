@@ -1,5 +1,5 @@
 ---
-id: planar-graphs-visual-analogy
+id: planar-graphs.visual-analogy
 concept_id: planar-graphs
 atom_type: visual_analogy
 bloom_level: 2
@@ -8,9 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
 
-# Planar Graphs as Road Maps (No Bridges Allowed)
-
-## The Analogy
+## The Analogy: Planar Graphs as Road Maps (No Bridges Allowed)
 
 Picture 5 cities on a flat piece of land. A city planner wants to build a direct road between every pair of cities — but the land has no mountains, no tunnels, and no bridges. Every road must lie flat on the ground.
 
@@ -81,3 +79,15 @@ $$4F \leq 2E \implies 4 \times 5 = 20 \leq 2 \times 9 = 18 \quad \text{CONTRADIC
 Planar = you can lay the road network flat on a table with zero intersections.
 Non-planar = at least one overpass is unavoidable.
 The density bound $E \leq 3V - 6$ is the mathematical test for "too many roads for a flat map."
+
+---
+
+## How Fast the Road Budget Grows
+
+The bound $3V-6$ is linear in $V$ — every new city buys exactly 3 more possible roads, no more:
+
+```gif-scene
+{"type": "discrete-bars", "values": [3, 6, 9, 12, 15, 18], "labels": ["V=3", "V=4", "V=5", "V=6", "V=7", "V=8"], "title": "Maximum edges for a planar graph: 3V-6"}
+```
+
+A city count that stays the same while the road count climbs past this line is the fastest possible non-planarity check — no drawing, no Kuratowski search, just one multiplication and a subtraction.

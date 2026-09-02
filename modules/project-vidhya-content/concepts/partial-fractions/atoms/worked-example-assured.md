@@ -20,7 +20,7 @@ for_stance: assured
 
 Cover-up skips the algebra entirely for distinct linear factors: cover $(x-2)$, evaluate what remains at $x=2$: $A=\frac{2+1}{2+3}=\frac35$. Cover $(x+3)$, evaluate at $x=-3$: $B=\frac{-3+1}{-3-2}=\frac25$.
 
-**Answer:** $\dfrac35\ln|x-2|+\dfrac25\ln|x+3|+C$.
+**Answer:** $\boxed{\dfrac35\ln|x-2|+\dfrac25\ln|x+3|+C}$.
 
 The shortcut only goes this far for a repeated factor: on $\dfrac{N(x)}{(x-2)^2(x+3)}=\dfrac{A}{x-2}+\dfrac{B}{(x-2)^2}+\dfrac{C}{x+3}$, cover-up cleanly recovers $B$ (set $x=2$) and $C$ (set $x=-3$) — but not $A$, since covering $(x-2)$ once still leaves a factor of $(x-2)$ in what remains, and that does not vanish at $x=2$ the way it does for a simple factor. $A$ needs coefficient comparison or a third convenient substitution instead.
 

@@ -1,25 +1,17 @@
 ---
 # Alternative body for sequences.intuition, served when the learner stance
-# is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# is `assured`. Terse, assumes the mental model, spends words on the
+# distinction that costs marks rather than re-teaching it.
 id: sequences.intuition.assured
 concept_id: sequences
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: sequences.intuition
 for_stance: assured
 ---
 
-Monotone alone is not enough, matching bounded alone: $a_n=n$ is monotone increasing but unbounded, hence divergent (to $+\infty$) — the Monotone Convergence Theorem needs *both* properties together, not either as a substitute for the other.
+The distinction that actually costs marks: convergence only constrains the **tail** of a sequence, never any finite prefix. Change or delete the first million terms of a convergent sequence and the limit is untouched, because "for every $\epsilon>0$ there exists $N$" only ever asks about $n>N$ — never about how the sequence starts. A sequence can wander wildly for its first thousand terms and still converge; one can sit beautifully close to $L$ for those thousand terms and still diverge later.
 
-A genuinely useful proof tool: if a sequence has two subsequences converging to different limits, the sequence itself diverges. $a_n=(-1)^n$ has the even-indexed subsequence converging to $1$ and the odd-indexed subsequence converging to $-1$ — two different destinations rule out any single limit for the whole sequence, without needing to invoke oscillation informally.
-
-The direction of the Monotone Convergence Theorem matters too: it proves existence of a limit without ever computing what that limit is — a bounded monotone sequence defined by a nasty recursion can be proven convergent this way even when solving for the actual limiting value requires separate work.
+Where students lose marks: treating "the terms look close to $L$ for the values I checked" as proof of convergence. It is evidence, never proof — the definition requires the closeness to persist for **every** later index, not just the ones computed by hand. A candidate limit has to be checked against the tail's behavior, never against the launch.

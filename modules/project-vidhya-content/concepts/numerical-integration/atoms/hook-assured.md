@@ -11,7 +11,7 @@ id: numerical-integration.hook.assured
 concept_id: numerical-integration
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: numerical-integration.hook
 for_stance: assured

@@ -10,7 +10,7 @@ estimated_minutes: 2
 
 A manufacturer claims that the average weight of a product is 500g. A sample of 16 items has a mean weight of 495g with a standard deviation of 8g. Using a two-tailed test at $\alpha = 0.05$, what should we conclude?
 
-- **(A)** Reject $H_0$; the claim is false
+- **(A)** Reject $H_0$; the claim is not well supported
 - **(B)** Fail to reject $H_0$; the claim is plausible
 - **(C)** The test is inconclusive
 - **(D)** Reject $H_1$; accept $H_0$
@@ -18,23 +18,14 @@ A manufacturer claims that the average weight of a product is 500g. A sample of 
 <details>
 <summary>Answer</summary>
 
-**B**. **Hypotheses:**
-- $H_0: \mu = 500$g
-- $H_1: \mu \ne 500$g (two-tailed)
+**A**. Hypotheses: $H_0: \mu = 500$g, $H_1: \mu \ne 500$g (two-tailed). $\sigma$ is unknown, only the sample $s=8$g is given, so use the $t$-test:
 
-**Test statistic** (using $t$-test, since $\sigma$ is unknown):
-$$t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} = \frac{495 - 500}{8/\sqrt{16}} = \frac{-5}{8/4} = \frac{-5}{2} = -2.5$$
+$$t = \frac{\bar{x} - \mu_0}{s/\sqrt{n}} = \frac{495 - 500}{8/\sqrt{16}} = \frac{-5}{2} = -2.5$$
 
-**Degrees of freedom:** $df = n - 1 = 16 - 1 = 15$
+Degrees of freedom: $df = n - 1 = 15$. Critical value for a two-tailed test at $\alpha = 0.05$ with $df=15$: $t_{0.025,15} \approx 2.131$.
 
-**Critical value** for two-tailed test at $\alpha = 0.05$ with $df = 15$:
-$t_{0.025, 15} \approx 2.131$ (from $t$-table)
+$$|t| = 2.5 > 2.131$$
 
-**Comparison:**
-$$|t| = |-2.5| = 2.5 > 2.131$$
-
-Actually, since $|t| = 2.5 > 2.131$, we **should reject $H_0$**. But let me check the p-value. With $t = -2.5$ and $df = 15$, the two-tailed p-value is approximately $0.024$, which is less than $0.05$.
-
-Given the options and the calculation, the correct answer appears to be **(A) Reject $H_0$**, but option **(B)** suggests failing to reject. Let me reconsider: using more conservative estimates or a different $t$-value interpretation, the answer key may have intended **(B)**. Standard practice would suggest rejection here.
+The test statistic falls in the rejection region, so we **reject $H_0$**: the sample gives sufficient evidence the true mean is not 500g. (Cross-check: the two-tailed p-value at $t=2.5$, $df=15$ is $\approx 0.024 < 0.05$ — the same conclusion from either route.)
 
 </details>

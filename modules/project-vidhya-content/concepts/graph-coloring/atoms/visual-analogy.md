@@ -1,5 +1,5 @@
 ---
-id: graph-coloring-visual-analogy
+id: graph-coloring.visual-analogy
 concept_id: graph-coloring
 atom_type: visual_analogy
 bloom_level: 2
@@ -8,9 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
 
-# Graph Coloring as Map Coloring
-
-## The Analogy
+## The Analogy: Graph Coloring as Map Coloring
 
 Imagine you are a cartographer coloring a political map of India. The rule is simple:
 
@@ -73,3 +71,15 @@ Colors represent **incompatible roles**. Think of university course scheduling:
 $\chi(G)$ = **minimum number of time slots** to schedule all courses without conflict.
 
 The map analogy and the scheduling analogy are mathematically identical — both are proper vertex colorings of a graph.
+
+---
+
+## The Pattern Behind the Numbers
+
+Cycles alone show why $\chi(G)$ is not about size — it is about parity. Six cycles, $C_3$ through $C_8$, in order:
+
+```gif-scene
+{"type": "discrete-bars", "values": [3, 2, 3, 2, 3, 2], "labels": ["C3", "C4", "C5", "C6", "C7", "C8"], "title": "Chromatic number by cycle length: odd needs 3, even needs 2"}
+```
+
+The bars alternate because the closing edge of an odd cycle always meets two vertices that were forced into the same color by the alternation before it — a third color absorbs that one collision. An even cycle never produces the collision, so two colors always suffice. Nothing about a bigger cycle changes this: $C_{101}$ still needs only 3.

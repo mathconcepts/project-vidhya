@@ -6,8 +6,10 @@
 # Written for a student who is low on this concept and low on confidence:
 # smallest true first step, concrete numbers before symbols, picture before
 # formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# mention of how the reader might be feeling.
+#
+# The fenced interactive block below is copied verbatim from the base atom
+# so the widget cannot drift between variants; only prose differs.
 id: complex-numbers.intuition.shaken
 concept_id: complex-numbers
 atom_type: intuition
@@ -19,7 +21,7 @@ variant_of: complex-numbers.intuition
 for_stance: shaken
 ---
 
-Take $z=3+4i$: a point $3$ right, $4$ up. Its distance from the origin is $|z|=\sqrt{3^2+4^2}=5$ — the familiar $3$-$4$-$5$ triangle. Multiply $z$ by $i$: $i(3+4i)=3i+4i^2=-4+3i$, the point $(-4,3)$ — same distance $5$ from the origin, rotated $90°$ counterclockwise. Multiplying by any complex number scales by its magnitude and rotates by its angle; that's complex multiplication, in one sentence. Try it on the picture below and watch $|z|$, $\cos\theta$, $\sin\theta$ move together — they're locked to the same point $z$.
+Take $z=3+4i$: a point $3$ right, $4$ up. Its distance from the origin is $|z|=\sqrt{3^2+4^2}=5$ — the $3$-$4$-$5$ triangle. Multiply $z$ by $i$: $i(3+4i)=3i+4i^2=-4+3i$, the point $(-4,3)$ — same distance $5$ from the origin, rotated $90°$. Multiplying by any complex number scales by its magnitude and rotates by its angle. Try it below and watch $|z|$, $\cos\theta$, $\sin\theta$ move together — they're locked to the same point $z$.
 
 ```interactive-spec
 {

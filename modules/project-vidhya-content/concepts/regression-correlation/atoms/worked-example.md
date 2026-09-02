@@ -1,24 +1,20 @@
 ---
-id: regression-correlation-worked-example
+id: regression-correlation.worked-example
 concept_id: regression-correlation
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.40
 exam_ids: [gate-ma]
-scaffold_fade: 1
+scaffold_fade: true
 ---
 
-# Worked Example — Regression Equation from Summary Statistics (GATE Style)
+## Worked Example — Regression Equation from Summary Statistics (GATE Style)
 
-## Problem
-
-For a sample of $n = 5$ observations the following sums are given:
+**Problem.** For a sample of $n = 5$ observations the following sums are given:
 
 $$\sum x_i = 15, \quad \sum y_i = 25, \quad \sum x_i^2 = 55, \quad \sum x_i y_i = 83$$
 
 Find the regression equation $\hat{y} = a + bx$.
-
----
 
 ## Step 1 — Compute the Means
 
@@ -28,9 +24,7 @@ $$\bar{x} = \frac{\sum x_i}{n} = \frac{15}{5} = 3, \qquad \bar{y} = \frac{\sum y
 
 Use the computational formula to avoid rounding errors with deviations:
 
-$$b = \frac{\sum x_i y_i - n\bar{x}\bar{y}}{\sum x_i^2 - n\bar{x}^2}$$
-
-$$b = \frac{83 - 5 \cdot 3 \cdot 5}{55 - 5 \cdot 3^2} = \frac{83 - 75}{55 - 45} = \frac{8}{10} = 0.8$$
+$$b = \frac{\sum x_i y_i - n\bar{x}\bar{y}}{\sum x_i^2 - n\bar{x}^2} = \frac{83 - 5 \cdot 3 \cdot 5}{55 - 5 \cdot 3^2} = \frac{83 - 75}{55 - 45} = \frac{8}{10} = 0.8$$
 
 ## Step 3 — Compute the Intercept $a$
 
@@ -40,13 +34,11 @@ $$a = \bar{y} - b\bar{x} = 5 - 0.8 \times 3 = 5 - 2.4 = 2.6$$
 
 $$\boxed{\hat{y} = 2.6 + 0.8\,x}$$
 
----
+**Verification — passes through $(\bar{x}, \bar{y})$:** $\hat{y}\big|_{x=3} = 2.6 + 2.4 = 5 = \bar{y}$ $\checkmark$
 
-## Verification: Passes Through $(\bar{x}, \bar{y})$
+## Method Selector
 
-$$\hat{y}\big|_{x=3} = 2.6 + 0.8 \times 3 = 2.6 + 2.4 = 5 = \bar{y} \checkmark$$
-
----
+Reach for the summary-statistic slope formula $b=(\sum x_iy_i-n\bar{x}\bar{y})/(\sum x_i^2-n\bar{x}^2)$ whenever the problem hands you sums directly (as here) — not the deviation-form definition $b=\sum(x_i-\bar x)(y_i-\bar y)/\sum(x_i-\bar x)^2$, which a student reaches for out of habit even when it forces recomputing every deviation from scratch and re-introduces rounding error the sums-based form avoids entirely.
 
 ## Bonus: Correlation Coefficient Link
 
@@ -54,11 +46,9 @@ If additionally $\sum y_i^2 = 135$, then:
 
 $$S_{xx} = \sum x_i^2 - n\bar{x}^2 = 10, \quad S_{yy} = \sum y_i^2 - n\bar{y}^2 = 135 - 125 = 10, \quad S_{xy} = 8$$
 
-$$r = \frac{S_{xy}}{\sqrt{S_{xx} \cdot S_{yy}}} = \frac{8}{\sqrt{10 \times 10}} = \frac{8}{10} = 0.8$$
+$$r = \frac{S_{xy}}{\sqrt{S_{xx} \cdot S_{yy}}} = \frac{8}{\sqrt{10 \times 10}} = 0.8$$
 
 And $b = r \cdot \dfrac{\sqrt{S_{yy}}}{\sqrt{S_{xx}}} = 0.8 \cdot 1 = 0.8$ — consistent. $R^2 = 0.64$.
-
----
 
 ## Common GATE Traps
 

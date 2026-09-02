@@ -8,10 +8,10 @@ exam_ids: ["*"]
 tested_by_atom: complex-numbers.micro-exercise.modulus
 ---
 
-**Trap 1 — Forgetting $i^2 = -1$ during multiplication.** Students stop at $-6i^2$ instead of converting to $+6$.
+**Trap 1 — Forgetting $i^2 = -1$ during multiplication.** Students stop at $-6i^2$ instead of converting it to $+6$, leaving the wrong sign in the final real part.
 
-**Trap 2 — Sign error on conjugate.** $\overline{a-bi} = a+bi$, not $-a+bi$. Only the imaginary part flips.
+**Trap 2 — Sign error on the conjugate.** $\overline{a-bi} = a+bi$, not $-a+bi$. Only the imaginary part flips.
 
-**Trap 3 — Modulus is non-negative.** $|3-4i| = 5$, never $-5$. The modulus is a distance.
+**Trap 3 — Modulus is never negative.** $|3-4i| = 5$, never $-5$. The modulus is a distance, so a negative answer is a sign it was computed wrong, not a valid case.
 
-**Trap 4 — Argument quadrant.** $\arg(-1-i)$ is in the third quadrant: $-3\pi/4$, not $\pi/4$. Use the signs of $a$ and $b$ to pin the quadrant before applying $\arctan$.
+**Trap 4 — Argument quadrant.** $\arg(-1-i)$ is in the third quadrant, $-3\pi/4$, not the $\pi/4$ that a bare $\arctan(-1/-1)$ suggests. Read the quadrant from the signs of $a$ and $b$ before applying $\arctan$ at all.

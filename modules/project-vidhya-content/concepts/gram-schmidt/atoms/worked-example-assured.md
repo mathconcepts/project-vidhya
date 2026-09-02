@@ -1,5 +1,5 @@
 ---
-# Alternative body for gram-schmidt.worked_example, served when the learner
+# Alternative body for gram-schmidt.worked-example, served when the learner
 # stance is `assured`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
@@ -7,28 +7,33 @@
 # vocabulary, and spends its words on the distinctions that actually cost
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
+#
+# The fenced interactive block below is copied verbatim from the base
+# atom so the widget cannot drift between variants; only prose differs.
 id: gram-schmidt.worked-example.assured
 concept_id: gram-schmidt
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.2
 scaffold_fade: true
 exam_ids: ["*"]
-variant_of: gram-schmidt.worked_example
+variant_of: gram-schmidt.worked-example
 for_stance: assured
 ---
 
-**Problem:** Orthonormalize $v_1=(1,0,1)^T$, $v_2=(1,1,0)^T$, $v_3=(0,1,1)^T$.
+Orthonormalize $v_1=(1,0,1)$, $v_2=(1,1,0)$, $v_3=(0,1,1)$.
 
-$$e_1 = \frac{v_1}{\|v_1\|} = \frac{1}{\sqrt2}\begin{pmatrix}1\\0\\1\end{pmatrix}, \qquad \tilde u_2 = v_2 - \langle v_2,e_1\rangle e_1 \Rightarrow e_2 = \frac{1}{\sqrt6}\begin{pmatrix}1\\2\\-1\end{pmatrix}$$
+$e_1 = v_1/\|v_1\| = \left(\tfrac{1}{\sqrt2},0,\tfrac{1}{\sqrt2}\right)$.
 
-$$\tilde u_3 = v_3 - \langle v_3,e_1\rangle e_1 - \langle v_3,e_2\rangle e_2 \Rightarrow e_3 = \frac{1}{\sqrt3}\begin{pmatrix}-1\\1\\1\end{pmatrix}$$
+$u_2 = v_2 - \langle v_2,e_1\rangle e_1 = \left(\tfrac12,1,-\tfrac12\right) \Rightarrow e_2 = \left(\tfrac{1}{\sqrt6},\tfrac{2}{\sqrt6},-\tfrac{1}{\sqrt6}\right)$.
 
-$$\boxed{e_1 = \begin{pmatrix} \frac{1}{\sqrt{2}} \\ 0 \\ \frac{1}{\sqrt{2}} \end{pmatrix}, \quad e_2 = \begin{pmatrix} \frac{1}{\sqrt{6}} \\ \frac{2}{\sqrt{6}} \\ -\frac{1}{\sqrt{6}} \end{pmatrix}, \quad e_3 = \begin{pmatrix} -\frac{1}{\sqrt{3}} \\ \frac{1}{\sqrt{3}} \\ \frac{1}{\sqrt{3}} \end{pmatrix}}$$
+$u_3 = v_3 - \langle v_3,e_1\rangle e_1 - \langle v_3,e_2\rangle e_2 = \left(-\tfrac23,\tfrac23,\tfrac23\right) \Rightarrow e_3 = \left(-\tfrac{1}{\sqrt3},\tfrac{1}{\sqrt3},\tfrac{1}{\sqrt3}\right)$.
 
-**Free check, always run it:** $\langle e_i,e_j\rangle=0$ for $i\neq j$ and $\|e_i\|=1$ — one dot product per pair catches an arithmetic slip before it compounds into the next projection.
+$$\boxed{e_1=\left(\tfrac{1}{\sqrt2},0,\tfrac{1}{\sqrt2}\right),\ e_2=\left(\tfrac{1}{\sqrt6},\tfrac{2}{\sqrt6},-\tfrac{1}{\sqrt6}\right),\ e_3=\left(-\tfrac{1}{\sqrt3},\tfrac{1}{\sqrt3},\tfrac{1}{\sqrt3}\right)}$$
 
-**Where the effort actually goes:** projecting $v_3$ onto *both* $e_1$ and $e_2$, not just the most recent vector — a common shortcut error is subtracting only the immediately preceding one.
+**Skip the pairwise dot-product check on the exam** — orthogonality is guaranteed by construction whenever each $u_i$'s formula is applied correctly; verifying it after the fact only catches an arithmetic slip, and a faster catch is $\|u_i\|^2>0$ for each $i$ (independence never breaks) plus a quick trace-style sanity check on one pair, not all three.
+
+**Where this earns marks beyond the mechanics.** These three $e_i$ are literally $Q$'s columns in the QR decomposition of $[v_1\,v_2\,v_3]$; $R$ is upper triangular with the projection coefficients you already computed (e.g. $R_{12}=\langle v_2,e_1\rangle$). A question asking for $Q$ and $R$ separately is this exact computation, relabeled.
 
 ```interactive-spec
 {
@@ -37,21 +42,21 @@ $$\boxed{e_1 = \begin{pmatrix} \frac{1}{\sqrt{2}} \\ 0 \\ \frac{1}{\sqrt{2}} \en
   "title": "Gram-Schmidt on three vectors",
   "steps": [
     {
-      "prompt": "Compute the norm of $v_1 = (1, 0, 1)^T$ and use it to normalize.",
-      "hint": "$\\|v_1\\| = \\sqrt{1 + 0 + 1}$. Then divide $v_1$ by this norm to get $e_1$.",
-      "answer": "$e_1 = \\begin{pmatrix} 1/\\sqrt{2} \\\\ 0 \\\\ 1/\\sqrt{2} \\end{pmatrix}$"
+      "prompt": "Compute the norm of v1 = (1, 0, 1) and use it to normalize.",
+      "hint": "||v1|| = sqrt(1 + 0 + 1). Then divide v1 by this norm to get e1.",
+      "answer": "e1 = (1/sqrt(2), 0, 1/sqrt(2))"
     },
     {
-      "prompt": "Compute $\\langle v_2, e_1 \\rangle$, subtract the projection from $v_2$, and normalize the result.",
-      "hint": "$\\langle v_2, e_1 \\rangle = 1 \\cdot \\frac{1}{\\sqrt{2}} + 1 \\cdot 0 + 0 \\cdot \\frac{1}{\\sqrt{2}} = \\frac{1}{\\sqrt{2}}$. Form $\\tilde{u}_2 = v_2 - \\frac{1}{\\sqrt{2}} e_1$, then normalize.",
-      "answer": "$e_2 = \\begin{pmatrix} 1/\\sqrt{6} \\\\ 2/\\sqrt{6} \\\\ -1/\\sqrt{6} \\end{pmatrix}$"
+      "prompt": "Compute <v2, e1>, subtract the projection from v2, and normalize the result.",
+      "hint": "<v2, e1> = 1/sqrt(2). Form u2 = v2 − (1/sqrt(2)) e1, then normalize.",
+      "answer": "e2 = (1/sqrt(6), 2/sqrt(6), −1/sqrt(6))"
     },
     {
-      "prompt": "Compute $\\langle v_3, e_1 \\rangle$ and $\\langle v_3, e_2 \\rangle$. Subtract both projections from $v_3$ and normalize.",
-      "hint": "Form $\\tilde{u}_3 = v_3 - \\langle v_3, e_1 \\rangle e_1 - \\langle v_3, e_2 \\rangle e_2$. The result should be proportional to $(-2/3, 2/3, 2/3)^T$.",
-      "answer": "$e_3 = \\begin{pmatrix} -1/\\sqrt{3} \\\\ 1/\\sqrt{3} \\\\ 1/\\sqrt{3} \\end{pmatrix}$"
+      "prompt": "Compute <v3, e1> and <v3, e2>. Subtract both projections from v3 and normalize.",
+      "hint": "Form u3 = v3 − <v3,e1> e1 − <v3,e2> e2. The result should be proportional to (−2/3, 2/3, 2/3).",
+      "answer": "e3 = (−1/sqrt(3), 1/sqrt(3), 1/sqrt(3))"
     }
   ],
-  "caption": "Follow the three steps of Gram-Schmidt: normalize $v_1$, orthogonalize $v_2$, then orthogonalize $v_3$."
+  "caption": "Follow the three steps of Gram-Schmidt: normalize v1, orthogonalize v2, then orthogonalize v3."
 }
 ```

@@ -3,18 +3,10 @@ id: numerical-linear-algebra.formal-definition
 concept_id: numerical-linear-algebra
 atom_type: formal_definition
 bloom_level: 2
-difficulty: 0.48
+difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-**LU Decomposition**: Every square matrix $A$ (with nonzero pivots) can be factored as:
+**LU decomposition.** Every square $A$ with nonzero leading principal minors factors as $A=LU$, $L$ unit lower-triangular, $U$ upper-triangular. Solving $Ax=b$ becomes forward substitution ($Ly=b$) then back substitution ($Ux=y$), each $O(n^2)$ once the $O(n^3)$ factorization is paid for once.
 
-$$A = LU$$
-
-where $L$ is lower triangular (1s on diagonal) and $U$ is upper triangular. Once computed, solving $Ax = b$ becomes two triangular solves:
-1. **Forward substitution**: Solve $Ly = b$ for $y$
-2. **Backward substitution**: Solve $Ux = y$ for $x$
-
-Each triangular solve costs $O(n^2)$ operations instead of the original $O(n^3)$ for Gaussian elimination. If you solve multiple systems with the same $A$ but different $b$, you factor once ($O(n^3)$) then solve cheaply ($O(n^2)$ each).
-
-The factorization is equivalent to Gaussian elimination: $U$ is the reduced form after all pivots, and $L$ records the multipliers used.
+**Method Selector.** Reach for LU decomposition (a direct method) when the SAME $A$ must be solved for multiple right-hand sides — not an iterative method like Jacobi or Gauss-Seidel, which a student reaches for on a large system but which restarts its full iteration from scratch for every new $b$, and isn't guaranteed to converge at all unless $A$ is diagonally dominant.

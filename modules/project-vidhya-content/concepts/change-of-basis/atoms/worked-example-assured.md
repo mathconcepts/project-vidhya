@@ -7,47 +7,46 @@
 # vocabulary, and spends its words on the distinctions that actually cost
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
+#
+# The fenced interactive block below is copied verbatim from the base
+# atom so the widget cannot drift between variants; only prose differs.
 id: change-of-basis.worked-example.assured
 concept_id: change-of-basis
 atom_type: worked_example
 bloom_level: 3
+difficulty: 0.2
 scaffold_fade: true
-difficulty: 0.25
 exam_ids: ["*"]
 variant_of: change-of-basis.worked-example
 for_stance: assured
 ---
 
-**By inspection**, $P$'s columns are $v_1, v_2$ in standard coordinates:
+$B=\{(1,1),(1,-1)\}$, $[x]_B=(2,1)$. Find $[x]_E$.
 
-$$P = \begin{pmatrix} 1 & 1 \\ 1 & -1 \end{pmatrix}, \qquad [x]_E = P[x]_B = \begin{pmatrix}1&1\\1&-1\end{pmatrix}\begin{pmatrix}2\\1\end{pmatrix} = \begin{pmatrix}3\\1\end{pmatrix}$$
+$$P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}, \qquad [x]_E = P[x]_B = \begin{pmatrix}2+1\\2-1\end{pmatrix} = \boxed{(3,1)}$$
 
-Cross-check without $P$: $2v_1+v_2 = \begin{pmatrix}3\\1\end{pmatrix}$ — matches, so no sign error crept in.
-
-$$\boxed{P = \begin{pmatrix} 1 & 1 \\ 1 & -1 \end{pmatrix}, \quad [x]_E = \begin{pmatrix} 3 \\ 1 \end{pmatrix}}$$
-
-**Where this generalizes.** For an orthonormal $B$, $P^{-1}=P^T$, so you skip the inverse entirely — recognizing an orthonormal basis is the fast path here. The reverse conversion $[x]_B = P^{-1}[x]_E$ is the more common exam framing; know both directions without re-deriving.
+**Going the other way is just as fast here.** Since $\det P = -2 \ne 0$, $P^{-1}=\tfrac{1}{-2}\begin{pmatrix}-1&-1\\-1&1\end{pmatrix}$ — given a vector in *standard* coordinates, $P^{-1}$ recovers its $B$-coordinates without resolving a system from scratch. For this particular $B$ (orthogonal columns), there's a shortcut: $[x]_B = \left(\tfrac{x\cdot v_1}{\|v_1\|^2}, \tfrac{x\cdot v_2}{\|v_2\|^2}\right)$ — the projection formula, since an orthogonal basis makes $P^{-1}=D^{-1}P^T$ for a diagonal $D$ of squared norms. That shortcut fails the moment $B$ isn't orthogonal; matrix inversion is the general tool.
 
 ```interactive-spec
 {
   "v": 1,
   "kind": "guided_walkthrough",
-  "title": "Walk through: Converting coordinates from basis B to standard basis E",
+  "title": "Walk through: converting coordinates from basis B to standard basis E",
   "steps": [
     {
       "prompt": "What are the columns of the change-of-basis matrix P?",
-      "hint": "The columns of P are the basis vectors v₁ and v₂, written in standard coordinates.",
-      "answer": "P = [v₁ | v₂] = [[1, 1], [1, -1]]"
+      "hint": "The columns of P are the basis vectors v1 and v2, written in standard coordinates.",
+      "answer": "P = [v1 | v2] = [[1, 1], [1, -1]]"
     },
     {
-      "prompt": "Now compute P × [x]_B. Multiply [[1,1],[1,-1]] by [[2],[1]].",
+      "prompt": "Now compute P times [x]_B. Multiply [[1,1],[1,-1]] by [[2],[1]].",
       "hint": "Row 1: (1)(2) + (1)(1) = 3. Row 2: (1)(2) + (-1)(1) = 1.",
       "answer": "[x]_E = [[3], [1]]"
     },
     {
-      "prompt": "Verify: compute 2v₁ + 1v₂ directly and check you get [[3],[1]].",
+      "prompt": "Verify: compute 2v1 + 1v2 directly and check you get [[3],[1]].",
       "hint": "2[[1],[1]] + 1[[1],[-1]] = [[2],[2]] + [[1],[-1]] = [[3],[1]]",
-      "answer": "Verification complete: 2v₁ + 1v₂ = [[3],[1]] ✓"
+      "answer": "Verification complete: 2v1 + 1v2 = [[3],[1]]"
     }
   ],
   "caption": "Converting a vector's coordinates when you switch from basis B to the standard basis E"

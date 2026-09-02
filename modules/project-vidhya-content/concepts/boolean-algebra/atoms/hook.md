@@ -3,8 +3,10 @@ id: boolean-algebra.hook
 concept_id: boolean-algebra
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-A light switch is either ON or OFF. Wire enough of them together in the right pattern and you have a processor. Boolean algebra is the arithmetic of those two values, and it is what lets a chip designer take a circuit of forty gates down to nine without changing a single output.
+A circuit computes $F = A'B'C + A'BC + AB'C + ABC' + ABC$ using five product terms wired into one big OR gate. Five gates just to combine them. Could the same truth table be built with far fewer?
+
+Check what the five terms have in common: three of them share $C=1$, two of them share $A=B=1$. If those overlaps aren't a coincidence, the circuit shrinks a lot.

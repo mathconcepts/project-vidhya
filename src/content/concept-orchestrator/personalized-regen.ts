@@ -25,6 +25,7 @@
 import pg from 'pg';
 import { generateConcept } from './orchestrator';
 import { ALL_CONCEPTS } from '../../constants/concept-graph';
+import type { DeltaKind } from '../delta-kinds';
 
 const { Pool } = pg;
 let _pool: any = null;
@@ -181,17 +182,25 @@ async function generatePersonalVariant(
     ? `Personalized for: ${student_errors[0].slice(0, 200)}`
     : 'Personalized after 3+ failures';
 
+  // delta-kinds.ts (P2 of the 2026-09-02 content-strategy plan): this is
+  // the ONLY trigger path wired today (repeated failure on one atom,
+  // whole-atom regen grounded in error text) -- it doesn't cleanly match
+  // any of the 10 research-named kinds, so it's tagged honestly rather
+  // than guessed. See delta-kinds.ts's module doc for why.
+  const delta_kind: DeltaKind = 'general_remediation';
+
   try {
     await pool.query(
       `INSERT INTO student_atom_overrides
-         (student_id, atom_id, override_content, generated_at, expires_at, trigger_reason)
-         VALUES ($1, $2, $3, NOW(), NOW() + ($4 || ' days')::interval, $5)
+         (student_id, atom_id, override_content, generated_at, expires_at, trigger_reason, delta_kind)
+         VALUES ($1, $2, $3, NOW(), NOW() + ($4 || ' days')::interval, $5, $6)
          ON CONFLICT (student_id, atom_id) DO UPDATE
            SET override_content = EXCLUDED.override_content,
                generated_at = NOW(),
                expires_at = NOW() + ($4 || ' days')::interval,
-               trigger_reason = EXCLUDED.trigger_reason`,
-      [student_id, atom_id, generated.content, String(PERSONAL_OVERRIDE_TTL_DAYS), trigger_reason],
+               trigger_reason = EXCLUDED.trigger_reason,
+               delta_kind = EXCLUDED.delta_kind`,
+      [student_id, atom_id, generated.content, String(PERSONAL_OVERRIDE_TTL_DAYS), trigger_reason, delta_kind],
     );
   } catch (err) {
     console.warn(`[personalized-regen] override insert failed: ${(err as Error).message}`);

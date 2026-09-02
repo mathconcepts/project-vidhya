@@ -89,13 +89,15 @@ $$(PD)P^{-1} = \begin{pmatrix} 5 & 2 \\ 5 & -4 \end{pmatrix}\begin{pmatrix} 2/3 
 $$A^3 = PD^3P^{-1}, \qquad D^3 = \begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix}
 $$
 
-$$A^3 = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}\begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix}
+$$PD^3 = \begin{pmatrix} 1 & 1 \\ 1 & -2 \end{pmatrix}\begin{pmatrix} 125 & 0 \\ 0 & 8 \end{pmatrix} = \begin{pmatrix} 125 & 8 \\ 125 & -16 \end{pmatrix}
 $$
 
-$$= \begin{pmatrix} 125 & 8 \\ 125 & -16 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix} = \begin{pmatrix} 258/3+8/3 & 125/3-8/3 \\ \cdots & \cdots \end{pmatrix}
+$$A^3 = \begin{pmatrix} 125 & 8 \\ 125 & -16 \end{pmatrix}\begin{pmatrix} 2/3 & 1/3 \\ 1/3 & -1/3 \end{pmatrix} = \begin{pmatrix} \tfrac{250+8}{3} & \tfrac{125-8}{3} \\ \tfrac{250-16}{3} & \tfrac{125+16}{3} \end{pmatrix} = \begin{pmatrix} 86 & 39 \\ 78 & 47 \end{pmatrix}
 $$
 
-Without diagonalization this would require two matrix multiplications. With it, just three scalar cubes.
+$$\boxed{A^3 = \begin{pmatrix} 86 & 39 \\ 78 & 47 \end{pmatrix}}$$
+
+Without diagonalization this would require two full matrix multiplications ($A \cdot A \cdot A$). With it, just two scalar cubes ($5^3=125$, $2^3=8$) and one matrix product with $P^{-1}$.
 
 ---
 

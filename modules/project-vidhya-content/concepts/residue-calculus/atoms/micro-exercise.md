@@ -8,18 +8,10 @@ exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-Find the residue of $f(z) = \frac{1}{(z-1)(z-2)}$ at $z = 1$.
-
-- **(A)** $1$
-- **(B)** $-1$
-- **(C)** $1/2$
-- **(D)** $-1/2$
+Find the residue of $f(z) = \dfrac{1}{(z-1)(z-2)}$ at $z=1$.
 
 <details>
 <summary>Answer</summary>
 
-**B**. Use the residue formula for a simple pole: $\text{Res}(f, z_0) = \lim_{z \to z_0} (z - z_0) f(z)$.
-At $z = 1$:
-$\text{Res}(f, 1) = \lim_{z \to 1} (z-1) \cdot \frac{1}{(z-1)(z-2)} = \lim_{z \to 1} \frac{1}{z-2} = \frac{1}{1-2} = \frac{1}{-1} = -1$.
-
+$-1$. Simple pole: $\text{Res}_{z=1}=\lim_{z\to1}(z-1)f(z)=\lim_{z\to1}\dfrac1{z-2}=\dfrac1{1-2}=-1$.
 </details>

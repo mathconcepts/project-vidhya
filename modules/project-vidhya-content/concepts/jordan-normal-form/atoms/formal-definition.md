@@ -1,5 +1,5 @@
 ---
-id: jordan-normal-form.formal_definition
+id: jordan-normal-form.formal-definition
 concept_id: jordan-normal-form
 atom_type: formal_definition
 bloom_level: 2
@@ -7,11 +7,10 @@ difficulty: 0.4
 exam_ids: ["*"]
 ---
 
-A **Jordan block** of size $k$ for eigenvalue $\lambda$ is the $k \times k$ matrix:
-$$J_k(\lambda) = \begin{pmatrix} \lambda & 1 & 0 & \cdots & 0 \\ 0 & \lambda & 1 & \cdots & 0 \\ 0 & 0 & \lambda & \cdots & 0 \\ \vdots & \vdots & \vdots & \ddots & \vdots \\ 0 & 0 & 0 & \cdots & \lambda \end{pmatrix}$$
+Every $A \in \mathbb{C}^{n\times n}$ is similar to a **Jordan normal form** $J=P^{-1}AP$, block-diagonal with **Jordan blocks**
 
-The **Jordan Normal Form** of an $n \times n$ matrix $A$ is a block-diagonal matrix $J = \text{diag}(J_{k_1}(\lambda_1), J_{k_2}(\lambda_2), \ldots, J_{k_r}(\lambda_r))$ such that $A = PJP^{-1}$ for some invertible $P$. Each block corresponds to an eigenvalue and its associated generalized eigenspace.
+$$J_k(\lambda) = \begin{pmatrix}\lambda&1&&\\&\lambda&\ddots&\\&&\ddots&1\\&&&\lambda\end{pmatrix}$$
 
-**Key Theorem:** Every square matrix over $\mathbb{C}$ has a Jordan Normal Form, and it is unique up to the order of blocks.
+one block per generalized-eigenvector chain. For eigenvalue $\lambda$: the **number** of blocks equals the geometric multiplicity $\dim\ker(A-\lambda I)$; their **combined size** equals the algebraic multiplicity; the size of the **largest** block equals the exponent of $(x-\lambda)$ in the minimal polynomial. $A$ is diagonalizable exactly when every block has size $1$.
 
-The **minimal polynomial** of $A$ is $m_A(x) = \prod_i (x - \lambda_i)^{d_i}$, where $d_i$ is the size of the **largest Jordan block** for eigenvalue $\lambda_i$. This is why Jordan form matters: it reveals both the spectrum (all eigenvalues) and the defect (how large the blocks are).
+Use Jordan form when a repeated eigenvalue is **defective** — geometric multiplicity below algebraic multiplicity. A tempting-but-wrong move here is to diagonalize anyway, writing $A=PDP^{-1}$ from the eigenvalues alone: with too few independent eigenvector columns, $P$ is singular and not invertible, so that equation is meaningless.

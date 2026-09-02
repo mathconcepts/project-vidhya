@@ -12,10 +12,10 @@ id: numerical-linear-algebra.hook.shaken
 concept_id: numerical-linear-algebra
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: numerical-linear-algebra.hook
 for_stance: shaken
 ---
 
-Solve $4x+y=6,\ x+3y=5$ by hand and $x=13/11\approx1.1818$. Now picture that same system with a thousand unknowns — hand elimination is out. Start from any guess, $0$ say, and update each variable from the others instead: one round already gives $x\approx1.5,\ y\approx1.667$, closer than the guess you began with.
+$A=\begin{pmatrix}2&1\\4&3\end{pmatrix}$. Eliminate the first column: multiplier $m=4/2=2$, new row 2 is $(4,3)-2(2,1)=(0,1)$. That single subtraction is the entire first step of Gaussian elimination — record the multiplier, subtract, move to the next column.

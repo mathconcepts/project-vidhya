@@ -24,3 +24,5 @@ Assume $u(x, t) = X(x) T(t)$ (a product), substitute into the PDE, and separate 
 $$\frac{1}{X} \frac{d^2 X}{dx^2} = \frac{1}{kT} \frac{dT}{dt} = -\lambda$$ (a separation constant)
 
 Each ODE can then be solved independently using ODE techniques.
+
+**Method Selector.** Reach for separation of variables when the PDE is linear and homogeneous, the boundary conditions are homogeneous too, and the domain is a simple product shape (a rectangle, a line segment) — not **direct integration treated like an ODE**, which a student reaches for out of habit but which fails structurally: integrating $u_x=2x$ with respect to $x$ while holding $y$ fixed gives $u=x^2+f(y)$, an *arbitrary function* of the other variable, not a numeric constant, so a single integration step never pins down a full solution.

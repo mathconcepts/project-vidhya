@@ -20,7 +20,7 @@ for_stance: assured
 
 Recognize $x(x^2+1)^5\,dx$ as $g'(x)$-adjacent times $g(x)^5$ directly: $g(x)=x^2+1$, $g'(x)=2x$, and the integrand carries $x$, a factor of $\frac12$ off from $g'$. Scale for the mismatch and apply the pattern in one line: $\int x(x^2+1)^5\,dx=\frac12\cdot\frac{(x^2+1)^6}{6}+C=\frac{(x^2+1)^6}{12}+C$.
 
-**Answer:** $\dfrac{(x^2+1)^6}{12}+C$, confirmed by differentiating back to $x(x^2+1)^5$.
+**Answer:** $\boxed{\dfrac{(x^2+1)^6}{12}+C}$, confirmed by differentiating back to $x(x^2+1)^5$.
 
 The distinction that costs marks: this shortcut only works when the *entire* integrand consists of a composition and a constant multiple of its exact derivative. $\int(x^2+1)^5\,dx$ alone, without the $x$ factor, is not this pattern at all — the power cannot simply be integrated by the same substitution, since no leftover factor supplies $du$. That integral needs a genuinely different route (expansion, or a different substitution entirely), and mistaking "looks similar" for "is the same pattern" is the error this concept exists to prevent.
 

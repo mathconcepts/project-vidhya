@@ -1,46 +1,42 @@
 ---
-# Alternative body for boolean-algebra.worked_example, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
-id: boolean-algebra.worked_example.shaken
+# Alternative body for boolean-algebra.worked-example, stance `shaken`.
+id: boolean-algebra.worked-example.shaken
 concept_id: boolean-algebra
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.4
-exam_ids: ["gate-ma"]
-scaffold_fade: 1
-variant_of: boolean-algebra-worked-example
+difficulty: 0.25
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: boolean-algebra.worked-example
 for_stance: shaken
 ---
 
-Take $F = A'BC + AB'C + ABC' + ABC$.
+**Problem:** Minimize $F(A,B,C)=\Sigma m(1,3,5,6,7)$ using a Karnaugh map.
 
-Find the minterm number for each term. $A'BC$: bits $0,1,1$, minterm $3$. $AB'C$: bits $1,0,1$, minterm $5$. $ABC'$: bits $1,1,0$, minterm $6$. $ABC$: bits $1,1,1$, minterm $7$.
+---
 
-Plot only those four cells as $1$ on a three-variable grid, rows for $AB$, columns for $C$:
+**Step 1 — Write each minterm in binary.** $1{=}001,\ 3{=}011,\ 5{=}101,\ 6{=}110,\ 7{=}111$.
 
-```
-         C:  0    1
-   AB: 00 |  0  |  0  |
-       01 |  0  |  1  |  ← m3
-       11 |  1  |  1  |  ← m6, m7
-       10 |  0  |  1  |  ← m5
-```
+---
 
-Group them. Row $AB=11$ holds cells $6$ and $7$: label $AB$, since $C$ changed across the group and gets dropped. Column $C=1$ holds cells $5$ and $7$: label $AC$. Cells $3$ and $7$ share $B=1,C=1$: label $BC$.
+**Step 2 — Note the last bit ($C$) of each.** $001\to1$, $011\to1$, $101\to1$, $110\to0$, $111\to1$. Four of five have $C=1$.
 
-Sum the labels: $F=AB+AC+BC$. Check each of the four original minterms — $3,5,6,7$ — against the three labels; each is covered.
+---
 
-A second check, kept separate: $F=AB+AB'+A'B$. Factor $A$ from the first two terms: $F=A(B+B')+A'B$. Replace $B+B'$ with $1$: $F=A\cdot1+A'B$. Drop the $\cdot1$: $F=A+A'B$. Apply absorption: $F=A+B$.
+**Step 3 — Group those four.** Minterms $1,3,5,7$ all have $C=1$: one group, literal $C$.
 
-```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: De Morgan's theorem and absorption law simplification","steps":[{"prompt":"Using De Morgan's theorem, simplify (A·B)'. Which law applies and what is the result?","hint":"'Break the bar, change the operation': (A·B)' → split the bar across both variables and flip AND to OR.","answer":"A' + B'"},{"prompt":"Simplify F = A + A'B using absorption. What is the result?","hint":"The absorption variant states A + A'B = A + B. Verify: if A=1, F=1=A+B. If A=0, F=B=A+B.","answer":"A + B"}]}
-```
+---
 
-Minimization is grouping equal outputs that are physically adjacent — nothing more.
+**Step 4 — Handle the leftover minterm.** $6=110$ is not covered. Pair it with $7=111$ (reusing it is fine): both have $A=1,B=1$.
+
+---
+
+**Step 5 — Group those two.** Minterms $6,7$: one group, literal $AB$.
+
+---
+
+**Step 6 — Combine with OR.** $F=C+AB$.
+
+$$\boxed{F = C + AB}$$
+
+Check: $m6=110$: $C=0$, $AB=1$, sum$=1$ ✓. $m4=100$ (not a minterm): $C=0,AB=0$, sum$=0$, correctly excluded.

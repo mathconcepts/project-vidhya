@@ -28,6 +28,7 @@ import { recordShadow } from '../gbrain/fsrs-shadow';
 import { recordTelemetry } from '../content/telemetry';
 import { recordSignal } from '../curriculum/quality-aggregator';
 import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration';
+import { isDeliveryLength } from '../content/delivery-length';
 import { getOrCreateStudentModel, readStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS, resolveConceptOrSection, SECTION_MAP } from '../constants/concept-graph';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
@@ -168,6 +169,7 @@ async function enrichAtomsWithEngagement(
  */
 const ALLOWED_MOTIVATION_STATES = new Set<string>(MOTIVATION_STATES);
 const ALLOWED_REPRESENTATION_MODES = new Set(['geometric', 'algebraic', 'balanced']);
+const ALLOWED_SESSION_MODES = new Set(['knowledge', 'exam-prep', 'revision', 'micro_sprint']);
 
 /**
  * Does this snapshot carry anything to personalise ON?
@@ -355,12 +357,24 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
   const masteryByTopic = sanitizeMasteryMap(rawMasteryByTopic);
   const masteryByConcept = sanitizeMasteryMap(body.student?.mastery_by_concept);
 
+  // P5 (2026-09-02 content-strategy plan): same drop-unknown-values
+  // discipline as motivation_state/representation_mode above — a value the
+  // client sent that isn't one we recognise is dropped, never forwarded.
+  const requestedSessionMode = ALLOWED_SESSION_MODES.has(String(body.session_mode))
+    ? (body.session_mode as LessonRequest['session_mode'])
+    : undefined;
+  const requestedDeliveryLength = isDeliveryLength(body.delivery_length)
+    ? body.delivery_length
+    : undefined;
+
   const lessonReq: LessonRequest = {
     concept_id: body.concept_id,
     session_id: body.session_id,
     student: body.student,
     force_full: body.force_full === true,
     user_material_chunks: Array.isArray(body.user_material_chunks) ? body.user_material_chunks : [],
+    session_mode: requestedSessionMode,
+    delivery_length: requestedDeliveryLength,
   };
 
   // Thread sanitized signals back into the snapshot the personalizer reads,
@@ -498,6 +512,8 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
           text: '',
           concept_id: effective_concept_id,
           preferred_exam_id: lessonReq.student?.preferred_exam_id,
+          session_mode: lessonReq.session_mode,
+          delivery_length: lessonReq.delivery_length,
         },
       });
       atoms = await enrichAtomsWithEngagement(selected, lessonReq.session_id ?? null);
@@ -956,4 +972,4 @@ export const lessonRoutes: Array<{ method: string; path: string; handler: RouteH
 ];
 
 /** Exposed for tests only — pins the client-motivation allowlist to the canonical vocabulary. */
-export const __testing = { ALLOWED_MOTIVATION_STATES };
+export const __testing = { ALLOWED_MOTIVATION_STATES, ALLOWED_SESSION_MODES };

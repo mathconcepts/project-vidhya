@@ -7,6 +7,8 @@ difficulty: 0.3
 exam_ids: ["*"]
 ---
 
-- **Forgetting the multiplier in composite rules**: Students write "Simpson's rule is $\frac{h}{3}[f_0 + 4f_1 + 2f_2 + \ldots]$" but forget that the 4 and 2 coefficients are for *composite* (repeated) Simpson. For a single application on two subintervals, it's just $\frac{h}{3}[f_0 + 4f_1 + f_2]$. Forgetting this costs an easy 2 marks.
-- **Confusing subintervals with nodes**: If $n$ is the number of subintervals, there are $n+1$ nodes. A question says "divide into 4 subintervals" — students mistakenly use 4 nodes instead of 5, getting the wrong $h$.
-- **Arithmetic slips in weighted sums**: Simpson's weights are $[1, 4, 2, 4, 2, \ldots, 2, 4, 1]$ (ends are 1, middles alternate 4 and 2). A single weight mistake (writing 2 instead of 4, or vice versa) propagates through the entire answer.
+**Trap 1 — Forgetting the composite multiplier.** Simpson's weights $[1,4,2,4,\dots,2,4,1]$ apply to the *composite* (repeated) rule. A single application over just two subintervals is $\frac{h}{3}[f_0+4f_1+f_2]$ — no repeating 2's yet, since there's only one interior node.
+
+**Trap 2 — Confusing subintervals with nodes.** $n$ subintervals means $n+1$ nodes. "Divide into 4 subintervals" needs 5 function evaluations, not 4 — using 4 gives the wrong $h$.
+
+**Trap 3 — Weight arithmetic slips.** Simpson's interior weights alternate $4,2,4,2,\dots$ (ends are always $1$). Writing a $2$ where a $4$ belongs propagates through the whole sum.

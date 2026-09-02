@@ -1,21 +1,23 @@
 ---
-# Alternative body for line-integrals.hook, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# Alternative body for line-integrals.hook, served when the learner stance
+# is `shaken`. Concrete-first, smallest true step, arithmetic in full,
+# explicit check at the end.
 id: line-integrals.hook.shaken
 concept_id: line-integrals
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: line-integrals.hook
 for_stance: shaken
 ---
 
-Push a trolley 10 m along a straight path against a constant 2 N headwind. Work done is just $2\times10=20$ J — force times distance, since the path is straight and the wind never changes. Curve the path, or vary the wind, and that product stops working: contributions must be added piece by piece instead.
+Take $\mathbf F(x,y)=(-y,x)$ and the unit circle $x=\cos t,\ y=\sin t$, $t:0\to2\pi$ — a closed loop, back where it began.
+
+**Step 1 — velocity.** $\mathbf r'(t)=(-\sin t,\cos t)$.
+
+**Step 2 — dot product.** $\mathbf F\cdot\mathbf r'=(-\sin t)(-\sin t)+(\cos t)(\cos t)=\sin^2t+\cos^2t=1$.
+
+**Step 3 — integrate.** $\int_0^{2\pi}1\,dt=2\pi$.
+
+**Check.** The path returns exactly to its start, yet the total work is $2\pi$, not $0$. Work along this field depends on the path taken, not only on where it starts and ends.

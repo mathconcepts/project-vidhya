@@ -53,6 +53,17 @@
  *            `verified_at` timestamp recording when that cross-check ran.
  *      See `checkProvenanceVerificationMethod` below.
  *
+ * P4 addition (2026-09-02, docs/designs/2026-09-02-content-strategy-
+ * research-integration-plan.md):
+ *
+ *   7. SOURCE LOCATOR — `source_locator` (src/content/source-locator.ts),
+ *      when present, is shape-checked on both banks. It becomes REQUIRED
+ *      only for the one case that needs it: an item whose `evidence_level`
+ *      is `directly_reviewed` AND whose text actually uses a phrase-rule-
+ *      licensed claim (rule 5, above) — that combination means "a human
+ *      directly reviewed a specific source for this claim," and the locator
+ *      is where that source is named. Every other item is unaffected.
+ *
  * Usage: npx tsx scripts/check-practice-items.ts
  * Exit: 0 = every item schema-valid + self-re-grades to full marks + PYQ
  *           bank schema-valid + phrase rule holds across both banks.
@@ -72,6 +83,7 @@ import { parseNumericAnswer } from '../src/gbrain/marking-derivation';
 import { EVIDENCE_LEVELS, type AuthoredItem } from '../src/scoring/learning-object-catalog-file';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 import { findForbiddenPhrases, evidenceLevelLicensesClaim } from '../src/content/evidence-phrase-rule';
+import { hasAnyLocatorField, validateSourceLocatorShape } from '../src/content/source-locator';
 import type { PracticeItemVerificationPath } from '../src/generation/practice-item-factory/types';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -153,6 +165,12 @@ export function validateItemSchema(raw: unknown): string[] {
       );
     }
   }
+
+  // P4 (2026-09-02 content-strategy plan): source_locator is OPTIONAL
+  // structural detail beneath evidence_level — shape-checked when present,
+  // never required by itself. checkPhraseRule below is the one place it
+  // becomes required (a directly_reviewed item making a licensed claim).
+  problems.push(...validateSourceLocatorShape(it.source_locator));
 
   const kind = it.question_type;
   if (typeof kind !== 'string' || !VALID_KINDS.has(kind)) {
@@ -296,18 +314,31 @@ export function checkPhraseRule(
   id: string,
   evidenceLevel: unknown,
   fields: Record<string, string | undefined | null>,
+  sourceLocator?: unknown,
 ): string[] {
   const problems: string[] = [];
-  if (evidenceLevelLicensesClaim(typeof evidenceLevel === 'string' ? evidenceLevel : undefined)) return problems;
+  const licensed = evidenceLevelLicensesClaim(typeof evidenceLevel === 'string' ? evidenceLevel : undefined);
+  // P4: a licensed claim still needs a locator — WHERE it was directly
+  // reviewed, not just the label saying it was. hasAnyLocatorField treats
+  // an absent/empty source_locator as "no locator", same as undefined.
+  const hasLocator = hasAnyLocatorField(sourceLocator as never);
 
   for (const [fieldName, text] of Object.entries(fields)) {
     const hits = findForbiddenPhrases(text);
     for (const hit of hits) {
-      problems.push(
-        `${id}: ${fieldName} contains "${hit.phrase}" without evidence_level='directly_reviewed' ` +
-          `(actual: ${JSON.stringify(evidenceLevel ?? null)}) — either add directly_reviewed provenance ` +
-          `for this specific claim or remove the phrase`,
-      );
+      if (!licensed) {
+        problems.push(
+          `${id}: ${fieldName} contains "${hit.phrase}" without evidence_level='directly_reviewed' ` +
+            `(actual: ${JSON.stringify(evidenceLevel ?? null)}) — either add directly_reviewed provenance ` +
+            `for this specific claim or remove the phrase`,
+        );
+      } else if (!hasLocator) {
+        problems.push(
+          `${id}: ${fieldName} contains "${hit.phrase}" licensed by evidence_level='directly_reviewed' but ` +
+            `source_locator is missing — name where this was verified (source_id/url/paper/question_id/page/section) ` +
+            `or remove the phrase`,
+        );
+      }
     }
   }
   return problems;
@@ -374,6 +405,13 @@ export interface PyqBankProblem {
    * copy on this entry (src/content/evidence-phrase-rule.ts).
    */
   evidence_level?: string;
+  /**
+   * Optional — the PYQ-bank mirror of AuthoredItem.source_locator
+   * (src/content/source-locator.ts). See that file's header for why this is
+   * a place to record a locator an author already has, never one to
+   * back-fill for a claim nobody pinpointed.
+   */
+  source_locator?: unknown;
   [key: string]: unknown;
 }
 
@@ -407,10 +445,14 @@ export function checkPyqBank(bank: PyqBankFile): string[] {
     }
 
     problems.push(
+      ...validateSourceLocatorShape(p.source_locator).map((msg) => `${id}: ${msg}`),
+    );
+
+    problems.push(
       ...checkPhraseRule(id, p.evidence_level, {
         question_text: p.question_text,
         explanation: p.explanation,
-      }),
+      }, p.source_locator),
     );
   }
   return problems;
@@ -453,7 +495,7 @@ export async function checkAllPracticeItems(dir: string = DEFAULT_ITEMS_DIR): Pr
         ...checkPhraseRule(typeof id === 'string' ? id : label, raw.evidence_level, {
           question_text: raw.question_text,
           solution_steps: Array.isArray(raw.solution_steps) ? raw.solution_steps.join(' ') : undefined,
-        }),
+        }, raw.source_locator),
       );
 
       problems.push(...checkProvenanceVerificationMethod(typeof id === 'string' ? id : label, raw));

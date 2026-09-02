@@ -14,3 +14,5 @@ $$\int_C \mathbf{F} \cdot d\mathbf{r} = \int_a^b \mathbf{F}(\mathbf{r}(t)) \cdot
 $$\int_C \mathbf{F} \cdot d\mathbf{r} = f(\text{endpoint}) - f(\text{startpoint})$$
 
 regardless of the path $C$ connecting them. This is the **Fundamental Theorem of Line Integrals**.
+
+**Method selector.** Run the mixed-partials test ($\partial Q/\partial x \overset{?}{=} \partial P/\partial y$) before committing to a path — a match licenses the Fundamental Theorem above, collapsing the whole computation to two evaluations of a potential. The tempting-but-wrong move is picking the algebraically simplest path (usually the straight segment) and grinding through parametrize–differentiate–dot–integrate regardless, which for a non-conservative field returns a value valid for that one path only and silently wrong the moment the exam swaps the curve.

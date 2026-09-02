@@ -2,31 +2,23 @@
 id: ode-higher-order.retrieval-prompt
 concept_id: ode-higher-order
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 3
+difficulty: 0.4
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["auxiliary-equation", "complex-roots", "ode-higher-order"]
 ---
 
-For the ODE with roots $r = 1$ (multiplicity 2) and $r = 2$ (multiplicity 1), write the general solution:
+Before checking, try to recall from memory: the general solution of $y'''+y'=0$ is:
 
-- **(A)** $y(x) = C_1 e^x + C_2 e^{2x} + C_3 e^{3x}$
-- **(B)** $y(x) = (C_1 + C_2 x)e^x + C_3 e^{2x}$
-- **(C)** $y(x) = (C_1 + C_2 x + C_3 x^2)e^x$
-- **(D)** $y(x) = C_1 e^x + C_2 xe^x + C_3 e^{2x}$
+- **(A)** $y=C_1+C_2\cos x+C_3\sin x$
+- **(B)** $y=C_1e^{x}+C_2\cos x+C_3\sin x$
+- **(C)** $y=(C_1+C_2x)\cos x+C_3\sin x$
+- **(D)** $y=C_1+C_2x+C_3x^2$
 
 <details>
 <summary>Answer</summary>
 
-**D**. When a root has multiplicity $m > 1$, the solution includes polynomial factors of degree $m - 1$ times the exponential.
-
-For $r = 1$ with multiplicity 2: the terms are $e^x$ and $xe^x$, so we write $(C_1 + C_2 x)e^x = C_1 e^x + C_2 xe^x$.
-
-For $r = 2$ with multiplicity 1: the term is $e^{2x}$.
-
-Combining:
-$$y(x) = C_1 e^x + C_2 xe^x + C_3 e^{2x}$$
-
-Option B is written differently but is equivalent: $(C_1 + C_2 x)e^x + C_3 e^{2x}$. Both D and B are the same; D separates the repeated root term explicitly.
+**A**. Auxiliary equation $r^3+r=0$ factors as $r(r^2+1)=0$, giving roots $r=0,\,\pm i$. The root $r=0$ contributes a plain constant $C_1$ (since $e^{0\cdot x}=1$), and the simple complex pair $\pm i$ (i.e. $\alpha=0,\beta=1$) contributes $C_2\cos x+C_3\sin x$ — no repeated roots here, so no $x$-multiplier anywhere.
 
 </details>

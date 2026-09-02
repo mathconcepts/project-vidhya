@@ -1,38 +1,39 @@
 ---
 # Alternative body for series.worked_example, served when the learner
-# stance is `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# stance is `shaken`. Same steps, concrete-first, full arithmetic.
 id: series.worked_example.shaken
 concept_id: series
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: series.worked_example
 for_stance: shaken
 ---
 
-**Given:** does $\sum_{n=1}^\infty\dfrac{n^2\cdot2^n}{n!}$ converge?
+Same problem: $\sum_{n=1}^{\infty} \dfrac{n}{2^n}$. Same numbers, one step at a time.
 
-**Step 1.** Notice the factorial: use the Ratio Test.
+**Step 1.** Ratio test: $\dfrac{a_{n+1}}{a_n}=\dfrac{(n+1)/2^{n+1}}{n/2^n}=\dfrac{n+1}{2n}$.
 
-**Step 2.** Write the ratio: $\dfrac{a_{n+1}}{a_n}=\dfrac{(n+1)^2\cdot2^{n+1}}{(n+1)!}\cdot\dfrac{n!}{n^2\cdot2^n}$.
+$$
+L=\lim_{n\to\infty}\frac{n+1}{2n}=\frac12
+$$
 
-**Step 3.** Cancel $n!$ against $(n+1)!=(n+1)\cdot n!$, and $2^n$ against $2^{n+1}$: $\dfrac{(n+1)^2\cdot2}{n^2\cdot(n+1)}=\dfrac{2(n+1)}{n^2}$.
+$L=\dfrac12<1$, so the series converges.
 
-**Step 4.** Take the limit: $\lim_{n\to\infty}\dfrac{2(n+1)}{n^2}=\lim_{n\to\infty}\left(\dfrac2n+\dfrac2{n^2}\right)=0$.
+**Step 2.** Use $\sum n x^n = \dfrac{x}{(1-x)^2}$ with $x=\dfrac12$:
 
-**Answer:** since the limit is $0<1$, the series converges absolutely.
+$$
+\sum_{n=1}^{\infty}\frac{n}{2^n}=\frac{\frac12}{\left(\frac12\right)^2}=\frac{0.5}{0.25}
+$$
 
-**Check it:** the terms themselves, $a_1=2$, $a_2=8$, $a_3=12$, $a_4\approx10.7$, grow for a while and then start shrinking — matching a ratio that heads toward $0$.
+$$
+\boxed{\sum_{n=1}^{\infty}\frac{n}{2^n}=2}
+$$
+
+**Check.** Add terms directly: $S_4=0.5+0.5+0.375+0.25=1.625$. $S_5=1.625+0.15625=1.78125$. Climbing toward $2$, steps shrinking — consistent.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Ratio Test with factorials","steps":[{"prompt":"Step 1: Which convergence test should we use for a series with factorials in the denominator?","hint":"Think about which test simplifies factorial ratios nicely.","answer":"The Ratio Test, because $\\frac{n!}{(n+1)!} = \\frac{1}{n+1}$ simplifies instantly."},{"prompt":"Step 2: Compute $\\frac{a_{n+1}}{a_n}$ where $a_n = \\frac{n^2 \\cdot 2^n}{n!}$.","hint":"Write $(n+1)! = (n+1) \\cdot n!$ and $2^{n+1} = 2 \\cdot 2^n$, then cancel.","answer":"$\\frac{a_{n+1}}{a_n} = \\frac{2(n+1)}{n^2}$"},{"prompt":"Step 3: What is $\\lim_{n \\to \\infty} \\frac{2(n+1)}{n^2}$?","hint":"Divide numerator and denominator by $n^2$ to find the dominant behaviour.","answer":"$\\lim_{n \\to \\infty} \\frac{2(n+1)}{n^2} = 0$, so the series converges by the Ratio Test."}],"caption":"Factorial terms always win: exponential/polynomial ÷ factorial → 0. Memorize this pattern for GATE."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: does sum n/2^n converge, and to what?","steps":[{"prompt":"Apply the ratio test to a_n = n/2^n. What is L = lim |a_{n+1}/a_n|?","hint":"Write a_{n+1}/a_n and simplify the powers of 2.","answer":"a_{n+1}/a_n = (n+1)/(2n), so L = lim (n+1)/(2n) = 1/2."},{"prompt":"L = 1/2 < 1. What does the ratio test conclude?","hint":"Compare L against 1.","answer":"The series converges (absolutely), since L < 1."},{"prompt":"Using sum n x^n = x/(1-x)^2 at x = 1/2, what is the sum?","hint":"Substitute x = 1/2 and simplify the fraction of fractions.","answer":"sum n/2^n = (1/2)/(1/2)^2 = (1/2)/(1/4) = \\boxed{2}."}]}
 ```

@@ -21,3 +21,5 @@ $$Y(s) = X(s) \cdot H(s)$$
 Multiplication in the $s$-domain corresponds to convolution in the time domain. This is profound: complex time-domain operations become simple $s$-domain multiplication.
 
 **Geometric interpretation:** Solving an ODE via Laplace is a coordinate transformation: the time-domain ODE (a differential equation) becomes an algebraic equation in $s$-space (multiplication and addition), which is trivial. Poles of $Y(s)$ encode the system's natural response modes (exponentials and sinusoids); their locations dictate stability.
+
+**When to reach for it:** the Laplace method is the right tool whenever the ODE is linear with constant coefficients and initial conditions are given as numbers — those numbers fold into $Y(s)$ during Step 2, not afterward. The tempting alternative, undetermined coefficients (homogeneous solution plus a guessed particular form), reaches the same answer, but it defers solving for the arbitrary constants to a separate step at the end using the initial conditions; Laplace bakes that bookkeeping into the algebra as it goes, which is why it wins on anything past a first-order equation.

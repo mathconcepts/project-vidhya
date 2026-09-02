@@ -1,5 +1,5 @@
 ---
-# Alternative body for vector-spaces-worked-example, served when the learner
+# Alternative body for vector-spaces.worked-example, served when the learner
 # stance is `assured`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
@@ -8,16 +8,16 @@
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
 #
-# variant_of names the base's literal (unusually hyphenated, not dotted) id
-# field — see the concept's atoms/worked-example.md front matter.
+# The fenced interactive block below is copied verbatim from the base
+# atom so the widget cannot drift between variants; only prose differs.
 id: vector-spaces.worked-example.assured
 concept_id: vector-spaces
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: vector-spaces-worked-example
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: vector-spaces.worked-example
 for_stance: assured
 ---
 
@@ -28,10 +28,6 @@ for_stance: assured
 **Dimension by Rank-Nullity, no basis required:** $\text{rank}(A)=1 \Rightarrow \dim(\text{Null}(A)) = 3-1=2$.
 
 **Basis, if the question asks for one explicitly.** Parameterize $y=s,\,z=t$:
-
-$$
-\begin{pmatrix}x\\y\\z\end{pmatrix} = s\begin{pmatrix}-1\\1\\0\end{pmatrix} + t\begin{pmatrix}-1\\0\\1\end{pmatrix}
-$$
 
 $$\boxed{\text{Basis } \{(-1,1,0),(-1,0,1)\},\ \dim(W)=2}$$
 

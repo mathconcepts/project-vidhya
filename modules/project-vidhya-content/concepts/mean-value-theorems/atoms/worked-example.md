@@ -39,7 +39,7 @@ Since $c$ must be in the open interval $(0, 3)$, we have $c = 2$.
 - $f'(2) = 3(4) - 6(2) = 12 - 12 = 0$ ✓
 - This matches the average slope of $0$.
 
-**Answer:** $c = 2$
+**Answer:** $\boxed{c = 2}$
 
 **Exam insight:** This problem combines Rolle's theorem (a special case of MVT where $f(a) = f(b)$, forcing the average slope to zero) with practical root-finding. When the endpoints have equal function values, the derivative *must* vanish somewhere in between—a powerful structural guarantee used in optimization and existence proofs.
 

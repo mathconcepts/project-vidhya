@@ -2,30 +2,17 @@
 id: discrete-distributions.retrieval-prompt
 concept_id: discrete-distributions
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.3
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["binomial-vs-hypergeometric", "poisson-limit"]
 ---
 
-A call center receives an average of 3 calls per minute. Assuming calls follow a Poisson distribution, what is the probability of receiving exactly 2 calls in a given minute?
-
-- **(A)** $\frac{9e^{-3}}{2}$
-- **(B)** $9e^{-3}$
-- **(C)** $\frac{3e^{-2}}{2}$
-- **(D)** $6e^{-3}$
+From memory: what single feature of the sampling process tells you to use Hypergeometric instead of Binomial?
 
 <details>
 <summary>Answer</summary>
 
-**A**. This is a Poisson distribution with parameter $\lambda = 3$ (the expected rate per minute).
-
-The PMF for Poisson is:
-$$P(X = k) = \frac{e^{-\lambda} \lambda^k}{k!}$$
-
-For $X = 2$ and $\lambda = 3$:
-$$P(X = 2) = \frac{e^{-3} \times 3^2}{2!} = \frac{e^{-3} \times 9}{2} = \frac{9e^{-3}}{2}$$
-
-The numerator is the exponential decay $e^{-3}$ (probability of zero events per minute in the underlying process) times $3^2$ (rate-squared), divided by $2!$ (accounting for two specific event times).
-
+Sampling *without replacement* from a *finite* population — each draw changes the success probability for the next, which Binomial's constant-$p$ assumption can't capture.
 </details>

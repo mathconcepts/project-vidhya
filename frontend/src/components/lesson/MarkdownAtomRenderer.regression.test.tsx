@@ -12,8 +12,11 @@
  * puts an atom through React. Deriving the list means new content is covered
  * the moment it lands.
  *
- * The 880 base atoms are pinned, so a seed atom cannot silently disappear.
- * Authored stance
+ * The base-atom count is pinned, so a seed atom cannot silently disappear.
+ * As of this writing all 101 concepts are being regenerated in place
+ * (full 11-atom-type + stance-variant treatment); the pinned number below
+ * will keep moving over that pass and is recomputed at each checkpoint —
+ * see CLAUDE.md's content-generation section for status. Authored stance
  * variants (`*.shaken.md` / `*.assured.md`, see src/content/stance-variants.ts)
  * are counted dynamically — they are expected to grow as concepts gain a
  * confident/unconfident axis, and pinning them would make every authoring
@@ -82,11 +85,11 @@ describe('MarkdownAtomRenderer — regression on seed atoms', () => {
     expect(CONCEPTS.length).toBe(101);
   });
 
-  it('loads all 880 base seed atoms', () => {
+  it('loads all 1113 base seed atoms', () => {
     // Pinned so a seed atom cannot silently disappear. Recompute and update
     // deliberately when base content is genuinely added or removed; a change
     // here should always be something an author meant to do.
-    expect(atoms.filter((a) => !a.isVariant).length).toBe(880);
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(1113);
   });
 
   it('loads the authored stance variants too', () => {

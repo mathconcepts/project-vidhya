@@ -1,27 +1,17 @@
 ---
-id: matrix-norms.micro_exercise
+id: matrix-norms.micro-exercise
 concept_id: matrix-norms
 atom_type: micro_exercise
 bloom_level: 3
 difficulty: 0.45
-estimated_minutes: 2
 exam_ids: ["*"]
+estimated_minutes: 2
 ---
 
-**Quick Exercise:** Compute the Frobenius norm of the matrix $B = \begin{pmatrix} 1 & 2 & -1 \\ 0 & 3 & 1 \end{pmatrix}$.
-
-(A) $\sqrt{15}$  
-(B) $\sqrt{16} = 4$  
-(C) $\sqrt{17}$  
-(D) $5$
+$A=\begin{pmatrix}4&0\\0&3\end{pmatrix}$. Find $\|A\|_2$, $\|A\|_F$, and $\kappa_2(A)$.
 
 <details>
 <summary>Answer</summary>
 
-Use $\|B\|_F = \sqrt{\sum_{i,j} b_{ij}^2}$:
-
-$$\|B\|_F = \sqrt{1^2 + 2^2 + (-1)^2 + 0^2 + 3^2 + 1^2} = \sqrt{1 + 4 + 1 + 0 + 9 + 1} = \sqrt{16} = 4$$
-
-**Answer: (B)**
-
+$A$ is diagonal, so its singular values are just $|4|,|3|$. $\|A\|_2=4$, $\|A\|_F=\sqrt{16+9}=5$, $\kappa_2(A)=4/3\approx1.33$.
 </details>

@@ -20,7 +20,7 @@ for_stance: assured
 
 Tabular shortcut collapses both applications into one pass: differentiate $x^2$ down to $0$ ($x^2,2x,2$), integrate $e^x$ unchanged across each row ($e^x,e^x,e^x$), alternate signs $+,-,+$: $x^2e^x-2xe^x+2e^x$.
 
-**Answer:** $e^x(x^2-2x+2)+C$, confirmed by differentiating back to $x^2e^x$.
+**Answer:** $\boxed{e^x(x^2-2x+2)+C}$, confirmed by differentiating back to $x^2e^x$.
 
 The tabular method terminates only because the polynomial factor's derivatives reach $0$ in finitely many steps — it extends to any $x^ne^{ax}$ or $x^n\sin(ax)$ pairing, always $n+1$ rows, but fails outright on $\int e^x\sin x\,dx$, where neither factor ever reaches a derivative of $0$: that pairing needs the algebraic self-referential trick, not more rows in the table.
 

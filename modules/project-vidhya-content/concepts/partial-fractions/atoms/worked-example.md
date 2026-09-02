@@ -52,7 +52,7 @@ $$\frac{3(x+3) + 2(x-2)}{5(x-2)(x+3)} = \frac{3x+9+2x-4}{5(x-2)(x+3)} = \frac{5x
 
 $$\int \frac{x+1}{(x-2)(x+3)}\,dx = \frac{3}{5}\int\frac{dx}{x-2} + \frac{2}{5}\int\frac{dx}{x+3}$$
 
-$$= \frac{3}{5}\ln|x-2| + \frac{2}{5}\ln|x+3| + C$$
+$$\boxed{\int \frac{x+1}{(x-2)(x+3)}\,dx = \frac{3}{5}\ln|x-2| + \frac{2}{5}\ln|x+3| + C}$$
 
 ---
 

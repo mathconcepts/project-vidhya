@@ -1,25 +1,19 @@
 ---
-id: definite-integrals.retrieval-prompt
+id: definite-integrals.retrieval_prompt
 concept_id: definite-integrals
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.15
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["definite-integral-substitution", "limit-conversion", "FTC"]
 ---
 
-Evaluate $\int_1^2 \frac{1}{x} \, dx$.
-
-- **(A)** $\ln(2)$
-- **(B)** $\ln(1/2)$
-- **(C)** $e - 1$
-- **(D)** $1 - e$
+Before checking: when you substitute $u=g(x)$ into a definite integral, what happens to the LIMITS — do they change, or do you convert back to $x$ at the end instead?
 
 <details>
 <summary>Answer</summary>
 
-**A**. Antiderivative: $F(x) = \ln|x|$
-
-$$\int_1^2 \frac{1}{x} \, dx = [\ln(x)]_1^2 = \ln(2) - \ln(1) = \ln(2) - 0 = \ln(2)$$
+The limits change to $g(a)$ and $g(b)$ in $u$ — you finish entirely in $u$ and never convert back. For $\int_0^1\frac{2x}{1+x^2}dx$ with $u=1+x^2$: limits become $u=1$ and $u=2$.
 
 </details>

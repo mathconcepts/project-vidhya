@@ -62,6 +62,8 @@ $$\oint_C \mathbf{F} \cdot d\mathbf{r} = -2\pi = \iint_S (\nabla \times \mathbf{
 
 Stokes' theorem is verified.
 
+$$\boxed{\oint_C \mathbf{F} \cdot d\mathbf{r} = \iint_S (\nabla \times \mathbf{F}) \cdot d\mathbf{S} = -2\pi}$$
+
 ---
 
 ## GATE Exam Strategy

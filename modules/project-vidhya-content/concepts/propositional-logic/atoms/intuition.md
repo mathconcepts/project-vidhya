@@ -3,26 +3,15 @@ id: propositional-logic.intuition
 concept_id: propositional-logic
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## Propositional Logic: The Foundation of Reasoning
+Start from a guess many students make: that $P \to Q$ and $Q \to P$ say the same thing. Test it on one concrete pair.
 
-Propositional logic is the formal language of true-or-false statements and how they combine. Every proposition $p$ is either true (T) or false (F)—there's no middle ground.
+Let $P$ = "the animal is a whale," $Q$ = "the animal is a mammal." $P \to Q$ says: every whale is a mammal — true. $Q \to P$ says: every mammal is a whale — false, since a dog is a mammal and not a whale.
 
-**Why it matters for GATE:** Digital circuits, algorithms, and proofs all rely on propositional logic. Understanding connectives and equivalences is essential for simplifying boolean expressions in computer architecture and discrete maths questions.
+One counterexample kills the guess: an implication and its **converse** ($Q\to P$) are independent statements. Swapping the direction can flip the truth value entirely.
 
-**The four core connectives** let you build complex statements:
-
-- **Negation** $\neg p$: flips the truth value (NOT)
-- **Conjunction** $p \land q$: both must be true (AND)
-- **Disjunction** $p \lor q$: at least one must be true (OR)
-- **Implication** $p \to q$: "if p then q" (equivalent to $\neg p \lor q$)
-
-**Truth values propagate predictably.** A truth table exhaustively shows all combinations. For two propositions, there are 4 rows; for three, 8 rows. By systematically evaluating each row, you can check if a formula is a **tautology** (always true) or **contradiction** (always false).
-
-**Equivalence is the key move:** two formulas are equivalent if they produce identical truth tables. For example, $p \to q \equiv \neg p \lor q$ always holds—swapping one form for the other doesn't change the meaning. Recognizing these patterns dramatically speeds up simplification in exams.
-
-**Core insight:** Master the connectives and De Morgan's laws ($\neg(p \land q) \equiv \neg p \lor \neg q$), and you can decode almost any logic problem.
+What *does* stay equivalent to $P\to Q$? Only its **contrapositive**, $\neg Q \to \neg P$. "Not a mammal, so not a whale" carries exactly the same information as the original, because $P \to Q \equiv \neg Q \to \neg P$ holds for every assignment of truth values — that identity is the one worth keeping, not the assumption that any rearrangement is safe.

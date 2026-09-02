@@ -3,7 +3,7 @@ id: taylor-laurent.hook
 concept_id: taylor-laurent
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 ---
 

@@ -3,31 +3,22 @@ id: ode-second-order-nonhomo.micro-exercise
 concept_id: ode-second-order-nonhomo
 atom_type: micro_exercise
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.3
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-For the ODE $\frac{d^2y}{dx^2} + 4\frac{dy}{dx} + 4y = 8$, the homogeneous solution $y_h$ is:
-
-- **(A)** $y_h = (C_1 + C_2 x)e^{-2x}$
-- **(B)** $y_h = C_1 e^{-2x} + C_2 e^{2x}$
-- **(C)** $y_h = C_1 \cos(2x) + C_2 \sin(2x)$
-- **(D)** $y_h = C_1 e^{2x} + C_2 e^{-2x}$
+Find a particular solution of $y''-y=x^2$.
 
 <details>
 <summary>Answer</summary>
 
-**A**. First, solve the homogeneous ODE: $\frac{d^2y}{dx^2} + 4\frac{dy}{dx} + 4y = 0$.
+Trial $y_p=Ax^2+Bx+C$ (no resonance: roots are $\pm1$, no polynomial homogeneous solutions).
 
-**Characteristic equation:**
-$$r^2 + 4r + 4 = 0$$
-$$(r + 2)^2 = 0$$
-$$r = -2 \text{ (repeated)}$$
+$y_p''=2A$. Substitute: $2A-(Ax^2+Bx+C)=x^2$.
 
-For a repeated root $r = -2$, the homogeneous solution is:
-$$y_h = (C_1 + C_2 x)e^{-2x}$$
+Match coefficients: $-A=1\Rightarrow A=-1$; $-B=0\Rightarrow B=0$; $2A-C=0\Rightarrow C=-2$.
 
-This is the complementary function; the non-homogeneous term $8$ affects only the particular solution, not $y_h$.
+$$y_p=-x^2-2$$
 
 </details>

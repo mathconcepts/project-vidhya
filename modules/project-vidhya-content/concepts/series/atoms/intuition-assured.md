@@ -1,25 +1,17 @@
 ---
 # Alternative body for series.intuition, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# `assured`. Assumes the partial-sums framing; spends words on the
+# distinction that costs marks.
 id: series.intuition.assured
 concept_id: series
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 variant_of: series.intuition
 for_stance: assured
 ---
 
-Convergence and absolute convergence are different claims: the alternating harmonic series $\sum\frac{(-1)^{n+1}}n=1-\frac12+\frac13-\cdots$ converges (to $\ln2$), but $\sum\left|\frac{(-1)^{n+1}}n\right|=\sum\frac1n$ diverges — it converges *conditionally*, not absolutely.
+What actually costs marks: **absolute** and **conditional** convergence are not the same fate wearing different names. $\sum a_n$ converges absolutely when $\sum |a_n|$ itself converges — a strictly stronger claim. $\sum \dfrac{(-1)^{n+1}}{n}$ converges (alternating, decreasing terms $\to 0$: the Leibniz test applies), but $\sum \dfrac1n$ diverges, so this series is convergent only **conditionally** — the sign alternation is doing real work, not decoration.
 
-The distinction is not cosmetic: a conditionally convergent series can be rearranged to sum to *any* target value, or to diverge entirely, by the Riemann rearrangement theorem — reordering terms is only guaranteed safe for an absolutely convergent series. This is why the ratio and root tests, which test $|a_n|$, establish the *stronger* claim whenever they succeed, and why "converges" on an exam answer needs the conditional/absolute distinction stated if the question asks for it.
-
-The $n$-th term test is a one-way filter: $a_n\not\to0\Rightarrow$ divergence, but $a_n\to0$ proves nothing — it is the necessary condition every convergent series satisfies, never a sufficient one, and treating it as sufficient is the harmonic series' standing counterexample.
+Why it matters beyond terminology: a conditionally convergent series can be reordered to sum to a *different* value, or to diverge entirely (Riemann rearrangement) — a manipulation that's completely safe for an absolutely convergent series. Treating "converges" as one undifferentiated fact, without asking *which* kind, is where GATE-level series questions quietly separate correct answers from confident-but-wrong ones.

@@ -913,3 +913,16 @@ for each atomic topic:
     compare variants through bounded experiments
     promote or rollback only with evidence
 ```
+
+
+## Research-grounded static core and dynamic personalization content layer
+
+The content system now uses a mandatory static core plus an evidence-triggered dynamic layer for every one of the 116 atomic GATE Engineering Mathematics topics. The static core contains the paper/year scope, prerequisite path, resonance hook, intuition or representation, formal definition/theorem/algorithm with conditions, method selector, one checked worked example, one boundary or misconception contrast, active recall, relevant MCQ/MSQ/NAT/timed or descriptive bridge, delayed changed-surface transfer and accessibility equivalent. This is the minimum reusable learning contract, not an optional template.
+
+The dynamic layer attaches only the smallest supported delta. Eligible deltas include prerequisite repair, representation shift, definition boundary, execution drill, assessment-mode repair, time/risk compression, custom-PDF clarification, verified computation, language/accessibility adaptation and confidence calibration. Each delta records its trigger, source, assumptions, version and outcome. It cannot silently replace canonical mathematics, official scope, marking rules, answer keys or reviewed prerequisite edges.
+
+Topic families receive different starting material patterns: matrices emphasize shape-before-arithmetic and dimension checks; eigen topics use invariant-direction geometry and multiplicity contrasts; limits and derivatives use prediction and graph/slope intuition; integration uses accumulation and bound/convergence checks; vector calculus uses field/operator visuals and theorem selection; ODE/PDE uses equation classification and system evolution; complex analysis uses Argand-plane mapping and singularity conditions; probability/statistics use sample-space/data visuals and assumption checks; numerical methods use algorithm traces and error budgets; and discrete mathematics uses small puzzles, counterexamples, truth tables and graph/lattice representations. These are evidence-informed design hypotheses to be validated by immediate recall, delayed retrieval, transfer, time-to-method, error recurrence and support burden rather than assumed to be universally optimal.
+
+The complete per-topic framework is exported separately as `gate_atomic_static_dynamic_content_framework.json`, `gate_atomic_static_dynamic_content_framework.csv` and `gate_atomic_static_dynamic_content_framework.md`.
+
+The design is grounded in research on retrieval/distributed practice, cognitive-load management, sequencing retrieval and generative activity, and the cautious use of AI for personalization. The exact effect of any hook or format for a GATE topic remains a product hypothesis until measured in a bounded experiment.

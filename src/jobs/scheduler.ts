@@ -33,10 +33,12 @@ import { pollAllInFlightBatches } from '../generation/batch/poller';
 import { resumeQueuedRuns } from '../generation/run-dispatcher';
 import { flushToDisk as flushRateLimits } from '../llm/rate-limit-tracker';
 import { runResonanceJob } from '../resonance/job';
+import { runSourceFreshnessMonitor } from './source-freshness-monitor';
 
 const HOUR_MS = 60 * 60 * 1000;
 const FIVE_MIN_MS = 5 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
 
 type JobHandle = {
   name: string;
@@ -238,6 +240,15 @@ register('abEvaluator', DAY_MS, async () => {
     tie: evaluations.filter((e) => e.verdict === 'tie').length,
     insufficient_data: evaluations.filter((e) => e.verdict === 'insufficient_data').length,
   };
+});
+
+register('sourceFreshnessMonitor', WEEK_MS, async () => {
+  // Weekly (docs/designs/2026-09-02-content-strategy-research-integration-
+  // plan.md P3): hashes the official GATE syllabus + question-pattern pages
+  // and flags a change on GET /api/admin/source-freshness. Replaces the
+  // parked "annual manual checklist" from the 2026-08-27 plan. Never
+  // throws — a fetch failure is recorded per-source, not fatal to the job.
+  return runSourceFreshnessMonitor();
 });
 
 // ─── Lifecycle ───────────────────────────────────────────────────────

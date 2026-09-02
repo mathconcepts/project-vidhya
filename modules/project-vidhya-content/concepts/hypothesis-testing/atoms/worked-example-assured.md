@@ -1,13 +1,7 @@
 ---
-# Alternative body for hypothesis-testing-worked-example, served when the
+# Alternative body for hypothesis-testing.worked-example, served when the
 # learner stance is `assured`. The base file is what a steady student
 # reads. See src/content/stance-variants.ts for how this is selected.
-#
-# Note: the base atom's own id is `hypothesis-testing-worked-example` (no
-# dot before the atom type), a legacy naming drift
-# check-content-integrity.ts tolerates. variant_of points at that exact id;
-# this file's own id follows the normal convention instead of propagating
-# the drift.
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
@@ -16,14 +10,14 @@
 #
 # The fenced interactive block below is copied verbatim from the base
 # atom so the widget cannot drift between variants; only prose differs.
-id: hypothesis-testing.worked_example.assured
+id: hypothesis-testing.worked-example.assured
 concept_id: hypothesis-testing
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.40
 exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: hypothesis-testing-worked-example
+scaffold_fade: true
+variant_of: hypothesis-testing.worked-example
 for_stance: assured
 ---
 

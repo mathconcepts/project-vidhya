@@ -1,22 +1,13 @@
 ---
 # Alternative body for spectral-theorem.worked-example, served when the learner stance is
 # `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
 id: spectral-theorem.worked-example.assured
 concept_id: spectral-theorem
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.25
-scaffold_fade: true
 exam_ids: ["*"]
+scaffold_fade: true
 variant_of: spectral-theorem.worked-example
 for_stance: assured
 ---

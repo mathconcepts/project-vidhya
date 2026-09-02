@@ -1,29 +1,18 @@
 ---
 # Alternative body for svd.worked_example, served when the learner stance is
 # `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
 id: svd.worked-example.assured
 concept_id: svd
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.25
-scaffold_fade: true
 exam_ids: ["*"]
+scaffold_fade: true
 variant_of: svd.worked_example
 for_stance: assured
 ---
 
-## $A = \begin{pmatrix} 2 & 1 \\ 0 & 1 \end{pmatrix}$: singular values via $A^TA$
-
-$A^TA = \begin{pmatrix} 4 & 2 \\ 2 & 2 \end{pmatrix}$, symmetric PSD by construction, so its eigendecomposition is guaranteed real and orthogonal regardless of whether $A$ itself is nice. $\operatorname{tr} = 6$, $\det = 4$ give $\lambda^2-6\lambda+4=0$ directly: $\lambda = 3\pm\sqrt5$.
+$A = \begin{pmatrix} 2 & 1 \\ 0 & 1 \end{pmatrix}$: singular values via $A^TA = \begin{pmatrix} 4 & 2 \\ 2 & 2 \end{pmatrix}$, symmetric PSD by construction, so its eigendecomposition is guaranteed real and orthogonal regardless of whether $A$ itself is nice. $\operatorname{tr} = 6$, $\det = 4$ give $\lambda^2-6\lambda+4=0$ directly: $\lambda = 3\pm\sqrt5$.
 
 $$\sigma_1 = \sqrt{3+\sqrt5} \approx 2.288, \qquad \sigma_2 = \sqrt{3-\sqrt5} \approx 0.874$$
 

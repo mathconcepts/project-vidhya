@@ -11,10 +11,9 @@ id: numerical-integration.intuition.assured
 concept_id: numerical-integration
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: numerical-integration-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: numerical-integration.intuition
 for_stance: assured
 ---
 
@@ -22,6 +21,4 @@ for_stance: assured
 
 Simpson's 1/3 rule needs $n$ even — it pairs nodes into groups of three, and an odd $n$ leaves one interval unpaired, breaking the formula outright rather than degrading it gracefully. Check parity before a single function value is computed.
 
-The $O(h^4)$ error bound is a second, independent condition: it needs $f^{(4)}$ continuous and bounded on $[a,b]$. A kink, a discontinuity in a low derivative, or a singularity anywhere within $[a,b]$, and the fourth-order guarantee disappears — the formula still runs and still hands back a number, but that number now converges at whatever rate the actual smoothness allows.
-
-Neither condition is optional, and both are checkable before touching a single node value: skip them and what you have is not a slightly worse estimate, it is a number carrying no stated accuracy at all.
+The $O(h^4)$ error bound is a second, independent condition: it needs $f^{(4)}$ continuous and bounded on $[a,b]$. A kink, a low-order discontinuity, or a singularity anywhere in $[a,b]$, and the fourth-order guarantee disappears — the formula still runs and returns a number, but that number now converges at whatever rate the actual smoothness allows, not the rate printed on the label.

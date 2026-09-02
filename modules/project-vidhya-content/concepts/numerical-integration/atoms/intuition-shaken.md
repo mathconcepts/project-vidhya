@@ -12,19 +12,18 @@ id: numerical-integration.intuition.shaken
 concept_id: numerical-integration
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: numerical-integration-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: numerical-integration.intuition
 for_stance: shaken
 ---
 
-## One strip, one number, before the general rule
+## One strip, one number, worked by hand first
 
-$\int_0^1\frac{dx}{1+x}$ has a closed form, $\ln2\approx0.6931$, but set that aside for a moment. Approximate the area with a single trapezoid, using only the two endpoint values $f(0)=1$ and $f(1)=0.5$:
+$\int_0^1\frac{dx}{1+x}$ has a closed form, $\ln2\approx0.6931$, but set that aside. Approximate the area with a single trapezoid, using only $f(0)=1$ and $f(1)=0.5$:
 
 $$T=\frac{1}{2}\bigl(f(0)+f(1)\bigr)=\frac{1}{2}(1+0.5)=0.75$$
 
-Already a number: $0.75$ against the true $0.6931$, off by roughly $8\%$ from one strip.
+Already a number: $0.75$ against the true $0.6931$, off by about $8\%$ from one strip.
 
-Split $[0,1]$ into more strips and each contributes its own small trapezoid; add them up and the estimate tightens. The idea then generalises: swap "find the antiderivative" for "add up known function values," trading exactness away for a formula that still works even when no antiderivative exists at all. Simpson's rule sharpens the same idea by fitting a parabola instead of a straight line to each small group of points, buying far more accuracy for barely more effort.
+Split $[0,1]$ into more strips and each contributes its own small trapezoid; add them up and the estimate tightens. Simpson's rule sharpens the same idea further by fitting a parabola instead of a straight line to each small group of points, buying far more accuracy for barely more effort.

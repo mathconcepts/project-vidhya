@@ -3,28 +3,22 @@ id: change-of-basis.interleaved-drill
 concept_id: change-of-basis
 atom_type: interleaved_drill
 bloom_level: 4
-difficulty: 0.60
+difficulty: 0.6
 exam_ids: ["*"]
 modality: drill
 tested_by_atom: change-of-basis.micro-exercise
 ---
 
-**Cross-concept check: linear transformations → change of basis.**
+**Cross-concept check: change of basis → linear transformations.**
 
-$T: \mathbb{R}^2 \to \mathbb{R}^2$ is the reflection across the line $y = x$. Use the basis $B = \{v_1, v_2\}$ with $v_1 = \begin{pmatrix} 1 \\ 1\end{pmatrix}$, $v_2 = \begin{pmatrix} 1 \\ -1\end{pmatrix}$, so $P = \begin{pmatrix} 1 & 1 \\ 1 & -1\end{pmatrix}$.
+The transformation $T$ has matrix $A=\begin{pmatrix}2&1\\1&2\end{pmatrix}$ in the standard basis. Let $B=\{v_1,v_2\}$ with $v_1=(1,1)$, $v_2=(1,-1)$, so $P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$.
 
-**Question 1 (linear transformations):** Write $[T]_E$, the matrix of $T$ in the standard basis.
+**Question 1 (change of basis):** Compute $[T]_B = P^{-1}AP$.
 
-*Answer:* The columns of a transformation's matrix are the images of the basis vectors. Reflection across $y = x$ swaps coordinates, so $T(e_1) = e_2$ and $T(e_2) = e_1$:
+*Answer:* $P^{-1}=\begin{pmatrix}0.5&0.5\\0.5&-0.5\end{pmatrix}$. Working through the product: $AP=\begin{pmatrix}3&1\\3&-1\end{pmatrix}$, then $P^{-1}(AP)=\begin{pmatrix}3&0\\0&1\end{pmatrix}$ (verified). $[T]_B$ is **diagonal**.
 
-$$[T]_E = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix}$$
+**Question 2 (linear transformations):** Why did that happen — is it a coincidence of this particular $A$?
 
-**Question 2 (change of basis):** Find $[T]_B$, and read off what it says geometrically.
+*Answer:* No. $B$'s vectors are exactly $A$'s eigenvectors: $Av_1 = (3,3) = 3v_1$ and $Av_2 = (1,-1) = 1v_2$, so the eigenvalues $3,1$ land directly on the diagonal. The same transformation $T$, described in the standard basis, looks like a matrix with off-diagonal entries; described in its own eigenbasis, it looks like pure per-axis scaling. Nothing about $T$ changed — only which basis is doing the describing.
 
-*Answer:* $[T]_B = P^{-1}[T]_E P$. With $\det(P) = -2$, $P^{-1} = \begin{pmatrix} 1/2 & 1/2 \\ 1/2 & -1/2\end{pmatrix}$, and
-
-$$[T]_B = \begin{pmatrix} 1/2 & 1/2 \\ 1/2 & -1/2\end{pmatrix}\begin{pmatrix} 0 & 1 \\ 1 & 0\end{pmatrix}\begin{pmatrix} 1 & 1 \\ 1 & -1\end{pmatrix} = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix}$$
-
-(verified). Geometrically: $v_1 = (1,1)$ lies **on** the mirror line, so it is fixed — hence the $+1$. $v_2 = (1,-1)$ is **perpendicular** to the mirror, so it flips — hence the $-1$. Sanity check on the invariants: $\text{tr} = 0$ and $\det = -1$ for both matrices ✓.
-
-**Why this drill exists:** the misconception this targets is "the matrix **is** the transformation." It isn't — a matrix is a transformation *plus a choice of basis*. One reflection produced two completely different matrices here, $\begin{pmatrix} 0&1\\1&0\end{pmatrix}$ and $\begin{pmatrix} 1&0\\0&-1\end{pmatrix}$, and only the basis-free quantities (trace, determinant, eigenvalues) survived the change. Choosing the right basis is what turned an off-diagonal matrix into a diagonal one.
+**Why this drill exists:** students treat "find $[T]_B$" as a mechanical $P^{-1}AP$ exercise disconnected from eigenvalues, and re-derive eigenvectors from scratch when a question already handed them a basis. Recognizing that a given basis IS an eigenbasis — by checking $Av_i \parallel v_i$ before multiplying anything — turns a three-matrix computation into reading the eigenvalues off the given vectors directly.

@@ -17,4 +17,4 @@ variant_of: hypothesis-testing.hook
 for_stance: assured
 ---
 
-A p-value of 0.03 does not mean a 3% chance $H_0$ is true — it means a 3% chance of seeing data this extreme IF $H_0$ were true, a statement about the data, not the hypothesis. That reversal — probability of data given hypothesis, versus hypothesis given data — is exactly the direction confusion Bayes warns about elsewhere in this syllabus, and it's the fastest wrong answer here: reading "$p<0.05$, so there's a 95% chance the effect is real" treats a conditional as if it pointed the other way.
+A p-value of 0.03 is not a 3% chance that $H_0$ is true — it means a 3% chance of seeing data this extreme IF $H_0$ were true, a statement about the data, not the hypothesis. That reversal — probability of data given hypothesis, versus hypothesis given data — is exactly the direction confusion Bayes warns about elsewhere in this syllabus, and it's the fastest wrong answer here: reading "$p<0.05$, so there's a 95% chance the effect is real" treats a conditional as if it pointed the other way.

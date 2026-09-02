@@ -1,20 +1,15 @@
 ---
 # Alternative body for sequences.hook, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# `assured` — a student who already trusts the arithmetic. Spends its
+# words on the one distinction that costs marks instead of re-teaching.
 id: sequences.hook.assured
 concept_id: sequences
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: sequences.hook
 for_stance: assured
 ---
 
-"Find $\lim_{n\to\infty}a_n$" for a sequence defined recursively, $a_{n+1}=f(a_n)$, is a GATE setup with a hidden precondition — and the wrong shortcut is setting $L=f(L)$ and solving without first establishing that the limit *exists*. A fixed point of $f$ is only the limit if the sequence is already known to converge, typically via monotone-plus-bounded; plugging into $L=f(L)$ for a sequence that diverges or oscillates returns a number satisfying the equation while meaning nothing.
+$a_n=\dfrac{2n+1}{n}\to 2$ — the arithmetic isn't in question. The distinction GATE actually tests: **bounded is necessary for convergence, never sufficient.** $a_n=(-1)^n$ is bounded between $-1$ and $1$ forever, and it never converges — it just alternates. Monotonic **and** bounded together *is* sufficient (the Monotone Convergence Theorem), which is why that pairing — not boundedness alone — is the real tool for proving a limit exists without computing it first. A sequence can also diverge by oscillating rather than by blowing up to infinity; don't read "bounded" as a synonym for "well-behaved."

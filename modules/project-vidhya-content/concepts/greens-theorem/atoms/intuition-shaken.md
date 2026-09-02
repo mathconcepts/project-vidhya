@@ -19,7 +19,7 @@ variant_of: greens-theorem.intuition
 for_stance: shaken
 ---
 
-Take $\mathbf F=(-y,x)$ and the unit circle $C:x^2+y^2=1$, traversed counterclockwise. Walking the boundary directly: parametrize $x=\cos t,y=\sin t$, so $\mathbf F\cdot d\mathbf r=(-\sin t)(-\sin t)\,dt+(\cos t)(\cos t)\,dt=dt$, and $\oint_C\mathbf F\cdot d\mathbf r=\int_0^{2\pi}dt=2\pi$.
+Set $\mathbf F=(-y,x)$ on the circle $C:x^2+y^2=1$, traversed counterclockwise. Walking the boundary directly: parametrize $x=\cos t,y=\sin t$, so $\mathbf F\cdot d\mathbf r=(-\sin t)(-\sin t)\,dt+(\cos t)(\cos t)\,dt=dt$, and $\oint_C\mathbf F\cdot d\mathbf r=\int_0^{2\pi}dt=2\pi$.
 
 Now check the interior instead. $P=-y,\,Q=x$, so $\partial Q/\partial x-\partial P/\partial y=1-(-1)=2$ at every point inside the disk. Multiply by the area, $\pi(1)^2=\pi$: $\iint_D 2\,dA=2\pi$.
 

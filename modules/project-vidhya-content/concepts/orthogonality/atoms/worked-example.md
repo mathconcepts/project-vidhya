@@ -70,7 +70,7 @@ $$\mathbf{q}_3 = \frac{\sqrt{3}}{2}\cdot\left(-\tfrac{2}{3},\tfrac{2}{3},\tfrac{
 
 ## Result: Orthonormal Basis
 
-$$\mathbf{q}_1 = \frac{1}{\sqrt{2}}(1,1,0), \quad \mathbf{q}_2 = \frac{1}{\sqrt{6}}(1,-1,2), \quad \mathbf{q}_3 = \frac{1}{\sqrt{3}}(-1,1,1)$$
+$$\boxed{\mathbf{q}_1 = \tfrac{1}{\sqrt{2}}(1,1,0), \quad \mathbf{q}_2 = \tfrac{1}{\sqrt{6}}(1,-1,2), \quad \mathbf{q}_3 = \tfrac{1}{\sqrt{3}}(-1,1,1)}$$
 
 **Sanity check:** $\|\mathbf{q}_3\|^2 = \frac{1}{3}(1+1+1) = 1$ ✓, and all three pairwise dot products equal 0.
 

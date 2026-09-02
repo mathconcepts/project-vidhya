@@ -21,28 +21,15 @@ variant_of: determinants.intuition
 for_stance: assured
 ---
 
-## Compute it the fast way
+Cofactor expansion is $O(n!)$; row reduction is $O(n^3)$. Past $3\times3$, reduce to upper triangular and multiply the diagonal, tracking two rules: a **row swap** flips the sign, a **row scaling by $k$** multiplies the result by $k$. Adding a multiple of one row to another is free — use it to manufacture zeros.
 
-Cofactor expansion is $O(n!)$. Row reduction is $O(n^3)$. For anything past $3\times3$, reduce to upper triangular and multiply the diagonal, tracking two things:
+Identities worth having automatic:
 
-- each **row swap** multiplies the result by $-1$
-- each **row scaling** by $k$ multiplies it by $k$ (so divide it back out)
-- **adding a multiple of one row to another does nothing** — this is the free operation, use it for everything
+$$\det(AB) = \det(A)\det(B), \qquad \det(A^{T}) = \det(A), \qquad \det(A^{-1}) = \frac{1}{\det(A)}, \qquad \det(kA) = k^n \det(A)$$
 
-## The identities worth memorising
+The $k^n$ scaling is the most-missed of the group — it scales **per dimension**, not once. And $\det(A) = \prod_i \lambda_i$ is the bridge to eigenvalues: a zero eigenvalue and a zero determinant are the same fact.
 
-$$\det(AB) = \det(A)\det(B), \qquad \det(A^{\mathsf T}) = \det(A), \qquad \det(A^{-1}) = \frac{1}{\det(A)}$$
-
-$$\det(kA) = k^n \det(A) \ \text{ for } A \in \mathbb{R}^{n\times n}, \qquad \det(A) = \prod_i \lambda_i$$
-
-The $k^n$ one is the most-missed of the group: scaling a matrix scales the determinant by $k$ **per dimension**, not once. And $\det = \prod \lambda_i$ is what links this topic to eigenvalues — a zero eigenvalue and a zero determinant are the same fact.
-
-## Traps that actually appear
-
-- $\det(A + B) \neq \det(A) + \det(B)$. There is no useful expansion for a sum.
-- A singular matrix is not "almost invertible" — the solution set is either empty or infinite, never unique.
-- For block-triangular $\begin{pmatrix} A & B \\ 0 & D\end{pmatrix}$, $\det = \det(A)\det(D)$. Papers use this to make a large determinant look worse than it is.
-- Cramer's rule is examinable but almost never the fast route; it is there to be recognised, not used.
+Traps that actually appear: $\det(A+B) \neq \det(A)+\det(B)$, there's no useful expansion for a sum. For block-triangular $\begin{pmatrix} A & B \\ 0 & D\end{pmatrix}$, $\det = \det(A)\det(D)$ — papers use this to make a large determinant look worse than it is.
 
 ```interactive-spec
 {

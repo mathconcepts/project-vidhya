@@ -33,7 +33,7 @@ for_stance: shaken
 
 **Step 6.** Substitute back: $x^2e^x-2(xe^x-e^x)=e^x(x^2-2x+2)$.
 
-**Answer:** $e^x(x^2-2x+2)+C$.
+**Answer:** $\boxed{e^x(x^2-2x+2)+C}$.
 
 **Check it:** differentiate: $e^x(x^2-2x+2)+e^x(2x-2)=x^2e^x$. Matches.
 

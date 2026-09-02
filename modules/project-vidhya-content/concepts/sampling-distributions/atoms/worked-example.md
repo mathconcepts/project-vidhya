@@ -8,17 +8,13 @@ exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-# Worked Example: Confidence Interval With Unknown $\sigma$
+## Worked Example: Confidence Interval With Unknown $\sigma$
 
-## Problem (GATE-style)
-
-A random sample of $n = 16$ observations is drawn from a population assumed to be normal, with unknown mean $\mu$ and unknown standard deviation. The sample gives $\bar{x} = 52$ and sample standard deviation $s = 8$. (Given: $t_{0.025, 15} = 2.131$.)
+**Problem (GATE-style).** A random sample of $n = 16$ observations is drawn from a population assumed to be normal, with unknown mean $\mu$ and unknown standard deviation. The sample gives $\bar{x} = 52$ and sample standard deviation $s = 8$. (Given: $t_{0.025, 15} = 2.131$.)
 
 **(a)** Find the standard error of the sample mean.
 **(b)** Which distribution should be used to construct a 95% confidence interval for $\mu$, and with how many degrees of freedom? Justify.
 **(c)** Construct the 95% confidence interval for $\mu$.
-
----
 
 ## Solution
 
@@ -40,11 +36,13 @@ The general form is $\bar{x} \pm t_{\alpha/2, n-1} \cdot SE$. With $\alpha = 0.0
 
 $$\text{Margin of error} = t_{0.025,15} \times SE = 2.131 \times 2 = 4.262$$
 
-$$\text{CI} = 52 \pm 4.262 = (52 - 4.262,\ 52 + 4.262) = \boxed{(47.738,\ 56.262)}$$
+$$\text{CI} = 52 \pm 4.262 = \boxed{(47.738,\ 56.262)}$$
 
 We are 95% confident the true population mean $\mu$ lies in $(47.738, 56.262)$.
 
----
+## Method Selector
+
+Reach for Student's $t$ whenever $\sigma$ is explicitly **unknown** (as in part (b)) — not the chi-squared distribution, which a student sometimes reaches for whenever a problem mentions "unknown" and "sample," even though $\chi^2$ answers a question about the population **variance**, not about $\mu$. This problem never asks about $\sigma^2$, so $\chi^2$ has no role here at all.
 
 ## Key Insights
 

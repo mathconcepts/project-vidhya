@@ -8,8 +8,10 @@ modality: visual
 exam_ids: ["*"]
 ---
 
-Think of fitting a best-fit line through scattered data points. You're looking for a line $y = mx + c$ such that the total vertical distance from each point to the line is minimized (in the sense of squared distance). The normal equations emerge naturally: you want the "slope" and "intercept" such that no change in either direction reduces the error further. In vector terms, the error vector is perpendicular to the column space—it cannot be "reduced" by any linear combination of your unknowns.
+The worked example fits $y=c+mx$ through $(0,1),(1,2),(2,2)$ and lands on $\hat x=(7/6,\,1/2)$. Fix the intercept at its optimal $c=7/6$ and let only the slope $m$ vary: the total squared error $\text{SSE}(m)$ traces a parabola in $m$, not a jagged or lumpy curve. That's the real reason least squares always has a single best answer — a sum of squares in one linear parameter is always convex, so there is exactly one minimum and no local traps to fall into.
+
+Watch the curve below: it bottoms out at $m=1/2$, exactly the slope the normal equations produced. Moving $m$ either direction from there strictly increases the total error.
 
 ```gif-scene
-{"type":"function-trace","expression":"0.5*x + 1","x_range":[-2,4],"y_range":[-1,3],"frames":30,"fps":12}
+{"type":"function-trace","expression":"5*x**2 - 5*x + 17/12","x_range":[-0.4,1.4],"y_range":[0,3],"frames":30,"fps":12}
 ```

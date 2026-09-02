@@ -1,30 +1,23 @@
 ---
-# Alternative body for hypothesis-testing-worked-example, served when the
+# Alternative body for hypothesis-testing.worked-example, served when the
 # learner stance is `shaken`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
-# Note: the base atom's own id is `hypothesis-testing-worked-example` (no
-# dot before the atom type), a legacy naming drift
-# check-content-integrity.ts tolerates. variant_of points at that exact id;
-# this file's own id follows the normal convention instead of propagating
-# the drift.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# Written for a student who is low on this concept and low on confidence.
+# Prose is held at or below the base atom's length, because a screen that
+# is visibly longer than the one that already defeated this reader signals
+# difficulty no matter how kindly it is written.
 #
 # The fenced interactive block below is copied verbatim from the base
 # atom so the widget cannot drift between variants; only prose differs.
-id: hypothesis-testing.worked_example.shaken
+id: hypothesis-testing.worked-example.shaken
 concept_id: hypothesis-testing
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.40
 exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: hypothesis-testing-worked-example
+scaffold_fade: true
+variant_of: hypothesis-testing.worked-example
 for_stance: shaken
 ---
 

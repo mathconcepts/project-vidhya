@@ -1,28 +1,13 @@
 ---
-id: continuity.micro-exercise
+id: continuity.micro_exercise
 concept_id: continuity
 atom_type: micro_exercise
 bloom_level: 3
-difficulty: 0.25
+difficulty: 0.2
 exam_ids: ["*"]
 estimated_minutes: 2
 ---
 
-At $x = 2$, the function $f(x) = \frac{x^2 - 4}{x - 2}$ is:
+Let $f(x)=\dfrac{\sin x}{x}$ for $x\neq0$, and $f(0)=1$. Is $f$ continuous at $x=0$?
 
-- **(A)** Continuous
-- **(B)** Discontinuous with a removable discontinuity
-- **(C)** Discontinuous with a jump discontinuity
-- **(D)** Discontinuous with an infinite discontinuity
-
-<details>
-<summary>Answer</summary>
-
-**B**. At $x = 2$, the function is undefined (gives $0/0$). However:
-$$\lim_{x \to 2} \frac{x^2 - 4}{x - 2} = \lim_{x \to 2} \frac{(x-2)(x+2)}{x-2} = \lim_{x \to 2} (x+2) = 4$$
-
-The limit exists and equals $4$. This is a **removable discontinuity** because we can redefine $f(2) = 4$ to make the function continuous.
-
-Note: The original function $f(2)$ is undefined, so the three conditions for continuity are not satisfied. But the discontinuity can be removed by redefining the function.
-
-</details>
+<details><summary>Answer</summary>Yes. All three conditions hold: $f(0)=1$ is defined; $\lim_{x\to0}\frac{\sin x}{x}=1$ exists (the standard limit); and the limit equals $f(0)$. This particular choice of $f(0)$ is exactly the value that removes what would otherwise be a removable discontinuity.</details>

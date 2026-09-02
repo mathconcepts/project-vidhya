@@ -1,20 +1,15 @@
 ---
-# Alternative body for recurrence-relations.hook, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# Alternative body for recurrence-relations.hook, stance `assured`.
 id: recurrence-relations.hook.assured
 concept_id: recurrence-relations
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: recurrence-relations.hook
 for_stance: assured
 ---
 
-Reporting only the homogeneous solution is wrong, not merely incomplete, whenever $f(n)\ne0$: the general solution needs a particular part too, shaped to match $f(n)$ itself — a polynomial $f(n)$ needs a polynomial guess, an exponential one needs an exponential guess — and gets multiplied by an extra factor of $n$ exactly when that guess collides with a homogeneous root. Skipping the particular part, or skipping the collision check, is where the marks disappear here.
+$a_n=5a_{n-1}-6a_{n-2}$ with $a_0=2,a_1=5$ has closed form $a_n=2^n+3^n$ — check: $a_0=1+1=2$ ✓, $a_1=2+3=5$ ✓, $a_2=4+9=13$ ✓.
+
+Unrolling the recurrence day-by-day to reach $a_{20}$ costs $20$ arithmetic steps and compounds sign slips; solving the characteristic equation once and evaluating the closed form at $n=20$ costs one exponentiation each of two terms. Whenever $n$ is large or symbolic, solve for the closed form — don't iterate.

@@ -19,3 +19,5 @@ exam_ids: ["*"]
 - If $f''(c) > 0$, then $f$ has a local minimum at $c$.
 - If $f''(c) < 0$, then $f$ has a local maximum at $c$.
 - If $f''(c) = 0$, the test is inconclusive.
+
+**Method selector.** Use the second derivative test when $f''(c)$ is quick to compute and comes out nonzero. A tempting but wrong shortcut is stopping there when $f''(c)=0$ and declaring "no extremum" — the test is silent, not negative, in that case, and only the first derivative test's sign check around $c$ can resolve it.

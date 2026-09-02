@@ -1,31 +1,19 @@
 ---
-id: multiple-integrals.retrieval-prompt
+id: multiple-integrals.retrieval_prompt
 concept_id: multiple-integrals
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.3
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["fubini", "order-of-integration", "rectangular-region"]
 ---
 
-Find the volume under $z = x + y$ over the rectangular region $0 \leq x \leq 3$, $0 \leq y \leq 2$.
-
-- **(A)** $6$
-- **(B)** $12$
-- **(C)** $15$
-- **(D)** $20$
+Before checking: for $\iint_R xy\,dA$ over the unit square $R=[0,1]\times[0,1]$, does the order of integration change the answer?
 
 <details>
 <summary>Answer</summary>
 
-**C**. Volume = $\iint_R (x + y) \, dA$
-
-$$\int_0^3 \int_0^2 (x + y) \, dy \, dx$$
-
-Inner (w.r.t. $y$):
-$$\int_0^2 (x + y) \, dy = [xy + \frac{y^2}{2}]_0^2 = 2x + 2$$
-
-Outer (w.r.t. $x$):
-$$\int_0^3 (2x + 2) \, dx = [x^2 + 2x]_0^3 = 9 + 6 = 15$$
+No — the region is a rectangle and the integrand is continuous, so Fubini applies. Either order gives $\int_0^1\int_0^1 xy\,dx\,dy=\tfrac14$.
 
 </details>

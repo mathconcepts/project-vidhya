@@ -2,11 +2,15 @@
 id: recurrence-relations.common-traps
 concept_id: recurrence-relations
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 3
+difficulty: 0.6
 exam_ids: ["*"]
 ---
 
-- **Forgetting to apply initial conditions**: Students solve the characteristic equation correctly but forget to use $a_0, a_1, \ldots$ to determine the constants $A_1, A_2, \ldots$ in the general solution. Without this step, the answer is a family of solutions, not the unique solution. **Check**: Always plug initial conditions back into the final answer.
-- **Algebraic errors in the characteristic equation**: Common mistakes: writing $r^n = c_1 r^{n-1} + \cdots$ without simplifying, or incorrectly moving terms. Always **divide through by $r^{n-k}$** first to get a polynomial equation of degree $k$, not a transcendental equation.
-- **Confusing repeated roots**: When the characteristic equation has a repeated root $r$ of multiplicity $m$, the solution includes terms like $(A_1 + A_2 n + A_3 n^2 + \cdots + A_m n^{m-1}) r^n$, NOT just $A \cdot r^n$. Forgetting the polynomial factor is a critical error.
+**Trap 1 — Repeated root, single term.** A repeated characteristic root $r$ does NOT give $a_n=(A+B)r^n$ (which collapses to one constant); the second independent solution is $n\cdot r^n$, giving $a_n=(A+Bn)r^n$.
+
+**Trap 2 — Ignoring the forcing term.** For $a_n=c_1a_{n-1}+c_2a_{n-2}+f(n)$ with $f(n)\ne0$, the homogeneous solution alone won't satisfy the recurrence for $n\ge2$ — a particular solution matching $f(n)$'s form must be added.
+
+**Trap 3 — Off-by-one indexing.** Confusing $a_0,a_1$ as "the first two terms" versus $a_1,a_2$ shifts every later index; re-derive $a_2$ from the stated recurrence and initial conditions as a check rather than assuming a convention.
+
+**Trap 4 — Resonance in the particular-solution guess.** If the guessed particular-solution form already matches part of the homogeneous solution, it must be multiplied by $n$ (or $n^2$) before solving — the un-multiplied guess gives an inconsistent system.

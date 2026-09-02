@@ -3,22 +3,22 @@ id: ode-second-order-homo.intuition
 concept_id: ode-second-order-homo
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.1
 exam_ids: ["*"]
-scaffold_fade: true
 ---
 
-## Why the Characteristic Equation Unlocks Second-Order ODEs
+## One Guess Does All the Work
 
-A second-order **homogeneous** ODE has the form $ay'' + by' + cy = 0$, where the right side is zero. The name "homogeneous" signals an algebraic turn: instead of solving a differential equation directly, we guess that the solution has the form $y = e^{rx}$ for some constant $r$. 
+The equation $ay''+by'+cy=0$ never changes what a solution *looks like* — only the derivative of $e^{rx}$ is a multiple of itself, so trying $y=e^{rx}$ turns the whole ODE into one algebra problem: $ar^2+br+c=0$. Every solution comes from picking the right $r$ (or $r$'s) and combining them.
 
-**The genius move:** Substitute this guess into the ODE. Since $y' = re^{rx}$ and $y'' = r^2e^{rx}$, the equation becomes:
-$$e^{rx}(ar^2 + br + c) = 0$$
+Take $y''-5y'+6y=0$. The characteristic equation is $r^2-5r+6=0$, which factors as $(r-2)(r-3)=0$ — roots $r=2,3$. Both $e^{2x}$ and $e^{3x}$ solve the ODE on their own, and because the equation is linear, so does any combination $C_1e^{2x}+C_2e^{3x}$. That combination — two free constants — is the *whole* general solution, no more roots to find.
 
-Since $e^{rx} \neq 0$, we must have $ar^2 + br + c = 0$ — the **characteristic equation**. Solving this quadratic gives us two values of $r$, and each generates one solution to the ODE.
+What changes across problems is only how the quadratic's roots come out:
 
-**Why this works in exams:** The characteristic equation converts a calculus problem into pure algebra. Once you find $r_1$ and $r_2$, the general solution is always $y = c_1 e^{r_1 x} + c_2 e^{r_2 x}$ (if roots are real and distinct). No integration by parts, no integration tables — just plug the roots in.
+| Discriminant $b^2-4ac$ | Roots | Solution shape |
+|---|---|---|
+| Positive | Two distinct real $r_1,r_2$ | $C_1e^{r_1x}+C_2e^{r_2x}$ |
+| Zero | One repeated real $r$ | $(C_1+C_2x)e^{rx}$ |
+| Negative | Complex $\alpha\pm i\beta$ | $e^{\alpha x}(C_1\cos\beta x+C_2\sin\beta x)$ |
 
-**Exam insight:** GATE problems typically give you messy coefficients to test whether you remember the formula structure, not whether you can integrate. Master the characteristic equation → master second-order homogeneous ODEs.
-
----
+The repeated-root row is the one case where a second, *independent* solution isn't another exponential — it's $xe^{rx}$, needed only because $e^{rx}$ alone can't supply two degrees of freedom by itself.

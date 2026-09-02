@@ -1,29 +1,19 @@
 ---
-id: improper-integrals.retrieval-prompt
+id: improper-integrals.retrieval_prompt
 concept_id: improper-integrals
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 1
+difficulty: 0.25
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["p-integral-test", "type-II-singularity", "convergence-direction"]
 ---
 
-Does $\int_1^{\infty} \frac{1}{x^p} \, dx$ converge for $p = 0.5$?
-
-- **(A)** Converges
-- **(B)** Diverges
-- **(C)** Converges to $p$
-- **(D)** Undefined
+Before checking: for $\int_0^1 x^{-p}\,dx$ (a singularity at the LOWER bound), does making $p$ LARGER make convergence more or less likely?
 
 <details>
 <summary>Answer</summary>
 
-**B**. For p-integrals $\int_1^{\infty} \frac{1}{x^p} dx$:
-- Converges if $p > 1$
-- Diverges if $p \leq 1$
-
-Since $p = 0.5 < 1$, the integral diverges.
-
-Check: $\int_1^{\infty} \frac{1}{\sqrt{x}} dx = \lim_{t \to \infty} [2\sqrt{x}]_1^t = \lim_{t \to \infty} (2\sqrt{t} - 2) = \infty$
+Less likely. At a point-singularity, convergence needs $p<1$; a larger $p$ pushes further from that, toward divergence — the opposite direction from the infinity case.
 
 </details>

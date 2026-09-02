@@ -4,27 +4,13 @@ concept_id: positive-definite-matrices
 atom_type: micro_exercise
 bloom_level: 3
 difficulty: 0.45
-estimated_minutes: 2
 exam_ids: ["*"]
+estimated_minutes: 2
 ---
 
-**Question:** For the matrix $A = \begin{pmatrix} 3 & 1 \\ 1 & 2 \end{pmatrix}$, which of the following is true?
-
-**(A)** $A$ is positive definite  
-**(B)** $A$ is positive semidefinite but not positive definite  
-**(C)** $A$ is indefinite  
-**(D)** $A$ is negative definite  
+For $A = \begin{pmatrix} 3 & 1 \\ 1 & 2 \end{pmatrix}$: positive definite, positive semidefinite, indefinite, or negative definite?
 
 <details><summary>Answer</summary>
 
-Apply Sylvester's criterion:
-- $D_1 = 3 > 0$ ✓
-- $D_2 = \det(A) = (3)(2) - (1)(1) = 6 - 1 = 5 > 0$ ✓
-
-Both leading principal minors are positive, so $A$ is **positive definite**. 
-
-**Answer: (A)**
-
-*Verification:* Eigenvalues are $\lambda = \frac{5 \pm \sqrt{25 - 4(5)}}{2} = \frac{5 \pm \sqrt{5}}{2}$, giving $\lambda_1 \approx 3.62, \lambda_2 \approx 1.38$ (both positive, sum $=5=\text{tr}(A)$ ✓, product $=5=\det(A)$ ✓) ✓
-
+$D_1=3>0$, $D_2=\det(A)=6-1=5>0$ — Sylvester passes: **positive definite**. Verify: $\lambda=\frac{5\pm\sqrt5}{2}\approx3.62,1.38$, both positive (sum $5=\text{tr}(A)$ ✓, product $5=\det(A)$ ✓).
 </details>

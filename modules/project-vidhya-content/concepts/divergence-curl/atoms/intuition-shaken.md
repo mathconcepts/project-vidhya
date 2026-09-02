@@ -1,26 +1,28 @@
 ---
-# Alternative body for divergence-curl.intuition, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# Alternative body for divergence-curl.intuition, served when the learner
+# stance is `shaken`. Concrete-first, smallest true step, arithmetic in
+# full, explicit check at the end.
 id: divergence-curl.intuition.shaken
 concept_id: divergence-curl
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: divergence-curl-intuition
+difficulty: 0.12
+exam_ids: ["*"]
+modality: visual
+variant_of: divergence-curl.intuition
 for_stance: shaken
 ---
 
-Take the field $\mathbf F=(x,y,0)$ and mark the point $(1,1,0)$. Draw a tiny box around it: on the right face the flow is roughly $F_x=1$ heading out, on the left face it is roughly $F_x=-1$ heading further out still — more is leaving the box than entering. That net outflow per unit volume is the divergence, and here $\nabla\cdot\mathbf F=\partial_x x+\partial_y y=2>0$: a source.
+Take $\mathbf F=(x,y)$.
 
-Now take $\mathbf F=(-y,x,0)$ at the origin and imagine a tiny paddle wheel dropped there. At $(1,0,0)$ the field points toward $(0,1,0)$, and at $(0,1,0)$ it points toward $(-1,0,0)$: the wheel gets pushed round its rim. That spin is the curl, and here $\nabla\times\mathbf F=2\hat k$ — nonzero.
+**Step 1 — divergence.** $\partial_x(x)+\partial_y(y)=1+1=2$. Positive: a source.
 
-Same construction — three partial derivatives assembled from $\mathbf F$ — gives two different answers: a number for spreading, a vector for spinning. Ask the outflow question first, the spin question second; the formulas are bookkeeping for what the picture already showed.
+**Step 2 — curl.** $\partial_x(y)-\partial_y(x)=0-0=0$. Zero: no spin.
+
+Now take $\mathbf G=(-y,x)$.
+
+**Step 3 — divergence.** $\partial_x(-y)+\partial_y(x)=0+0=0$. Zero: no source.
+
+**Step 4 — curl.** $\partial_x(x)-\partial_y(-y)=1-(-1)=2$. Positive: spin.
+
+**Check.** $\mathbf F$ scores $(\operatorname{div},\operatorname{curl})=(2,0)$; $\mathbf G$ scores $(0,2)$. Each field passes one test and fails the other completely.

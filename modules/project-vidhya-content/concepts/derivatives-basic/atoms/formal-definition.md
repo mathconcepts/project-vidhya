@@ -24,3 +24,5 @@ A function is **differentiable** at $a$ if this limit exists. It is **differenti
 - $(f+g)' = f' + g'$ — sum rule
 - $(fg)' = f'g + fg'$ — product rule
 - $(f(g(x)))' = f'(g(x)) \cdot g'(x)$ — chain rule
+
+**Method selector.** Apply the rules above directly when $f$ is a sum or constant multiple of basic power/exponential/trig terms — each term differentiates independently. A tempting but wrong shortcut: treating a composite like $(x^2+1)^3$ as "already a power of $x$" and expanding the sum rule on the unexpanded expression — the outer power needs the chain rule's extra factor $g'(x)$, which the sum rule alone never supplies.

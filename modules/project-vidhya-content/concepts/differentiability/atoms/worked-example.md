@@ -3,67 +3,49 @@ id: differentiability.worked_example
 concept_id: differentiability
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-# Worked Example: Finding Differentiability Conditions
+**Problem.** $f(x)=x^2$ for $x<1$, and $f(x)=ax+b$ for $x\ge1$. Find $a,b$ so that $f$ is differentiable at $x=1$.
 
-## Problem
+Differentiability at a join point needs **two** conditions, not one: continuity first, then matching one-sided derivatives.
 
-Find the values of $a$ and $b$ such that the following piecewise function is differentiable at $x = 1$:
+---
 
-$$f(x) = \begin{cases} x^2 & x \leq 1 \\ ax + b & x > 1 \end{cases}$$
+**Step 1 — Impose continuity at $x=1$.**
 
-## Solution
+$$
+\lim_{x\to1^-}x^2 = 1, \qquad f(1)=a(1)+b=a+b
+$$
 
-For a piecewise function to be differentiable at the junction point $x = 1$, it must satisfy two conditions:
-1. **Continuity:** The left and right limits must equal the function value
-2. **Differentiability:** The left and right derivatives must be equal
+Continuity requires $a+b=1$. — call this equation (i).
 
-### Step 1: Apply Continuity Condition
+---
 
-The function value at $x = 1$ from the first piece:
-$$f(1) = 1^2 = 1$$
+**Step 2 — Impose matching one-sided derivatives.**
 
-The limit as we approach from the right:
-$$\lim_{x \to 1^+} f(x) = \lim_{x \to 1^+} (ax + b) = a + b$$
+Left-hand derivative (from $f(x)=x^2$): $f'(x)=2x$, so at $x=1$, left derivative $=2$.
 
-For continuity: $a + b = 1$ ... **(Equation 1)**
+Right-hand derivative (from $f(x)=ax+b$): $f'(x)=a$, constant.
 
-### Step 2: Find the Left Derivative
+Differentiability requires the two to match: $a=2$. — call this equation (ii).
 
-For $x \leq 1$: $f(x) = x^2$, so
-$$f'(x) = 2x$$
-$$f'(1^-) = 2(1) = 2$$
+---
 
-### Step 3: Find the Right Derivative
+**Step 3 — Solve.**
 
-For $x > 1$: $f(x) = ax + b$, so
-$$f'(x) = a$$
-$$f'(1^+) = a$$
+From (ii), $a=2$. Substituting into (i): $2+b=1\Rightarrow b=-1$.
 
-### Step 4: Apply Differentiability Condition
+$$
+\boxed{a=2,\ b=-1}
+$$
 
-For differentiability, the derivatives must match:
-$$f'(1^-) = f'(1^+)$$
-$$2 = a$$ ... **(Equation 2)**
+---
 
-### Step 5: Solve for Both Parameters
-
-From Equation 2: $a = 2$
-
-Substitute into Equation 1:
-$$2 + b = 1$$
-$$b = -1$$
-
-## Answer
-
-$$\boxed{a = 2, \quad b = -1}$$
-
-The function becomes $f(x) = \begin{cases} x^2 & x \leq 1 \\ 2x - 1 & x > 1 \end{cases}$, which is continuous and differentiable at $x = 1$ with derivative value $f'(1) = 2$.
+**Sanity check.** With $a=2,b=-1$: at $x=1$, both pieces give $f(1)=1$ (continuity holds), and both one-sided derivatives equal $2$ (differentiability holds). At $x=1.1$ from the right: $f(1.1)=2(1.1)-1=1.2$; from the left, extrapolating the parabola's own slope near $1$, $f(1)+2(0.1)=1.2$ — consistent.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Piecewise Differentiability","steps":[{"prompt":"Step 1: For differentiability at x = 1, the function must first be continuous. What must be true about the left and right limits?","hint":"The limits from both sides must equal f(1) = 1². Find the right limit: a(1) + b = ?","answer":"Both limits must equal 1, so a + b = 1"},{"prompt":"Step 2: Calculate the left derivative at x = 1 by differentiating x² and evaluating at x = 1.","hint":"d/dx(x²) = 2x. At x = 1, this equals ?","answer":"f'(1⁻) = 2(1) = 2"},{"prompt":"Step 3: The right derivative is the derivative of ax + b. What is this?","hint":"The derivative of a linear function ax + b is just the slope.","answer":"f'(1⁺) = a"},{"prompt":"Step 4: For differentiability, left and right derivatives must be equal: 2 = a. Use continuity a + b = 1 to find b.","hint":"If a = 2, then 2 + b = 1, so b = ?","answer":"a = 2 and b = −1"}],"caption":"Key exam insight: Check continuity first (matching y-values), then matching slopes (derivatives) at the junction point."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: find a, b so f(x)=x^2 (x<1), f(x)=ax+b (x>=1) is differentiable at x=1","steps":[{"prompt":"First impose continuity at x=1. What equation does that give you?","hint":"Set the limit of x^2 as x to 1 equal to a(1)+b.","answer":"lim_{x to 1^-} x^2 = 1, and f(1) = a + b, so continuity requires a + b = 1."},{"prompt":"Now impose matching one-sided derivatives at x=1. What equation does THIS give you?","hint":"Differentiate each piece separately: d/dx(x^2) = 2x; d/dx(ax+b) = a.","answer":"Left derivative at x=1 is 2(1)=2. Right derivative is a (constant). Matching requires a = 2."},{"prompt":"Solve the two equations together. What are a and b?","hint":"Substitute a = 2 into a + b = 1.","answer":"a = 2, and b = 1 - 2 = -1, so \\boxed{a=2,\\ b=-1}."}]}
 ```

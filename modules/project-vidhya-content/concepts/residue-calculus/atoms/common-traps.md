@@ -2,11 +2,13 @@
 id: residue-calculus.common-traps
 concept_id: residue-calculus
 atom_type: common_traps
-bloom_level: 2
-difficulty: 0.3
+bloom_level: 4
+difficulty: 0.5
 exam_ids: ["*"]
 ---
 
-- **Forgetting the $2\pi i$ factor**: The Residue Theorem includes a factor of $2\pi i$. Students often compute the sum of residues and forget to multiply by $2\pi i$, giving an answer that's off by a factor of $2\pi i$.
-- **Confusing residue formula for different pole orders**: For a simple pole at $z_0$, use $\text{Res}(f, z_0) = \lim_{z \to z_0} (z - z_0) f(z)$. For a pole of order $n > 1$, use the derivative formula. Using the simple formula on a higher-order pole gives the wrong answer.
-- **Ignoring poles outside the contour**: If a pole lies outside the contour, it contributes zero to the integral. Many students mistakenly include poles from the full factorization without checking whether they're inside or outside.
+**Trap 1 — Forgetting the $2\pi i$ factor.** The Residue Theorem includes a factor of $2\pi i$. Computing the sum of residues and stopping there gives an answer off by exactly that factor.
+
+**Trap 2 — Wrong formula for the pole order.** Simple pole: $\lim_{z\to z_0}(z-z_0)f(z)$. Order $n>1$: the derivative formula. Applying the simple-pole limit to $e^z/z^2$ gives $\lim_{z\to0}e^z/z$, which doesn't exist — a strong signal the order was misjudged, not that the residue is undefined.
+
+**Trap 3 — Including poles outside the contour.** A pole outside $C$ contributes nothing. Factoring the full denominator and summing every residue found, without checking each one is actually inside $C$, is a common source of an inflated answer.

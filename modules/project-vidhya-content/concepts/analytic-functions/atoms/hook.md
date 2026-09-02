@@ -3,7 +3,7 @@ id: analytic-functions.hook
 concept_id: analytic-functions
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 ---
 

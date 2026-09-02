@@ -1,83 +1,59 @@
 ---
-id: sequences.worked-example
+id: sequences.worked_example
 concept_id: sequences
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.2
 exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-# Worked Example: Proving Convergence and Finding Limits
+**Problem.** Show that $a_n = \dfrac{n}{n+1}$ converges, and find its limit.
 
-## Problem (GATE-style)
-
-Consider the sequence $a_n = \frac{3n^2 + 2n - 1}{n^2 + 5n + 3}$.
-
-**(a)** Find $\lim_{n \to \infty} a_n$.  
-**(b)** Verify that for all $n \geq 1$, the sequence is bounded above by 4.  
-**(c)** Determine whether the sequence is monotone, and justify your answer.
+There is no need to guess the limit first — boundedness plus monotonicity will prove convergence exists, and a small algebraic rewrite will hand over the exact value.
 
 ---
 
-## Solution
+**Step 1 — Check boundedness.**
 
-### Part (a): Finding the Limit
-
-To find the limit of a rational function where both numerator and denominator are polynomials, divide both by the highest power of $n$, which is $n^2$:
-
-$$a_n = \frac{3n^2 + 2n - 1}{n^2 + 5n + 3} = \frac{n^2(3 + \frac{2}{n} - \frac{1}{n^2})}{n^2(1 + \frac{5}{n} + \frac{3}{n^2})} = \frac{3 + \frac{2}{n} - \frac{1}{n^2}}{1 + \frac{5}{n} + \frac{3}{n^2}}$$
-
-As $n \to \infty$: $\frac{2}{n} \to 0$, $\frac{1}{n^2} \to 0$, $\frac{5}{n} \to 0$, $\frac{3}{n^2} \to 0$.
-
-By the limit properties (limit of quotient = quotient of limits):
-
-$$\lim_{n \to \infty} a_n = \frac{3 + 0 - 0}{1 + 0 + 0} = \boxed{3}$$
-
-### Part (b): Boundedness
-
-We need to show $a_n < 4$ for all $n \geq 1$.
-
-$$a_n < 4 \iff \frac{3n^2 + 2n - 1}{n^2 + 5n + 3} < 4$$
-
-Multiply both sides by $(n^2 + 5n + 3)$ (positive for $n \geq 1$):
-
-$$3n^2 + 2n - 1 < 4(n^2 + 5n + 3)$$
-$$3n^2 + 2n - 1 < 4n^2 + 20n + 12$$
-$$0 < n^2 + 18n + 13$$
-
-Since $n \geq 1$: $n^2 + 18n + 13 \geq 1 + 18 + 13 = 32 > 0$ ✓
-
-Therefore, $a_n < 4$ for all $n \geq 1$, and the sequence is **bounded above by 4**.
-
-By evaluating $a_1 = \frac{3 + 2 - 1}{1 + 5 + 3} = \frac{4}{9} > 0$, the sequence is also bounded below by 0, so it is **bounded**.
-
-### Part (c): Monotonicity
-
-Compute $a_{n+1} - a_n$:
-
-$$a_{n+1} - a_n = \frac{3(n+1)^2 + 2(n+1) - 1}{(n+1)^2 + 5(n+1) + 3} - \frac{3n^2 + 2n - 1}{n^2 + 5n + 3}$$
-
-Numerator of $a_{n+1}$: $3(n^2 + 2n + 1) + 2n + 2 - 1 = 3n^2 + 8n + 4$
-
-Denominator of $a_{n+1}$: $(n^2 + 2n + 1) + 5n + 5 + 3 = n^2 + 7n + 9$
-
-After finding a common denominator and simplifying (algebra omitted for brevity):
-
-$$a_{n+1} - a_n = \frac{(3n^2 + 8n + 4)(n^2 + 5n + 3) - (3n^2 + 2n - 1)(n^2 + 7n + 9)}{(n^2 + 7n + 9)(n^2 + 5n + 3)}$$
-
-The numerator, when expanded, gives $n^2 + 31n + 39 > 0$ for all $n \geq 1$.
-
-Therefore, $a_{n+1} > a_n$, so the sequence is **monotonically increasing** toward its limit of 3.
+For every $n\ge 1$, $n < n+1$, so $0 < \dfrac{n}{n+1} < 1$. The sequence is bounded between $0$ and $1$.
 
 ---
 
-## Key Insights
+**Step 2 — Check monotonicity.**
 
-- **Polynomial limits**: For rational functions, the limit is determined by the leading terms.
-- **Boundedness + monotonicity**: A bounded monotone sequence always converges (Monotone Convergence Theorem).
-- **Algebraic verification**: Always check inequalities by cross-multiplying carefully when signs are known positive.
+$$
+a_{n+1}-a_n=\frac{n+1}{n+2}-\frac{n}{n+1}=\frac{(n+1)^2-n(n+2)}{(n+2)(n+1)}
+$$
+
+The numerator is $(n^2+2n+1)-(n^2+2n)=1$, so
+
+$$
+a_{n+1}-a_n=\frac{1}{(n+1)(n+2)}>0 \quad \text{for all } n\ge 1.
+$$
+
+The sequence is strictly increasing.
+
+---
+
+**Step 3 — Apply the Monotone Convergence Theorem.**
+
+Bounded above by $1$ and strictly increasing $\Rightarrow$ the sequence converges. This step alone guarantees a limit exists, before its value is even computed.
+
+---
+
+**Step 4 — Find the value.**
+
+Rewrite $a_n = \dfrac{n}{n+1} = \dfrac{1}{1+\frac{1}{n}}$. As $n\to\infty$, $\dfrac{1}{n}\to 0$, so
+
+$$
+\boxed{\lim_{n\to\infty}\frac{n}{n+1}=1}
+$$
+
+---
+
+**Sanity check.** $a_{1000} = \dfrac{1000}{1001}\approx 0.999001$ — closer to $1$ than $a_{100}=\dfrac{100}{101}\approx0.990099$, exactly as an increasing sequence approaching $1$ should be.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: Limit of a rational sequence","steps":[{"prompt":"Step 1: To find the limit of $a_n = \\frac{3n^2 + 2n - 1}{n^2 + 5n + 3}$, divide numerator and denominator by the highest power of $n$ present. What is the highest power?","hint":"Look at both the numerator and denominator. The highest power in both is...?","answer":"$n^2$"},{"prompt":"Step 2: Rewrite the sequence as $\\frac{n^2(3 + \\frac{2}{n} - \\frac{1}{n^2})}{n^2(1 + \\frac{5}{n} + \\frac{3}{n^2})}$. Cancel the $n^2$ terms to get $\\frac{3 + \\frac{2}{n} - \\frac{1}{n^2}}{1 + \\frac{5}{n} + \\frac{3}{n^2}}$. As $n \\to \\infty$, what happens to fractions like $\\frac{1}{n}$ and $\\frac{1}{n^2}$?","hint":"What is $\\lim_{n \\to \\infty} \\frac{1}{n}$? What is $\\lim_{n \\to \\infty} \\frac{1}{n^2}$?","answer":"They both approach 0."},{"prompt":"Step 3: Apply the limit to the simplified expression: $\\lim_{n \\to \\infty} \\frac{3 + \\frac{2}{n} - \\frac{1}{n^2}}{1 + \\frac{5}{n} + \\frac{3}{n^2}} = \\frac{3 + 0 - 0}{1 + 0 + 0}$. What is this limit?","hint":"Substitute the limiting values of the fractional terms.","answer":"The limit is $\\frac{3}{1} = 3$. The sequence converges to 3."}],"caption":"Rational sequences converge to the ratio of leading coefficients. This trick works for all polynomial quotients where the numerator and denominator have the same degree."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: does a_n = n/(n+1) converge?","steps":[{"prompt":"Is a_n = n/(n+1) bounded? Find the bounds.","hint":"Compare n against n+1.","answer":"Yes: 0 < a_n < 1 for every n, since n < n+1."},{"prompt":"Is a_n increasing? Compute a_{n+1} - a_n.","hint":"Combine over the common denominator (n+1)(n+2).","answer":"a_{n+1} - a_n = 1/[(n+1)(n+2)] > 0, so the sequence is strictly increasing."},{"prompt":"Bounded above and increasing — what does the Monotone Convergence Theorem give, and what is the limit?","hint":"Rewrite a_n as 1/(1 + 1/n) and let n go to infinity.","answer":"The sequence converges by the Monotone Convergence Theorem, and the limit is \\boxed{1}."}]}
 ```

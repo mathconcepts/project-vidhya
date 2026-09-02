@@ -4,31 +4,21 @@ concept_id: least-squares
 atom_type: interleaved_drill
 bloom_level: 4
 difficulty: 0.60
-exam_ids: ["*"]
 modality: drill
+exam_ids: ["*"]
 tested_by_atom: least-squares.micro_exercise
 ---
 
-**Cross-concept check: least squares → inner product spaces.**
+**Cross-concept check: least squares → SVD.**
 
-$A = \begin{pmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 2 \end{pmatrix}$, $b = \begin{pmatrix} 1 \\ 2 \\ 2 \end{pmatrix}$, with least-squares solution $\hat{x} = \left(\tfrac{7}{6}, \tfrac{1}{2}\right)^T$ (verified) and residual $\hat{r} = b - A\hat{x} = \tfrac{1}{6}(-1, 2, -1)^T$.
+$A = \begin{pmatrix} 1 & 0 \\ 1 & 1 \\ 1 & 2 \end{pmatrix}$ has full column rank 2, so $A^TA=\begin{pmatrix}3&3\\3&5\end{pmatrix}$ is invertible and the normal equations give the unique $\hat x=(7/6,1/2)$ (worked example, verified).
 
-**Question 1 (least squares):** Verify $\hat{x}$ without re-solving — using only the defining orthogonality.
+**Question 1 (least squares):** The normal-equation route needs $A^TA$ invertible. What happens to $\hat x=(A^TA)^{-1}A^Tb$ when $A$'s columns are dependent instead — say a fourth column duplicating an existing one is added?
 
-*Answer:* Check $\hat{r}$ against each column. With $a_1 = (1,1,1)^T$ and $a_2 = (0,1,2)^T$:
+*Answer:* $A^TA$ becomes singular — it has no inverse, so the formula $\hat x=(A^TA)^{-1}A^Tb$ breaks down entirely. The normal equations $A^TA\hat x=A^Tb$ still hold, but now have infinitely many solutions rather than one.
 
-$$\langle \hat{r}, a_1 \rangle = \tfrac{1}{6}(-1 + 2 - 1) = 0, \qquad \langle \hat{r}, a_2 \rangle = \tfrac{1}{6}(0 + 2 - 2) = 0$$
+**Question 2 (SVD):** What does SVD give you in exactly that broken case that the normal equations alone cannot?
 
-Both zero, so $A^T\hat{r} = 0$ ✓ — and that *is* the normal equations, just written as two inner products instead of one matrix equation.
+*Answer:* The Moore–Penrose pseudoinverse $A^+=V\Sigma^+U^T$ (built from $A=U\Sigma V^T$, inverting only the nonzero singular values) always exists, rank-deficient or not, and $\hat x=A^+b$ is the *minimum-norm* least squares solution — the smallest $\hat x$ among the infinitely many that all minimize $\|b-Ax\|$. When $A$ has full column rank, $A^+=(A^TA)^{-1}A^T$ and the two methods agree exactly; SVD is the version that never breaks.
 
-**Question 2 (inner product spaces):** $\hat{r} \perp A\hat{x}$, since $A\hat{x} \in \text{col}(A)$. What identity does that hand you for free, and does it hold here?
-
-*Answer:* The Pythagorean theorem in an inner product space: if $\langle u, v \rangle = 0$ then $\|u + v\|^2 = \|u\|^2 + \|v\|^2$. Applied to $b = A\hat{x} + \hat{r}$:
-
-$$\|b\|^2 = \|A\hat{x}\|^2 + \|\hat{r}\|^2$$
-
-Check: $\|b\|^2 = 1 + 4 + 4 = 9$. $A\hat{x} = \tfrac{1}{6}(7, 10, 13)^T$, so $\|A\hat{x}\|^2 = \tfrac{49 + 100 + 169}{36} = \tfrac{53}{6}$. And $\|\hat{r}\|^2 = \tfrac{1 + 4 + 1}{36} = \tfrac{1}{6}$. Sum: $\tfrac{53}{6} + \tfrac{1}{6} = 9$ ✓ (verified).
-
-So $\|\hat{r}\|^2 = \|b\|^2 - \|A\hat{x}\|^2$ — the minimum squared error, obtainable without ever forming $\hat{r}$.
-
-**Why this drill exists:** students file the normal equations as a formula to reproduce, not as the sentence "the residual is orthogonal to the column space." Once it's the sentence, three things become obvious that were previously separate facts to memorise: the equations themselves, the Pythagorean split of $\|b\|^2$, and why the whole method transfers verbatim to a weighted or function-space inner product where $A^TA$ is no longer the right object.
+**Why this drill exists:** the normal equations are taught as *the* method, so a rank-deficient $A$ reads as a dead end rather than a case needing a different, still-honest tool. SVD is that tool — not a replacement for the normal equations, but what they're secretly built from once $\Sigma$ is invertible.

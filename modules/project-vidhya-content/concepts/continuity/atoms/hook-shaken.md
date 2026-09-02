@@ -1,21 +1,19 @@
 ---
 # Alternative body for continuity.hook, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# `shaken`. Concrete-first, full arithmetic, explicit check, no
+# reassurance language.
 id: continuity.hook.shaken
 concept_id: continuity
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: continuity.hook
 for_stance: shaken
 ---
 
-Look at $f(x)=\frac{x^2-4}{x-2}$ near $x=2$. At $x=1.9$, $f=3.9$; at $x=2.1$, $f=4.1$ — both sides are homing in on $4$. Plug $x=2$ in directly, though, and you get $\frac{0}{0}$: undefined. The pen would have to jump off the page and land back on it. That gap is what continuity rules out.
+Compute $f(x)=\dfrac{x^2-4}{x-2}$ at three values. $x=0$: $\dfrac{0-4}{0-2}=2$. $x=1$: $\dfrac{1-4}{1-2}=3$. $x=1.9$: $\dfrac{3.61-4}{1.9-2}=\dfrac{-0.39}{-0.1}=3.9$. Each value fits the line $y=x+2$ exactly. Now check $x=2$ directly: $\dfrac{4-4}{2-2}=\dfrac00$, undefined — one single point breaks. Every other point, including points as close to $2$ as you like, works fine on the same straight line. One undefined point does not mean the whole function is broken.
+
+```interactive-spec
+{"v":1,"kind":"simulation","title":"(x^2-4)/(x-2) traced toward x=2 — smooth everywhere but one point","x_expr":"t","y_expr":"(t*t-4)/(t-2)","t_min":0,"t_max":1.98,"duration_sec":8,"view_box":{"x_min":-0.3,"x_max":2.6,"y_min":1.5,"y_max":4.5},"narration_steps":[{"at_progress":0.0,"text":"At x = 0, f(x) = (0-4)/(0-2) = 2. Nothing unusual — an ordinary point on an ordinary curve.","text_shaken":"At x = 0: (0^2-4)/(0-2) = -4/-2 = 2. Compute it yourself.","text_assured":"f(x) = (x^2-4)/(x-2) simplifies algebraically to x+2 for every x != 2 — the curve traced here IS the line y = x+2, minus one point.","emphasize":false},{"at_progress":0.5,"text":"At x = 1, f(x) = -3/-1 = 3. The curve is climbing in a perfectly straight line, no surprises yet.","text_shaken":"At x = 1: (1-4)/(1-2) = -3/-1 = 3. Same straight climb as before.","text_assured":"Every value traced so far equals x + 2 exactly — the cancellation (x-2) in numerator and denominator is legal for every x on this path, since none of them equal 2.","emphasize":false},{"at_progress":0.92,"text":"At x = 1.96, f(x) = 3.96 — the curve keeps climbing in that same straight line, heading toward 4.","text_shaken":"At x = 1.96: (1.96^2-4)/(1.96-2) = 3.96. Still exactly on the line y = x+2.","text_assured":"The limit as x approaches 2 is 4 — but f(2) itself cannot be computed from this formula at all: 0/0.","trap":{"text":"Students assume a formula with a division problem is broken everywhere, or conclude the function is simply undefined and stop analysing it.","avoid":"Check the domain point by point: f is undefined only exactly at x=2. Everywhere else, including arbitrarily close to 2, the formula works fine and the curve is a straight line."}},{"at_progress":1.0,"text":"At x=2 the curve has an open hole exactly at height 4 — the point that would complete the line is missing, though every point around it agrees on where it should be.","text_shaken":"At x=2: 0/0, undefined. But the trend from both directions points at height 4. Write that down as the limit — not as f(2), which does not exist.","text_assured":"This is the textbook shape of a removable discontinuity: the limit exists (4), the function value does not — redefining f(2)=4 would make f continuous everywhere.","emphasize":true}]}
+```

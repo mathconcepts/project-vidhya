@@ -27,3 +27,7 @@ This holds because both products yield the same non-zero eigenvalues (the zero s
 Trace is a linear functional:
 - $\text{tr}(A + B) = \text{tr}(A) + \text{tr}(B)$
 - $\text{tr}(cA) = c \cdot \text{tr}(A)$ for scalar $c$
+
+## Method selector
+
+Use $\text{tr}(A) = \sum\lambda_i$ to **check** eigenvalues already found some other way — not to derive them outright. The trace is one equation in $n$ unknowns, so infinitely many eigenvalue sets share the same sum; it confirms a candidate answer in one glance but a student who tries to *solve for* the eigenvalues from trace alone (with no other equation) has under-constrained the problem.

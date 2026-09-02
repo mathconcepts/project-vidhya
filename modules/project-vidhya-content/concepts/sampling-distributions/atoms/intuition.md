@@ -8,7 +8,7 @@ exam_ids: ["*"]
 scaffold_fade: true
 ---
 
-# Understanding Sampling Distributions: The Statistic That Has Its Own Distribution
+## Understanding Sampling Distributions: The Statistic That Has Its Own Distribution
 
 Every time you draw a sample and compute a statistic — a mean, a variance — you get a slightly different number. If you imagine repeating that draw infinitely many times, the collection of all those statistic values forms its own probability distribution: the **sampling distribution**. The population has a distribution; so does the sample mean computed *from* it — and these two are usually not the same shape at all.
 
@@ -23,5 +23,3 @@ Every time you draw a sample and compute a statistic — a mean, a variance — 
 ## Why It Matters for GATE
 
 Confidence intervals, hypothesis tests, and quality-control problems all hinge on picking the *right* distribution for the statistic at hand — normal when $\sigma$ is known and $n$ is large, $t$ when $\sigma$ is unknown, $\chi^2$ when the target is variance. Picking the wrong one is one of the most common ways marks are lost in this topic.
-
----

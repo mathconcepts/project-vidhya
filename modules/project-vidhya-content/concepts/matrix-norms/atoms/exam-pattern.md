@@ -3,22 +3,21 @@ id: matrix-norms.exam-pattern
 concept_id: matrix-norms
 atom_type: exam_pattern
 bloom_level: 3
-difficulty: 0.40
+difficulty: 0.4
 exam_ids: ["*"]
 modality: text
 ---
 
 **How GATE actually asks this.**
 
-- **Three of the four norms are free; only one costs anything.** For a NAT asking $\|A\|_1$, $\|A\|_\infty$ or $\|A\|_F$, the answer is pure arithmetic on the entries — no eigenvalues, no decomposition. For $A = \begin{pmatrix} 3 & 4 \\ 0 & 5 \end{pmatrix}$: column sums $3$ and $9$ give $\|A\|_1 = 9$; row sums $7$ and $5$ give $\|A\|_\infty = 7$; $\|A\|_F = \sqrt{9+16+25} = \sqrt{50} \approx 7.07$. Under 30 seconds for all three.
+- **NAT: "compute $\|A\|_F$ (or $\|A\|_1$/$\|A\|_\infty$) for a given matrix."** Pure definition-plug-in, no eigenvalues needed.
 
-- **The signature trap: $\|A\|_2$ is *not* the largest $|\lambda|$.** That same $A$ is triangular, so its eigenvalues are $3$ and $5$ — and the tempting answer $\|A\|_2 = 5$ is wrong. You must go through $A^TA = \begin{pmatrix} 9 & 12 \\ 12 & 41 \end{pmatrix}$, whose eigenvalues are $45$ and $5$, giving $\|A\|_2 = \sqrt{45} = 3\sqrt5 \approx 6.708$. Spectral radius $\rho(A) = 5$ is a strict *lower* bound here, never the answer. $\|A\|_2 = \max|\lambda|$ holds **only** for symmetric (more generally normal) $A$ — check symmetry before using the shortcut.
+  Example: $A=\begin{pmatrix}4&1\\0&2\end{pmatrix}$: $\|A\|_F=\sqrt{16+1+0+4}=\sqrt{21}\approx4.58$ — read straight off the entries.
 
-- **MCQ/MSQ property questions worth pre-loading:**
-  - $\|A\|_F = \sqrt{\sum_i \sigma_i^2}$ and $\|A\|_2 = \sigma_{\max}$, so $\|A\|_2 \le \|A\|_F \le \sqrt{r}\,\|A\|_2$ for rank $r$. Above: $45 + 5 = 50 = \|A\|_F^2$ ✓.
-  - The Frobenius norm is **not** an induced norm: $\|I_n\|_F = \sqrt n$, while every induced norm gives $\|I_n\| = 1$. This is the standard "which of the following is an operator norm" filter.
-  - $\|A\|_2 = \|A^T\|_2$ and $\|A\|_1 = \|A^T\|_\infty$ — a matrix and its transpose swap the tall/wide pair.
+- **NAT/MCQ on the condition number, usually via singular values already given or an easy $A^TA$.** For a symmetric or diagonal $A$, $\kappa_2(A)$ is a one-line ratio of $|$eigenvalues$|$ — check whether $A$ is symmetric before reaching for $A^TA$.
 
-- **Condition number is usually the real question.** $\kappa_2(A) = \sigma_{\max}/\sigma_{\min} = 3\sqrt5/\sqrt5 = 3$ for the matrix above. Remember $\kappa \ge 1$ always, and $\kappa(I) = 1$ — a negative or sub-1 answer is arithmetic failure, not an ill-conditioned matrix.
+- **MSQ "true/false" on norm properties.** Common statements tested: $\kappa(A)\geq1$ (true, always); $\|A\|_2=\rho(A)$ (true only for symmetric/normal $A$); $\kappa(cA)=\kappa(A)$ for scalar $c\neq0$ (true — condition number is scale-invariant).
 
-- **Time budget:** entry-arithmetic norms, 30 seconds. A $2\times2$ spectral norm via $A^TA$, about 90 seconds. If a NAT wants $\|A\|_2$ of a $3\times3$ non-symmetric matrix by hand, re-read it — the intended route is almost always a property, not a computation.
+- **A frequent framing device, not a computation:** the question describes an ill-conditioned system narratively (small perturbations causing large solution changes) and asks which quantity explains it — the expected answer is condition number, not determinant.
+
+- **Time budget:** a $2\times2$ Frobenius or induced-1/∞ norm should take under $60$ seconds. A spectral norm requiring eigenvalues of $A^TA$ needs the full $90$–$120$ seconds a $2\times2$ eigenvalue problem takes.

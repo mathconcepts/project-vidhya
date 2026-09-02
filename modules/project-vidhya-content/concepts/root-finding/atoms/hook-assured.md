@@ -11,10 +11,10 @@ id: root-finding.hook.assured
 concept_id: root-finding
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: root-finding.hook
 for_stance: assured
 ---
 
-Newton-Raphson's quadratic convergence assumes $f'(x_n)$ stays away from zero and the root is simple. A double root — $f(x)=(x-1)^2$, say — quietly breaks the second assumption: the iteration $x_{n+1}=(x_n+1)/2$ still converges to $x=1$, so nothing looks wrong, but the order silently drops to linear, and the digit-doubling you were counting on to bound your iteration count never shows up.
+Every root-finding method here trades away a guarantee for speed, and GATE tests exactly that trade. Bisection converges whenever $f(a)f(b)<0$, at a fixed linear rate, using only the sign of $f$ — slow, but it cannot fail. Newton-Raphson converges quadratically near a *simple* root with $f'$ bounded away from zero, but a repeated root, a poor starting guess, or a near-zero $f'$ can make it stall, oscillate, or diverge outright. The secant method needs no derivative but only reaches superlinear order ($\approx1.618$), and it needs two starting values, not one. Knowing which guarantee a question is quietly assuming is worth more marks than reciting any single formula.

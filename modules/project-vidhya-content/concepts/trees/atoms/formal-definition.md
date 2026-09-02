@@ -22,3 +22,5 @@ exam_ids: ["*"]
 **Rooted tree**: A tree with a distinguished vertex $r$ called the root. Each non-root vertex has a unique parent, and is the parent to zero or more children. Height = longest path from root to a leaf.
 
 **Spanning Tree of $G$**: A tree that includes all vertices of $G$ and is a subgraph of $G$. Any connected graph has at least one spanning tree.
+
+**Method selector.** For a *minimum*-weight spanning tree, reach for Kruskal's (sort edges, add greedily while skipping cycles) when the edge list is sparse, or Prim's (grow one frontier from a start vertex) when the graph is dense — both are correct by the Cut Property and give the same total weight. Don't reach for generating every one of the $n^{n-2}$ labeled spanning trees (Cayley's formula) and comparing weights; that count explodes past single digits of $n$ and Cayley's formula answers a *counting* question, not a *minimum-weight* one — the two tools solve different problems even though both start from "spanning tree."

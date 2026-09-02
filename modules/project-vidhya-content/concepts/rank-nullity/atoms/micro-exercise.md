@@ -18,13 +18,6 @@ Find the rank of $A = \begin{pmatrix} 1 & 2 \\ 2 & 4 \\ 3 & 6 \end{pmatrix}$.
 <details>
 <summary>Answer</summary>
 
-**A**. Notice that column 2 is exactly 2 times column 1: $(2, 4, 6)^T = 2(1, 2, 3)^T$. So the two columns are linearly dependent.
-
-Only one of them is independent, so $\text{rank}(A) = 1$.
-
-Alternatively, perform row reduction:
-$\begin{pmatrix} 1 & 2 \\ 2 & 4 \\ 3 & 6 \end{pmatrix} \xrightarrow{R_2 - 2R_1, R_3 - 3R_1} \begin{pmatrix} 1 & 2 \\ 0 & 0 \\ 0 & 0 \end{pmatrix}$.
-
-One non-zero row, so rank = 1.
+**A**. Column 2 is exactly $2\times$ column 1: $(2,4,6)^T = 2(1,2,3)^T$, so the columns are dependent. Row-reducing confirms it: $R_2-2R_1$ and $R_3-3R_1$ both zero out, leaving one non-zero row. $\text{rank}(A) = 1$.
 
 </details>

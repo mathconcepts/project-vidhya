@@ -3,25 +3,13 @@ id: differentiability.visual_analogy
 concept_id: differentiability
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.15
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-# Visual Analogy: The Mountain Road vs. The Lightning Bolt
-
-**Imagine two mountain paths up a hillside:**
-
-The **smooth winding road** curves gently — at any point, you can clearly see the direction you're heading. This is like a differentiable function: no matter where you look, there's a well-defined tangent line (slope).
-
-The **lightning bolt path**, however, has a sharp zigzag at one point where the path suddenly changes direction abruptly. At that exact corner, you cannot draw a single tangent line — the direction before the corner and after the corner are different. This is like a non-differentiable point.
-
-The absolute value function $y = |x|$ is exactly this: smooth everywhere except at $x = 0$, where the path makes a sharp V-shaped turn. The left and right slopes don't match, so the derivative doesn't exist there.
-
-Differentiability captures this idea: **a function is differentiable where its graph is smooth, with no sharp corners or sudden changes in direction**.
+Trace $f(x)=|x|$ across a window centered on the origin. The two halves are dead straight — no curving anywhere — and meet at the bottom in a sharp point, like a tent pole planted at $x=0$. Nothing about the curve is broken there: you can trace along it without lifting your finger. What's broken is the *direction* your finger is moving in the instant it crosses the point — steadily downward one moment, steadily upward the very next, with no smooth turn in between. A parabola bends gradually through every one of its points; this curve refuses to bend at all anywhere except at the one sharp corner, where it changes direction instantly instead.
 
 ```gif-scene
-{"type":"function-trace","expression":"abs(x)","x_range":[-3,3],"y_range":[0,3.5],"frames":30,"fps":12}
+{"type":"function-trace","expression":"abs(x)","x_range":[-3,3],"y_range":[-0.5,3.2]}
 ```
-
----

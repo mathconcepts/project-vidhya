@@ -4,6 +4,67 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.48.0] — 2026-09-02 — Content strategy: research integration, second pass (P4–P7)
+
+**Operator action:** migration `057_custom_source_ingestion.sql`
+auto-applies on boot (no manual step). No new env vars.
+
+Same-day follow-up to 4.47.0: the four items that release deferred were
+re-scoped and shipped, each narrowed to what's safely buildable without a
+live LLM call or an undecided product choice (OCR provider, file storage).
+Full rationale: `docs/designs/2026-09-02-content-strategy-research-
+integration-plan.md` §5–6.
+
+- **Per-claim source locator** (`src/content/source-locator.ts`) beside
+  `evidence_level` — required only when `directly_reviewed` licenses a
+  phrase-rule claim; zero committed items trigger this today.
+- **Three-tier delivery length** (`src/content/delivery-length.ts`) wired
+  into `pedagogy-engine.ts`'s `selectAtoms()`; `SessionMode.micro_sprint`
+  now compresses the atom set, not just modality. Resonance-beat safe: a
+  fused scene on `intuition` is never dropped by the micro filter.
+- **Bounded-depth diagnostic probe** (`src/gbrain/diagnostic-probe.ts`) —
+  additive in `student-audit.ts`'s report; the live prerequisite-alert path
+  (`traceWeakestPrerequisite`, `refreshPrerequisiteAlerts`) is untouched.
+- **Custom-PDF ingestion scaffold** (`src/content/custom-source/`) — a
+  real, tested `CustomSourceRepo` (register/hash-dedup/permission-gate/
+  review workflow); the extraction/OCR adapter itself is deliberately
+  unimplemented pending a provider decision (TODOS.md).
+
+See CLAUDE.md's "Content strategy: research integration" section for full
+detail and what remains out of scope.
+
+## [4.47.0] — 2026-09-02 — Content strategy: research integration
+
+**Operator action:** migration `056_delta_kind.sql` auto-applies on boot
+(no manual step). No new env vars — `sourceFreshnessMonitor` runs weekly
+in-process like every other scheduled job.
+
+Reconciled five external research documents proposing a "research-first,
+static-core + evidence-triggered-delta" content framework against what
+Vidhya already ships across the 116 atomic GATE Engineering Mathematics
+topics. Full comparison: `docs/designs/2026-09-02-content-strategy-
+research-integration-plan.md`. Six of the research's ten core requirements
+were already at or above the bar (atomic topic contract, template families,
+evidence labels, assessment contract, quality gate pipeline); four real
+gaps closed as infrastructure:
+
+- `docs/content-spec/` gained the two missing research documents and a
+  richer per-topic CSV schema; the currently-wired structure-map CSV is
+  left untouched (see CLAUDE.md for why).
+- **Method Selector** pedagogy pattern (`ped_method_selector`,
+  `data/registry/pedagogy-patterns.yml`) — the first pattern with
+  full-catalogue reach across all 10 topics, not a new `AtomType`.
+- **Typed `DeltaKind` taxonomy** (`src/content/delta-kinds.ts`, migration
+  `056_delta_kind.sql`) replaces `student_atom_overrides.trigger_reason`'s
+  free text with a closed, honest vocabulary.
+- **Source freshness monitor** (`src/jobs/source-freshness-monitor.ts`,
+  `GET /api/admin/source-freshness`) replaces a previously-parked "annual
+  manual checklist" with a weekly automated hash check on the official GATE
+  syllabus/pattern pages.
+
+See CLAUDE.md's "Content strategy: research integration" section for the
+full rationale and what was deliberately deferred (tracked in TODOS.md).
+
 ## [4.46.0] — 2026-09-01 — Admin/owner no longer hit teacher-only dead ends
 
 **Operator action:** none required. No new env vars, no migrations.

@@ -1,54 +1,32 @@
 ---
-# Alternative body for jordan-normal-form.worked_example, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
+# Alternative body for jordan-normal-form.worked-example, served when the
+# learner stance is `assured`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
 #
 # Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
-#
-# The fenced interactive block below is copied verbatim from the base
-# atom so the widget cannot drift between variants; only prose differs.
+# vocabulary, and spends its words on the distinction that actually costs
+# marks (when block sizes stop being forced) rather than re-deriving J.
 id: jordan-normal-form.worked-example.assured
 concept_id: jordan-normal-form
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.25
-scaffold_fade: true
+difficulty: 0.2
 exam_ids: ["*"]
-variant_of: jordan-normal-form.worked_example
+scaffold_fade: true
+variant_of: jordan-normal-form.worked-example
 for_stance: assured
 ---
 
-$A = \begin{pmatrix} 2 & 1 & 0 \\ 0 & 2 & 1 \\ 0 & 0 & 2 \end{pmatrix}$: upper triangular, so $\lambda = 2$ (multiplicity 3) is read off the diagonal for free — no characteristic polynomial to expand.
+**Problem:** Jordan form of $A=\begin{pmatrix}4&1\\-1&2\end{pmatrix}$.
 
-$\operatorname{rank}(A-2I) = 2$ caps the eigenspace at dimension $1$: one block, size $3$, and $A$ is already sitting in Jordan form.
+**By the multiplicities.** $\operatorname{tr}(A)=6$, $\det(A)=9 \Rightarrow \lambda^2-6\lambda+9=(\lambda-3)^2$ — repeated $\lambda=3$, no need to expand $\det(A-\lambda I)$ term by term.
 
-**The general recipe when it isn't this obvious:** block count for $\lambda$ = $\dim\ker(A-\lambda I)$ = geometric multiplicity. Block sizes come from the rank sequence of $(A-\lambda I)^j$ — the number of blocks of size $\ge j$ is $\operatorname{rank}(A-\lambda I)^{j-1} - \operatorname{rank}(A-\lambda I)^{j}$. Here that sequence is $3 \to 2 \to 1 \to 0$, one drop per power, which is exactly the signature of a single size-3 block rather than three size-1s or a 2+1 split — those would show rank stabilizing before $j=3$.
+$\operatorname{rank}(A-3I)=1\Rightarrow$ geometric multiplicity $1$ against algebraic multiplicity $2$: exactly one Jordan block, size $2$.
+
+$$\boxed{J=\begin{pmatrix}3&1\\0&3\end{pmatrix}}$$
+
+**Where this stops being forced.** Block sizes are automatic whenever geometric multiplicity is $1$ (one block, sized to the full algebraic multiplicity) or algebraic multiplicity is at most $3$. The first real fork is algebraic multiplicity $4$ with geometric multiplicity $2$: the split could be $3+1$ or $2+2$, and only $\operatorname{rank}(A-\lambda I)^2$ — not $\operatorname{rank}(A-\lambda I)$ alone — tells them apart.
 
 ```interactive-spec
-{
-  "v": 1,
-  "kind": "guided_walkthrough",
-  "title": "Walk through: Jordan Form of defective matrix",
-  "steps": [
-    {
-      "prompt": "What is the characteristic polynomial of $A$, and what are its roots?",
-      "hint": "Compute $\\det(A - \\lambda I)$ for the upper-triangular matrix. The diagonal entries are all $(2-\\lambda)$.",
-      "answer": "$\\det(A - \\lambda I) = (2-\\lambda)^3$, so $\\lambda = 2$ with algebraic multiplicity 3."
-    },
-    {
-      "prompt": "Find the eigenspace for $\\lambda = 2$ by solving $(A - 2I)\\mathbf{v} = \\mathbf{0}$.",
-      "hint": "$A - 2I$ is strictly upper-triangular with rank 2. Use row reduction or back-substitution. The null space is 1-dimensional.",
-      "answer": "$E_2 = \\text{span}\\{(1, 0, 0)^T\\}$. There is only 1 independent eigenvector, so the matrix is defective."
-    },
-    {
-      "prompt": "Compute $(A - 2I)^2$ and determine the size of the largest Jordan block.",
-      "hint": "$(A - 2I)^2$ has rank 1. The geometric multiplicity is 1 (one Jordan block), and the algebraic multiplicity is 3, so the block has size 3.",
-      "answer": "$(A - 2I)^2$ has rank 1, confirming one Jordan block of size 3 for $\\lambda = 2$."
-    }
-  ],
-  "caption": "The Jordan form of a defective matrix records one large block for the repeated eigenvalue."
-}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: building the Jordan chain for a defective 2×2 matrix","steps":[{"prompt":"A has a repeated eigenvalue $\\lambda=3$ with algebraic multiplicity 2, but $\\operatorname{rank}(A-3I)=1$. What does that rank tell you about the geometric multiplicity, and what does it force about the Jordan form?","hint":"$\\dim\\ker(A-3I) = 2 - \\operatorname{rank}(A-3I)$. Compare that to the algebraic multiplicity.","answer":"Geometric multiplicity is $2-1=1$, strictly less than the algebraic multiplicity $2$. The matrix is defective, so it cannot be diagonalized — the eigenvalue must sit in a single $2\\times2$ Jordan block with a $1$ on the superdiagonal."},{"prompt":"Given the eigenvector $v=(1,-1)$, how do you find the generalized eigenvector $w$ that completes the Jordan chain, and how do you check it's right?","hint":"Solve $(A-3I)w=v$ for $w$, then verify $Aw=3w+v$ directly.","answer":"Solve $(A-3I)w=v$: $w_1+w_2=1$ gives $w=(1,0)$. Check by direct multiplication: $Aw=(4,-1)=3(1,0)+(1,-1)=3w+v$ — this is exactly the column relation that makes $J=\\begin{pmatrix}3&1\\\\0&3\\end{pmatrix}$ correct."}]}
 ```

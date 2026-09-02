@@ -12,19 +12,19 @@ id: vector-algebra-basics.intuition.shaken
 concept_id: vector-algebra-basics
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.15
+difficulty: 0.10
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: vector-algebra-basics.intuition
 for_stance: shaken
 ---
 
-Take $\vec a=3\hat i,\ \vec b=4\hat j,\ \vec c=5\hat k$ — three vectors along the axes, forming an ordinary $3\times4\times5$ box.
+Take $\vec a=(1,0,0)$ and $\vec b=(0,1,0)$ — arrows along the $x$-axis and $y$-axis.
 
-Dot product: $\vec a\cdot\vec b=(3)(0)+(0)(4)+(0)(0)=0$. Perpendicular, as expected for two edges of a box meeting at a corner.
+Step one, the dot product: $\vec a\cdot\vec b=(1)(0)+(0)(1)+(0)(0)=0$. Zero means perpendicular — these two arrows are exactly perpendicular, so the number matches the picture.
 
-Cross product: $\vec a\times\vec b=(0,0,12)$, magnitude $12$, exactly the area of the $3\times4$ face the two vectors span.
+Step two, the cross product: $\vec a\times\vec b=(0\cdot0-0\cdot1,\ 0\cdot0-1\cdot0,\ 1\cdot1-0\cdot0)=(0,0,1)$. This new arrow points straight up, perpendicular to both — check with the right-hand rule: fingers from $\vec a$ toward $\vec b$, thumb points up. Its length is $1$, matching the area of the unit square $\vec a,\vec b$ span.
 
-Scalar triple product: $\vec b\times\vec c=(20,0,0)$, then $\vec a\cdot(\vec b\times\vec c)=(3)(20)=60$, exactly the volume of the box, $3\times4\times5=60$.
+Step three, add a third arrow $\vec c=(0,0,1)$ and compute the triple product: $\vec a\cdot(\vec b\times\vec c)=\vec a\cdot(1,0,0)=1$. Nonzero, so the three arrows are not coplanar — they span a real box, the unit cube.
 
-Tilt any one of the three away from its axis and every number changes, but the pattern does not: dot product answers how aligned, cross product answers how much area, and the triple product answers how much volume — three different questions about the same three arrows.
+Check: dot product zero matched perpendicular; cross product length matched the square's area; triple product matched the cube's volume.

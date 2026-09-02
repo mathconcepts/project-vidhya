@@ -84,17 +84,15 @@ $$y'(t) = -2e^{-t} + 2e^{-2t}$$
 
 $$y'(0) = -2 + 2 = 0 \quad \checkmark$$
 
-**Verification of ODE at $t=0$:**
+**Verification against the ODE itself:**
 
 $$y''(t) = 2e^{-t} - 4e^{-2t}$$
-
-$$y''(0) + 3y'(0) + 2y(0) = 2 + 0 + 2 = 4 \neq 0$$
-
-Wait — let us recheck with the ODE $y'' + 3y' + 2y = 0$ everywhere:
 
 $$y'' + 3y' + 2y = (2e^{-t} - 4e^{-2t}) + 3(-2e^{-t} + 2e^{-2t}) + 2(2e^{-t} - e^{-2t})$$
 
 $$= e^{-t}(2 - 6 + 4) + e^{-2t}(-4 + 6 - 2) = 0 + 0 = 0 \quad \checkmark$$
+
+This holds identically in $t$, not just at $t=0$ — the coefficient of each exponential term vanishes on its own, which is the real check.
 
 ---
 

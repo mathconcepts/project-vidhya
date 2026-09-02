@@ -18,3 +18,5 @@ $$\frac{\partial M}{\partial y} = \frac{\partial N}{\partial x}$$
 **Solution Method**: If the equation is exact, the solution is $F(x, y) = C$ (an implicit curve), where:
 1. Integrate $M$ with respect to $x$: $F(x, y) = \int M(x, y) \, dx + g(y)$
 2. Differentiate with respect to $y$ and compare with $N$ to find $g(y)$.
+
+**Method selector.** Run the exactness test first, before reaching for an integrating factor — a tempting-but-wrong habit is assuming every $M\,dx + N\,dy=0$ equation needs one. If $\partial M/\partial y = \partial N/\partial x$ already, multiplying by an unnecessary factor only adds an extra integration step for nothing. Only when the test fails should you check whether $(M_y - N_x)/N$ depends on $x$ alone (giving $\mu(x)$) or $(N_x - M_y)/M$ depends on $y$ alone (giving $\mu(y)$).

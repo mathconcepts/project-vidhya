@@ -3,31 +3,13 @@ id: graph-basics.intuition
 concept_id: graph-basics
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
+difficulty: 0.10
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## What is a Graph?
+Every edge has two ends, and each end adds 1 to some vertex's degree. So adding up every vertex's degree counts each edge exactly twice — once from each end. That's the entire mechanism behind the handshaking lemma; nothing else is happening.
 
-A **graph** is a collection of **vertices** (or nodes) connected by **edges** (or links). Think of it as a network of points and the connections between them. Graphs are fundamental in GATE because they model real-world relationships: social networks, communication systems, circuit topologies, and data structures.
+Take a triangle $A$-$B$-$C$ with one more vertex $D$ hanging off $A$: four edges, $AB, BC, CA, AD$. Walk around and tally: $A$ touches three of them (degree 3), $B$ and $C$ each touch two (degree 2 apiece), $D$ touches one (degree 1). Add these: $3+2+2+1=8$. That's exactly twice the edge count, $2\times4=8$, because every one of those four edges got counted at both its ends.
 
-### Core Building Blocks
-
-**Vertices ($V$):** The basic units. A graph $G = (V, E)$ has a set of vertices. Each vertex is distinct.
-
-**Edges ($E$):** Connections between pairs of vertices. An edge $(u, v)$ connects vertices $u$ and $v$. In an **undirected graph**, edges have no direction — $(u,v)$ equals $(v,u)$. In a **directed graph**, direction matters — $(u \to v)$ is different from $(v \to u)$.
-
-### Degree: Measuring Connectivity
-
-The **degree** of a vertex is the number of edges incident to it. 
-- In undirected graphs, $\deg(v)$ counts all edges touching $v$.
-- In directed graphs, we distinguish **in-degree** (edges entering) and **out-degree** (edges leaving).
-
-For a GATE exam, the most powerful insight is the **handshaking lemma**: 
-
-$$\sum_{v \in V} \deg(v) = 2|E|$$
-
-This says the sum of all degrees equals twice the number of edges. Why? Because each edge connects two vertices and contributes 1 to each endpoint's degree — counting from the vertex side double-counts every edge.
-
-**Exam relevance:** This lemma appears in nearly every GATE problem involving degree sequences, connectivity analysis, or graph properties. Memorize it cold.
+This is also why an isolated vertex with no edges has degree 0 — it isn't touched from either end of anything — and why a loop (an edge from a vertex to itself) counts *twice* at that one vertex: both of its ends land on the same spot.

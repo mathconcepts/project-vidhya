@@ -8,27 +8,44 @@
 # formula, and the check made explicit. No praise, no reassurance, and no
 # mention of how the reader might be feeling — a small win is what steadies
 # someone, not being told they are struggling.
-id: vector-algebra-basics.worked_example.shaken
+#
+# The fenced interactive block below is copied verbatim from the base
+# atom so the widget cannot drift between variants; only prose differs.
+id: vector-algebra-basics.worked-example.shaken
 concept_id: vector-algebra-basics
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.30
+difficulty: 0.20
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: vector-algebra-basics.worked-example
 for_stance: shaken
 ---
 
-$\vec a=(1,1,0),\ \vec b=(1,0,1),\ \vec c=(1,1,1)$.
+**Problem:** Area of the parallelogram from $\vec a=(2,1,-1)$, $\vec b=(1,-1,2)$; volume with $\vec c=(1,2,2)$.
 
-Angle between $\vec a,\vec b$: $\vec a\cdot\vec b=(1)(1)+(1)(0)+(0)(1)=1$. $|\vec a|=\sqrt2,\ |\vec b|=\sqrt2$. $\cos\theta=\frac{1}{2}$, so $\theta=60^\circ$.
+---
 
-Cross product: $\vec a\times\vec b=\hat i(1\cdot1-0\cdot0)-\hat j(1\cdot1-0\cdot1)+\hat k(1\cdot0-1\cdot1)=(1,-1,-1)$. Its length is $\sqrt{1+1+1}=\sqrt3$, the area of the parallelogram the two vectors span.
+**Step 1 — Cross product, one entry at a time.** $\hat\imath$: $(1)(2)-(-1)(-1)=2-1=1$. $\hat\jmath$: $-[(2)(2)-(-1)(1)]=-(4+1)=-5$. $\hat k$: $(2)(-1)-(1)(1)=-2-1=-3$. So $\vec a\times\vec b=(1,-5,-3)$.
 
-Triple product: first $\vec b\times\vec c=(1,0,1)\times(1,1,1)=(0\cdot1-1\cdot1,\ 1\cdot1-1\cdot1,\ 1\cdot1-0\cdot1)=(-1,0,1)$. Then $\vec a\cdot(\vec b\times\vec c)=(1)(-1)+(1)(0)+(0)(1)=-1$.
+---
 
-Since $-1\ne0$, the parallelepiped they form has nonzero volume, $1$ cubic unit, so $\vec a,\vec b,\vec c$ are not coplanar.
+**Step 2 — Length of that vector.** $\sqrt{1^2+5^2+3^2}=\sqrt{1+25+9}=\sqrt{35}\approx5.92$.
+
+$$\boxed{\text{Area}=\sqrt{35}}$$
+
+---
+
+**Step 3 — Dot with $\vec c$.** $(1)(1)+(-5)(2)+(-3)(2)=1-10-6=-15$.
+
+---
+
+**Step 4 — Take the absolute value for volume.**
+
+$$\boxed{V=15}$$
+
+**Check:** redo Step 3's arithmetic in reverse order: $-6-10+1=-15$ — same total, so no entry or sign was dropped.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: scalar triple product and coplanarity","steps":[{"prompt":"To test whether $\\vec{a}=(1,1,0)$, $\\vec{b}=(1,0,1)$, $\\vec{c}=(1,1,1)$ are coplanar, which single number do we need to compute?","hint":"It's the volume of the parallelepiped they form.","answer":"The scalar triple product $[\\vec{a}\\ \\vec{b}\\ \\vec{c}] = \\vec{a}\\cdot(\\vec{b}\\times\\vec{c})$."},{"prompt":"Compute $\\vec{b}\\times\\vec{c}$ first. What vector do you get?","hint":"Use the determinant formula with rows $\\hat i,\\hat j,\\hat k$ then $\\vec b$ then $\\vec c$.","answer":"$\\vec{b}\\times\\vec{c} = (-1, 0, 1)$"},{"prompt":"Now dot $\\vec{a}=(1,1,0)$ with $(-1,0,1)$. What is the scalar triple product, and are the vectors coplanar?","hint":"$\\vec a \\cdot (\\vec b \\times \\vec c) = (1)(-1)+(1)(0)+(0)(1)$.","answer":"The triple product is $-1$, which is nonzero, so the three vectors are NOT coplanar."}],"caption":"A zero scalar triple product means zero enclosed volume — the geometric signature of three vectors collapsing into a single plane."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: picking the right vector product","steps":[{"prompt":"The question asks for the angle between two vectors. Which product do you reach for?","hint":"One product returns a scalar tied to cosine; the other returns a vector tied to sine.","answer":"The dot product: $\\cos\\theta=\\dfrac{\\vec a\\cdot\\vec b}{|\\vec a||\\vec b|}$."},{"prompt":"The question asks for a vector perpendicular to two given vectors. Which product?","hint":"You need a vector back, not a number.","answer":"The cross product $\\vec a\\times\\vec b$ — perpendicular to both, direction from the right-hand rule."},{"prompt":"The question asks whether three vectors lie in one plane. Which product?","hint":"Coplanarity is a volume-zero statement about all three vectors at once.","answer":"The scalar triple product $\\vec a\\cdot(\\vec b\\times\\vec c)$ — zero exactly when the three are coplanar."}],"caption":"Angle or projection -> dot product. Perpendicular direction or area -> cross product. Coplanarity or volume -> scalar triple product."}
 ```

@@ -1,24 +1,18 @@
 ---
 # Alternative body for quadratic-forms.worked_example, served when the
 # learner stance is `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
 id: quadratic-forms.worked-example.assured
 concept_id: quadratic-forms
 atom_type: worked_example
 bloom_level: 3
 difficulty: 0.25
-scaffold_fade: true
 exam_ids: ["*"]
+scaffold_fade: true
 variant_of: quadratic-forms.worked_example
 for_stance: assured
 ---
 
-**Problem:** Classify $f(x,y)=2x^2+4xy+5y^2$; canonical form.
+**Problem.** Classify $f(x,y)=2x^2+4xy+5y^2$; canonical form.
 
 $$A = \begin{pmatrix} 2 & 2 \\ 2 & 5 \end{pmatrix}$$
 

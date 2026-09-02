@@ -7,21 +7,30 @@
 # vocabulary, and spends its words on the distinctions that actually cost
 # marks (degenerate cases, faster routes, common false generalisations)
 # rather than re-teaching what they can already do.
-id: vector-algebra-basics.worked_example.assured
+#
+# The fenced interactive block below is copied verbatim from the base
+# atom so the widget cannot drift between variants; only prose differs.
+id: vector-algebra-basics.worked-example.assured
 concept_id: vector-algebra-basics
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.30
+difficulty: 0.20
 exam_ids: ["*"]
 scaffold_fade: true
 variant_of: vector-algebra-basics.worked-example
 for_stance: assured
 ---
 
-$\vec a=(1,1,0),\vec b=(1,0,1),\vec c=(1,1,1)$: $\cos\theta=\frac{\vec a\cdot\vec b}{|\vec a||\vec b|}=\frac{1}{2}\Rightarrow\theta=60^\circ$; $\vec a\times\vec b=(1,-1,-1)$, area $\sqrt3$, cross-checked against $|\vec a||\vec b|\sin60^\circ=2\cdot\frac{\sqrt3}{2}=\sqrt3$; $[\vec a\,\vec b\,\vec c]=\vec a\cdot(\vec b\times\vec c)=-1$.
+**Problem:** Same $\vec a,\vec b,\vec c$ — area and volume, by determinant shortcut.
 
-The number $-1$ answers two questions at once, and it costs marks to only read one: the magnitude, $1$, is the parallelepiped's volume and confirms non-coplanarity; the sign, negative, reports that $(\vec a,\vec b,\vec c)$ is a left-handed ordering, not a smaller or more-negative volume. Reordering to $(\vec b,\vec a,\vec c)$ flips the sign to $+1$ without changing the shape at all — a fast distractor for a which-ordering-gives-volume question.
+$$[\vec a\ \vec b\ \vec c]=\det\begin{pmatrix}2&1&-1\\1&-1&2\\1&2&2\end{pmatrix}=2\begin{vmatrix}-1&2\\2&2\end{vmatrix}-1\begin{vmatrix}1&2\\1&2\end{vmatrix}+(-1)\begin{vmatrix}1&-1\\1&2\end{vmatrix}=2(-6)-1(0)-1(3)=-15$$
+
+$$\boxed{V=15}$$
+
+For the area, $\vec a\times\vec b=(1,-5,-3)$ (Step 1 of the base example), so $\boxed{\text{Area}=\sqrt{35}}$.
+
+**The distinction worth marks:** the scalar triple product **is** a $3\times3$ determinant of the three vectors as rows — once you know determinants, go straight there instead of computing $\vec b\times\vec c$ and then dotting with $\vec a$. But the **cross product itself has no such determinant-to-a-number shortcut** — its output is a vector, not a scalar, so there is no faster route around Steps 1–2 of the area computation.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: scalar triple product and coplanarity","steps":[{"prompt":"To test whether $\\vec{a}=(1,1,0)$, $\\vec{b}=(1,0,1)$, $\\vec{c}=(1,1,1)$ are coplanar, which single number do we need to compute?","hint":"It's the volume of the parallelepiped they form.","answer":"The scalar triple product $[\\vec{a}\\ \\vec{b}\\ \\vec{c}] = \\vec{a}\\cdot(\\vec{b}\\times\\vec{c})$."},{"prompt":"Compute $\\vec{b}\\times\\vec{c}$ first. What vector do you get?","hint":"Use the determinant formula with rows $\\hat i,\\hat j,\\hat k$ then $\\vec b$ then $\\vec c$.","answer":"$\\vec{b}\\times\\vec{c} = (-1, 0, 1)$"},{"prompt":"Now dot $\\vec{a}=(1,1,0)$ with $(-1,0,1)$. What is the scalar triple product, and are the vectors coplanar?","hint":"$\\vec a \\cdot (\\vec b \\times \\vec c) = (1)(-1)+(1)(0)+(0)(1)$.","answer":"The triple product is $-1$, which is nonzero, so the three vectors are NOT coplanar."}],"caption":"A zero scalar triple product means zero enclosed volume — the geometric signature of three vectors collapsing into a single plane."}
+{"v":1,"kind":"guided_walkthrough","title":"Walk through: picking the right vector product","steps":[{"prompt":"The question asks for the angle between two vectors. Which product do you reach for?","hint":"One product returns a scalar tied to cosine; the other returns a vector tied to sine.","answer":"The dot product: $\\cos\\theta=\\dfrac{\\vec a\\cdot\\vec b}{|\\vec a||\\vec b|}$."},{"prompt":"The question asks for a vector perpendicular to two given vectors. Which product?","hint":"You need a vector back, not a number.","answer":"The cross product $\\vec a\\times\\vec b$ — perpendicular to both, direction from the right-hand rule."},{"prompt":"The question asks whether three vectors lie in one plane. Which product?","hint":"Coplanarity is a volume-zero statement about all three vectors at once.","answer":"The scalar triple product $\\vec a\\cdot(\\vec b\\times\\vec c)$ — zero exactly when the three are coplanar."}],"caption":"Angle or projection -> dot product. Perpendicular direction or area -> cross product. Coplanarity or volume -> scalar triple product."}
 ```

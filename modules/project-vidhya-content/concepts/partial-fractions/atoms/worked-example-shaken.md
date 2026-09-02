@@ -33,7 +33,7 @@ for_stance: shaken
 
 **Step 6.** Integrate each piece separately: $\dfrac35\int\dfrac{dx}{x-2}+\dfrac25\int\dfrac{dx}{x+3}$.
 
-**Answer:** $\dfrac35\ln|x-2|+\dfrac25\ln|x+3|+C$.
+**Answer:** $\boxed{\dfrac35\ln|x-2|+\dfrac25\ln|x+3|+C}$.
 
 **Check it:** add $\dfrac{3/5}{x-2}+\dfrac{2/5}{x+3}$ back over a common denominator: $\dfrac{3(x+3)+2(x-2)}{5(x-2)(x+3)}=\dfrac{5x+5}{5(x-2)(x+3)}=\dfrac{x+1}{(x-2)(x+3)}$. Matches the original.
 

@@ -18,8 +18,7 @@ If the correlation coefficient $r = 0.8$, what is the coefficient of determinati
 <details>
 <summary>Answer</summary>
 
-**A**. The coefficient of determination is the square of the correlation coefficient:
-$$R^2 = r^2 = (0.8)^2 = 0.64$$
+**A**. The coefficient of determination is the square of the correlation coefficient: $R^2 = r^2 = (0.8)^2 = 0.64$.
 
 This means that 64% of the variance in the dependent variable is explained by the independent variable (the regression model). The remaining 36% is unexplained (due to other factors or random noise).
 

@@ -6,26 +6,13 @@ bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
 estimated_minutes: 3
+retention_tags: ["residue", "pole-order"]
 ---
 
-Find the residue of $f(z) = \frac{e^z}{(z-1)^2}$ at the pole $z = 1$.
-
-- **(A)** $e$
-- **(B)** $e/2$
-- **(C)** $2e$
-- **(D)** $e^{-1}$
+From memory, before checking: what is the residue of $f(z)=\dfrac{e^z}{(z-1)^2}$ at $z=1$?
 
 <details>
 <summary>Answer</summary>
 
-**A**. The function $f(z) = \frac{e^z}{(z-1)^2}$ has a pole of order 2 at $z = 1$.
-For a pole of order $m$ at $z_0$, the residue is:
-$\text{Res}(f, z_0) = \frac{1}{(m-1)!} \lim_{z \to z_0} \frac{d^{m-1}}{dz^{m-1}} [(z - z_0)^m f(z)]$.
-With $m = 2$:
-$\text{Res}(f, 1) = \frac{1}{(2-1)!} \lim_{z \to 1} \frac{d}{dz} [(z-1)^2 f(z)]$.
-$(z-1)^2 f(z) = (z-1)^2 \cdot \frac{e^z}{(z-1)^2} = e^z$.
-$\frac{d}{dz}[e^z] = e^z$.
-$\lim_{z \to 1} e^z = e^1 = e$.
-Therefore, $\text{Res}(f, 1) = \frac{1}{1!} \cdot e = e$.
-
+$e$. Pole of order $2$: $\text{Res}_{z=1}=\lim_{z\to1}\dfrac{d}{dz}\left[(z-1)^2f(z)\right]=\lim_{z\to1}\dfrac{d}{dz}[e^z]=\lim_{z\to1}e^z=e$.
 </details>

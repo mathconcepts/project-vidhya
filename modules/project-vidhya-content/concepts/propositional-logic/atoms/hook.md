@@ -3,8 +3,10 @@ id: propositional-logic.hook
 concept_id: propositional-logic
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-"If it is raining AND I am late, take the bus." You have written that line, in one syntax or another, a hundred times. Propositional logic is what is left when you stop caring about rain and buses and keep only the AND, the OR and the NOT — which turns out to be enough to decide whether a statement is always true, never true, or depends on its inputs.
+A security rule says: **if** motion is detected, **then** the alarm sounds. One quiet night nothing moves and the alarm stays silent — and the rule was never broken. Nothing happened, so the promise was never tested.
+
+That is the whole trap of implication. $P \to Q$ makes a claim only about what happens *when $P$ is true*; when $P$ is false, the statement is true automatically, whatever $Q$ turns out to be. Two of the implication's four truth-table rows come out true for exactly this reason — not because anything meaningful occurred. Which two?

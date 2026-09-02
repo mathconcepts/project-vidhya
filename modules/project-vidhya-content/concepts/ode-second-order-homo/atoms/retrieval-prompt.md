@@ -2,28 +2,23 @@
 id: ode-second-order-homo.retrieval-prompt
 concept_id: ode-second-order-homo
 atom_type: retrieval_prompt
-bloom_level: 4
-difficulty: 0.5
+bloom_level: 3
+difficulty: 0.3
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["characteristic-equation", "distinct-real-roots", "ode-second-order-homo"]
 ---
 
-For the ODE $\frac{d^2y}{dx^2} - 2\frac{dy}{dx} + y = 0$ (repeated root $r = 1$), the general solution is:
+Before checking, try to recall from memory: the general solution of $y''-y'-6y=0$ is:
 
-- **(A)** $y(x) = (C_1 + C_2 x)e^x$
-- **(B)** $y(x) = C_1 e^x + C_2 e^{-x}$
-- **(C)** $y(x) = e^x(C_1 \cos(x) + C_2 \sin(x))$
-- **(D)** $y(x) = C_1 e^{2x} + C_2 e^{-2x}$
+- **(A)** $y=C_1e^{3x}+C_2e^{-2x}$
+- **(B)** $y=C_1e^{-3x}+C_2e^{2x}$
+- **(C)** $y=(C_1+C_2x)e^{3x}$
+- **(D)** $y=C_1\cos3x+C_2\sin2x$
 
 <details>
 <summary>Answer</summary>
 
-**A**. When the characteristic equation has a repeated root $r = r_0$ (with multiplicity 2), the general solution is:
-$$y(x) = (C_1 + C_2 x)e^{r_0 x}$$
-
-With $r_0 = 1$:
-$$y(x) = (C_1 + C_2 x)e^x$$
-
-This solution has two linearly independent components: $e^x$ and $xe^x$. The factor $(C_1 + C_2 x)$ represents the polynomial part introduced by the repeated root.
+**A**. Characteristic equation $r^2-r-6=0$ factors as $(r-3)(r+2)=0$, giving distinct real roots $r=3,-2$. Two distinct real roots always give a sum of two plain exponentials — no repeated-root $x$ factor, no trig, since the discriminant $(-1)^2-4(1)(-6)=25>0$ rules both of those out.
 
 </details>

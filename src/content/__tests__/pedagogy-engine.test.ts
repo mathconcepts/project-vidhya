@@ -404,3 +404,110 @@ describe('selectAtoms — difficulty filter', () => {
     expect(result[0].id).toBe('hard');
   });
 });
+
+// ─── P5: delivery-length wiring (2026-09-02 content-strategy plan) ──────
+
+describe('selectAtoms — delivery_length / session_mode wiring', () => {
+  it('an unset delivery_length and session_mode behaves exactly as before (standard, everything)', () => {
+    const atoms = fullAtomSet();
+    const result = selectAtoms({
+      conceptAtoms: atoms,
+      conceptMeta: baseMeta,
+      studentModel: null,
+      sessionContext: baseSession,
+      routeRequest: baseRouteRequest,
+    });
+    expect(result.length).toBe(atoms.length);
+  });
+
+  it('explicit delivery_length="micro" trims to the micro atom types', () => {
+    const atoms = fullAtomSet();
+    const result = selectAtoms({
+      conceptAtoms: atoms,
+      conceptMeta: baseMeta,
+      studentModel: null,
+      sessionContext: baseSession,
+      routeRequest: { ...baseRouteRequest, delivery_length: 'micro' },
+    });
+    expect(result.length).toBeLessThan(atoms.length);
+    expect(result.every((a) =>
+      ['hook', 'formal_definition', 'worked_example', 'common_traps', 'retrieval_prompt', 'exam_pattern']
+        .includes(a.atom_type),
+    )).toBe(true);
+  });
+
+  it('session_mode="micro_sprint" alone (no explicit delivery_length) also trims', () => {
+    const atoms = fullAtomSet();
+    const result = selectAtoms({
+      conceptAtoms: atoms,
+      conceptMeta: baseMeta,
+      studentModel: null,
+      sessionContext: baseSession,
+      routeRequest: { ...baseRouteRequest, session_mode: 'micro_sprint' },
+    });
+    expect(result.length).toBeLessThan(atoms.length);
+  });
+
+  it('an explicit delivery_length overrides what session_mode would otherwise imply', () => {
+    const atoms = fullAtomSet();
+    const result = selectAtoms({
+      conceptAtoms: atoms,
+      conceptMeta: baseMeta,
+      studentModel: null,
+      sessionContext: baseSession,
+      // micro_sprint would imply 'micro', but the explicit 'standard' wins.
+      routeRequest: { ...baseRouteRequest, session_mode: 'micro_sprint', delivery_length: 'standard' },
+    });
+    expect(result.length).toBe(atoms.length);
+  });
+
+  it('other session modes (knowledge/exam-prep/revision) do not trim', () => {
+    for (const mode of ['knowledge', 'exam-prep', 'revision'] as const) {
+      const atoms = fullAtomSet();
+      const result = selectAtoms({
+        conceptAtoms: atoms,
+        conceptMeta: baseMeta,
+        studentModel: null,
+        sessionContext: baseSession,
+        routeRequest: { ...baseRouteRequest, session_mode: mode },
+      });
+      expect(result.length).toBe(atoms.length);
+    }
+  });
+
+  it('the difficulty-filter fallback still respects micro compression (does not silently widen back to everything)', () => {
+    // Every atom is too hard for a mastery-0 student — the difficulty filter
+    // empties the candidate set and pedagogy-engine falls back to the
+    // unfiltered set, which must still be the delivery-length-filtered one.
+    const atoms = fullAtomSet().map((a) => ({ ...a, difficulty: 0.9 }));
+    const result = selectAtoms({
+      conceptAtoms: atoms,
+      conceptMeta: baseMeta,
+      studentModel: studentWithMastery(0.0),
+      sessionContext: baseSession,
+      routeRequest: { ...baseRouteRequest, delivery_length: 'micro' },
+    });
+    expect(result.length).toBeGreaterThan(0);
+    expect(result.every((a) =>
+      ['hook', 'formal_definition', 'worked_example', 'common_traps', 'retrieval_prompt', 'exam_pattern']
+        .includes(a.atom_type),
+    )).toBe(true);
+  });
+
+  it('resonance safety end to end: an intuition atom with a real scene survives micro compression through selectAtoms', () => {
+    const atoms = [
+      atom('hook', 'hook'),
+      atom('intuition', 'intuition', { content: '```interactive-spec\n{"v":1}\n```' }),
+      atom('formal', 'formal_definition'),
+      atom('example', 'worked_example'),
+    ];
+    const result = selectAtoms({
+      conceptAtoms: atoms,
+      conceptMeta: baseMeta,
+      studentModel: null,
+      sessionContext: baseSession,
+      routeRequest: { ...baseRouteRequest, delivery_length: 'micro' },
+    });
+    expect(result.some((a) => a.id === 'intuition')).toBe(true);
+  });
+});

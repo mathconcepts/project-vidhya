@@ -751,3 +751,117 @@ role-aware messaging) is picked.
 bookmark/back-button visit specifically to hit).
 **Deferred from:** `/ship` Red Team review, 2026-09-01, branch
 `claude/teaching-audit-progress-bugs`.
+
+## Bounded-depth diagnostic probe REPLACING the live prerequisite-alert path
+
+**Trigger:** the next `/student-audit` or prerequisite-alert investigation
+that turns out to have misdiagnosed a wrong answer's cause, or a decision to
+have `traceWeakestPrerequisite`/`refreshPrerequisiteAlerts` themselves use
+the bounded-depth ranking instead of the unbounded BFS.
+
+**What:** `src/gbrain/diagnostic-probe.ts`'s `diagnoseWrongAnswer()` (shipped
+2026-09-02) implements the research's bounded-depth, ranked, converging-
+evidence-gated probe as an ADDITIVE view — wired into `student-audit.ts`'s
+report only. `traceWeakestPrerequisite` (`src/constants/concept-graph.ts:351-
+384`) and `refreshPrerequisiteAlerts` (`src/gbrain/student-model.ts:378-396`)
+— the live path that gates real interventions — are untouched on purpose.
+This entry tracks the REMAINING step: deciding whether/how the live path
+itself should adopt the bounded algorithm, not building the algorithm (done).
+
+**Why not fixed inline:** the live path gates real interventions for real
+students — a correctness regression here is student-facing and needs its
+own reviewed change with regression tests against known student cases, not
+a rider on an infrastructure pass. The additive version already gives a
+coach/operator the better view without that risk.
+
+**Where to start:** `src/gbrain/diagnostic-probe.ts` (the algorithm, already
+built and tested) vs. `src/constants/concept-graph.ts:351-384` +
+`src/gbrain/student-model.ts:378-396` (the live path to migrate, if the
+product decision is made to migrate it rather than keep both).
+
+**Effort:** M human / CC ~1 day (the algorithm exists; this is the
+migration + regression-test work, not new algorithm design).
+**Priority:** P3 — the additive view already ships the research's real
+value (a coach/operator sees the bounded, ranked probe today); migrating
+the live path is a smaller, lower-urgency follow-up.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Custom-PDF extraction/OCR adapter (the data model and repo already ship)
+
+**Trigger:** an operator or teacher actually asks to upload a PDF (a
+classroom note, an alternate textbook derivation) for the platform to fold
+into content, or a decision on which OCR/extraction library and file
+storage to use.
+
+**What:** `src/content/custom-source/types.ts` + `repo.ts` (shipped
+2026-09-02, migration `057_custom_source_ingestion.sql`) is the full
+register/hash-dedup/permission-gate/span-storage/claim-review data model —
+a real, usable seam. `CustomSourceExtractor` (the `extract()` interface in
+`types.ts`) is deliberately UNIMPLEMENTED: no OCR provider, no file storage,
+no upload UI has been decided. This entry tracks ONLY that remaining step —
+a concrete adapter implementing `CustomSourceExtractor`, plus an upload
+endpoint that calls `getCustomSourceRepo().registerDocument()` /
+`.addSpans()`.
+
+**Why not fixed inline:** the extraction/OCR provider and file-storage
+choice is a product decision this pass can't make unilaterally (same
+reasoning as the LLMJudge/CASChecker split this repo already used) — an
+adapter without that decision would either invent one silently or ship
+nothing real.
+
+**Where to start:** `docs/content-spec/integrated-self-improving-learning-
+system.md` §15.6 for the pipeline shape; `src/content/custom-source/types.ts`'s
+`CustomSourceExtractor` is the interface to implement;
+`src/content/custom-source/repo.ts`'s `getCustomSourceRepo()` is the storage
+seam already wired and tested; `ReviewQueuePanel.tsx` /
+`admin-review-queue-routes.ts` is the closest existing review-queue UI
+pattern to model an operator-facing claim-review screen on.
+
+**Effort:** L human / CC ~3-5 days (OCR/extraction library integration,
+upload endpoint, review UI — the storage layer is done).
+**Priority:** P3 — no demand signal yet; build when an operator actually
+has a PDF to ingest.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Wire the other 9 `DeltaKind` values to real trigger detectors
+
+**Trigger:** a decision to build a specific personalization trigger beyond
+the one that already exists (repeated-failure → whole-atom regen, tagged
+`general_remediation`) or beyond `custom_source` (now written by
+`src/content/custom-source/repo.ts`'s `addClaimDraft`, once an operator
+approves a claim into a real delta — see the custom-PDF entry above for
+what's still needed before that path is reachable at all).
+
+**What:** `src/content/delta-kinds.ts`'s `DeltaKind` union has 10
+research-named values plus `general_remediation`. Only two have anything
+that writes them: `general_remediation` (the existing failure-triggered
+regen) and `custom_source` (P7's claim-review repo, once wired to a real
+upload flow). The other 8 — `prerequisite_repair`, `representation_shift`,
+`definition_boundary`, `execution_drill`, `assessment_mode`,
+`time_and_risk`, `verified_computation`, `confidence_calibration` — are
+real, typed, and ready to receive writes, but nothing detects the
+conditions that should trigger them (a prerequisite-gap probe surfacing an
+actionable hypothesis, a representation-mismatch detector, a confidence/
+performance divergence check, etc.).
+
+**Why not fixed inline:** each detector is its own scoped project with its
+own evidence question (what signal, what threshold, what false-positive
+cost) — bundling any one of them into an infrastructure pass that was
+about making the TAXONOMY real, not inventing eight new detection
+algorithms, would have meant guessing at product decisions with no
+evidence behind them.
+
+**Where to start:** `src/content/delta-kinds.ts`'s `DELTA_KIND_DESCRIPTIONS`
+names what each kind is FOR; `src/gbrain/diagnostic-probe.ts`'s
+`diagnoseWrongAnswer()` is the closest existing building block for
+`prerequisite_repair` specifically (it already identifies the candidate,
+it just doesn't write a delta yet).
+
+**Effort:** varies per kind — S-M human / CC per detector (each is
+independent).
+**Priority:** P3 — the taxonomy itself unblocks this; no single kind is
+more urgent than another without a product signal.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.

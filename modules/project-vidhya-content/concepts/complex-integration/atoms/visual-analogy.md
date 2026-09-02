@@ -1,52 +1,17 @@
 ---
-id: complex-integration-visual-analogy
+id: complex-integration.visual_analogy
 concept_id: complex-integration
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
-exam_ids: [gate-ma]
-scaffold_fade: 0
+difficulty: 0.3
+exam_ids: ["*"]
+modality: visual
 ---
 
-# The Park-Walking Analogy
+Every contour integral needs a closed loop to travel — here it's $|z|=2$, the boundary this concept's worked example integrates over. Nothing about the loop itself decides whether the integral vanishes; that depends entirely on what sits inside it.
 
-Imagine a large, perfectly smooth park. You go for a walk along a closed loop — you start at the gate, wander through the park, and return to the same gate.
-
-As you walk, you accumulate "elevation gain." In a perfectly smooth, flat park, your total elevation gain around any closed loop is exactly **zero** — what goes up must come down.
-
-This is **Cauchy's theorem**: if the function $f(z)$ is analytic (smooth, no holes) inside the loop, the contour integral around that loop is zero.
-
-## What Happens When There Is a Whirlpool?
-
-Now imagine there is a whirlpool (a singularity — a point where $f$ is not analytic) in the middle of the park, say at the fountain. The ground is perfectly smooth *around* the whirlpool, but the whirlpool itself is a vortex.
-
-When you walk a loop **around the whirlpool**, you feel a net swirl — you return to the start having accumulated a non-zero "spin." The contour integral is no longer zero; its value is determined entirely by the **strength of the whirlpool** (the residue) at the singularity.
-
-## The Function $1/(1+z^2)$ and Its Poles
-
-The function $\dfrac{1}{1+z^2} = \dfrac{1}{(z-i)(z+i)}$ has singularities (whirlpools) at $z = +i$ and $z = -i$ — the two poles lie on the imaginary axis, off the real line.
-
-The plot below shows the real-line cross-section $\dfrac{1}{1+x^2}$. Notice the smooth bell shape — but in the complex plane, the "whirlpools" at $\pm i$ are just off-screen, and they control the contour integrals that enclose them.
+If every singularity of the integrand lies outside this loop, Cauchy's theorem forces the integral to zero, no matter how the loop bends. If a singularity sits inside, as $z=\pm1$ do for $z/(z^2-1)$, the loop "feels" it, and the integral is fixed by Cauchy's formula (or the residue theorem) instead of vanishing.
 
 ```gif-scene
-{
-  "type": "function-trace",
-  "expression": "1 / (1 + x*x)",
-  "x_range": [-5, 5],
-  "y_range": [0, 1.2],
-  "label": "1/(1+z²): poles at ±i affect contour integrals"
-}
+{"type":"parametric-curve","x_expr":"2*cos(s)","y_expr":"2*sin(s)","s_range":[0,6.283185307179586],"x_range":[-3,3],"y_range":[-3,3],"frames":30,"fps":12,"title":"Closed contour |z| = 2"}
 ```
-
-## Path Independence — The Smooth-Terrain Version
-
-In the smooth part of the park (away from whirlpools), you can take any path between two points A and B and arrive with the same total elevation — path independence. This corresponds to the integral of an analytic function being independent of the path chosen between two endpoints.
-
-## Summary
-
-| Park | Complex Integration |
-|---|---|
-| Smooth, flat terrain | Analytic function |
-| Closed loop, no whirlpools | $\oint f\,dz = 0$ (Cauchy's theorem) |
-| Whirlpool inside the loop | $\oint f\,dz \neq 0$ (residue theorem) |
-| Elevation between A and B is path-independent | Integral is path-independent (analytic case) |

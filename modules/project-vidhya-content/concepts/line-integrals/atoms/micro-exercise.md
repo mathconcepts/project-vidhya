@@ -12,7 +12,7 @@ Evaluate $\int_C (x^2 + y) dx + xy \, dy$ where $C$ is the line segment from $(0
 
 - **(A)** 2
 - **(B)** 3
-- **(C)** 4
+- **(C)** $\frac{13}{3}$
 - **(D)** 5
 
 <details>
@@ -27,16 +27,8 @@ $$\int_0^1 [(2t)^2 + t](2) + (2t)(t) \, dt = \int_0^1 [2(4t^2 + t) + 2t^2] \, dt
 
 $$= \int_0^1 [8t^2 + 2t + 2t^2] \, dt = \int_0^1 [10t^2 + 2t] \, dt$$
 
-$$= \left[\frac{10t^3}{3} + t^2\right]_0^1 = \frac{10}{3} + 1 = \frac{13}{3}$$
+$$= \left[\frac{10t^3}{3} + t^2\right]_0^1 = \frac{10}{3} + 1 = \boxed{\frac{13}{3}}$$
 
-Hmm, this doesn't match the options. Let me recalculate:
-
-$x^2 + y = 4t^2 + t$ (this multiplies $dx = 2dt$) gives $(4t^2 + t) \cdot 2 = 8t^2 + 2t$.
-
-$xy = 2t \cdot t = 2t^2$ (this multiplies $dy = 1dt$) gives $2t^2$.
-
-Integral: $\int_0^1 (8t^2 + 2t + 2t^2) dt = \int_0^1 (10t^2 + 2t) dt = [\frac{10t^3}{3} + t^2]_0^1 = \frac{10}{3} + 1 = \frac{13}{3} \approx 4.33$.
-
-The closest is 4. Let me assume there's a slight adjustment to the problem; the method is correct. Answer is C.
+Check: $\frac{13}{3}\approx4.33$, and the two terms $\frac{10}{3}\approx3.33$ and $1$ sum to that — consistent with the positive integrand $10t^2+2t\geq0$ on $[0,1]$.
 
 </details>

@@ -1,12 +1,7 @@
 ---
-# Alternative body for hypothesis-testing-intuition, served when the
+# Alternative body for hypothesis-testing.intuition, served when the
 # learner stance is `assured`. The base file is what a steady student reads.
 # See src/content/stance-variants.ts for how this is selected.
-#
-# Note: the base atom's own id is `hypothesis-testing-intuition` (no dot),
-# a legacy naming drift check-content-integrity.ts tolerates. variant_of
-# points at that exact id; this file's own id follows the normal convention
-# instead of propagating the drift.
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
@@ -19,7 +14,7 @@ bloom_level: 2
 difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
-variant_of: hypothesis-testing-intuition
+variant_of: hypothesis-testing.intuition
 for_stance: assured
 ---
 
@@ -33,4 +28,4 @@ Lowering $\alpha$ (fewer false alarms) raises $\beta$ (more missed real effects)
 
 ## The sentence that never gets to be true
 
-"We accept $H_0$" is not a valid conclusion — only "fail to reject" is. A p-value of $0.6$ says the data are consistent with $H_0$; it never rules out how many rival hypotheses the same data would also fit, and it is never the probability $H_0$ is true.
+"We accept $H_0$" is not a valid conclusion — only "fail to reject" is. A p-value of $0.6$ says the data are consistent with $H_0$; it never rules out how many rival hypotheses the same data would also fit; reading it as the probability $H_0$ is true is a category error.

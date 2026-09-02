@@ -1641,6 +1641,128 @@ research-grounded rules, and a composable "delivery modifier" scheme
 row shipped in this pass; the rest is future content/schema work, not
 decided here — see TODOS.md.
 
+### Content strategy: research integration (2026-09-02)
+
+Five external research documents proposing a "research-first, static-core +
+evidence-triggered-delta" content framework for the 116 atomic GATE
+Engineering Mathematics topics were reconciled against what Vidhya already
+ships. Full comparison + rationale:
+`docs/designs/2026-09-02-content-strategy-research-integration-plan.md`.
+
+**Verdict:** six of the research's ten core requirements were already at or
+above the research bar (atomic topic contract, template families, evidence
+labels, assessment contract, quality gate pipeline — all pre-existing and
+in most cases more mature than the research's own proposal). Four were real
+gaps, closed this pass as infrastructure — not hand-authored content, since
+this environment has no live LLM provider key (same "known-unrun"
+constraint as `npm run variants:eval` elsewhere in this doc):
+
+- **`docs/content-spec/`** gained the two missing research documents
+  (`adaptive-content-generation-framework.md`,
+  `atomic-static-dynamic-content-framework.md` + `.csv`, a richer
+  21-column per-topic schema) and the previously-truncated
+  `integrated-self-improving-learning-system.md` was updated to its full
+  text. The already-wired 13-column `atomic-content-structure-map.csv` and
+  `src/content/atomic-topic-spec.ts`'s loader are deliberately left
+  untouched — swapping the schema under `GET /api/admin/content-spec/
+  atomic-topics` is a breaking API change that deserves its own pass.
+- **Method Selector** (a mandatory anchor per the research: state the
+  decision rule for when a method applies, name one tempting-but-wrong
+  alternative) was missing entirely — closed via the Pedagogy Pattern
+  Library (E4, `src/registry/pedagogy-patterns.ts`), NOT a new `AtomType`.
+  A new atom type has a huge blast radius (template YAML,
+  `ci:template-coverage`, prose-budget rules, stance-variant rules, the
+  walkthrough gate, `ATOM_ANIMATION_MAP`) and would leave every one of 101
+  concepts "failing" a brand-new coverage gate with no live provider key to
+  backfill content. `ped_method_selector` in
+  `data/registry/pedagogy-patterns.yml` is the first pattern with
+  full-catalogue reach (`applicable_modules`: all 10 topics — the existing
+  5 patterns cover only linear-algebra/calculus), injected at the
+  `formalism`/`worked_example` stages via the existing `buildPatternPromptBlock()`
+  seam every future generation call already reads.
+- **Typed delta-kind taxonomy.** `student_atom_overrides.trigger_reason`
+  was free text with no closed vocabulary anywhere. `src/content/delta-
+  kinds.ts` (`DeltaKind`, migration `056_delta_kind.sql`'s CHECK
+  constraint) codifies the research's 10 named kinds plus an 11th,
+  honestly-named `general_remediation` for the one trigger path that
+  actually exists today (3-failures-in-7-days → whole-atom regen) — it
+  doesn't cleanly match any single research kind, and mislabeling it as one
+  would fabricate precision the detector doesn't have. Wiring the other 10
+  kinds to real trigger detectors (a prerequisite-gap probe, a
+  representation-shift detector, ...) is each its own follow-up (TODOS.md)
+  — this makes the taxonomy real and queryable, not nine new detectors.
+- **Source freshness monitoring** — `docs/designs/2026-08-27-content-
+  readiness-market-research-integration.md:97` had explicitly parked this
+  as "an annual operator checklist item, not a system." `src/jobs/source-
+  freshness-monitor.ts` (+ `GET /api/admin/source-freshness`, weekly in
+  `src/jobs/scheduler.ts`) hashes the two official GATE 2026 pages
+  (syllabus, question-pattern) and flags drift via the existing
+  `durableCollection` pattern (migration-free — `durable_records`'
+  `collection` discriminator). Network reachability from any given
+  deployment isn't guaranteed; the job never throws on a fetch failure
+  (per-source `fetch_failed` status) and is unit-tested against a mocked
+  `fetch`.
+
+**Deliberately not touched:** `content_gate_ledger` (5 gates),
+`assessment_contracts`, no new `AtomType`/`StageKind`,
+`ci:template-coverage`/`ci:la-walkthrough` unchanged.
+
+**Second pass, same day — the four items above were re-scoped and shipped:**
+
+- **Per-claim source locator.** `src/content/source-locator.ts`
+  (`SourceLocator`) sits beside `evidence_level` on `AuthoredItem` and
+  `PyqBankProblem`. Does NOT touch `historical-evidence.yml` — that file's
+  own header already refuses to invent per-item locators for its 116
+  topic-level D/P/S rows without a real coding protocol, and doing so here
+  would be exactly that fabrication. Instead, `scripts/check-practice-
+  items.ts`'s `checkPhraseRule` now requires a locator on the one
+  combination that needs it: `evidence_level: 'directly_reviewed'` PLUS an
+  actual phrase-rule-licensed claim in the text. Zero committed items
+  trigger this today (a forward-looking tightening, not a breaking change).
+- **Three-tier delivery length.** `src/content/delivery-length.ts`
+  (`'micro' | 'standard' | 'deep'`) is a pure filter wired into
+  `pedagogy-engine.ts`'s `selectAtoms()` via a new `RouteRequest.
+  delivery_length` field (`/api/lesson/compose` now reads `body.
+  delivery_length` / `body.session_mode`). `'micro'` keeps only the
+  research's 6 named anchors; `'standard'`/`'deep'` are honest no-ops today
+  (Vidhya's base already matches "Standard," and a real "Deep" layer
+  doesn't exist yet — claiming otherwise would be fabricated precision).
+  `SessionMode.micro_sprint` (previously modality-only) now also compresses
+  the atom set via `deliveryLengthFromSessionMode()`. Resonance-beat
+  safety: `carriesInteractiveScene()` keeps any atom with a real
+  ` ```interactive-spec` `` / ` ```gif-scene` `` fence regardless of
+  atom_type, so a fused scene authored on `intuition` is never silently
+  dropped by the micro filter.
+- **Bounded-depth diagnostic probe — additive, not a replacement.**
+  `src/gbrain/diagnostic-probe.ts`'s `diagnoseWrongAnswer()` implements the
+  research's bounded traversal + ranking + "smallest discriminating probe"
+  + converging-evidence gate (reusing FIRe's own `FIRE_MAX_DEPTH` bound,
+  not a second depth constant). `traceWeakestPrerequisite` and
+  `refreshPrerequisiteAlerts` — the live path gating real interventions —
+  are untouched; the new function is wired ADDITIVELY into
+  `student-audit.ts`'s report (`diagnostic_probes` field + a new markdown
+  section), an on-demand coaching view, never the live decision path.
+- **Custom-PDF ingestion scaffold.** `src/content/custom-source/types.ts`
+  is the full research §15.6 data model (`CustomSourceDocument`,
+  `SourceSpan`, `ClaimDraft`) with a `CustomSourceExtractor` interface left
+  deliberately UNIMPLEMENTED — same LLMJudge/CASChecker split: an interface
+  first, a concrete OCR/extraction adapter in its own wiring PR once a
+  provider decision is made. `src/content/custom-source/repo.ts` is the
+  real, usable half — `CustomSourceRepo` (Pg + File, same two-impl pattern
+  as every repo in `src/storage/repositories/`) with hash-deduped
+  registration, permission-gated span attachment, and a review workflow
+  (`resolveClaim` refuses to reject/quarantine without a `review_note`, and
+  is idempotent). Migration `057_custom_source_ingestion.sql` creates the
+  three tables, empty until an upload flow calls in. `ClaimDraft` reuses
+  `DeltaKind` and `SourceLocator` from the two pieces above rather than
+  inventing its own vocabulary.
+
+**Still deliberately out of scope, named in TODOS.md:** migrating the live
+prerequisite-alert path onto the bounded algorithm (vs. the additive view
+that already ships), a concrete `CustomSourceExtractor` adapter (needs an
+OCR/storage product decision), and wiring the remaining 8 unwired
+`DeltaKind` values to real trigger detectors (each its own scoped project).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

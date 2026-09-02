@@ -2,27 +2,17 @@
 id: positive-definite-matrices.common-traps
 concept_id: positive-definite-matrices
 atom_type: common_traps
-bloom_level: 4
+bloom_level: 3
 difficulty: 0.55
 exam_ids: ["*"]
 ---
 
-**Trap 1: "Positive diagonal entries imply positive definiteness."**
+**Trap 1 — "Positive diagonal entries imply positive definiteness."** WRONG. $\begin{pmatrix} 1 & 3 \\ 3 & 1 \end{pmatrix}$ has positive diagonal but eigenvalues $4,-2$ (indefinite). Only leading principal minors (or the full spectrum) determine positive definiteness.
 
-WRONG. The matrix $\begin{pmatrix} 1 & 3 \\ 3 & 1 \end{pmatrix}$ has positive diagonal but eigenvalues $\lambda = 4, -2$ (indefinite). Only leading principal minors determine positive definiteness, not diagonal entries alone.
+**Trap 2 — "All positive entries means positive definite."** WRONG. $\begin{pmatrix} 1 & 2 \\ 2 & 1 \end{pmatrix}$ has every entry positive but eigenvalues $3,-1$ — indefinite. Entry-wise positivity is unrelated to matrix positive definiteness.
 
-**Trap 2: "If all entries are positive, the matrix is positive definite."**
+**Trap 3 — "Eigenvalues are always simpler than Sylvester's criterion."** MISLEADING. For $n\ge3$, leading principal minors (determinant arithmetic) are usually cheaper than a full eigen-decomposition.
 
-WRONG. The matrix $\begin{pmatrix} 1 & 2 \\ 2 & 1 \end{pmatrix}$ has all positive entries but eigenvalues $\lambda = 3, -1$. It is indefinite, not positive definite. Entry-wise positivity is completely different from matrix positive definiteness.
+**Trap 4 — "Positive semidefinite is just slightly less positive definite."** WRONG. $A=\begin{pmatrix}1&0\\0&0\end{pmatrix}$ is positive semidefinite but not positive definite — the difference is categorical (strict vs. non-strict), not a matter of degree.
 
-**Trap 3: "Computing eigenvalues is always simpler than Sylvester's criterion."**
-
-MISLEADING. For $3 \times 3$ or larger matrices, Sylvester's criterion (computing leading principal minors via determinants) is often computationally cheaper than finding all eigenvalues. Eigenvalue computation is $O(n^3)$ and numerically harder.
-
-**Trap 4: "Positive semidefinite is just 'slightly less' positive definite."**
-
-WRONG. Positive semidefinite allows zero eigenvalues—complete flat directions. For example, $A = \begin{pmatrix} 1 & 0 \\ 0 & 0 \end{pmatrix}$ is positive semidefinite ($\lambda_i \geq 0$) but not positive definite ($\lambda_2 = 0$). The difference is categorical: PD requires all eigenvalues strictly positive; PSD allows zero.
-
-**Trap 5: "Cholesky decomposition always works for symmetric matrices."**
-
-WRONG. Cholesky factorization $A = LL^T$ succeeds only for positive definite matrices. For a positive semidefinite matrix with zero eigenvalues, Cholesky will fail or require modification (modified Cholesky). Always verify positive definiteness first.
+**Trap 5 — "Cholesky always works on a symmetric matrix."** WRONG. $A=LL^T$ succeeds without pivoting only when $A$ is positive definite; a positive semidefinite matrix needs a modified (rank-revealing) Cholesky.

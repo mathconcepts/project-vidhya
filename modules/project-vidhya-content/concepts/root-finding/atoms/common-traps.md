@@ -7,6 +7,8 @@ difficulty: 0.3
 exam_ids: ["*"]
 ---
 
-- **Sign error in Newton-Raphson**: Many students write $x_{n+1} = x_n + \frac{f(x_n)}{f'(x_n)}$ (plus instead of minus). The minus sign is critical: you move *toward* the root by subtracting the tangent intercept. Geometric check: if $f(x_n) > 0$, you move left; the formula must produce $x_{n+1} < x_n$.
-- **Confusing convergence rates**: Bisection is linear (each iteration halves the interval), Newton-Raphson is quadratic (error squares each iteration—why it's faster). Students often memorize "Newton is faster" without understanding that quadratic vs. linear is a *huge* difference: after 10 iterations, bisection error is $10^{-3}$, but Newton-Raphson error is $10^{-1024}$.
-- **Assuming $f'(x) \neq 0$ everywhere**: Newton-Raphson fails spectacularly at multiple roots (where $f'(r) = 0$). Question might ask "which method is safer?" and the answer is bisection (no derivative needed, no division-by-zero risk).
+**Trap 1 — Sign error in Newton-Raphson.** Many students write $x_{n+1}=x_n+f(x_n)/f'(x_n)$, plus instead of minus. Geometric check: if $f(x_n)>0$ and $f'(x_n)>0$, the tangent's zero lies to the left, so $x_{n+1}$ must be less than $x_n$ — the minus sign is what makes that happen.
+
+**Trap 2 — Confusing convergence rates.** Bisection is linear, Newton-Raphson is quadratic. Students memorize "Newton is faster" without weighing how much: after 10 iterations bisection's error is around $10^{-3}$ of the original bracket, Newton's is astronomically smaller — quadratic vs. linear is not a small edge.
+
+**Trap 3 — Assuming $f'(x)\neq0$ always holds.** Newton-Raphson degrades to linear convergence (or fails entirely) at a repeated root, where $f'(x^*)=0$. A question asking "which method is safest with no information about multiplicity?" is pointing at bisection.

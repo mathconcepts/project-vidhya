@@ -1,30 +1,71 @@
 ---
-# Alternative body for divergence-curl.worked-example, served when the learner stance is
-# `shaken`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who is low on this concept and low on confidence:
-# smallest true first step, concrete numbers before symbols, picture before
-# formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
-id: divergence-curl.worked_example.shaken
+# Alternative body for divergence-curl.worked-example, served when the
+# learner stance is `shaken`. Prose held at or below the base atom's
+# length; the extra steps live in the walkthrough below.
+id: divergence-curl.worked-example.shaken
 concept_id: divergence-curl
 atom_type: worked_example
 bloom_level: 3
-difficulty: 0.40
-exam_ids: [gate-ma]
-scaffold_fade: 1
-variant_of: divergence-curl-worked-example
+difficulty: 0.25
+exam_ids: ["*"]
+scaffold_fade: true
+variant_of: divergence-curl.worked-example
 for_stance: shaken
 ---
 
-For $\mathbf F=xy^2\hat i+yz^2\hat j+zx^2\hat k$, take one partial derivative at a time. $\partial_x(xy^2)=y^2$. $\partial_y(yz^2)=z^2$. $\partial_z(zx^2)=x^2$. Add them: $\nabla\cdot\mathbf F=x^2+y^2+z^2$. At $(1,2,3)$ that is $1+4+9=14$.
+**Problem:** $\mathbf F(x,y,z)=(xy,\ yz,\ zx)$. Find $\operatorname{div}\mathbf F$ and $\operatorname{curl}\mathbf F$ at $(1,2,3)$.
 
-For the curl, the $\hat k$ component needs care first: $\partial_x(yz^2)-\partial_y(xy^2)=0-2xy$, so $-2xy$; at $(1,2,3)$ that is $-2(1)(2)=-4$. The $\hat i$ component is $\partial_y(zx^2)-\partial_z(yz^2)=0-2yz=-2yz$, which is $-12$ at the point. The $\hat j$ component carries the extra minus sign from the determinant expansion: $-[\partial_x(zx^2)-\partial_z(xy^2)]=-[2xz-0]=-2xz$, which is $-6$ at the point. So $\nabla\times\mathbf F=-12\hat i-6\hat j-4\hat k$ at $(1,2,3)$.
+---
 
-Last, check $\nabla\cdot(\nabla\times\mathbf F)$ using the general components $-2yz,-2xz,-2xy$: each partial derivative of these three is $0$, so the sum is $0$ — the identity holds.
+**Step 1 — Name $P,Q,R$.** $P=xy,\ Q=yz,\ R=zx$.
+
+---
+
+**Step 2 — Divergence.** $\operatorname{div}\mathbf F=\partial_xP+\partial_yQ+\partial_zR=y+z+x$. At $(1,2,3)$: $1+2+3=6$.
+
+---
+
+**Step 3 — Curl, one component at a time.** $\partial_yR-\partial_zQ=0-y=-y$. $\partial_zP-\partial_xR=0-z=-z$. $\partial_xQ-\partial_yP=0-x=-x$.
+
+$$\operatorname{curl}\mathbf F=(-y,-z,-x)$$
+
+---
+
+**Step 4 — Evaluate and check.** At $(1,2,3)$:
+
+$$\boxed{\operatorname{div}\mathbf F=6,\quad \operatorname{curl}\mathbf F=(-2,-3,-1)}$$
+
+$\operatorname{div}(\operatorname{curl}\mathbf F)=\partial_x(-y)+\partial_y(-z)+\partial_z(-x)=0+0+0=0$.
 
 ```interactive-spec
-{"v":1,"kind":"guided_walkthrough","title":"Walk through: divergence and curl of F = (xy², yz², zx²)","steps":[{"prompt":"For F = (xy², yz², zx²), write down ∂F_x/∂x, ∂F_y/∂y, ∂F_z/∂z and sum them to get div F.","hint":"Differentiate xy² w.r.t. x, yz² w.r.t. y, and zx² w.r.t. z. Each is a straightforward partial.","answer":"y² + z² + x²; at (1,2,3): 4 + 9 + 1 = 14"},{"prompt":"Compute the k̂ component of curl F = ∂F_y/∂x − ∂F_x/∂y for F = (xy², yz², zx²).","hint":"∂(yz²)/∂x = 0, and ∂(xy²)/∂y = 2xy. The k̂ component is the difference.","answer":"0 − 2xy = −2xy. At (1,2,3): −2(1)(2) = −4"},{"prompt":"State the identity that guarantees div(curl F) = 0 for any smooth field, and confirm it for G = (−2yz, −2xz, −2xy).","hint":"Compute ∂(−2yz)/∂x + ∂(−2xz)/∂y + ∂(−2xy)/∂z.","answer":"The identity is ∇·(∇×F) = 0 always. Each partial is 0, confirming 0+0+0 = 0."}]}
+{
+  "v": 1,
+  "kind": "guided_walkthrough",
+  "title": "Walk through: div and curl of F = (xy, yz, zx) at (1,2,3)",
+  "steps": [
+    {
+      "prompt": "Step 1: Write down P, Q, R for F = (xy, yz, zx).",
+      "hint": "F = (P, Q, R) component by component.",
+      "answer": "P = xy, Q = yz, R = zx"
+    },
+    {
+      "prompt": "Step 2: Compute div F in general, then at (1,2,3).",
+      "hint": "div F = ∂P/∂x + ∂Q/∂y + ∂R/∂z.",
+      "answer": "div F = x+y+z; at (1,2,3): div F = 6",
+      "eqn": "∂(xy)/∂x + ∂(yz)/∂y + ∂(zx)/∂z = y + z + x"
+    },
+    {
+      "prompt": "Step 3: Compute curl F in general.",
+      "hint": "curl F = (∂R/∂y − ∂Q/∂z, ∂P/∂z − ∂R/∂x, ∂Q/∂x − ∂P/∂y).",
+      "answer": "curl F = (-y, -z, -x)",
+      "eqn": "(∂(zx)/∂y − ∂(yz)/∂z, ∂(xy)/∂z − ∂(zx)/∂x, ∂(yz)/∂x − ∂(xy)/∂y) = (0-y, 0-z, 0-x)"
+    },
+    {
+      "prompt": "Step 4: Evaluate curl F at (1,2,3) and check div(curl F) = 0.",
+      "hint": "Substitute (1,2,3) into (-y,-z,-x), then take the divergence of the general curl expression.",
+      "answer": "curl F at (1,2,3) = (-2,-3,-1); div(curl F) = 0"
+    }
+  ],
+  "caption": "div(curl F) = 0 is a fixed identity — it must come out exactly zero for any twice-differentiable F, so a nonzero result here always means an arithmetic slip upstream."
+}
 ```

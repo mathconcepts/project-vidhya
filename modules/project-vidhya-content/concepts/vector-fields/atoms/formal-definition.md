@@ -3,16 +3,16 @@ id: vector-fields.formal-definition
 concept_id: vector-fields
 atom_type: formal_definition
 bloom_level: 2
-difficulty: 0.32
+difficulty: 0.40
 exam_ids: ["*"]
 ---
 
-**Vector Field (3D)**: A vector field $\mathbf{F}$ is a function that assigns a vector to each point $(x, y, z)$ in space:
-$$\mathbf{F}(x, y, z) = P(x, y, z)\mathbf{i} + Q(x, y, z)\mathbf{j} + R(x, y, z)\mathbf{k}$$
+A **scalar field** assigns one number $\phi(x,y,z)$ to every point of a region; a **vector field** assigns a vector $\mathbf F(x,y,z)$ to every point. Differentiating a scalar field produces its **gradient field**
 
-where $P$, $Q$, $R$ are scalar functions (the component functions). 
+$$\nabla\phi = \left(\frac{\partial\phi}{\partial x},\ \frac{\partial\phi}{\partial y},\ \frac{\partial\phi}{\partial z}\right),$$
 
-**Gradient Field (Conservative)**: A vector field $\mathbf{F}$ is conservative if it equals the gradient of a scalar potential function $f$:
-$$\mathbf{F} = \nabla f = \frac{\partial f}{\partial x}\mathbf{i} + \frac{\partial f}{\partial y}\mathbf{j} + \frac{\partial f}{\partial z}\mathbf{k}$$
+and any vector field arising this way is called **conservative**, with $\phi$ its **scalar potential**. For a planar field $\mathbf F=(P,Q)$, conservativity on a simply connected domain is equivalent to the mixed-partials condition
 
-For a conservative field, the line integral depends only on endpoints, not the path taken.
+$$\frac{\partial Q}{\partial x} = \frac{\partial P}{\partial y}.$$
+
+**Method selector.** Run the mixed-partials test before searching for a potential — it is a two-line check for whether one even exists. Guessing a candidate $\phi$ and differentiating it to see whether it reproduces $\mathbf F$ is the tempting alternative, but a guess that satisfies $\partial\phi/\partial x = P$ while quietly missing $\partial\phi/\partial y = Q$ can survive several lines of algebra unnoticed; the mixed-partials test catches a non-conservative field in one line, before any integration starts.

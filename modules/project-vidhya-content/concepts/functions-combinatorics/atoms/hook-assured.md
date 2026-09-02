@@ -1,20 +1,15 @@
 ---
-# Alternative body for functions-combinatorics.hook, served when the learner stance is
-# `assured`. The base file is what a steady student reads.
-# See src/content/stance-variants.ts for how this is selected.
-#
-# Written for a student who already has the mechanics: terse, assumes the
-# vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# Alternative body for functions-combinatorics.hook, stance `assured`.
 id: functions-combinatorics.hook.assured
 concept_id: functions-combinatorics
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: functions-combinatorics.hook
 for_stance: assured
 ---
 
-The exact place a confident answer goes wrong: "choose three people from ten" sounds like one question but is two. If the three end up in labeled roles — chair, secretary, treasurer — order matters and the count is $P(10,3)=720$. If the three just form a committee with no roles, order doesn't matter and the count is $C(10,3)=120$ — six times smaller, because each committee of three can be labeled $3!=6$ ways. Reading "choose" as automatically unordered is the most frequent way this topic gets a confident answer wrong.
+The "no empty box" count is a surjection count, and inclusion-exclusion gives it directly: $2^4 - \binom{2}{1}1^4 = 16-2=14$.
+
+The tempting shortcut — "just subtract the two all-in-one-box cases from $16$" — happens to land on the right answer only because there are $k=2$ boxes. For $3$ or more boxes, subtracting only the all-in-one-box cases overcounts what's removed: cases with exactly two boxes empty (out of three or more) get double-subtracted or skipped depending on how the shortcut is patched, which is exactly why the full alternating inclusion-exclusion sum exists.

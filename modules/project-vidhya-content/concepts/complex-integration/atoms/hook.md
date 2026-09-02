@@ -3,7 +3,7 @@ id: complex-integration.hook
 concept_id: complex-integration
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 ---
 

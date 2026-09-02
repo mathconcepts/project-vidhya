@@ -22,42 +22,17 @@ variant_of: determinants.intuition
 for_stance: shaken
 ---
 
-## The $2\times2$ case, concretely
+For $A = \begin{pmatrix} a & b \\ c & d \end{pmatrix}$: $\det(A) = ad - bc$. Multiply the diagonal, multiply the anti-diagonal, subtract.
 
-For $A = \begin{pmatrix} a & b \\ c & d \end{pmatrix}$, the determinant is
-
-$$\det(A) = ad - bc$$
-
-Multiply the diagonal, multiply the anti-diagonal, subtract. Try one:
-
-$$
-\begin{pmatrix} 3 & 1 \\ 2 & 4 \end{pmatrix} \quad\Rightarrow\quad (3)(4) - (1)(2) = 12 - 2 = 10
-$$
+$$\begin{pmatrix} 3 & 1 \\ 2 & 4 \end{pmatrix} \Rightarrow (3)(4) - (1)(2) = 12 - 2 = 10$$
 
 This matrix makes areas ten times bigger.
 
-## Three questions it answers
+Three questions the number answers: can I invert this matrix? Yes, exactly when $\det \neq 0$ — a zero determinant means the matrix squashed space flat, and nothing can unsquash it. What happened to areas? They scaled by $|\det|$. Did it flip? Yes, if $\det$ is negative — the transformation turned the plane over.
 
-**Can I invert this matrix?** Yes, exactly when $\det \neq 0$. If $\det = 0$ the matrix squashed space flat, and nothing can unsquash it. That is the whole reason invertibility and determinants are taught together.
+The property that saves the most time: $\det(AB) = \det(A)\det(B)$. So a question asking for $\det(A^3)$ does **not** require multiplying $A$ by itself three times — compute $\det(A)$ once and cube it.
 
-**What happened to areas?** They scaled by $|\det|$.
-
-**Did it flip?** Yes if $\det$ is negative. Negative means the transformation turned the plane over, like a reflection.
-
-## The property that saves the most time
-
-$$\det(AB) = \det(A)\det(B)$$
-
-Matrix multiplication is awkward and order-dependent. Determinants of products are just ordinary multiplication. So if a question asks for $\det(A^3)$, you do **not** multiply $A$ by itself three times — you compute $\det(A)$ once and cube it.
-
-## What GATE asks
-
-1. Compute a determinant — usually by row reduction, not cofactors
-2. Spot a singular matrix ($\det = 0$)
-3. Use $\det(AB) = \det(A)\det(B)$ to avoid work
-4. Connect $\det$ to whether a linear system has a unique solution
-
-All four rest on the same picture: a determinant is what happened to area.
+What GATE asks: compute a determinant (usually by row reduction, not cofactors), spot a singular matrix, use $\det(AB)=\det(A)\det(B)$ to avoid work, connect $\det$ to whether a system has a unique solution.
 
 ```interactive-spec
 {

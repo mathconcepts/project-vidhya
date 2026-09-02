@@ -31,4 +31,4 @@ Is ∂M/∂y = ∂N/∂x?           → Exact
 Otherwise                    → Check for Bernoulli or substitution
 ```
 
-The claim that sounds right but isn't: "linear in $y$" does not mean "no $x$ and $y$ appearing together." $y'+xy=x$ is linear even though $xy$ shows up, since $y$ itself is still first power throughout. What actually breaks linearity is $y$ raised to a power, or $y$ sitting inside a nonlinear function — never a coefficient that merely depends on $x$.
+The claim that sounds right but isn't: "linear in $y$" does not mean "no $x$ and $y$ appearing together." $y'+xy=x$ is linear even though $xy$ shows up, since $y$ itself is still first power throughout. What actually breaks linearity is $y$ raised to a power, or $y$ passed through something like $\sin$, $\log$ or $e^{(\cdot)}$ — never a coefficient that merely depends on $x$.

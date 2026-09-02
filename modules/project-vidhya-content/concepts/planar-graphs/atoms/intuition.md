@@ -1,5 +1,5 @@
 ---
-id: planar-graphs-intuition
+id: planar-graphs.intuition
 concept_id: planar-graphs
 atom_type: intuition
 bloom_level: 2
@@ -7,8 +7,6 @@ difficulty: 0.25
 exam_ids: [gate-ma]
 scaffold_fade: 0
 ---
-
-# Planar Graphs — What It Means
 
 ## The Core Idea
 
@@ -72,12 +70,4 @@ Each face is bounded by a **closed walk**. For a simple planar graph:
 - Summing over all faces: $2E \geq 3F$ (each edge borders at most 2 faces).
 - Combined with Euler's formula, this gives $E \leq 3V - 6$.
 
----
-
-## GATE Exam Signals
-
-- Euler's formula $V-E+F=2$ appears in almost every GATE set on planar graphs.
-- Quick non-planarity test: check if $E \leq 3V-6$ is violated.
-- For bipartite graphs, use the tighter bound $E \leq 2V-4$.
-- Memorize: $K_5$ and $K_{3,3}$ are the two smallest non-planar graphs.
-- Euler characteristic of a sphere = 2; for a torus = 0 (GATE may occasionally ask this).
+A curiosity worth holding onto: Euler's formula's constant, $2$, is itself a property of the surface being drawn on — a sphere gives $2$, a torus (donut surface) gives $0$. Every planar drawing lives on a sphere in disguise (the outer face is just the point at infinity), which is why $2$ shows up without exception.

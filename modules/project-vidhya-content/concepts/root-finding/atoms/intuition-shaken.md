@@ -12,10 +12,9 @@ id: root-finding.intuition.shaken
 concept_id: root-finding
 atom_type: intuition
 bloom_level: 2
-difficulty: 0.25
-exam_ids: [gate-ma]
-scaffold_fade: 0
-variant_of: root-finding-intuition
+difficulty: 0.1
+exam_ids: ["*"]
+variant_of: root-finding.intuition
 for_stance: shaken
 ---
 
@@ -27,4 +26,4 @@ $$x_1=x_0-\frac{f(x_0)}{f'(x_0)}=1.5-\frac{0.875}{5.75}\approx1.3478$$
 
 One step already moved the guess from $1.5$ toward the true root near $1.3247$.
 
-That move — follow the tangent line down to where it hits zero, and use that crossing as the new guess — is the entire idea behind Newton-Raphson. Repeat it and, once the guess is close enough, the correction shrinks fast: each new error is roughly proportional to the square of the one before it, which is why so few repeats are usually needed once the method has caught on to a root.
+That move — follow the tangent line down to where it hits zero, and use that crossing as the new guess — is the entire idea behind Newton-Raphson. Repeat it and, once close enough, each new error is roughly the square of the one before it, so few repeats are usually needed once the method has caught on to a root.

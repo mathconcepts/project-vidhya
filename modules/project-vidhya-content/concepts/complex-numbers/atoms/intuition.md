@@ -8,9 +8,9 @@ exam_ids: ["*"]
 modality: visual
 ---
 
-A complex number $a + bi$ is a point in the plane: $a$ on the real axis, $b$ on the imaginary axis. Adding two complex numbers is vector addition. Multiplying by $i$ rotates 90° counterclockwise. Multiplying by any complex number scales by its magnitude and rotates by its angle.
+A complex number $a + bi$ is a point in the plane: $a$ on the real axis, $b$ on the imaginary axis. Adding two complex numbers is vector addition. Multiplying by $i$ rotates $90°$ counterclockwise. Multiplying by any complex number scales by its magnitude and rotates by its angle.
 
-That last fact is the whole game: **complex multiplication = rotation + scaling**. Polar form $re^{i\theta}$ makes this explicit.
+That last fact is the whole game: **complex multiplication = rotation + scaling**. Polar form $re^{i\theta}$ makes this explicit, which is why it — not Cartesian form — is the natural form for multiplying, dividing, or raising to a power.
 
 Drag $a$ and $b$ below and watch $|z|$, $\cos\theta$, and $\sin\theta$ move together — they never move independently, because all three are locked to the same point $z = a+bi$.
 

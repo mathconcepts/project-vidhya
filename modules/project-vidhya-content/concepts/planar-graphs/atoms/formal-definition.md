@@ -20,3 +20,5 @@ $$m \leq 3n - 6$$
 **Complete Graph Planarity**: $K_5$ and $K_{3,3}$ are non-planar. These are the minimal non-planar graphs (Kuratowski's Theorem: a graph is planar iff it contains no subdivision of $K_5$ or $K_{3,3}$).
 
 **Dual Graph**: For a planar embedding, the dual graph has one vertex per face and edges connecting adjacent faces.
+
+**Choosing a test.** Use the density bound $E\leq 3V-6$ (or $E\leq 2V-4$ if the graph is bipartite) first — it is one multiplication and a subtraction, and a violation proves non-planarity outright. Reach for Kuratowski's theorem only when the density bound is satisfied but a subdivision of $K_5$ or $K_{3,3}$ is still suspected — the tempting-but-wrong shortcut is stopping at "the bound is satisfied" and calling the graph planar, when the bound is necessary, never sufficient, on its own.

@@ -5,8 +5,10 @@
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# marks rather than re-teaching what they can already do.
+#
+# The fenced interactive block below is copied verbatim from the base atom
+# so the widget cannot drift between variants; only prose differs.
 id: complex-numbers.intuition.assured
 concept_id: complex-numbers
 atom_type: intuition
@@ -18,11 +20,9 @@ variant_of: complex-numbers.intuition
 for_stance: assured
 ---
 
-$z=a+bi\leftrightarrow re^{i\theta}$, $r=|z|=\sqrt{a^2+b^2}$; multiplication is rotate-and-scale, $z_1z_2=r_1r_2e^{i(\theta_1+\theta_2)}$ — additive angles are the entire reason polar form exists.
+$z=a+bi\leftrightarrow re^{i\theta}$, $r=|z|=\sqrt{a^2+b^2}$; multiplication is rotate-and-scale, $z_1z_2=r_1r_2e^{i(\theta_1+\theta_2)}$ — additive angles are the entire reason polar form exists, and why it beats Cartesian for products, quotients, and powers.
 
-The mark-losing trap: $\theta=\arctan(b/a)$ alone gives the wrong quadrant whenever $a<0$. For $z=-3+4i$: the raw formula $\arctan(4/{-3})$ returns a fourth-quadrant angle, but $z$ sits in the second quadrant ($a<0,b>0$); the correct value is $\theta=\pi-\arctan(4/3)$. Read the quadrant from the signs of $a$ and $b$ before trusting $\arctan$ at all.
-
-$\cos\theta=a/r$, $\sin\theta=b/r$ pin the quadrant correctly where $\arctan(b/a)$ alone can't, since each carries its own sign separately.
+The mark-losing trap: $\theta=\arctan(b/a)$ alone gives the wrong quadrant whenever $a<0$. For $z=-3+4i$: raw $\arctan(4/{-3})$ returns a fourth-quadrant angle, but $z$ sits in the second quadrant; the correct value is $\theta=\pi-\arctan(4/3)$. Read the quadrant from the signs of $a,b$ before trusting $\arctan$ at all — $\cos\theta=a/r,\ \sin\theta=b/r$ carry their own sign and never need this correction.
 
 ```interactive-spec
 {

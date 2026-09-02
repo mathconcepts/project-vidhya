@@ -5,7 +5,8 @@ atom_type: retrieval_prompt
 bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
-estimated_minutes: 3
+estimated_minutes: 1
+retention_tags: ["euler-formula", "planarity-bound"]
 ---
 
 A connected simple planar graph has 7 vertices and 15 edges. How many faces does it have according to Euler's formula?

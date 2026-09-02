@@ -6,22 +6,19 @@ bloom_level: 4
 difficulty: 0.5
 exam_ids: ["*"]
 estimated_minutes: 3
+retention_tags: ["bisection", "bracket-halving"]
 ---
 
-For $f(x) = e^x - 3x = 0$, the Newton-Raphson iteration starting at $x_0 = 1$ gives $x_1 = 1 - \frac{e - 3}{e - 3}$. What is $x_1$?
+Before checking, try to recall: for $f(x)=x^3-x-1$ on the bracket $[1,2]$, what is $x$ after **two** bisection iterations (the second midpoint tested)?
 
-- **(A)** $x_1 = 1$
-- **(B)** $x_1 = 0$
-- **(C)** $x_1 = 1.5$
-- **(D)** Cannot be determined
+- **(A)** $1.5$
+- **(B)** $1.25$
+- **(C)** $1.375$
+- **(D)** $1.75$
 
 <details>
 <summary>Answer</summary>
 
-**A**. Step 1: $f(x) = e^x - 3x$ and $f'(x) = e^x - 3$.
-Step 2: At $x_0 = 1$: $f(1) = e - 3 ≈ 2.718 - 3 = -0.282$ and $f'(1) = e - 3 ≈ -0.282$.
-Step 3: $x_1 = 1 - \frac{f(1)}{f'(1)} = 1 - \frac{e-3}{e-3} = 1 - 1 = 0$.
-
-However, the expression given shows $x_1 = 1 - \frac{e-3}{e-3}$. If $e-3 ≠ 0$ (which it is), then $\frac{e-3}{e-3} = 1$, so $x_1 = 0$. The answer is B.
+**B**. Iteration 1: $c=1.5$, $f(1.5)=0.875>0$, and $f(1)=-1<0$, so the root is in $[1,1.5]$. Iteration 2: $c=(1+1.5)/2=1.25$, $f(1.25)\approx-0.297$. That midpoint, $1.25$, is the answer — the sign at $c$ then tells you which half to keep next.
 
 </details>

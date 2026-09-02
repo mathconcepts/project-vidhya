@@ -18,3 +18,5 @@ exam_ids: ["*"]
 **Chromatic Polynomial** $P(G, k)$: The number of proper $k$-colorings of $G$. For example, $P(K_n, k) = k(k-1)(k-2) \cdots (k-n+1) = k^{\underline{n}}$ (falling factorial).
 
 **Greedy Coloring**: A heuristic that colors vertices one by one, assigning each vertex the smallest available color not used by its already-colored neighbors. Not always optimal, but fast.
+
+**Choosing a bound, not just a heuristic.** Use greedy's $\Delta(G)+1$ bound only as a quick upper estimate, never as $\chi(G)$ itself — check structure first: a clique of size $r$ forces $\chi(G)\geq r$, and bipartiteness (no odd cycle) forces $\chi(G)=2$ exactly. The tempting-but-wrong move is running greedy in an arbitrary vertex order and reporting whatever count comes out as "the" chromatic number — a bad order can waste colors Brooks' theorem says are unnecessary, and greedy has no mechanism to notice or correct it.

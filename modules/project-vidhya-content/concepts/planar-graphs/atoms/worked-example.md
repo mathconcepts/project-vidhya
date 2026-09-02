@@ -1,5 +1,5 @@
 ---
-id: planar-graphs-worked-example
+id: planar-graphs.worked-example
 concept_id: planar-graphs
 atom_type: worked_example
 bloom_level: 3
@@ -8,9 +8,7 @@ exam_ids: [gate-ma]
 scaffold_fade: 1
 ---
 
-# Worked Example: $K_4$ is Planar; $K_5$ is Not
-
-## Problem (GATE Style)
+## Problem (GATE Style): $K_4$ is Planar, $K_5$ is Not
 
 **(Part A)** For the complete graph $K_4$ ($V = 4$, $E = 6$), verify Euler's formula and exhibit a planar drawing.
 

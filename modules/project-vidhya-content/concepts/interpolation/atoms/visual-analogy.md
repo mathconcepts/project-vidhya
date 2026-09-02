@@ -1,25 +1,17 @@
 ---
-id: interpolation.visual_analogy
+id: interpolation.visual-analogy
 concept_id: interpolation
 atom_type: visual_analogy
 bloom_level: 2
-difficulty: 0.30
+difficulty: 0.3
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## The Interpolation Curve: Drawing a Smooth Path Through the Data
-
-Think of interpolation as **connecting dots on a graph with a smooth, predictable curve**. When you have a few scattered data points and you need a value somewhere in between, you're asking: "What curve best represents the underlying trend I'm sampling?"
-
-A **Lagrange polynomial** is like drawing a single smooth curve that touches every dot exactly. It's unique—there's only one polynomial of degree $n-1$ that passes through $n$ points. The polynomial "learns" the character of your data from those fixed points, and then you evaluate it anywhere you want.
-
-A **Newton divided differences** approach is the same end result, but built incrementally: start with a constant (the first data point), then add corrections for each new point, building up the polynomial layer by layer. It's more efficient for computation, especially when you're adding points one at a time.
-
-**Splines** take a different philosophy: instead of one global curve, use many small polynomial pieces (typically cubics) that knit together smoothly. This prevents the "wiggling" that can happen when a high-degree Lagrange polynomial tries to thread through many distant points—a common pitfall in practice.
+Picture three known readings as pins on a board: $f(1)=1$, $f(2)=8$, $f(4)=64$. A quadratic thread pulled taut through all three pins is the interpolating polynomial — it is forced to touch every pin exactly, but between and beyond them it follows its own curve, not necessarily the process that produced the data.
 
 ```gif-scene
-{"type":"function-trace","expression":"sin(x)*cos(x/3) + 0.3*x","x_range":[-6.28,6.28],"y_range":[-3,3],"frames":30,"fps":12}
+{"type": "discrete-bars", "values": [1, 8, 64], "labels": ["x=1", "x=2", "x=4"]}
 ```
 
-This trace shows the kind of smooth, continuous interpolated curve you create from discrete data—monotonic in character, predictable, and ready for downstream analysis.
+These three bars are all the interpolant is allowed to know. If the true underlying rule were $f(x)=x^3$, the honest value at $x=3$ is $27$ — but the quadratic thread through only these three pins reads $29$ there, off by $2$. Not a mistake: a thread pulled through three tacks has no way to know it is chasing a cubic, and the gap only grows once you step outside the span the tacks define.

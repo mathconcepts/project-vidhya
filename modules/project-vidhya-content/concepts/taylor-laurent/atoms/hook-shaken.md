@@ -6,13 +6,12 @@
 # Written for a student who is low on this concept and low on confidence:
 # smallest true first step, concrete numbers before symbols, picture before
 # formula, and the check made explicit. No praise, no reassurance, and no
-# mention of how the reader might be feeling — a small win is what steadies
-# someone, not being told they are struggling.
+# mention of how the reader might be feeling.
 id: taylor-laurent.hook.shaken
 concept_id: taylor-laurent
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: taylor-laurent.hook
 for_stance: shaken

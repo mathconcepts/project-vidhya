@@ -5,13 +5,12 @@
 #
 # Written for a student who already has the mechanics: terse, assumes the
 # vocabulary, and spends its words on the distinctions that actually cost
-# marks (degenerate cases, faster routes, common false generalisations)
-# rather than re-teaching what they can already do.
+# marks rather than re-teaching what they can already do.
 id: taylor-laurent.hook.assured
 concept_id: taylor-laurent
 atom_type: hook
 bloom_level: 1
-difficulty: 0
+difficulty: 0.0
 exam_ids: ["*"]
 variant_of: taylor-laurent.hook
 for_stance: assured

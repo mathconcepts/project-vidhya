@@ -5,32 +5,13 @@ atom_type: intuition
 bloom_level: 2
 difficulty: 0.25
 exam_ids: ["*"]
-scaffold_fade: true
+modality: visual
 ---
 
-## Taylor & Laurent Series: Powering Complex Analysis
+**Taylor series** expand analytic functions around ordinary points: $f(z)=\sum_{n=0}^\infty a_n(z-z_0)^n$, with $a_n=f^{(n)}(z_0)/n!$ encoding every derivative at the expansion point. Within the radius of convergence, the function *is* the series — no information lost.
 
-Taylor and Laurent series are power series representations of complex functions—the bridge between calculus intuition and singularity analysis.
+**Laurent series** generalize this near singularities: $f(z)=\sum_{n=-\infty}^\infty a_n(z-z_0)^n$. Negative-power terms ($n<0$) form the **principal part**, capturing what happens approaching the singularity; non-negative terms form the **regular part**.
 
-**Taylor series** expand analytic functions around ordinary points:
-$$f(z) = \sum_{n=0}^{\infty} a_n(z-z_0)^n$$
+Singularity classification becomes automatic once the series is centered *at* the singularity: zero principal-part terms is **removable**; exactly $m$ negative powers (worst term $(z-z_0)^{-m}$) is a **pole of order $m$**; infinitely many is **essential**. The coefficient $a_{-1}$ is the **residue** — it feeds directly into the residue theorem, no further computation needed.
 
-The coefficients $a_n = \frac{f^{(n)}(z_0)}{n!}$ encode all derivatives at the expansion point. Within the radius of convergence, **the function IS the series**—no information is lost.
-
-**Laurent series** generalize this near singularities:
-$$f(z) = \sum_{n=-\infty}^{\infty} a_n(z-z_0)^n$$
-
-The negative-power terms ($n<0$) are the **principal part**—they capture what happens as you approach the singularity. The non-negative terms form the **regular part**.
-
-**Why this matters for GATE:**
-
-1. **Singularity classification is automatic**: Count non-zero coefficients in the principal part.
-   - Removable singularity: all $a_{-n}=0$ (zero principal part)
-   - Pole of order $m$: exactly $m$ negative powers (highest is $a_{-m}$)
-   - Essential singularity: infinitely many negative powers
-
-2. **The residue is hidden in the series**: The coefficient $a_{-1}$ (the "residue") determines the integral by residue theorem.
-
-3. **Series accelerates problem-solving**: Instead of computing limits or derivatives, classify by inspection.
-
-Master the mechanics first—partial fractions, geometric series, substitution—then singularity classification flows directly from the series formula.
+Master the mechanics first — partial fractions, geometric series, substitution — then classification and the residue both fall straight out of the series by inspection.

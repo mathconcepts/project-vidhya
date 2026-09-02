@@ -172,6 +172,9 @@ export default function StudymateSessionPage() {
     try {
       await apiFetch('/api/studymate/sessions/' + session.id + '/answer', {
         method: 'POST',
+        // Required so the server can verify this session actually owns
+        // studymateId before writing to it (/ship review army, 2026-09-02).
+        headers: { 'X-Session-Id': sessionId },
         body: JSON.stringify({
           problem_id: currentProblem.problem_id,
           user_answer: userAnswer.trim(),
@@ -249,7 +252,7 @@ export default function StudymateSessionPage() {
       try {
         const data = await apiFetch<{ stat: string }>(
           '/api/studymate/sessions/' + session.id + '/complete',
-          { method: 'POST' },
+          { method: 'POST', headers: { 'X-Session-Id': sessionId } },
         );
         setStatLine(data.stat);
         setPageState('stat');

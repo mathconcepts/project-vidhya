@@ -202,6 +202,25 @@ export async function resumeSession(
   };
 }
 
+/**
+ * True only when `studymateId` names a real session AND that session's
+ * own `session_id` matches the caller's anonymous session key.
+ *
+ * Closes an ownership gap the review army found (/ship, 2026-09-02):
+ * `studymateId` reaches the API from a URL path segment the client fully
+ * controls, and nothing verified it belonged to the caller before
+ * recording an answer, completing a session, or (once thinking-gap
+ * persistence started actually writing on the flat-file backend) setting
+ * its gap_text. A missing session or a session_id mismatch both return
+ * false — callers must treat "not proven mine" as "not mine".
+ */
+export async function isSessionOwner(studymateId: string, sessionId: string): Promise<boolean> {
+  if (!studymateId || !sessionId) return false;
+  const store = getSessionStore();
+  const session = await store.getSession(studymateId);
+  return session?.session_id === sessionId;
+}
+
 export async function recordAnswer(
   studymateId: string,
   problemId: string,

@@ -99,6 +99,15 @@ export interface SessionStore {
   /** Look up the most recent resumable session within RESUME_WINDOW_HOURS. */
   findResumable(sessionId: string, withinHours: number): Promise<StoredSession | null>;
 
+  /**
+   * Look up a session by its own id, regardless of resumability — the
+   * ownership check callers need before acting on a `studymateId` taken
+   * from a URL path (a client can send ANY id there; this is how the
+   * caller finds out whose session it actually is before recording an
+   * answer or completing it on their behalf).
+   */
+  getSession(studymateId: string): Promise<StoredSession | null>;
+
   /** Load all problem rows for a session. */
   getSessionProblems(studymateId: string): Promise<Array<StoredProblem & SessionProblemRow>>;
 
@@ -254,6 +263,17 @@ class PostgresStore implements SessionStore {
        ORDER BY updated_at DESC
        LIMIT 1`,
       [sessionId],
+    );
+    return rows[0] ?? null;
+  }
+
+  async getSession(studymateId: string): Promise<StoredSession | null> {
+    const { rows } = await this.pool.query(
+      `SELECT id, session_id, exam_id, session_type, state, problem_count, current_index, updated_at
+       FROM studymate_sessions
+       WHERE id = $1
+       LIMIT 1`,
+      [studymateId],
     );
     return rows[0] ?? null;
   }
@@ -485,6 +505,11 @@ class FlatFileStore implements SessionStore {
         && new Date(x.updated_at).getTime() > cutoff)
       .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     return matches[0] ?? null;
+  }
+
+  async getSession(studymateId: string): Promise<StoredSession | null> {
+    const s = this.store.read();
+    return s.sessions.find((x) => x.id === studymateId) ?? null;
   }
 
   async getSessionProblems(studymateId: string) {

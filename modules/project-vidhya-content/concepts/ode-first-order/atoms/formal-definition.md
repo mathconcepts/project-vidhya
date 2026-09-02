@@ -27,3 +27,5 @@ Integrate both sides to find the solution.
   "caption": "Watch the solution to dy/dt = −y trace out exponential decay. Changing the initial condition y(0) = C scales the curve up or down — the shape never changes."
 }
 ```
+
+**Method selector.** Reach for the integrating factor $\mu(x)=e^{\int P(x)\,dx}$ once the equation is confirmed linear ($y' + P(x)y = Q(x)$), not before. A tempting-but-wrong move is forcing separation of variables onto every first-order equation on sight: separation only works when the right side factors as $g(x)h(y)$, and $\frac{dy}{dx} + 2y = e^{-x}$ has no such factorization — the $-2y$ term never splits cleanly from the rest — so separation stalls while the integrating factor solves it in one pass.

@@ -4,6 +4,38 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.47.0] — 2026-09-02 — Content strategy: research integration
+
+**Operator action:** migration `056_delta_kind.sql` auto-applies on boot
+(no manual step). No new env vars — `sourceFreshnessMonitor` runs weekly
+in-process like every other scheduled job.
+
+Reconciled five external research documents proposing a "research-first,
+static-core + evidence-triggered-delta" content framework against what
+Vidhya already ships across the 116 atomic GATE Engineering Mathematics
+topics. Full comparison: `docs/designs/2026-09-02-content-strategy-
+research-integration-plan.md`. Six of the research's ten core requirements
+were already at or above the bar (atomic topic contract, template families,
+evidence labels, assessment contract, quality gate pipeline); four real
+gaps closed as infrastructure:
+
+- `docs/content-spec/` gained the two missing research documents and a
+  richer per-topic CSV schema; the currently-wired structure-map CSV is
+  left untouched (see CLAUDE.md for why).
+- **Method Selector** pedagogy pattern (`ped_method_selector`,
+  `data/registry/pedagogy-patterns.yml`) — the first pattern with
+  full-catalogue reach across all 10 topics, not a new `AtomType`.
+- **Typed `DeltaKind` taxonomy** (`src/content/delta-kinds.ts`, migration
+  `056_delta_kind.sql`) replaces `student_atom_overrides.trigger_reason`'s
+  free text with a closed, honest vocabulary.
+- **Source freshness monitor** (`src/jobs/source-freshness-monitor.ts`,
+  `GET /api/admin/source-freshness`) replaces a previously-parked "annual
+  manual checklist" with a weekly automated hash check on the official GATE
+  syllabus/pattern pages.
+
+See CLAUDE.md's "Content strategy: research integration" section for the
+full rationale and what was deliberately deferred (tracked in TODOS.md).
+
 ## [4.46.0] — 2026-09-01 — Admin/owner no longer hit teacher-only dead ends
 
 **Operator action:** none required. No new env vars, no migrations.

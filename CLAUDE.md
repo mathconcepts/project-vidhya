@@ -1641,6 +1641,79 @@ research-grounded rules, and a composable "delivery modifier" scheme
 row shipped in this pass; the rest is future content/schema work, not
 decided here — see TODOS.md.
 
+### Content strategy: research integration (2026-09-02)
+
+Five external research documents proposing a "research-first, static-core +
+evidence-triggered-delta" content framework for the 116 atomic GATE
+Engineering Mathematics topics were reconciled against what Vidhya already
+ships. Full comparison + rationale:
+`docs/designs/2026-09-02-content-strategy-research-integration-plan.md`.
+
+**Verdict:** six of the research's ten core requirements were already at or
+above the research bar (atomic topic contract, template families, evidence
+labels, assessment contract, quality gate pipeline — all pre-existing and
+in most cases more mature than the research's own proposal). Four were real
+gaps, closed this pass as infrastructure — not hand-authored content, since
+this environment has no live LLM provider key (same "known-unrun"
+constraint as `npm run variants:eval` elsewhere in this doc):
+
+- **`docs/content-spec/`** gained the two missing research documents
+  (`adaptive-content-generation-framework.md`,
+  `atomic-static-dynamic-content-framework.md` + `.csv`, a richer
+  21-column per-topic schema) and the previously-truncated
+  `integrated-self-improving-learning-system.md` was updated to its full
+  text. The already-wired 13-column `atomic-content-structure-map.csv` and
+  `src/content/atomic-topic-spec.ts`'s loader are deliberately left
+  untouched — swapping the schema under `GET /api/admin/content-spec/
+  atomic-topics` is a breaking API change that deserves its own pass.
+- **Method Selector** (a mandatory anchor per the research: state the
+  decision rule for when a method applies, name one tempting-but-wrong
+  alternative) was missing entirely — closed via the Pedagogy Pattern
+  Library (E4, `src/registry/pedagogy-patterns.ts`), NOT a new `AtomType`.
+  A new atom type has a huge blast radius (template YAML,
+  `ci:template-coverage`, prose-budget rules, stance-variant rules, the
+  walkthrough gate, `ATOM_ANIMATION_MAP`) and would leave every one of 101
+  concepts "failing" a brand-new coverage gate with no live provider key to
+  backfill content. `ped_method_selector` in
+  `data/registry/pedagogy-patterns.yml` is the first pattern with
+  full-catalogue reach (`applicable_modules`: all 10 topics — the existing
+  5 patterns cover only linear-algebra/calculus), injected at the
+  `formalism`/`worked_example` stages via the existing `buildPatternPromptBlock()`
+  seam every future generation call already reads.
+- **Typed delta-kind taxonomy.** `student_atom_overrides.trigger_reason`
+  was free text with no closed vocabulary anywhere. `src/content/delta-
+  kinds.ts` (`DeltaKind`, migration `056_delta_kind.sql`'s CHECK
+  constraint) codifies the research's 10 named kinds plus an 11th,
+  honestly-named `general_remediation` for the one trigger path that
+  actually exists today (3-failures-in-7-days → whole-atom regen) — it
+  doesn't cleanly match any single research kind, and mislabeling it as one
+  would fabricate precision the detector doesn't have. Wiring the other 10
+  kinds to real trigger detectors (a prerequisite-gap probe, a
+  representation-shift detector, ...) is each its own follow-up (TODOS.md)
+  — this makes the taxonomy real and queryable, not nine new detectors.
+- **Source freshness monitoring** — `docs/designs/2026-08-27-content-
+  readiness-market-research-integration.md:97` had explicitly parked this
+  as "an annual operator checklist item, not a system." `src/jobs/source-
+  freshness-monitor.ts` (+ `GET /api/admin/source-freshness`, weekly in
+  `src/jobs/scheduler.ts`) hashes the two official GATE 2026 pages
+  (syllabus, question-pattern) and flags drift via the existing
+  `durableCollection` pattern (migration-free — `durable_records`'
+  `collection` discriminator). Network reachability from any given
+  deployment isn't guaranteed; the job never throws on a fetch failure
+  (per-source `fetch_failed` status) and is unit-tested against a mocked
+  `fetch`.
+
+**Deliberately not touched:** `content_gate_ledger` (5 gates),
+`assessment_contracts`, `evidence_level`, no new `AtomType`/`StageKind`,
+`ci:template-coverage`/`ci:la-walkthrough` unchanged.
+
+**Deferred, named in TODOS.md:** three-tier delivery length
+(Micro/Standard/Deep), a bounded-depth diagnostic probe replacing
+`traceWeakestPrerequisite`'s unbounded BFS, custom-PDF ingestion, and a
+per-claim source locator alongside `evidence_level`. Each touches either a
+live student-facing path or a large net-new subsystem and needs its own
+reviewed pass.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -111,6 +111,44 @@ patterns:
     status: active
     version: 1
 
+  - id: ped_method_selector
+    name: Method Selector
+    description: >
+      State the decision rule for when this method applies, and name ONE
+      tempting-but-wrong alternative method a GATE student would reach for
+      instead. Closes the "method-selection confusion" pain point that the
+      GATE Engineering Mathematics research (docs/content-spec/integrated-
+      self-improving-learning-system.md §3-4) flags as a recurring
+      hypothesis across most of the 116 atomic topics -- e.g. L'Hospital's
+      rule applied to a non-eligible form, Green's/Stokes'/Gauss' theorem
+      chosen by pattern-matching instead of eligibility, a distribution
+      picked from keywords instead of its conditions. Universal across all
+      topic families, not family-specific -- this is the first pattern with
+      full-catalogue reach (every other pattern here covers 1-2 modules).
+    applicable_modules:
+      - linear-algebra
+      - calculus
+      - vector-calculus
+      - differential-equations
+      - complex-variables
+      - probability-statistics
+      - numerical-methods
+      - discrete-mathematics
+      - transform-theory
+      - graph-theory
+    blueprint_stages:
+      - formalism
+      - worked_example
+    prompt_directives:
+      - "State the decision rule for when this method/theorem/test applies, as a compact if-then statement -- not a restatement of the definition."
+      - "Name exactly ONE tempting-but-wrong alternative method a GATE student would reach for, and one sentence on why it fails here (a missing condition, wrong eligibility, or a superficial pattern match)."
+      - "Do NOT enumerate every possible wrong method -- one named contrast, not a survey."
+      - "Keep the decision rule and the rejected alternative to 2-3 sentences total; this is a selector, not a second worked example."
+    modality_bias: STATIC
+    evidence: "docs/content-spec/integrated-self-improving-learning-system.md §3-4 (method-selection confusion pain-point family, recurring across LA/CA/VC/DE/PD/CX/PS/NM rows); docs/content-spec/atomic-static-dynamic-content-framework.md (Method Selector listed as a mandatory static-core anchor for every atomic topic)"
+    status: active
+    version: 1
+
   - id: ped_worked_first
     name: Worked-Example-First Inversion
     description: >

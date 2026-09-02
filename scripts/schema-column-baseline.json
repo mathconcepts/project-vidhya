@@ -64,6 +64,7 @@
     "decided_by",
     "decisions",
     "delta_days",
+    "delta_kind",
     "demotions",
     "dependent_id",
     "description",

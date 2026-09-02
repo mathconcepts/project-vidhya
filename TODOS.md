@@ -751,3 +751,132 @@ role-aware messaging) is picked.
 bookmark/back-button visit specifically to hit).
 **Deferred from:** `/ship` Red Team review, 2026-09-01, branch
 `claude/teaching-audit-progress-bugs`.
+
+## Three-tier delivery length (Micro/Standard/Deep) from the same base anchors
+
+**Trigger:** the next content-pacing complaint ("too long before I get to
+practice") or a product decision to ship a "quick review" mode distinct from
+`micro_sprint`'s current modality-only effect.
+
+**What:** the research framework integrated in
+`docs/designs/2026-09-02-content-strategy-research-integration-plan.md`
+calls for three delivery lengths compiled from the SAME base anchors per
+topic — Micro (hook + minimum formal rule + one example + one trap + one
+recall + one mode check), Standard (full sequence), Deep (Standard + varied
+transfer). Vidhya's `SessionMode.micro_sprint`
+(`src/content/content-types.ts:41`) only forces STATIC modality today
+(`src/content/modality-orchestrator.ts:36,97-101`) — it doesn't shorten the
+atom set.
+
+**Why not fixed inline:** reshaping lesson compose to drop atoms per mode
+risks the resonance-beat / `MediaSidecar` rendering contract (see CLAUDE.md
+"Resonance beats", "Seven live-QA fixes on the lesson page") if a fused
+hook/intuition scene's trap beat or a dependent atom gets silently excluded.
+Needs its own design pass on which atoms are droppable per family without
+breaking that contract, not a rider on the P0-P3 changes in the plan above.
+
+**Where to start:** `src/content/modality-orchestrator.ts` (where
+`micro_sprint` is currently read) and `frontend/src/pages/app/LessonPage`'s
+atom-sequencing call site; the per-family "what's droppable" question needs
+an answer per `data/curriculum/gate-em/template-families.yml` family before
+any code changes.
+
+**Effort:** M human / CC ~1-2 days (design pass + implementation).
+**Priority:** P2 — real gap, not urgent; no user complaint yet.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Bounded-depth diagnostic probe for a wrong answer (replacing the unbounded mastery-vector BFS)
+
+**Trigger:** the next `/student-audit` or prerequisite-alert investigation
+that turns out to have misdiagnosed a wrong answer's cause, or a decision to
+invest in the research framework's "smallest discriminating probe"
+diagnostic algorithm.
+
+**What:** `traceWeakestPrerequisite`
+(`src/constants/concept-graph.ts:351-384`) is an unbounded BFS over the
+static prerequisite graph, flagging any prerequisite whose STORED mastery
+score is below a threshold — not the research's attempt-triggered,
+bounded-depth probe that asks follow-up questions to isolate root cause for
+one specific wrong answer (docs/content-spec/adaptive-content-generation-
+framework.md §10). `src/gbrain/fire.ts`'s `upClosureFor` is genuinely
+depth-bounded but serves FSRS credit propagation, not diagnosis.
+
+**Why not fixed inline:** this touches the live prerequisite-alert path
+(`src/gbrain/student-model.ts:378-396`) that gates real interventions for
+real students — a correctness regression here is student-facing and needs
+its own reviewed change with test coverage on the diagnostic accuracy, not
+a rider on an infrastructure-only pass.
+
+**Where to start:** `src/constants/concept-graph.ts:351-384` and
+`src/gbrain/student-model.ts:378-396`; the research's algorithm (§10 of the
+adaptive-content-generation-framework doc) is the reference design.
+
+**Effort:** L human / CC ~2-3 days (algorithm change + new probe-selection
+logic + regression tests against known student cases).
+**Priority:** P2 — would meaningfully improve diagnosis quality, but the
+current mechanism is not broken, just coarser than the research target.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Custom-PDF ingestion → delta pipeline
+
+**Trigger:** an operator or teacher actually asks to upload a PDF (a
+classroom note, an alternate textbook derivation) for the platform to fold
+into content, or a decision to prioritize this over other content-pipeline
+work.
+
+**What:** the research framework's §5.6/§15.6 custom-PDF ingestion pipeline
+(register source → hash → extract text/layout → OCR if needed → segment
+into spans with page references → map to atomic IDs → classify claims →
+verify → draft delta with citations → owner review → publish/quarantine)
+has no analog anywhere in Vidhya today. This is a net-new subsystem (file
+upload, OCR, span extraction, a review queue similar to
+`ReviewQueuePanel.tsx`'s pattern) — not an extension of an existing seam.
+
+**Why not fixed inline:** genuinely large scope with no existing seam to
+build on safely within this pass; deserves its own design doc (source
+hierarchy, conflict handling, the `custom_source` DeltaKind's applicability
+predicate) before any code.
+
+**Where to start:** `docs/content-spec/integrated-self-improving-learning-
+system.md` §15.6 for the pipeline shape; `src/content/delta-kinds.ts`'s
+`custom_source` kind is the attachment point once a detector/ingestion path
+exists; `ReviewQueuePanel.tsx` / `admin-review-queue-routes.ts` is the
+closest existing review-queue pattern to model the operator side on.
+
+**Effort:** L human / CC ~1 week+ (upload flow, OCR integration, span
+extraction, review UI).
+**Priority:** P3 — no demand signal yet; build when an operator actually
+has a PDF to ingest.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Per-claim source locator alongside `evidence_level`
+
+**Trigger:** the next `evidence_level` write site that needs to answer "on
+what page/URL is this claim sourced" — currently that's `verification_method`
+free text, not a structured locator.
+
+**What:** the research framework wants claim-granularity evidence with a
+source id + page/section locator (docs/content-spec/adaptive-content-
+generation-framework.md §5.4's claim table). Vidhya's `evidence_level`
+(`src/scoring/learning-object-catalog-file.ts:99-117`) is per-practice-item,
+with no structured locator field alongside it.
+
+**Why not fixed inline:** touches every existing `evidence_level` write
+site across the generation pipeline; a reviewed, scoped follow-up, not
+bundled into an infrastructure pass that otherwise touches zero existing
+`evidence_level` code.
+
+**Where to start:** `src/scoring/learning-object-catalog-file.ts:92-117`
+(the `AuthoredItem` docblock and fields) and `scripts/check-practice-
+items.ts` (the enforcement site) for where a `source_locator` field would
+need to be validated alongside `evidence_level`.
+
+**Effort:** M human / CC ~1 day (schema field + validator + backfill
+strategy for existing items).
+**Priority:** P3 — the item-level granularity already in place covers the
+practical need; claim-level is a refinement.
+**Deferred from:** content-strategy research integration, 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.

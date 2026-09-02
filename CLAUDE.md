@@ -1846,6 +1846,106 @@ future — without a content rewrite.
    this" now always renders when the item carries a `node_id`, correct or
    not.
 
+### Wolfram-inspired prompt resource registry (2026-09-02)
+
+`/autoplan` on 9 uploaded research files (a Wolfram Prompt Repository
+design study, a prompt-resource registry YAML, a 116-topic atomic mapping,
+research notes, and their validator/generator scripts). Full plan:
+`docs/designs/2026-09-02-wolfram-prompt-resource-registry.md`.
+
+**Scope-defining fact found before any design work:** 8 of the 9 uploaded
+files were already committed verbatim by the SAME-DAY prior pass
+(`docs/designs/2026-09-02-content-strategy-research-integration-plan.md`)
+— `diff` confirmed byte-identical content for the first 928 of 942 lines
+of the shared design doc. The only genuinely new idea across all 9 files
+was a typed, versioned **prompt resource registry** layer — this pass
+built that, not a from-scratch "10000x" system. The source document's own
+closing section is explicit that "10000x" is an operational-leverage
+hypothesis (reuse, consistency, production speed), not a content-quality
+claim measured or promised by this pass.
+
+**`src/content/prompt-registry/`** — `PromptResource`/`Modifier` types
+across the uploaded registry's 9 categories (`persona`,
+`research_function`, `teaching_function`, `assessment_function`,
+`diagnosis_function`, `modifier`, `verifier`, `renderer`, `governance`),
+an approval-state lifecycle (`draft`/`benchmarked`/`pilot`/`released`/
+`deprecated`/`blocked` — only `released`/`pilot` resources ever resolve
+into a live prompt, mirroring `pain-points.ts`'s reviewed-only discipline)
+and `runPromptResourceContract()` every resource must pass (mirrors
+`marking-strategy-contract.ts`'s pattern). Registered as the
+`prompt-resource-registry` seam in `seam-registry.json`.
+
+**Deliberately does NOT duplicate what already exists.** The registry's
+`verifier` category REGISTERS the existing `AnswerVerifier`/
+`ContentVerifier` cascade, never reimplements it. Resource-approval-state
+(is this PROMPT RESOURCE safe to use) is kept as a separate axis from
+`content_gate_ledger` (is this GENERATED ITEM safe to serve) — the
+uploaded registry's own `release_gates` block conflated the two, which
+this plan corrected before building rather than shipping a duplicate gate.
+
+**`orchestrator.ts`'s `buildPrompt()` now composes from the registry**
+instead of 4 hardcoded function calls (pain-point/pattern/resonance/tone
+blocks — each wrapped as a registered resource in `src/content/prompt-
+registry/resources/`, not rewritten). Behavior-preserving: the existing
+`resonance-prompt.test.ts`, which asserts on exact prompt-string output,
+passes unmodified.
+
+**Named-but-unimplemented is honest, not silently absent.** The uploaded
+registry names 5 modifiers Vidhya has no implementation for
+(`visual_first`, `simple_words`, `exam_timed`, `prerequisite_repair`,
+`hindi_glossary`) — registered at `approval_state: 'draft'`, which the
+registry's own `resolvePromptResources()` never returns, so they can never
+silently ship in a real prompt. `npm run content:registry-audit` (new,
+zero-LLM-call) reports them explicitly rather than pretending 10-for-10
+coverage.
+
+**`src/content/wolfram-content-family.ts`** classifies all 116 GATE-EM
+atomic topics into 14 Wolfram content families (matrix/eigen/limit/
+derivative/integral/optimization/vector/ode/pde/complex/probability/
+statistics/numerical/discrete — the uploaded generator script's own
+keyword-matching `classify()` ported verbatim, quirks included: e.g. any
+domain containing "differential equations" classifies as `derivative`,
+never `ode`, because the `derivative` keyword check runs first in the
+source script's own precedence and "differential" is a substring match —
+faithfully reproduced, not fixed, since the ask was to adapt the uploaded
+framework, not silently correct its internals), joined via the existing
+`atomic-concept-map.ts` crosswalk.
+
+**Regeneration: the user explicitly redirected the "no provider key"
+premise.** This session flagged that literal corpus regeneration was
+blocked on a missing `GEMINI_API_KEY`/`ANTHROPIC_API_KEY`/etc. — the same
+"known-unrun" wall documented throughout this doc. The user's answer:
+"Use claude sonnet subagents from here to generate the materials" — i.e.
+bypass the app's runtime LLM client entirely and use this session's own
+Claude Sonnet model access (the Agent tool) to do real content rewrites
+directly. This is the same mechanism the "21 batch subagents, 101
+concepts" precedent used earlier in this repo's history, and it worked
+again here: **all 26 GATE Linear Algebra concepts' `common_traps` atoms**
+were rewritten against the ELI5/Indian-English tone directive via 5
+parallel subagent batches (5-6 concepts each), each under hard
+constraints (frontmatter byte-identical, every math/LaTeX expression
+unchanged, same trap count/order/underlying mistake, no fabricated
+claims, no emoji). The confirmed jargon gap that motivated this pilot —
+`symmetric-matrices/atoms/common-traps.md` Trap 1's ungossed "Hermitian
+matrix" — is fixed; every rewrite glosses each technical term on first
+use. Validated clean against `ci:katex-fences`, `ci:content-integrity`,
+`ci:la-walkthrough`, `ci:template-coverage`, `ci:variant-agreement`, and
+the frontend's 1726-assertion `MarkdownAtomRenderer.regression.test.tsx`.
+
+**What this pilot does NOT claim:** it covers exactly one (atom_type,
+topic) slice — `common_traps` on Linear Algebra. Every other atom_type
+across all 101 concepts, and `common_traps` on the other 9 topics, is
+untouched and tracked in TODOS.md as the next wave, with the exact
+pattern (5-6 concepts per subagent batch) that worked here as the
+template to repeat.
+
+**This framework is also the one future content handling should use.**
+Every new prompt-shaping block (a new modifier, a new teaching_function)
+should register through `src/content/prompt-registry/` and pass
+`runPromptResourceContract()` rather than being added as a fifth
+hardcoded call inside `buildPrompt()` — the whole point of this pass was
+to stop that pattern from compounding.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -4,45 +4,68 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
-## Existing content corpus not reprocessed against the ELI5/Indian-English register directive
+## Existing content corpus mostly not reprocessed against the ELI5/Indian-English register directive
 
-**Trigger:** a live LLM provider key becomes available in an environment
-that can run a batch regeneration pass, or an operator wants to spend the
-provider budget on a tone pass specifically.
+**Trigger:** an operator wants to spend agent time/budget on the next wave,
+or a fresh live-QA report surfaces another unglossed-jargon instance
+outside Linear Algebra `common_traps`.
 
 **What:** `/investigate` (2026-09-02) added an unconditional
 `TONE_REGISTER_BLOCK` to `orchestrator.ts`'s `buildPrompt()` — ELI5
 reasoning, gloss any technical term on first use, default to Indian
-English, written for an anxious exam student — so every atom the generator
-produces from here on gets this register. It does NOT touch anything
-already committed: the 880+ base atoms and 505+ practice items authored
-before this change keep whatever register they were written in, jargon and
-all. The screenshot that surfaced this (a `common_traps` atom on a linear-
-algebra concept naming "Hermitian matrix" / "symmetric matrix" with no
-plain-language gloss) is one confirmed instance of the gap on already-
-shipped content, not a hypothetical.
+English, written for an anxious exam student. `/autoplan` (2026-09-02, same
+day) closed the pilot slice: all 26 GATE Linear Algebra concepts'
+`common_traps` atoms were rewritten via 5 parallel subagents against this
+directive, verified against `ci:katex-fences`, `ci:content-integrity`,
+`ci:la-walkthrough`, `ci:template-coverage`, `ci:variant-agreement`, and the
+frontend's full atom-render regression suite — all clean. The confirmed
+instance that surfaced the gap (`symmetric-matrices/atoms/common-traps.md`
+Trap 1's ungossed "Hermitian matrix") is fixed.
 
-**Why not fixed inline:** no LLM provider key is configured in this
-environment (`GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / etc. all unset — see
-the "known-unrun" precedent at v4.33.0/v4.43.0 in CLAUDE.md), so there is
-no way to actually run a regeneration pass here, only to fix the prompt
-future generations will read. A full re-pass of 101 concepts is also a
-real cost (the June batch-regeneration precedent in this repo used 21
-subagents) that deserves an operator decision, not a silent trigger.
+This closed one (atom_type, topic) slice out of many. NOT touched: every
+other atom_type (`hook`, `intuition`, `formal_definition`, `worked_example`,
+`micro_exercise`, `retrieval_prompt`, `visual_analogy`, `mnemonic`,
+`exam_pattern`, `interleaved_drill`) across all 101 concepts, and
+`common_traps` itself on the other 9 topics beyond Linear Algebra. The
+880+ base atoms this pass didn't touch keep whatever register they were
+originally written in.
 
-**Where to start:** `docs/ops/content-verification-runbook.md`'s pilot
-pattern (the 50-item anatomy pilot from PR #129) is the template — a small
-pilot batch re-authoring a handful of already-flagged-jargon atoms (start
-with the `common_traps` atoms across the Linear Algebra pack, since that's
-where this was found), verified by a human before wider rollout, not a
-mass unattended regeneration of the whole corpus.
+**Why the rest isn't done here too:** no LLM provider key is configured in
+this environment for the LIVE generation path (`GEMINI_API_KEY`/
+`ANTHROPIC_API_KEY`/etc. all unset), so `generateConcept()` itself can't
+run — but the pilot proved the workaround (Claude Sonnet subagents doing
+the rewrite directly, bypassing the app's runtime LLM client) works and
+produces real, CI-clean output. The remaining scope is ~9x this pilot's
+size for `common_traps` alone across the other 9 topics, and roughly
+10x again per additional atom_type — a real cost that deserves batching
+in deliberate, human-checkpointed waves (mirroring this repo's own Wave
+1-13 FSRS precedent and the 24-of-26 resonance-beats rollout), not one
+unattended mega-run.
 
-**Effort:** S to scope a pilot / L to actually run and verify one across
-all 101 concepts.
-**Priority:** P2 (real but not urgent — the register on NEW content is
-already fixed; this is about content written before the fix).
+**Where to start:** repeat this pass's exact pattern — 5-6 concepts per
+subagent batch, dispatched in parallel via the Agent tool, each given the
+verbatim tone directive + hard constraints (frontmatter untouched, math
+unchanged, same trap/step count, no fabricated claims) — for the next
+(atom_type, topic) slice. `common_traps` on Calculus (22 concepts) or
+Vector Calculus (11 concepts) is the natural next slice, matching this
+pass's atom_type before moving to a new atom_type on Linear Algebra.
 
-**Deferred from:** `/investigate` 2026-09-02, branch
+**Also still open:** the 5 modifiers the uploaded Wolfram-inspired registry
+names but Vidhya has no implementation for (`modifier.visual_first`,
+`modifier.simple_words`, `modifier.exam_timed`,
+`modifier.prerequisite_repair`, `modifier.hindi_glossary` — registered at
+`approval_state: 'draft'` in `src/content/prompt-registry/resources/
+modifiers.ts`, never resolved into a live prompt). Each is its own scoped
+project: `modifier.hindi_glossary` in particular would need a real
+Hindi-English glossary decision (translation source, review process)
+before any code.
+
+**Effort:** M per additional (atom_type, topic) slice (~this pass's size),
+L+ for the full remaining corpus.
+**Priority:** P2 (real but not urgent — new content already gets the
+register automatically; this is a backfill).
+
+**Deferred from:** `/autoplan` 2026-09-02, branch
 `claude/content-strategy-framework-o9afoc`.
 
 ## "Concept learning" room silently bounces students with no knowledge track

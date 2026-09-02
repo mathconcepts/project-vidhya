@@ -179,6 +179,11 @@ export async function generateConcept(
       // when opts carries nothing (every pre-existing caller), so this wiring
       // is a no-op for them.
       generation_context: opts.generation_context,
+      // Prompt-resource-registry opt-in modifiers — both undefined for
+      // every pre-existing caller, so this is a no-op unless a caller
+      // explicitly opts in.
+      active_modifiers: opts.active_modifiers,
+      prerequisite_gap: opts.prerequisite_gap,
     });
 
     total_cost += generated.meta.cost_usd;
@@ -321,6 +326,10 @@ interface GenerateOneArgs {
    * from generateConcept's opts.
    */
   generation_context?: 'batch' | 'personalized';
+  /** Prompt-resource-registry opt-in modifiers — see OrchestratorOptions for the full contract. */
+  active_modifiers?: readonly string[];
+  /** Input for modifier.prerequisite_repair — see OrchestratorOptions for the full contract. */
+  prerequisite_gap?: { concept_id: string; label?: string };
 }
 
 async function generateOne(args: GenerateOneArgs): Promise<GeneratedAtom> {
@@ -559,6 +568,8 @@ function composePromptBlocks(args: GenerateOneArgs): string {
     atom_type: args.atom_type,
     generation_context: args.generation_context,
     student_context: args.student_context,
+    active_modifiers: args.active_modifiers,
+    prerequisite_gap: args.prerequisite_gap,
   };
   const topics = [args.topic_family];
 

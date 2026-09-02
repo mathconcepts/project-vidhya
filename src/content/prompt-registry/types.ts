@@ -68,6 +68,29 @@ export interface PromptResourceBuildArgs {
   atom_type: string;
   generation_context?: 'batch' | 'personalized';
   student_context?: unknown;
+  /**
+   * Explicit opt-in list of modifier resource_ids for THIS call. Modifiers
+   * other than the unconditional baseline (modifier.tone_register, which
+   * ignores this field and always fires — matching its pre-registry
+   * always-on behavior) must check `active_modifiers?.includes(their own
+   * resource_id)` and return '' otherwise. Without this, releasing a new
+   * optional modifier would make it fire on EVERY generation call the
+   * moment resolvePromptResources() stops filtering it out by
+   * approval_state — exactly the "silently ships in every prompt" failure
+   * mode the draft/released split exists to prevent. Absent/undefined
+   * means "no optional modifiers requested," not "all of them."
+   */
+  active_modifiers?: readonly string[];
+  /**
+   * Input for modifier.prerequisite_repair (DeltaKind.prerequisite_repair
+   * — src/content/delta-kinds.ts): the specific upstream concept a
+   * diagnostic signal (diagnose.prerequisite_probe /
+   * diagnostic-probe.ts's diagnoseWrongAnswer) flagged as weak. The
+   * modifier attaches a bridge ONLY when both this is present AND its own
+   * resource_id is in active_modifiers — a bridge note with no real named
+   * gap would be inventing a weakness the evidence doesn't support.
+   */
+  prerequisite_gap?: { concept_id: string; label?: string };
 }
 
 /**

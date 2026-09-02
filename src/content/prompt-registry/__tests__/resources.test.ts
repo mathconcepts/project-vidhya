@@ -94,3 +94,85 @@ describe('persona.student_context', () => {
     expect(resource.build({ concept_id: 'c', topic_family: 't', atom_type: 'hook' })).toBe('');
   });
 });
+
+describe('the 5 opt-in modifiers (visual_first / simple_words / exam_timed / prerequisite_repair / hindi_glossary)', () => {
+  beforeEach(() => __resetPromptRegistryModuleForTests());
+
+  const baseArgs = { concept_id: 'eigenvalues', topic_family: 'linear-algebra', atom_type: 'hook' as const };
+
+  function resourceById(id: string) {
+    ensureBuiltInPromptResourcesRegistered();
+    const [r] = resolvePromptResources('modifier', ['linear-algebra']).filter((x) => x.resource_id === id);
+    if (!r) throw new Error(`${id} did not resolve — check its approval_state`);
+    return r;
+  }
+
+  it('all 5 are pilot (not draft, not released) — real but not yet usage-proven', () => {
+    ensureBuiltInPromptResourcesRegistered();
+    for (const id of ['modifier.visual_first', 'modifier.simple_words', 'modifier.exam_timed', 'modifier.prerequisite_repair', 'modifier.hindi_glossary']) {
+      const r = listPromptResources().find((x) => x.resource_id === id);
+      expect(r?.approval_state, id).toBe('pilot');
+    }
+  });
+
+  it('every one of the 5 returns "" when not in active_modifiers (opt-in, not unconditional)', () => {
+    for (const id of ['modifier.visual_first', 'modifier.simple_words', 'modifier.exam_timed', 'modifier.prerequisite_repair', 'modifier.hindi_glossary']) {
+      const r = resourceById(id);
+      expect(r.build({ ...baseArgs, active_modifiers: ['some.other.modifier'] }), id).toBe('');
+      expect(r.build(baseArgs), id).toBe('');
+    }
+  });
+
+  it('modifier.visual_first returns the visual-first directive when active', () => {
+    const r = resourceById('modifier.visual_first');
+    const out = r.build({ ...baseArgs, active_modifiers: ['modifier.visual_first'] });
+    expect(out).toContain('visual');
+    expect(out.toLowerCase()).toContain('before introducing symbolic notation');
+  });
+
+  it('modifier.simple_words returns the escalated-simplicity directive when active', () => {
+    const r = resourceById('modifier.simple_words');
+    const out = r.build({ ...baseArgs, active_modifiers: ['modifier.simple_words'] });
+    expect(out).toContain('shortest word');
+  });
+
+  it('modifier.exam_timed returns the time-budget directive when active, and explicitly prohibits omitting a required condition', () => {
+    const r = resourceById('modifier.exam_timed');
+    const out = r.build({ ...baseArgs, active_modifiers: ['modifier.exam_timed'] });
+    expect(out).toContain('target time');
+    expect(out.toLowerCase()).toContain('without ever telling the student to skip a required condition');
+  });
+
+  it('modifier.prerequisite_repair refuses to fire without a real prerequisite_gap, even when active', () => {
+    const r = resourceById('modifier.prerequisite_repair');
+    expect(r.build({ ...baseArgs, active_modifiers: ['modifier.prerequisite_repair'] })).toBe('');
+  });
+
+  it('modifier.prerequisite_repair names the real gap concept when both active_modifiers and prerequisite_gap are present', () => {
+    const r = resourceById('modifier.prerequisite_repair');
+    const out = r.build({
+      ...baseArgs,
+      active_modifiers: ['modifier.prerequisite_repair'],
+      prerequisite_gap: { concept_id: 'determinants', label: 'determinants' },
+    });
+    expect(out).toContain('determinants');
+  });
+
+  it('modifier.hindi_glossary returns real curated glosses when active, never a fabricated one', () => {
+    const r = resourceById('modifier.hindi_glossary');
+    const out = r.build({ ...baseArgs, active_modifiers: ['modifier.hindi_glossary'] });
+    expect(out).toContain('eigenvalue');
+    // The Devanagari gloss for "matrix" must be the curated one, not invented inline.
+    expect(out).toContain('आव्यूह');
+  });
+
+  it('every one of the 5 passes its own contract at pilot state', async () => {
+    ensureBuiltInPromptResourcesRegistered();
+    const { runPromptResourceContract } = await import('../contract');
+    for (const id of ['modifier.visual_first', 'modifier.simple_words', 'modifier.exam_timed', 'modifier.prerequisite_repair', 'modifier.hindi_glossary']) {
+      const r = listPromptResources().find((x) => x.resource_id === id)!;
+      const result = await runPromptResourceContract(r);
+      expect(result.ok, `${id}: ${result.errors.join('; ')}`).toBe(true);
+    }
+  });
+});

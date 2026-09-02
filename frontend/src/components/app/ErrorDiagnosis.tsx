@@ -38,6 +38,9 @@ interface ErrorDiagnosisProps {
   consecutiveFailures?: number;
 }
 
+/** Both markers `classifyError` sets on a filler diagnosis — see the check below. */
+const PLACEHOLDER_MISCONCEPTION_IDS = new Set(['unclassified', 'classification-failed']);
+
 const ERROR_TYPE_CONFIG: Record<string, { label: string; color: string; icon: typeof Brain }> = {
   conceptual:          { label: 'Conceptual Gap',     color: 'var(--red)',        icon: Brain },
   procedural:          { label: 'Wrong Procedure',    color: 'var(--orange)',     icon: GitBranch },
@@ -53,14 +56,19 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
   const [showCorrective, setShowCorrective] = useState(false);
   const [corrAnswerRevealed, setCorrAnswerRevealed] = useState(false);
 
-  // When no LLM is configured, classifyError returns a placeholder shaped like
-  // a diagnosis: "The answer was incorrect", "The approach may have seemed
-  // reasonable", "The specific error needs further analysis". Rendering that
-  // under headings like "why this was tempting" presents filler as insight,
-  // which is worse than showing nothing — it makes the product look like it
-  // analysed the mistake when it did not. `unclassified` is the marker the
-  // fallback sets; refuse to dress it up.
-  if (diagnosis.misconception_id === 'unclassified') return null;
+  // classifyError (src/gbrain/error-taxonomy.ts) has THREE fallback paths that
+  // all produce filler shaped like a diagnosis: no LLM configured
+  // (`unclassified`), the LLM returned no text, and the LLM returned
+  // unparseable JSON (the latter two both set `classification-failed`).
+  // Rendering any of them under headings like "why this was tempting"
+  // presents filler as insight, which is worse than showing nothing — it
+  // makes the product look like it analysed the mistake when it did not.
+  // /investigate (2026-09-02): the guard only ever checked `unclassified`,
+  // so a real student on a live-LLM deploy who hit an LLM hiccup or a bad
+  // JSON parse still saw "Conceptual Gap — Error classification unavailable"
+  // rendered as if it were a real analysis. Both markers are the one thing
+  // distinguishing filler from a real diagnosis; refuse to dress up either.
+  if (PLACEHOLDER_MISCONCEPTION_IDS.has(diagnosis.misconception_id)) return null;
 
   const config = ERROR_TYPE_CONFIG[diagnosis.error_type] || ERROR_TYPE_CONFIG.conceptual;
   const Icon = config.icon;

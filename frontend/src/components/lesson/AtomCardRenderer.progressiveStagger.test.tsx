@@ -2,10 +2,19 @@
  * AtomCardRenderer — `.vidhya-atom-body--progressive` className wiring.
  *
  * Attention-span pass (/investigate, 2026-09-01): visual_analogy and
- * mnemonic atoms get the paragraph-stagger modifier class; every other
- * atom type (including formal_definition, deliberately — see the
- * definition/mnemonic engagement-framework proposal doc) renders without
- * it, same as before this pass.
+ * mnemonic atoms got the paragraph-stagger modifier class first.
+ *
+ * Widened (/investigate, 2026-09-02, "just static text is provided...
+ * needs to be resonant... using motion"): every other DefaultAtomCard type
+ * (hook, intuition, micro_exercise, retrieval_prompt, interleaved_drill)
+ * now gets it too — those atom types had zero motion not by design
+ * decision but because the mechanism had never been extended to them.
+ * `formal_definition` stays the one deliberate holdout (see the
+ * definition/mnemonic engagement-framework proposal doc — Sweller's
+ * split-attention effect). `exam_pattern` is excluded too, but only
+ * because it already animates via the `structured` list-row stagger
+ * instead — `progressive` targets `> p` and its markup is a bullet list,
+ * so adding it would be an inert no-op, not a second animation.
  */
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
@@ -50,10 +59,34 @@ describe('AtomCardRenderer — progressive stagger className', () => {
     expect(container.querySelector('.vidhya-atom-body--progressive')).toBeNull();
   });
 
-  it('does NOT apply the progressive class to a plain intuition atom', () => {
+  it('does NOT apply the progressive class to an exam_pattern atom (already animates via structured)', () => {
+    const { container } = renderSingleAtom(
+      makeAtom({ id: 'c.exam', atom_type: 'exam_pattern', content: '- **NAT trap**: watch the sign.' }),
+    );
+    expect(container.querySelector('.vidhya-atom-body--progressive')).toBeNull();
+    expect(container.querySelector('.vidhya-atom-body--structured')).not.toBeNull();
+  });
+
+  it('applies the progressive class to a plain intuition atom', () => {
     const { container } = renderSingleAtom(
       makeAtom({ id: 'c.int', atom_type: 'intuition', content: 'Some intuition prose.' }),
     );
-    expect(container.querySelector('.vidhya-atom-body--progressive')).toBeNull();
+    expect(container.querySelector('.vidhya-atom-body--progressive')).not.toBeNull();
+  });
+
+  it('applies the progressive class to a hook atom', () => {
+    const { container } = renderSingleAtom(
+      makeAtom({ id: 'c.hook', atom_type: 'hook', content: 'Some hook prose.' }),
+    );
+    expect(container.querySelector('.vidhya-atom-body--progressive')).not.toBeNull();
+  });
+
+  it('applies the progressive class to micro_exercise, retrieval_prompt, and interleaved_drill atoms', () => {
+    for (const atom_type of ['micro_exercise', 'retrieval_prompt', 'interleaved_drill'] as const) {
+      const { container } = renderSingleAtom(
+        makeAtom({ id: `c.${atom_type}`, atom_type, content: 'Some prose.' }),
+      );
+      expect(container.querySelector('.vidhya-atom-body--progressive')).not.toBeNull();
+    }
   });
 });

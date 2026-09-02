@@ -484,50 +484,17 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         )}
       </svg>
 
+      {/* Controls sit directly under the SVG, before any text — a
+          /design-review finding (2026-09-02): "the control must be near
+          the image." The beat bar + play/pause/reset + scrub slider used
+          to be pushed down below the narration caption and the trap row,
+          so a student's hand had to travel past a paragraph of text to
+          reach the thing that changes what the image shows. Moving them
+          up makes control-then-image-then-text one visual unit instead of
+          a scrubber stranded at the bottom of the card. */}
       {!hasBeats && !reducedMotion && (
         <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the trace manually" />
       )}
-
-      {!hasBeats && reducedMotion && (
-        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-          Reduced-motion enabled — showing the final trace instead of animation.
-        </p>
-      )}
-
-      {!hasBeats && spec.caption && (
-        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
-      )}
-
-      {showStoryboard && (
-        <ReducedMotionStoryboard atomId={resolvedId} spec={spec} sortedSteps={sortedSteps} servedStance={servedStance} />
-      )}
-
-      {showLiveBeatUI && (
-        <div aria-live="polite">
-          {/* No `mode="wait"` — matches GuidedWalkthrough's AnimatePresence
-              convention. `mode="wait"` would hold the OLD beat mounted
-              until its exit transition finishes before mounting the new
-              one, so a seek's DOM update would lag its own animation
-              rather than reflecting the state change immediately. */}
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={activeIdx ?? 'none'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
-            >
-              <MarkdownAtomRenderer
-                atomId={`${resolvedId}::beat-${activeIdx ?? 0}`}
-                content={activeIdx != null ? resolveBeatText(sortedSteps[activeIdx], servedStance) : ''}
-                className="vidhya-atom-body--beat-caption"
-              />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      )}
-
-      {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} />}
 
       {showLiveBeatUI && (
         <div className="flex items-center gap-2">
@@ -569,6 +536,53 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
       {showLiveBeatUI && !reducedMotion && (
         <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the scene at your own pace" />
       )}
+
+      {!hasBeats && reducedMotion && (
+        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
+          Reduced-motion enabled — showing the final trace instead of animation.
+        </p>
+      )}
+
+      {!hasBeats && spec.caption && (
+        <p className="text-[11px] leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{spec.caption}</p>
+      )}
+
+      {showStoryboard && (
+        <ReducedMotionStoryboard atomId={resolvedId} spec={spec} sortedSteps={sortedSteps} servedStance={servedStance} />
+      )}
+
+      {/* Caption text below the controls, not above them — the sentence
+          describes what the trace HAS drawn (activeBeatIndex's "last beat
+          whose at_progress <= progress" rule), so it reads as a live
+          caption for the control the student just touched, in sync with
+          the transition, rather than a paragraph to read before touching
+          anything. */}
+      {showLiveBeatUI && (
+        <div aria-live="polite">
+          {/* No `mode="wait"` — matches GuidedWalkthrough's AnimatePresence
+              convention. `mode="wait"` would hold the OLD beat mounted
+              until its exit transition finishes before mounting the new
+              one, so a seek's DOM update would lag its own animation
+              rather than reflecting the state change immediately. */}
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={activeIdx ?? 'none'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
+            >
+              <MarkdownAtomRenderer
+                atomId={`${resolvedId}::beat-${activeIdx ?? 0}`}
+                content={activeIdx != null ? resolveBeatText(sortedSteps[activeIdx], servedStance) : ''}
+                className="vidhya-atom-body--beat-caption"
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      )}
+
+      {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} />}
     </div>
   );
 }

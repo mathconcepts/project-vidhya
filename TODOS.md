@@ -4,6 +4,47 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Existing content corpus not reprocessed against the ELI5/Indian-English register directive
+
+**Trigger:** a live LLM provider key becomes available in an environment
+that can run a batch regeneration pass, or an operator wants to spend the
+provider budget on a tone pass specifically.
+
+**What:** `/investigate` (2026-09-02) added an unconditional
+`TONE_REGISTER_BLOCK` to `orchestrator.ts`'s `buildPrompt()` — ELI5
+reasoning, gloss any technical term on first use, default to Indian
+English, written for an anxious exam student — so every atom the generator
+produces from here on gets this register. It does NOT touch anything
+already committed: the 880+ base atoms and 505+ practice items authored
+before this change keep whatever register they were written in, jargon and
+all. The screenshot that surfaced this (a `common_traps` atom on a linear-
+algebra concept naming "Hermitian matrix" / "symmetric matrix" with no
+plain-language gloss) is one confirmed instance of the gap on already-
+shipped content, not a hypothetical.
+
+**Why not fixed inline:** no LLM provider key is configured in this
+environment (`GEMINI_API_KEY` / `ANTHROPIC_API_KEY` / etc. all unset — see
+the "known-unrun" precedent at v4.33.0/v4.43.0 in CLAUDE.md), so there is
+no way to actually run a regeneration pass here, only to fix the prompt
+future generations will read. A full re-pass of 101 concepts is also a
+real cost (the June batch-regeneration precedent in this repo used 21
+subagents) that deserves an operator decision, not a silent trigger.
+
+**Where to start:** `docs/ops/content-verification-runbook.md`'s pilot
+pattern (the 50-item anatomy pilot from PR #129) is the template — a small
+pilot batch re-authoring a handful of already-flagged-jargon atoms (start
+with the `common_traps` atoms across the Linear Algebra pack, since that's
+where this was found), verified by a human before wider rollout, not a
+mass unattended regeneration of the whole corpus.
+
+**Effort:** S to scope a pilot / L to actually run and verify one across
+all 101 concepts.
+**Priority:** P2 (real but not urgent — the register on NEW content is
+already fixed; this is about content written before the fix).
+
+**Deferred from:** `/investigate` 2026-09-02, branch
+`claude/content-strategy-framework-o9afoc`.
+
 ## "Concept learning" room silently bounces students with no knowledge track
 
 **Trigger:** the next time someone touches `RoomsPage`, `KnowledgeHomePage`,

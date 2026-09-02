@@ -1763,6 +1763,89 @@ that already ships), a concrete `CustomSourceExtractor` adapter (needs an
 OCR/storage product decision), and wiring the remaining 8 unwired
 `DeltaKind` values to real trigger detectors (each its own scoped project).
 
+### Five live-QA fixes: motion framework, control placement, tone directive, error-diagnosis leak, correct-answer CTA (2026-09-02)
+
+Second live-QA `/investigate` pass the same day as the seven-fix pass
+above, on five issues reported with screenshots. All five root-caused
+before any fix, per the skill's Iron Law; three land as code-level
+framework changes so they reach every concept and topic — existing and
+future — without a content rewrite.
+
+1. **"Just static text" (motion/animation for prose, not just images).**
+   `.vidhya-atom-body--progressive` (the paragraph-stagger CSS class from
+   the earlier attention-span pass) only ever reached `visual_analogy` and
+   `mnemonic` atoms — every other `DefaultAtomCard` type (`hook`,
+   `intuition` outside the resonance-beat scenes, `micro_exercise`,
+   `retrieval_prompt`, `interleaved_drill`) rendered with zero motion, not
+   by design but because the mechanism had never been extended past the
+   first two types. `AtomCardRenderer.tsx`'s `DefaultAtomCard` now applies
+   it to every type except two deliberate holdouts: `formal_definition`
+   (Sweller's split-attention effect — see the definition/mnemonic
+   engagement-framework doc, v4.45.0 section above) and `exam_pattern`
+   (already animates via the `structured` list-row stagger; `progressive`
+   targets `> p` and would be an inert no-op on its bullet-list markup).
+   Gated by `atom_type` in code, so it applies to every existing concept
+   and every concept the generator produces from here on — no content
+   edits needed. Self-disables under `prefers-reduced-motion` via the
+   existing `--dur-base` token collapse, same as `--structured`.
+
+2. **Interactive control too far from the image (`/design-review`
+   finding).** `Simulation.tsx`'s beat-bar + play/pause/reset + scrub
+   slider used to render below the narration caption and the trap row, so
+   reaching the control that changes what the SVG shows meant scrolling
+   past a paragraph of text first. Reordered: SVG → controls (beat bar +
+   buttons + scrub slider) → caption → trap row. The caption still updates
+   live as the student scrubs (`activeBeatIndex`'s "last beat whose
+   `at_progress` ≤ progress" rule, unchanged) — it now reads as a caption
+   for the control just touched instead of a paragraph to read before
+   touching anything.
+
+3. **Tone: ELI5 + anxious-student register + Indian English by default.**
+   `orchestrator.ts`'s `buildPrompt()` gained an unconditional
+   `TONE_REGISTER_BLOCK` — the first thing in every generation prompt,
+   every atom type, not just hook/intuition: write for an anxious exam
+   student, ELI5 the reasoning, gloss any technical term in plain words
+   the first time it appears, default to Indian English (every exam pack
+   Vidhya ships — GATE, BITSAT, NEET, civil services — is an Indian
+   competitive exam, so that's the region-appropriate default for "all
+   exams" as the platform stands today; there's no per-exam locale field
+   yet, so a genuinely non-Indian exam pack would need one, not a special
+   case bolted onto this block). This is a generation-time fix, not a
+   content rewrite: no LLM provider key is configured in this environment
+   (same "known-unrun" constraint noted elsewhere in this doc — see
+   v4.33.0), so the existing 505+ committed practice items and 880+ base
+   atoms were NOT reprocessed against the new register. The dense-jargon
+   example that surfaced this (a `common_traps` atom naming "Hermitian
+   matrix"/"symmetric matrix" with no gloss) is real content debt on the
+   existing corpus, tracked in TODOS.md, not silently fixed by this prompt
+   change alone.
+
+4. **"Conceptual gap unavailable" leaking as if it were real analysis.**
+   `classifyError` (`src/gbrain/error-taxonomy.ts`) has three fallback
+   paths that all return filler shaped like a diagnosis: no LLM configured
+   (marker `unclassified`), the LLM returning no text, and the LLM
+   returning unparseable JSON (the latter two both set marker
+   `classification-failed`, diagnosis text "The answer was incorrect.
+   Error classification unavailable."). `ErrorDiagnosis.tsx`'s
+   render-nothing guard was added in an earlier pass but only checked
+   `unclassified` — so a real LLM hiccup or bad JSON parse on a live-LLM
+   deploy still rendered "Conceptual Gap — Error classification
+   unavailable" under headings like "Why this was tempting" as if it were
+   a genuine analysis. The guard now keys on both markers
+   (`PLACEHOLDER_MISCONCEPTION_IDS`).
+
+5. **Smart Practice gave no way to keep practicing after a correct
+   answer.** `PracticeAttemptPage.tsx`'s post-answer CTA row ("Explore
+   this concept" / "Practice more like this") was gated on
+   `!result.grade.correct` — added in the earlier same-day pass for wrong
+   answers, but the guard hid BOTH buttons on a correct answer too, so a
+   student who answered right had no path to another problem on the same
+   concept short of navigating away and re-searching. "Explore this
+   concept" stays wrong-answer-only (remediation framing is backwards for
+   an answer the student just proved they know); "Practice more like
+   this" now always renders when the item carries a `node_id`, correct or
+   not.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

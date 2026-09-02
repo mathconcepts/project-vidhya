@@ -245,7 +245,13 @@ describe('PracticeAttemptPage — post-wrong-answer next-move CTAs', () => {
     await waitFor(() => expect(screen.getByText('SMART PRACTICE PAGE')).toBeInTheDocument());
   });
 
-  it('does not show either CTA on a correct answer', async () => {
+  // /investigate (2026-09-02): a correct answer used to hide BOTH CTAs, so
+  // a student who got it right had no way to keep practicing the same
+  // concept short of navigating away and re-searching for it. "Explore
+  // this concept" stays hidden — it's remediation framing, backwards for
+  // an answer the student just proved they know — but "Practice more like
+  // this" now always shows.
+  it('shows "Practice more like this" but not "Explore this concept" on a correct answer', async () => {
     const { authFetch } = await import('@/lib/auth/client');
     vi.mocked(authFetch)
       .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
@@ -265,7 +271,10 @@ describe('PracticeAttemptPage — post-wrong-answer next-move CTAs', () => {
 
     await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
     expect(screen.queryByText('Explore this concept')).toBeNull();
-    expect(screen.queryByText('Practice more like this')).toBeNull();
+    expect(screen.getByText('Practice more like this')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Practice more like this'));
+    await waitFor(() => expect(screen.getByText('SMART PRACTICE PAGE')).toBeInTheDocument());
   });
 
   it("gives the receipt neutral tone on a wrong answer so its checkmark doesn't read as correctness", async () => {

@@ -569,6 +569,35 @@ function buildResonanceBlock(strategy: ResonanceStrategy | null): string {
 `;
 }
 
+/**
+ * Register/tone directive — unconditional on every generation prompt
+ * (/investigate, 2026-09-02: "use eli5 language, aimed at anxious student
+ * persona... use Indian English as default... do not use unfamiliar
+ * language"). Distinct from the Motivation-Aware Teaching Policy
+ * (src/teaching/motivation-aware-policy.ts, which re-ranks which ALREADY-
+ * GENERATED atoms to serve and when) — this shapes how new prose gets
+ * WRITTEN in the first place, so the default register is right from the
+ * moment an atom is authored rather than only at serve time.
+ *
+ * "Indian English as default" is scoped to the platform's actual exam
+ * roster, not hardcoded to GATE: every exam pack Vidhya ships today (GATE,
+ * BITSAT, NEET, civil services — see CLAUDE.md's "Exam-agnostic by
+ * design") is an Indian competitive exam, so Indian English IS the
+ * region-appropriate default for "all exams" as the platform stands. If a
+ * non-Indian exam pack is ever added, this block is the one place to
+ * branch on region — there's no per-exam locale field to read yet, and
+ * inventing one here (schema, migration, exam-pack UI) is a separate,
+ * larger change than a prompt-tone fix.
+ *
+ * Applies to every atom_type — the anxious-student persona reads
+ * `formal_definition` and `common_traps` atoms just as often as `hook`,
+ * and jargon dropped without a plain-language gloss is the same failure
+ * mode regardless of which atom carries it.
+ */
+const TONE_REGISTER_BLOCK = `Register: write for a student who gets anxious about this exam and needs the plainest possible path in. ELI5 the reasoning — explain WHY a step happens, not just that it happens. The first time you use a technical term (e.g. "Hermitian", "eigenbasis", "orthonormal"), gloss it in plain words in the same sentence before using it bare again; never introduce two new terms back to back without grounding the first one. Default to Indian English: familiar Indian-classroom phrasing and idiom (e.g. "sums" for practice problems is fine), not translated-from-American phrasing. Short sentences. No word the student would have to look up.
+
+`;
+
 function buildPrompt(args: GenerateOneArgs & {
   template_scaffold: string;
   template_guidance: string;
@@ -607,7 +636,7 @@ function buildPrompt(args: GenerateOneArgs & {
       ? 'hook/intuition: script the beats — motion, caption, emphasis and exactly one trap, together (see the beat-scripting instructions above). Do not just keep the body to a single static learning beat.'
       : 'other types: keep the body focused on a single learning beat.';
 
-  return `${studentContextBlock}${painPointBlock ? painPointBlock + '\n\n' : ''}${patternBlock ? patternBlock + '\n\n' : ''}${resonanceBlock}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
+  return `${TONE_REGISTER_BLOCK}${studentContextBlock}${painPointBlock ? painPointBlock + '\n\n' : ''}${patternBlock ? patternBlock + '\n\n' : ''}${resonanceBlock}Generate the "${args.atom_type}" atom for concept "${args.concept_id}" (topic family: ${args.topic_family}).
 
 Scaffold: ${args.template_scaffold}
 ${args.template_guidance ? `Guidance:\n${args.template_guidance}` : ''}

@@ -2237,6 +2237,92 @@ today; threading one through is real, separate selection-logic work.
 query-param propagation test on `PracticeAttemptPage`, 5 wizard-page
 context/CTA tests). Full frontend suite 2584/2584. `tsc --noEmit` clean.
 
+---
+
+### Two systemic rendering bugs: raw LaTeX and dead markdown tables (2026-09-03)
+
+`/investigate` on a live-QA screenshot ("Poor formatting... $/text is
+rendered??") of the systems-of-equations lesson. Root-caused BEFORE any
+content rewrite, per the skill's Iron Law — most of what looked like a
+content-quality problem turned out to be two rendering bugs.
+
+**Bug 1 — trap rows leaked raw LaTeX.** `Simulation.tsx`'s `TrapRow`
+("Where marks are lost") rendered `trap.text`/`trap.avoid` as plain JSX
+string interpolation — `{trap.text}` — never through
+`MarkdownAtomRenderer`. Any trap authored with inline math (every one of
+them; `$\text{rank}(A)$` is a completely ordinary trap sentence) leaked
+the literal LaTeX source to students instead of typeset math. Fixed: both
+lines now route through `MarkdownAtomRenderer` with a new
+`.vidhya-atom-body--trap` modifier class reproducing the prior plain
+styling; `"Avoid: "` stays a plain-text prefix folded into the SAME
+markdown string rather than a separate element, so label and reason still
+read as one sentence.
+
+**Bug 2 — every authored table in the corpus rendered as literal pipes.**
+`MarkdownAtomRenderer.tsx`'s remark pipeline (`remark-parse` +
+`remark-math` + `remark-directive` + `remark-rehype`) never had
+`remark-gfm` — GFM tables are not CommonMark, so a `| Condition |
+Solutions |` block was never recognized as a table at all, just an
+unparsed paragraph. This wasn't a one-atom bug: EVERY table across the
+whole content corpus was silently broken the same way, on every deploy,
+since the renderer was written. Installed `remark-gfm@4.0.1`, added it to
+the pipeline right after `remark-parse`. The CSS
+(`.vidhya-atom-body table/th/td`, wide-table horizontal scroll) was
+already fully written in `globals.css` — someone had anticipated tables
+and it was simply waiting on the plugin the whole time.
+
+**Content pilot, same concept the screenshot named.**
+`systems-of-equations/atoms/visual-analogy.md` rewritten: leads with a
+concrete "three sheets of glass" picture instead of the formal definition,
+splits the three-outcome paragraph into a scannable bulleted list (every
+rank formula kept, just reordered after the plain-English shape), and
+closes by connecting back to the concept's own hook animation instead of
+a bare "stays verbal" disclaimer. `intuition.md`'s dense closing paragraph
+(homogeneous-systems fact + GATE exam-pattern facts crammed together) got
+a one-line split into two paragraphs.
+
+**Design brainstorm, published as an artifact — not code.** A short
+"One Idea Per Screen" page (Vidhya Clarity's own tokens, no new palette)
+laying out: the two bugs' before/after, a 4-rule density-reduction
+principle (LEAD/SPLIT/DEFER/CONNECT), and a real capsule-hook layout
+mockup — folding the current 3-stacked-cards hook (animation card, prose
+card, trap card) into one bounded capsule object with the beat-bar and a
+tap-to-expand trap pill inside it, built from the concept's own now-fixed
+content. Explicitly a mockup, not a build — a real capsule layout is its
+own `Simulation.tsx` change plus a design-system scope decision (every
+hook, or only revisit cards?), named as future work.
+
+**Predict-before-reveal wave — complete, all 29 remaining scenes.** The
+prior pass (CLAUDE.md, "Content teaching arc") fixed exactly one reported
+scene (spectral-theorem) and named the rest as deferred content debt. This
+pass found the precise, closed worklist first — every `simulation`-kind
+scene lives exclusively in a `hook.md` (none in any other atom type),
+29 concepts remaining — then dispatched 6 parallel background agents (5
+concepts each) to audit and split any combined-observe-reveal beat.
+**22 of 29 concepts had a real defect and were fixed**; 7 were already
+clean (`determinants`, `eigenvalues`, `null-space-column-space`,
+`orthogonality`, `quadratic-forms`, `rank-nullity`, `cayley-hamilton`) and
+were left untouched rather than forced into an unneeded split. Every
+touched concept got the identical fence applied byte-for-byte across
+`hook.md`/`hook-shaken.md`/`hook-assured.md`. One agent (batch 3) also
+trimmed a pre-existing 287-char `linear-independence` beat that was
+blocking its own validation run — a real, in-scope fix, not scope creep.
+
+Every batch validated its own concepts against `ci:interactive-specs`,
+`ci:variant-agreement`, `ci:katex-fences`, `ci:content-integrity` before
+reporting done; a final full-repo run of all four plus `npm run ci`
+(18 gates) and both test suites confirmed the combined result — no commit
+happened until every batch had actually reported back, per the standing
+rule against fabricating results from work still in flight.
+
+**Tests:** 2 new (GFM table renders as a real `<table>`,
+`MarkdownAtomRenderer.test.tsx`; trap math renders through KaTeX,
+`Simulation.test.tsx`). Full frontend suite 2586/2586, backend
+4672/4672. `tsc --noEmit` clean both sides. `npm run ci` (18 gates) clean.
+Content gates (`ci:interactive-specs` 383 blocks, `ci:variant-agreement`
+610 pairs, `ci:katex-fences` 1723, `ci:content-integrity` 1729) clean,
+unchanged counts throughout.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

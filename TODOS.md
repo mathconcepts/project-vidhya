@@ -84,41 +84,6 @@ the same way.
 `claude/content-strategy-framework-o9afoc`. See
 `docs/designs/2026-09-03-content-teaching-arc-framework.md`.
 
-## Audit remaining concepts' resonance beats for reveal-without-predict
-
-**Trigger:** the next content wave, or another live-QA report naming a
-specific concept.
-
-This pass fixed exactly one reported scene (`spectral-theorem/atoms/
-hook.md`'s "flipped arrow" beat, which combined OBSERVE and REVEAL into one
-beat with no prior prediction cue). The same defect class — a resonance
-beat stating a rule/sign/classification with nothing before it inviting a
-guess — has not been systematically audited across the other ~33 scenes
-carrying `simulation`-kind beats (`ci:interactive-specs` reports 383 total
-interactive-spec blocks; the `simulation` subset is documented per-topic in
-`docs/designs/2026-09-03-motion-and-plain-language-strategy.md`'s table).
-The new `ped_predict_before_reveal` pedagogy pattern (`data/registry/
-pedagogy-patterns.yml`) shapes future LLM-GENERATED atoms automatically,
-but does nothing for already-committed hand-authored scenes.
-
-**What:** read each existing `simulation`-kind scene's `narration_steps`,
-identify any beat that both shows a result AND states the rule/sign/
-classification for the first time (the same "combined observe+reveal"
-shape), and split it per this pass's pattern — one predict-cue beat, one
-reveal+why beat.
-
-**Where to start:** `docs/designs/2026-09-03-motion-and-plain-language-
-strategy.md`'s per-topic table for the scene inventory; this pass's
-`spectral-theorem/atoms/hook.md` fix (5-beat structure) as the worked
-template.
-
-**Effort:** M human / CC ~5-6 concepts per batch (same pattern as every
-other content wave in this repo's history).
-**Priority:** P2 — real pedagogical debt, but the reported instance is
-fixed; no evidence yet that the other beats are causing the same confusion.
-**Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
-`claude/content-strategy-framework-o9afoc`.
-
 ## ELI5/register pass over the other ~500 practice items' `solution_steps`
 
 **Trigger:** the `solution_steps` LaTeX-pipeline item above lands, or

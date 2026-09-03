@@ -37,6 +37,8 @@ async function renderPage() {
         <Route path="/attempt/:objectId" element={<Page />} />
         <Route path="/lesson/:conceptId" element={<div>LESSON PAGE: matrix-operations</div>} />
         <Route path="/smart-practice" element={<div>SMART PRACTICE PAGE</div>} />
+        <Route path="/theorem-wizard/:module" element={<div>THEOREM WIZARD</div>} />
+        <Route path="/distribution-selector" element={<div>DISTRIBUTION SELECTOR</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -298,5 +300,81 @@ describe('PracticeAttemptPage — post-wrong-answer next-move CTAs', () => {
     await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
     const receiptLabel = screen.getByText('✓').parentElement as HTMLElement;
     expect(receiptLabel.getAttribute('style')).not.toContain('--green-ink');
+  });
+});
+
+// Regression (/investigate, 2026-09-03): a wrong answer on a linear-algebra
+// item (e.g. spectral-theorem's eigenvalue-power questions) used to hand the
+// student one canned solution and nothing else — the real branching
+// method-selection wizard (which already covers this exact territory via
+// its `la_power`/`la_definite` nodes) existed but was reachable only by
+// typing its URL directly.
+describe('PracticeAttemptPage — method-selection wizard link', () => {
+  const LA_ITEM = { ...MCQ_ITEM, id: 'obj-la', topic: 'linear-algebra' };
+  const LA_ITEM_TITLE_CASE = { ...MCQ_ITEM, id: 'obj-la2', topic: 'Linear Algebra' };
+  const PS_ITEM = { ...MCQ_ITEM, id: 'obj-ps', topic: 'probability-statistics' };
+  const UNMAPPED_ITEM = { ...MCQ_ITEM, id: 'obj-cx', topic: 'complex-variables' };
+
+  async function submitWrong(item: typeof MCQ_ITEM) {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(item))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+      }));
+    await renderPage();
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+  }
+
+  it('links a wrong linear-algebra answer to the theorem-selection wizard', async () => {
+    await submitWrong(LA_ITEM);
+    const link = screen.getByText(/Which method applies/);
+    fireEvent.click(link);
+    await waitFor(() => expect(screen.getByText('THEOREM WIZARD')).toBeInTheDocument());
+  });
+
+  it('normalizes a title-case topic to the same slug', async () => {
+    await submitWrong(LA_ITEM_TITLE_CASE);
+    expect(screen.getByText(/Which method applies/)).toBeInTheDocument();
+  });
+
+  it('links a wrong probability-statistics answer to the distribution selector', async () => {
+    await submitWrong(PS_ITEM);
+    const link = screen.getByText(/Which method applies/);
+    fireEvent.click(link);
+    await waitFor(() => expect(screen.getByText('DISTRIBUTION SELECTOR')).toBeInTheDocument());
+  });
+
+  it('shows no wizard link for a topic with no trainer', async () => {
+    await submitWrong(UNMAPPED_ITEM);
+    expect(screen.queryByText(/Which method applies/)).toBeNull();
+  });
+
+  it('never shows the wizard link on a correct answer', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(LA_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 1, max: 1, correct: true, feedback: 'Nice work.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: 1,
+        failure_tag: null,
+      }));
+    await renderPage();
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[1]);
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
+    expect(screen.queryByText(/Which method applies/)).toBeNull();
   });
 });

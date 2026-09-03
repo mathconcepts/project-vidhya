@@ -24,7 +24,7 @@ import { motion } from 'framer-motion';
 import { authFetch } from '@/lib/auth/client';
 import {
   CheckCircle2, XCircle, Loader2, ArrowLeft, SkipForward,
-  Target, AlertTriangle, Compass, RefreshCw, GraduationCap, Repeat,
+  Target, AlertTriangle, Compass, RefreshCw, GraduationCap, Repeat, GitBranch,
 } from 'lucide-react';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import { Card } from '@/components/ui/Card';
@@ -87,6 +87,34 @@ const COMMON_MISTAKE_LABEL: Record<string, string> = {
   risk_decision: 'a risky guess rather than a knowledge gap',
   prerequisite: 'a gap in an earlier concept, not this one',
 };
+
+/**
+ * A wrong answer's `solution_steps` is a single canned route through ONE
+ * problem (see `data/practice-items/*.json`). When the item's `topic` has a
+ * real branching method-selection wizard (`method-selection-trainers.ts`),
+ * the honest next move for "why did I pick the wrong approach" is that
+ * wizard — it already asks "what kind of problem is this, and which method
+ * fits" across several problem shapes, which is exactly what a step-reveal
+ * solution for one instance cannot teach. Root-caused by /investigate
+ * (2026-09-03): the wizard existed and covered this ground (linear-algebra's
+ * `la_power`/`la_definite` nodes already branch on eigenvalue-power and
+ * definiteness questions — the same territory as a spectral-theorem miss)
+ * but was reachable only via a direct URL, never linked from the one moment
+ * a student actually needs it. `topic` values come straight from the
+ * practice-item bank and must match a trainer key/route exactly — an
+ * unmapped topic (or none) renders no button rather than a guessed link.
+ */
+function wizardRouteForTopic(topic: string | null | undefined): string | null {
+  if (typeof topic !== 'string') return null;
+  // Practice-item banks are not fully consistent on topic casing (e.g. one
+  // hand-authored file uses "Linear Algebra" where every other uses the
+  // kebab-case slug) — normalize rather than require exact-match, since a
+  // display-only casing difference is not a reason to withhold a real link.
+  const slug = topic.trim().toLowerCase().replace(/\s+/g, '-');
+  if (slug === 'linear-algebra' || slug === 'vector-calculus') return `/theorem-wizard/${slug}`;
+  if (slug === 'probability-statistics') return '/distribution-selector';
+  return null;
+}
 
 // Shared base for the two post-wrong-answer CTA buttons below — only
 // background/border/color differ per button (indigo vs. green).
@@ -513,6 +541,20 @@ export default function PracticeAttemptPage() {
                       practicing after getting it right" — so the row now
                       always renders, and only the remediation button is
                       gated on the miss.) */}
+                  {!result.grade.correct && wizardRouteForTopic(item?.topic) && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(wizardRouteForTopic(item?.topic)!)}
+                      style={{
+                        ...NEXT_MOVE_BUTTON_BASE,
+                        flex: 'none', width: '100%', marginTop: 4,
+                        background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
+                        color: 'var(--indigo-ink)',
+                      }}
+                    >
+                      <GitBranch size={14} /> Which method applies? Work through it
+                    </button>
+                  )}
                   {item?.node_id && (
                     <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
                       {!result.grade.correct && (

@@ -170,3 +170,44 @@ patterns:
     evidence: "ue_la_03 (step-by-step worked examples before theory)"
     status: active
     version: 1
+
+  - id: ped_predict_before_reveal
+    name: Predict-Before-Reveal Sequencing
+    description: >
+      Before stating a rule, a sign, or a classification the student cannot
+      yet derive, insert one narrowly-cued prediction beat -- a specific
+      yes/no or either/or question the student can actually attempt with
+      what they've seen so far -- THEN reveal the answer, THEN explain why.
+      Never open-ended discovery ("what do you think happens?"): a novice
+      with no prior model to predict from just gets frustrated, and an
+      unscaffolded prediction defeats its own purpose. The cue must narrow
+      the guess to a small answer space the preceding content already makes
+      reachable. Closes a live-QA finding where a resonance-beat scene
+      (spectral-theorem hook, "flipped arrow") stated the observation and
+      the rule in the SAME beat, so students never had a moment to think
+      before being told the answer -- content that "drives directly into a
+      solution without preparing the student as to how to learn."
+    applicable_modules:
+      - linear-algebra
+      - calculus
+      - vector-calculus
+      - differential-equations
+      - complex-variables
+      - probability-statistics
+      - numerical-methods
+      - discrete-mathematics
+      - transform-theory
+      - graph-theory
+    blueprint_stages:
+      - intuition
+      - discovery
+    prompt_directives:
+      - "When the content is about to state a rule, sign, or classification the reader could not yet derive, insert a SEPARATE beat/sentence immediately before it that poses one narrow, answerable question (yes/no or a choice of 2) grounded in what was just shown -- never an open 'what do you think happens?' with no scaffolding."
+      - "Never combine the prediction cue and the answer in the same sentence or the same resonance beat -- the reveal is the NEXT beat/sentence, not an appositive clause in the same one."
+      - "The reveal states the answer plainly, then one sentence of why -- do not restate the question as the answer's setup."
+      - "Keep the prediction question small enough to attempt in a few seconds -- if answering it requires a derivation the student hasn't been taught yet, the cue is too broad; narrow it or drop it."
+      - "This pattern augments, it does not replace, a separately-authored misconception callout elsewhere in the atom -- a predict cue is about the CURRENT step's result, not a warning about a DIFFERENT, tempting error."
+    modality_bias: DYNAMIC
+    evidence: "White & Gunstone 1992 (Predict-Observe-Explain); Slamecka & Graf 1978 (generation effect) tempered by Sweller's worked-example effect for novices (narrow-cued prediction only, never open derivation); live-QA report 2026-09-03 (spectral-theorem/atoms/hook.md resonance beat revealed the flipped-eigenvector rule with no prior prediction step)"
+    status: active
+    version: 1

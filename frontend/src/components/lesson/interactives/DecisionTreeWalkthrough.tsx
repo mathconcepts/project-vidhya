@@ -32,10 +32,25 @@
  * Motion: none. Reveals here are navigation, not animation, so
  * prefers-reduced-motion is honoured trivially — there is nothing to
  * reduce.
+ *
+ * `startAt` (wizard-mistake-loop follow-up, 2026-09-03): the wizard used to
+ * always open at `branches.nodes[0]`, so a student diagnosed with a SPECIFIC
+ * mistake (e.g. "picked trace(A) for invertibility") still had to re-walk
+ * the topic's WHOLE classification chain before reaching the fork that
+ * actually mattered. `startAt` is a render-time hint — never part of the
+ * persisted spec, so an authored `branches` tree means the same thing
+ * everywhere it's used — naming the node id to open at instead. An unknown
+ * or absent id fails closed to the true root (never a broken render, never
+ * a guess): a caller passes a value it computed from real data (the
+ * concept→node map in method-selection-trainers.ts) or nothing at all.
+ * `restart()` returns to that same deep-linked fork, not the true root —
+ * "start over" means "try this decision again," not "abandon the shortcut."
+ * A separate "see the full picture" control (rendered only when the deep
+ * link is actually in effect) is the one way to walk from the true root.
  */
 
 import { useMemo, useState } from 'react';
-import { ArrowLeft, Check, CornerUpLeft, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Check, CornerUpLeft, RotateCcw, Route } from 'lucide-react';
 import type { BranchLeaf, BranchNode, GuidedWalkthroughSpec } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { Button } from '@/components/ui/Button';
@@ -47,9 +62,15 @@ export const BEST_HEADING = 'That is the right call';
 /** E5 honesty label — same wording family as SmartPracticePage. */
 export const SELF_CHECK_LABEL =
   'Self-check — not exam grading, no marks recorded.';
+/** Shown above the tree when a valid `startAt` skipped the classification chain. */
+export const DEEP_LINK_NOTE = 'Jumping straight to where this went wrong.';
+/** The escape hatch back to the true root, from a deep-linked entry. */
+export const FULL_PICTURE_LABEL = 'See the full picture from the top';
 
 interface Props {
   spec: GuidedWalkthroughSpec & { branches: NonNullable<GuidedWalkthroughSpec['branches']> };
+  /** See the file-level doc comment above. */
+  startAt?: string;
 }
 
 interface TrailEntry {
@@ -60,9 +81,10 @@ interface TrailEntry {
   next: string;
 }
 
-export function DecisionTreeWalkthrough({ spec }: Props) {
+export function DecisionTreeWalkthrough({ spec, startAt }: Props) {
   const { branches } = spec;
   const [trail, setTrail] = useState<TrailEntry[]>([]);
+  const [fromTrueRoot, setFromTrueRoot] = useState(false);
 
   const nodesById = useMemo(
     () => new Map<string, BranchNode>(branches.nodes.map((n) => [n.id, n])),
@@ -74,7 +96,9 @@ export function DecisionTreeWalkthrough({ spec }: Props) {
   );
 
   const rootId = branches.nodes[0].id;
-  const currentId = trail.length > 0 ? trail[trail.length - 1].next : rootId;
+  const deepLinkActive = !fromTrueRoot && !!startAt && nodesById.has(startAt);
+  const entryId = deepLinkActive ? startAt! : rootId;
+  const currentId = trail.length > 0 ? trail[trail.length - 1].next : entryId;
   const node = nodesById.get(currentId);
   const leaf = leavesById.get(currentId);
 
@@ -85,6 +109,10 @@ export function DecisionTreeWalkthrough({ spec }: Props) {
     setTrail((prev) => prev.slice(0, -1));
   }
   function restart() {
+    setTrail([]);
+  }
+  function walkFromTop() {
+    setFromTrueRoot(true);
     setTrail([]);
   }
 
@@ -107,6 +135,29 @@ export function DecisionTreeWalkthrough({ spec }: Props) {
           {leaf ? 'Result' : `Question ${trail.length + 1}`}
         </span>
       </header>
+
+      {/* Deep-link note (see the file-level doc comment). Rendered only
+          while a valid startAt is actually in effect — a wizard opened
+          directly, or one whose concept has no map entry, shows neither
+          this note nor the escape hatch, and behaves exactly as before. */}
+      {deepLinkActive && (
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <p
+            className="leading-relaxed"
+            style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)' }}
+          >
+            {DEEP_LINK_NOTE}
+          </p>
+          <button
+            type="button"
+            onClick={walkFromTop}
+            className="inline-flex items-center gap-1 font-medium underline-offset-2 hover:underline"
+            style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)', background: 'transparent', border: 'none', padding: 0 }}
+          >
+            <Route size={12} aria-hidden /> {FULL_PICTURE_LABEL}
+          </button>
+        </div>
+      )}
 
       {/* Breadcrumb of choices made. Plain text, not tappable — the Back
           button is the tappable affordance, at a full 44px. */}

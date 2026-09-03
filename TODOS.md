@@ -4,6 +4,42 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Micro-solver authoring pass: close wizard coverage for the other 8 topic families
+
+**Trigger:** ready to start the next content wave, or a live-QA report
+naming a method-selection miss on a topic with no wizard today.
+
+`/office-hours` (2026-09-03) brainstormed the tailored-mistake-wizard
+redesign; the `startAt` deep-link mechanism (CLAUDE.md's 2026-09-03
+"Method-selection wizard: `startAt` deep link" section) is shipped and
+covers the 3 existing trainers (linear-algebra, vector-calculus,
+distributions). The other half of the recommended approach — treating a
+single fork + its leaves as its own authorable unit, so a topic gets
+tailored guidance one concept at a time instead of needing a whole
+multi-fork tree drafted up front — is NOT started.
+
+**What:** for a topic with no `MethodSelectionTrainer` yet (everything
+outside linear-algebra/vector-calculus/distributions — calculus,
+complex-variables, numerical-methods, discrete-mathematics, graph-theory,
+transform-theory, and the rest), pick the concept most likely to produce a
+real method-selection miss, author ONE `BranchNode` + 2-3 `BranchLeaf`s
+(same schema `DecisionTreeWalkthrough` already renders — a 1-node tree
+needs no new component or renderer change), register it under a new or
+existing trainer keyed by that topic's module id, and add the concept's
+entry to `CONCEPT_TO_WIZARD_NODE`. Every leaf's `reason` must say why the
+plausible wrong method fails, same discipline as the 3 shipped trainers —
+verify every mathematical claim (Wolfram or by hand) before authoring.
+
+**Where to start:** `frontend/src/data/method-selection-trainers.ts` for
+the data shape and the 3 existing trainers as templates;
+`frontend/src/pages/app/TheoremWizardPage.tsx`'s routing (`:module` param
+→ `THEOREM_WIZARD_TRAINERS[moduleId]`) is already generic enough to add a
+4th+ module with no page changes.
+
+**Effort:** S per concept (one fork + its leaves, roughly a `common_traps`
+atom's worth of authoring + verification), following the same 5-6-concept
+subagent batch pattern used for content waves elsewhere in this doc.
+
 ## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
 
 **Trigger:** the next live-QA report naming a different concept's

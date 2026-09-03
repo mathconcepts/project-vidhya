@@ -15,8 +15,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   ALL_METHOD_SELECTION_TRAINERS,
+  CONCEPT_TO_WIZARD_NODE,
   DISTRIBUTION_TRAINER,
   THEOREM_WIZARD_TRAINERS,
+  wizardStartNodeForConcept,
 } from './method-selection-trainers';
 import { __testing } from '@/components/lesson/interactives/types';
 
@@ -103,5 +105,42 @@ describe('method-selection trainers — the migration lost nothing', () => {
       'linear-algebra',
       'vector-calculus',
     ]);
+  });
+});
+
+describe('CONCEPT_TO_WIZARD_NODE — the startAt deep-link map', () => {
+  function trainerFor(trainerId: string) {
+    if (trainerId === 'distribution-selector') return DISTRIBUTION_TRAINER;
+    return THEOREM_WIZARD_TRAINERS[trainerId];
+  }
+
+  it('every mapped node id is a real node in that trainer\'s own tree — no stale/typo\'d targets', () => {
+    for (const [trainerId, concepts] of Object.entries(CONCEPT_TO_WIZARD_NODE)) {
+      const trainer = trainerFor(trainerId);
+      expect(trainer, `no trainer registered for "${trainerId}"`).toBeDefined();
+      const nodeIds = new Set(trainer.spec.branches!.nodes.map((n) => n.id));
+      for (const [concept, nodeId] of Object.entries(concepts)) {
+        expect(
+          nodeIds.has(nodeId),
+          `${trainerId}/${concept} -> "${nodeId}" is not a node in ${trainerId}'s tree`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('resolves a mapped concept to its fork', () => {
+    expect(wizardStartNodeForConcept('linear-algebra', 'determinants')).toBe('la_invertible');
+    expect(wizardStartNodeForConcept('linear-algebra', 'rank-nullity')).toBe('la_injective');
+    expect(wizardStartNodeForConcept('vector-calculus', 'stokes-theorem')).toBe('vc_space_pick');
+    expect(wizardStartNodeForConcept('distribution-selector', 'discrete-distributions')).toBe(
+      'ds_discrete',
+    );
+  });
+
+  it('returns undefined for an unmapped concept, an unmapped trainer, or no concept — never a guess', () => {
+    expect(wizardStartNodeForConcept('linear-algebra', 'vector-spaces')).toBeUndefined();
+    expect(wizardStartNodeForConcept('some-unknown-trainer', 'determinants')).toBeUndefined();
+    expect(wizardStartNodeForConcept('linear-algebra', null)).toBeUndefined();
+    expect(wizardStartNodeForConcept('linear-algebra', undefined)).toBeUndefined();
   });
 });

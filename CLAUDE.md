@@ -2761,6 +2761,61 @@ report named one specific concept (`trace`), not a corpus-wide ask.
 TODOS.md's existing "audit other concepts" entry stands, now with a
 second confirmed instance as evidence rather than a prediction.
 
+### Method-selection wizard: `startAt` deep link (2026-09-03)
+
+`/office-hours` brainstorm on the wizard-mistake-loop feature (W2.5's
+`DecisionTreeWalkthrough`, PRs #157-158's `?concept=&mistake=` context):
+the wizard always opened at its tree's root, so a student diagnosed with
+ONE specific mistake still had to re-walk the whole topic classification
+chain (4-6 forks) to reach the fork that actually mattered — "tailored to
+the mistake" was aspirational, not real. `item.node_id` (the concept) was
+already threaded through the URL and unused for routing; `failure_tag` is
+too coarse to pick a fork (it says "method mix-up", not which one), but
+concept id is exactly the right granularity.
+
+**Shipped:**
+
+- `DecisionTreeWalkthrough` gains an optional `startAt?: string` prop —
+  the node id to open at instead of `branches.nodes[0]`. Render-time only,
+  never part of the persisted spec (so an authored `branches` tree still
+  means the same thing everywhere it's rendered). Unknown/absent id fails
+  closed to the true root — never a broken render, never a guess.
+  `restart()` returns to the deep-linked fork ("try this decision again",
+  not "abandon the shortcut"); a separate "See the full picture from the
+  top" control (rendered only while the deep link is in effect) walks from
+  the true root. `GuidedWalkthrough` forwards `startAt` straight through;
+  `InteractiveSidecar`'s lesson-embedded call site passes nothing, so a
+  lesson-authored branching walkthrough is unaffected.
+- `CONCEPT_TO_WIZARD_NODE` (`method-selection-trainers.ts`) — a small
+  per-trainer `concept → node id` map, verified against the real
+  `node_id` values in `data/practice-items/gate-ma-la-*.json`,
+  `gate-ma-vector-calculus.json`, `gate-ma-probability-statistics.json`
+  (not assumed from the concept graph). `wizardStartNodeForConcept()`
+  resolves it; a test asserts every mapped node id is real in that
+  trainer's own tree, so the map can't silently drift from the content.
+  Coverage is partial and the two reasons are different: linear-algebra
+  and vector-calculus map every fork that IS a method decision (a few
+  purely foundational vector-calculus concepts correctly fall through to
+  the classification root, since they aren't "which theorem" questions);
+  distributions can only skip the count-vs-measurement root question,
+  because the curriculum has no per-distribution concept id (only
+  `discrete-distributions`/`continuous-distributions`) — a real content-
+  model limit, named rather than silently narrowed.
+- `TheoremWizardPage`/`DistributionSelectorPage` resolve `startAt` from
+  the existing `?concept=` param and pass it through — zero new routing,
+  zero new authoring for the 3 existing trainers.
+
+**Deliberately not done, tracked as the next wave:** the micro-solver
+authoring pass (a single fork + leaves as its own authorable unit,
+concept-by-concept, for the other 8 topic families that have no tree at
+all) — the second half of the brainstormed workflow. Follows the same
+5-6-concept subagent batch pattern used elsewhere in this doc, with
+Wolfram/hand-verification on every claim before any content ships.
+
+**Tests:** 10 new (`DecisionTreeWalkthrough.test.tsx` +7 deep-link/escape-
+hatch cases, `method-selection-trainers.test.ts` +3 map-resolution/self-
+consistency cases). Frontend suite 2604 → 2614/2614. `tsc --noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

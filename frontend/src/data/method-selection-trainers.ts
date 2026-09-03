@@ -664,3 +664,77 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
   VECTOR_CALCULUS,
   DISTRIBUTIONS,
 ];
+
+/**
+ * CONCEPT_TO_WIZARD_NODE (wizard-mistake-loop follow-up, 2026-09-03) — the
+ * startAt deep-link map. Keys are `item.node_id` values as they actually
+ * appear in the shipped practice-item banks (verified against
+ * `data/practice-items/gate-ma-la-*.json`, `gate-ma-vector-calculus.json`,
+ * `gate-ma-probability-statistics.json` — not assumed from the concept
+ * graph alone), mapped to the specific `BranchNode.id` inside the matching
+ * trainer's tree that presents the decision that concept's questions
+ * actually test.
+ *
+ * Coverage is PARTIAL by design, on two different grounds:
+ *
+ *  - Linear algebra and vector calculus: every fork in both trees maps to
+ *    a real concept id except vector-calculus's three purely foundational
+ *    concepts (`vector-fields`, `divergence-curl`, `vector-algebra-basics`)
+ *    and the two integral-setup concepts (`line-integrals`,
+ *    `surface-integrals`) — none of those is itself a "which theorem"
+ *    decision, so routing them to `vc_start`'s classification question
+ *    (unchanged, the pre-existing behavior) is the correct entry point,
+ *    not a gap to close.
+ *
+ *  - Distributions: the curriculum's concept granularity for this topic is
+ *    `discrete-distributions` / `continuous-distributions` — there is no
+ *    per-distribution concept id (no "poisson-distribution", etc.), so the
+ *    deep link can only skip `ds_start` (count vs. measurement), not the
+ *    finer forks the tree asks next (`ds_discrete`/`ds_continuous`
+ *    themselves ask which distribution WITHIN that category — a student
+ *    still walks that one extra question). A real limitation of today's
+ *    content model, not an oversight — recorded, not silently narrowed.
+ *
+ * A concept absent here is not a bug: `DecisionTreeWalkthrough`'s own
+ * `startAt` fails closed to the tree's true root, exactly as if no map
+ * existed at all.
+ */
+export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
+  'linear-algebra': {
+    determinants: 'la_invertible',
+    'matrix-inverse': 'la_invertible',
+    'rank-nullity': 'la_injective',
+    'null-space-column-space': 'la_injective',
+    'linear-transformations': 'la_injective',
+    diagonalization: 'la_power',
+    'cayley-hamilton': 'la_power',
+    'quadratic-forms': 'la_definite',
+    'positive-definite-matrices': 'la_definite',
+    'spectral-theorem': 'la_definite',
+  },
+  'vector-calculus': {
+    'greens-theorem': 'vc_plane_pick',
+    'stokes-theorem': 'vc_space_pick',
+    'gauss-divergence': 'vc_closed_pick',
+  },
+  'distribution-selector': {
+    'discrete-distributions': 'ds_discrete',
+    'continuous-distributions': 'ds_continuous',
+  },
+};
+
+/**
+ * Resolves the `startAt` node id for a trainer + concept, or `undefined`
+ * when there's no mapped fork (an unmapped concept, an unmapped trainer, or
+ * no concept at all) — the caller passes `undefined` straight through to
+ * `GuidedWalkthrough`/`DecisionTreeWalkthrough`, which already treats a
+ * missing `startAt` as "open at the true root," so there is no separate
+ * fallback branch to get wrong here.
+ */
+export function wizardStartNodeForConcept(
+  trainerId: string,
+  concept: string | null | undefined,
+): string | undefined {
+  if (!concept) return undefined;
+  return CONCEPT_TO_WIZARD_NODE[trainerId]?.[concept];
+}

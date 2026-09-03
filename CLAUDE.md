@@ -1946,6 +1946,63 @@ should register through `src/content/prompt-registry/` and pass
 hardcoded call inside `buildPrompt()` — the whole point of this pass was
 to stop that pattern from compounding.
 
+---
+
+### Why-first interactive framing (2026-09-03)
+
+Live-QA report (4 screenshots, matrix-operations lesson) via `/investigate`:
+students couldn't tell why an interactive widget was on the page, a
+"Linear map y = Ax (1D slice)" exploration widget appeared with no
+explanation of why a scalar simplification was shown for a 2×2-matrix
+lesson, the "Try It: 2×2 Matrix Multiplication" walkthrough rendered
+cramped bracket-array text instead of typeset matrices, and a resonance
+scene's "circle has become a tilted ellipse" line never explained why.
+Full root-cause + design: `docs/designs/2026-09-03-why-first-interactive-
+framing.md`.
+
+**Root causes, not just symptoms:** (1) `InteractiveSidecar.tsx` never
+framed any of the 380 authored interactive-spec blocks — structural, not
+content. (2) `ConceptMathViz.tsx` is a SEPARATE, hardcoded 53-entry widget
+system bolted onto every lesson page (`LessonPage.tsx`), entirely outside
+the atom-authoring/tone-directive/prompt-registry pipeline this repo has
+spent the whole day building — its `matrix-operations` entry was scope-
+mismatched and unglossed. (3) `matrix-operations/atoms/intuition.md`'s
+guided-walkthrough spec wrote matrices as un-delimited bracket arrays
+(`A = [[1,2],[3,4]]`) instead of LaTeX, so KaTeX never touched them —
+confirmed systemic across 5 concepts / 15 files (matrix-operations,
+lu-factorization, eigenvalues, change-of-basis, numerical-linear-algebra),
+all fixed. (4) the circle→ellipse resonance beat explained the "why" only
+in the `text_assured` register, never in `text`/`text_shaken`.
+
+**The fix is a reusable field, not four patches.** `why?: string` added to
+all three `InteractiveSpec` kinds (`frontend/src/components/lesson/
+interactives/types.ts`, capped at `MAX_WHY_CHARS=220`, optional so all
+existing content keeps validating) and to `ConceptMathViz`'s `VizSpec`.
+`WhyThisHelps.tsx` is the ONE shared framing component, rendered by both
+`InteractiveSidecar` and `ConceptMathViz` — renders nothing when `why` is
+absent. `src/hooks/useEliFraming.ts` is the "option in backend to remove"
+the report asked for, built as a client preference (mirrors
+`useCalmMode.ts`'s persistence pattern exactly) rather than a literal
+backend flag, since this content is static pre-authored markdown with no
+per-request LLM call to gate server-side. Defaults ON (unlike Calm Mode);
+"Hide these tips" turns it off everywhere, persisted.
+
+**Pilot slice shipped:** the framework itself, plus all 4 reported issues
+fixed at the source (matrix-operations' guided walkthrough + hook scene +
+ConceptMathViz entry; the 4 other concepts sharing the bracket-array bug).
+18 of 380 interactive-spec blocks now carry `why`; 1 of 53 `ConceptMathViz`
+entries audited. The other 362 blocks and 52 entries are the next wave —
+tracked in TODOS.md, same 5-6-per-batch pattern as the common_traps pass
+above. `matrix-inverse/atoms/hook.md` carries the same ellipse scene
+pattern (checked, not assumed) and is a natural next candidate, untouched
+here since the live-QA report was scoped to matrix-operations.
+
+**Verification:** `ci:katex-fences`, `ci:content-integrity`,
+`ci:interactive-specs`, `ci:variant-agreement`, `ci:la-walkthrough`
+(26/26) all clean. Frontend 94 files / 2567 tests (full corpus render
+regression included). Backend untouched, 362 files / 4672 tests. `tsc
+--noEmit` clean both sides.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

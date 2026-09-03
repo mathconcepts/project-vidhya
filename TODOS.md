@@ -4,6 +4,71 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Why-first interactive framing: 362 of 380 interactive-spec blocks still have no `why`
+
+**Trigger:** an operator wants to spend agent time on the next wave, or a
+fresh live-QA report finds another interactive with no framing.
+
+`docs/designs/2026-09-03-why-first-interactive-framing.md` built the
+`why?: string` field (schema + validation), the shared `WhyThisHelps`
+component, and the `useEliFraming` hide-toggle, then piloted it on the one
+concept a live-QA report flagged (matrix-operations) plus the 4 other
+concepts sharing its guided_walkthrough bracket-notation bug (lu-
+factorization, eigenvalues, change-of-basis, numerical-linear-algebra).
+That's 18 of 380 authored interactive-spec blocks (253 guided_walkthrough +
+100 simulation + 27 manipulable). The other 362 render exactly as before —
+`why` is optional — just without the new framing line. Same 5-6-concepts-
+per-batch subagent pattern that worked for the common_traps ELI5 pass
+(CLAUDE.md, 2026-09-02) applies here: read each concept's real narration,
+write one honest sentence on why THIS widget helps (never a generic
+template line), respect `MAX_WHY_CHARS=220`.
+
+**Also flagged, not yet fixed:** `matrix-inverse/atoms/hook.md` carries the
+same "circle has become a tilted ellipse" resonance beat as
+matrix-operations (confirmed via grep, its own narration read — not
+assumed identical) and would benefit from the same why-explains-how
+treatment; out of scope here since the live-QA report was scoped to
+matrix-operations only.
+
+**Effort:** M per 5-concept batch (~this pass's size for the LaTeX-bug
+concepts), L+ for the full remaining 362-block corpus.
+
+## `ConceptMathViz`'s 52 other entries are unaudited for scope-mismatch/jargon-density
+
+**Trigger:** same as above — an operator-driven content wave, or a fresh
+live-QA report on a different concept's exploration widget.
+
+`frontend/src/components/lesson/ConceptMathViz.tsx`'s 53-entry `CONCEPT_VIZ`
+map is a hardcoded, pre-ELI5-directive widget entirely separate from the
+authored atom pipeline — it predates the tone-directive/prompt-registry
+work and was never touched by any of it. Only `matrix-operations` has been
+checked and fixed (rescoped honestly as a 1-number simplification, ELI5
+description, real `why`). The other 52 entries may carry the same kind of
+issue found there: a plot that doesn't actually match what the concept's
+authored atoms teach, or a `description` written in dense unglossed
+register. Each entry needs its own real check against that concept's
+actual lesson content — not a templated rewrite.
+
+**Effort:** S per entry once checked against real content, M-L to audit
+all 52.
+
+## No server-side/admin-configurable default for the ELI5-framing toggle
+
+**Trigger:** an admin wants to change the platform-wide default (e.g. off
+for an advanced-track exam pack) rather than relying on each student
+discovering "Hide these tips" themselves.
+
+`useEliFraming.ts` is a per-student client preference only (localStorage,
+mirrors `useCalmMode.ts`). The live-QA report's "maybe with an option in
+backend to remove" was interpreted as this per-student toggle since content
+is static (no per-request LLM call to gate). A genuine server-side default
+— an env var or admin setting read at boot, consulted only as the
+*initial* value before a student's own localStorage choice takes over —
+is real, separate follow-up work, not attempted here.
+
+**Effort:** S — one read at app boot, threaded into `useEliFraming`'s
+initial state.
+
 ## Existing content corpus mostly not reprocessed against the ELI5/Indian-English register directive
 
 **Trigger:** an operator wants to spend agent time/budget on the next wave,

@@ -23,7 +23,7 @@ Draw **one straight line** through that cloud so it sits as centrally as possibl
 
 ## The Slope $b$ Tells the Story
 
-If $b = 0.8$, for every extra unit of $x$, $y$ increases by $0.8$ **on average** along the line. The line below traces $\hat{y}=2.6+0.8x$ from the worked example — a straight rule, not a curve, and every point on it is a *prediction*, not a guarantee.
+If $b = 0.8$, for every extra unit of $x$, $y$ increases by $0.8$ **on average** along the line. The line on this card traces $\hat{y}=2.6+0.8x$ from the worked example — a straight rule, not a curve, and every point on it is a *prediction*, not a guarantee.
 
 ```gif-scene
 {"type":"function-trace","expression":"2.6 + 0.8*x","x_range":[0,6],"y_range":[0,8],"title":"The least-squares line ŷ = 2.6 + 0.8x"}

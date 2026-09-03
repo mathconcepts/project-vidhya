@@ -40,7 +40,19 @@
  *     not an expression — it never touches `compileExpression` and adds no
  *     new expression-evaluation surface.
  *
- * Future extensions (v3): vector field, 3-D surface plot, custom sprites.
+ *   - 'line-panels' scene (v3, 2026-09-03): a row of small static panels,
+ *     each drawn once (default 1 frame — nothing animates) with up to a few
+ *     literal line segments and a caption underneath. Built for the
+ *     "compare N discrete outcomes side by side" case a single curve/level-set
+ *     plot can't show at all — e.g. the three systems-of-equations rank
+ *     outcomes (one point / a shared line / no crossing) side by side instead
+ *     of described one at a time in prose. Takes literal (x, y) endpoints,
+ *     not expressions — same no-new-eval-surface discipline as discrete-bars.
+ *     When a panel names exactly two lines, their intersection (if any, and
+ *     if it falls inside the panel) is marked with a small accent dot —
+ *     free reinforcement of "this is where they agree," not authored by hand.
+ *
+ * Future extensions (v4): vector field, 3-D surface plot, custom sprites.
  *
  * Theme palette — Vidhya Clarity (see DESIGN-SYSTEM.md).
  *
@@ -88,7 +100,8 @@ export type SceneDescription =
   | FunctionTraceScene
   | ParametricCurveScene
   | LevelSetScene
-  | DiscreteBarsScene;
+  | DiscreteBarsScene
+  | LinePanelsScene;
 
 /**
  * Scene `type` values the renderer actually knows how to draw. Callers that
@@ -103,6 +116,7 @@ export const KNOWN_SCENE_TYPES = [
   'parametric-curve',
   'level-set',
   'discrete-bars',
+  'line-panels',
 ] as const;
 
 export function isKnownSceneType(type: unknown): type is SceneDescription['type'] {
@@ -223,6 +237,39 @@ export interface DiscreteBarsScene {
   height?: number;
 }
 
+export interface LinePanelScene {
+  /**
+   * Each entry is one straight line segment as literal [x, y] endpoints in a
+   * shared local coordinate space (default roughly [-1.3, 1.3] on both axes
+   * — deliberately a bit past ±1 so an author's segment reads as an
+   * infinite line crossing the panel, not a short stroke stopping short of
+   * the edge). Not an expression — no evaluator involved, same discipline
+   * as discrete-bars' literal `values`.
+   */
+  lines: Array<[[number, number], [number, number]]>;
+  /** Caption drawn under this panel, e.g. "One point". Required — an
+   *  unlabeled panel in a comparison row defeats the point of comparing. */
+  label: string;
+}
+
+export interface LinePanelsScene {
+  type: 'line-panels';
+  /** 2-4 panels rendered left to right with a hairline separator between
+   *  them. Each is independent — there is no shared coordinate transform
+   *  across panels beyond identical local bounds, so "one point" / "a
+   *  line" / "no crossing" sit side by side for direct comparison instead
+   *  of being described one at a time in prose. */
+  panels: LinePanelScene[];
+  /** Optional heading drawn top-center via the QA bitmap font (§4.15 W3.6). */
+  title?: string;
+  /** Static by default (1 frame — nothing here animates); set explicitly
+   *  only if a caller has a reason to re-encode multiple identical frames. */
+  frames?: number;
+  fps?: number;
+  width?: number;
+  height?: number;
+}
+
 const DEFAULTS = {
   width: 480,
   height: 320,
@@ -248,7 +295,7 @@ export interface LabelBox {
   y: number;
   width: number;
   height: number;
-  source: 'title' | 'bar-label';
+  source: 'title' | 'bar-label' | 'panel-label';
 }
 
 export interface LabelOverlap {
@@ -327,6 +374,24 @@ function compileExpression(expr: string, vars: string[]): (...args: number[]) =>
   }
 }
 
+/**
+ * Per-type frame-count default, consulted only when a scene omits `frames`
+ * entirely. Every existing scene type keeps falling through to
+ * DEFAULTS.frames (30) exactly as before — 'line-panels' is the one type
+ * where re-encoding 30 identical static frames would be pure waste, so an
+ * author who doesn't think to write `"frames": 1` still gets the cheap,
+ * correct render. Used by renderFrame's discrete-bars/curve branches,
+ * computeSceneLabels, and renderScene so all four agree — a scene's actual
+ * frame count is computed in exactly one place.
+ */
+const DEFAULT_FRAMES_BY_TYPE: Partial<Record<SceneDescription['type'], number>> = {
+  'line-panels': 1,
+};
+
+function resolveTotalFrames(scene: SceneDescription): number {
+  return scene.frames ?? DEFAULT_FRAMES_BY_TYPE[scene.type] ?? DEFAULTS.frames;
+}
+
 /** Render a (width × height) frame buffer for the scene at frame index i. */
 function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
   const w = scene.width ?? DEFAULTS.width;
@@ -346,9 +411,20 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
   // axis/curve coordinate system entirely rather than forcing bars through
   // a -3..3 default that has nothing to do with the data.
   if (scene.type === 'discrete-bars') {
-    const totalFrames = scene.frames ?? DEFAULTS.frames;
+    const totalFrames = resolveTotalFrames(scene);
     const barsShown = Math.max(1, Math.round((scene.values.length * (i + 1)) / totalFrames));
     drawDiscreteBars(buf, w, h, scene.values, barsShown);
+    drawSceneLabels(buf, w, h, scene, i);
+    return buf;
+  }
+
+  // line-panels draws N independent static panels — like discrete-bars, it
+  // has no x_range/y_range and no expression, and skips the generic
+  // axis/curve coordinate system entirely. Static regardless of `i`
+  // (nothing here animates); resolveTotalFrames just controls how many
+  // identical frames get encoded, defaulting to 1.
+  if (scene.type === 'line-panels') {
+    drawLinePanels(buf, w, h, scene);
     drawSceneLabels(buf, w, h, scene, i);
     return buf;
   }
@@ -372,7 +448,7 @@ function renderFrame(scene: SceneDescription, i: number): Uint8ClampedArray {
   }
 
   // Draw the curve.
-  const totalFrames = scene.frames ?? DEFAULTS.frames;
+  const totalFrames = resolveTotalFrames(scene);
   if (scene.type === 'parametric') {
     const tStart = scene.t_range?.[0] ?? 0;
     const tEnd = scene.t_range?.[1] ?? Math.PI * 2;
@@ -449,6 +525,31 @@ function computeBarGeometry(
 }
 
 /**
+ * Shared panel-position math for 'line-panels': used both by drawLinePanels
+ * (to paint each panel's border + lines) and computeSceneLabels (to place
+ * each panel's caption directly beneath it) — same "compute once, draw and
+ * label from the same numbers" discipline as computeBarGeometry above, so
+ * a caption can never drift from the panel it's supposed to sit under.
+ */
+function computeLinePanelGeometry(
+  w: number,
+  h: number,
+  n: number,
+  hasTitle: boolean,
+): { marginX: number; gap: number; plotTop: number; plotBottom: number; panelW: number; innerPadX: number; innerPadY: number } {
+  const marginX = Math.round(w * 0.04);
+  const gap = Math.max(1, Math.round(w * 0.025));
+  const plotTop = Math.round(h * (hasTitle ? 0.14 : 0.06));
+  const plotBottom = h - Math.round(h * 0.14); // reserve space for the caption row
+  const plotW = w - marginX * 2 - gap * Math.max(0, n - 1);
+  const panelW = Math.max(1, Math.floor(plotW / Math.max(1, n)));
+  const panelH = Math.max(1, plotBottom - plotTop);
+  const innerPadX = Math.round(panelW * 0.14);
+  const innerPadY = Math.round(panelH * 0.14);
+  return { marginX, gap, plotTop, plotBottom, panelW, innerPadX, innerPadY };
+}
+
+/**
  * A label the rasterizer will draw for frame `i`: a scene's optional `title`
  * (top-center, every frame it's present) plus — for discrete-bars — one
  * label per currently-revealed bar. Positions are computed WITHOUT touching
@@ -461,12 +562,12 @@ interface LabelDescriptor {
   x: number;
   y: number;
   scale: number;
-  source: 'title' | 'bar-label';
+  source: 'title' | 'bar-label' | 'panel-label';
 }
 
 function computeSceneLabels(scene: SceneDescription, i: number, w: number, h: number): LabelDescriptor[] {
   const labels: LabelDescriptor[] = [];
-  const totalFrames = scene.frames ?? DEFAULTS.frames;
+  const totalFrames = resolveTotalFrames(scene);
 
   const title = scene.title;
   if (title) {
@@ -491,6 +592,21 @@ function computeSceneLabels(scene: SceneDescription, i: number, w: number, h: nu
       const x = barX + Math.max(0, Math.round((barW - dim.width) / 2));
       const y = h - marginBottom + 2;
       labels.push({ text, x, y, scale, source: 'bar-label' });
+    }
+  }
+
+  if (scene.type === 'line-panels') {
+    const n = scene.panels.length;
+    const geo = computeLinePanelGeometry(w, h, n, !!title);
+    const scale = 1;
+    for (let idx = 0; idx < n; idx++) {
+      const text = scene.panels[idx]?.label;
+      if (!text) continue;
+      const panelX0 = geo.marginX + idx * (geo.panelW + geo.gap);
+      const dim = textDimensions(text, scale);
+      const x = panelX0 + Math.max(0, Math.round((geo.panelW - dim.width) / 2));
+      const y = geo.plotBottom + Math.round(h * 0.03);
+      labels.push({ text, x, y, scale, source: 'panel-label' });
     }
   }
 
@@ -818,6 +934,89 @@ function drawDiscreteBars(
   }
 }
 
+/**
+ * Draw every panel of a 'line-panels' scene: a hairline border box, each
+ * authored line segment (mapped from the shared local coordinate space —
+ * fixed at [-1.3, 1.3] on both axes, deliberately NOT adaptive to the
+ * segment's own extent, so panels stay directly comparable to each other),
+ * and — when a panel names exactly two lines — an accent dot at their
+ * intersection, if any, and if it falls inside the panel's local bounds.
+ */
+function drawLinePanels(buf: Uint8ClampedArray, w: number, h: number, scene: LinePanelsScene): void {
+  const n = scene.panels.length;
+  if (n === 0) return;
+
+  const LOCAL_MIN = -1.3;
+  const LOCAL_MAX = 1.3;
+  const geo = computeLinePanelGeometry(w, h, n, !!scene.title);
+
+  for (let idx = 0; idx < n; idx++) {
+    const panel = scene.panels[idx];
+    const bx0 = geo.marginX + idx * (geo.panelW + geo.gap);
+    const bx1 = bx0 + geo.panelW;
+    const by0 = geo.plotTop;
+    const by1 = geo.plotBottom;
+
+    // Hairline border — makes each comparison cell read as one unit even
+    // before any line is drawn inside it.
+    for (let x = bx0; x <= bx1; x++) {
+      putPixel(buf, w, h, x, by0, DEFAULTS.axes);
+      putPixel(buf, w, h, x, by1, DEFAULTS.axes);
+    }
+    for (let y = by0; y <= by1; y++) {
+      putPixel(buf, w, h, bx0, y, DEFAULTS.axes);
+      putPixel(buf, w, h, bx1, y, DEFAULTS.axes);
+    }
+
+    const toPixel = (lx: number, ly: number): [number, number] => {
+      const px = bx0 + geo.innerPadX + ((lx - LOCAL_MIN) / (LOCAL_MAX - LOCAL_MIN)) * (bx1 - bx0 - 2 * geo.innerPadX);
+      const py = by1 - geo.innerPadY - ((ly - LOCAL_MIN) / (LOCAL_MAX - LOCAL_MIN)) * (by1 - by0 - 2 * geo.innerPadY);
+      return [Math.round(px), Math.round(py)];
+    };
+
+    for (const [p0, p1] of panel.lines) {
+      const [ax, ay] = toPixel(p0[0], p0[1]);
+      const [cx, cy] = toPixel(p1[0], p1[1]);
+      drawLine(buf, w, h, ax, ay, cx, cy, DEFAULTS.curve);
+    }
+
+    if (panel.lines.length === 2) {
+      const hit = lineIntersection(panel.lines[0][0], panel.lines[0][1], panel.lines[1][0], panel.lines[1][1]);
+      if (hit && Math.abs(hit[0]) <= LOCAL_MAX && Math.abs(hit[1]) <= LOCAL_MAX) {
+        const [dx, dy] = toPixel(hit[0], hit[1]);
+        drawDot(buf, w, h, dx, dy, DEFAULTS.accent, 3);
+      }
+    }
+  }
+}
+
+/**
+ * Where two infinite lines (each defined by two points) cross, or null when
+ * they're parallel (including coincident — two lines drawn on top of each
+ * other read visually as "the same line," which is the point, without a
+ * dot implying a single unique crossing that doesn't exist).
+ */
+function lineIntersection(
+  p1: [number, number],
+  p2: [number, number],
+  p3: [number, number],
+  p4: [number, number],
+): [number, number] | null {
+  const denom = (p1[0] - p2[0]) * (p3[1] - p4[1]) - (p1[1] - p2[1]) * (p3[0] - p4[0]);
+  if (Math.abs(denom) < 1e-9) return null;
+  const t = ((p1[0] - p3[0]) * (p3[1] - p4[1]) - (p1[1] - p3[1]) * (p3[0] - p4[0])) / denom;
+  return [p1[0] + t * (p2[0] - p1[0]), p1[1] + t * (p2[1] - p1[1])];
+}
+
+/** Small filled circle — used for the line-panels intersection marker. */
+function drawDot(buf: Uint8ClampedArray, w: number, h: number, cx: number, cy: number, color: number[], radius: number): void {
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      if (dx * dx + dy * dy <= radius * radius) putPixel(buf, w, h, cx + dx, cy + dy, color);
+    }
+  }
+}
+
 function drawLine(
   buf: Uint8ClampedArray,
   w: number,
@@ -870,7 +1069,7 @@ export function renderScene(scene: SceneDescription): RenderResult {
   const t0 = Date.now();
   const w = scene.width ?? DEFAULTS.width;
   const h = scene.height ?? DEFAULTS.height;
-  const totalFrames = scene.frames ?? DEFAULTS.frames;
+  const totalFrames = resolveTotalFrames(scene);
   const fps = scene.fps ?? DEFAULTS.fps;
   const delay = Math.round(1000 / fps);
 

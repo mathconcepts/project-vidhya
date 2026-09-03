@@ -28,7 +28,7 @@ A weather map assigns a **temperature** $u(x, y, t)$ to every point on the groun
 
 ---
 
-The animation below shows a travelling wave — a solution $u(x,t) = e^{-x^2 \cdot 0.1}\cos(x - 2t)$ of the wave equation — sweeping to the right:
+The animation on this card shows a travelling wave — a solution $u(x,t) = e^{-x^2 \cdot 0.1}\cos(x - 2t)$ of the wave equation — sweeping to the right:
 
 ```gif-scene
 {

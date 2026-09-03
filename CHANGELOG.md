@@ -4,6 +4,41 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.55.0] — 2026-09-03 — Two systemic rendering bugs: raw LaTeX and dead markdown tables
+
+No new env vars, no migrations.
+
+`/investigate` on a live-QA screenshot ("$/text is rendered??", raw pipe
+characters where a table should be) traced to two root causes, both fixed
+at the shared-renderer level so every atom in the corpus benefits, not
+just the one reported:
+
+1. `Simulation.tsx`'s `TrapRow` ("Where marks are lost") rendered
+   `trap.text`/`trap.avoid` as raw JSX string interpolation, never through
+   `MarkdownAtomRenderer` — any trap authored with inline math (e.g.
+   `$\text{rank}(A)$`) leaked the literal LaTeX source to students. Now
+   routed through the real markdown/KaTeX pipeline.
+2. `MarkdownAtomRenderer.tsx`'s remark pipeline never had `remark-gfm`
+   installed, so every authored `| Condition | Solutions |`-style table
+   across the whole content corpus rendered as literal pipe-and-dash text
+   — GFM tables aren't CommonMark, and nothing in the pipeline understood
+   them. Installed and wired in; the `.vidhya-atom-body table` CSS was
+   already written and waiting on the plugin.
+
+Content pilot: `systems-of-equations`'s `visual-analogy.md` rewritten to
+lead with a concrete picture, split a dense paragraph into a scannable
+list, and connect back to its own hook animation — every formula kept,
+just reordered. Light split on `intuition.md`'s dense closing paragraph.
+
+Design brainstorm published as an artifact (not code): a density-reduction
+principle set and a capsule-hook layout mockup, grounded in Vidhya
+Clarity's own tokens.
+
+2 new regression tests (table renders as a real `<table>`, trap math
+renders through KaTeX). Full frontend suite 2586/2586, `tsc --noEmit` clean
+both sides, content gates (`ci:content-integrity`, `ci:katex-fences`,
+`ci:variant-agreement`) clean.
+
 ## [4.54.0] — 2026-09-03 — Adaptive hook pacing + wizard-to-practice mistake loop
 
 No new env vars, no migrations.

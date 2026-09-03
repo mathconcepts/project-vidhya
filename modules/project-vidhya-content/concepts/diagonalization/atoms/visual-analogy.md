@@ -41,7 +41,7 @@ When $A$ is diagonalized, the coupled system $\frac{d\mathbf{x}}{dt} = A\mathbf{
 
 $$\frac{dy_i}{dt} = \lambda_i y_i \implies y_i(t) = y_i(0)\,e^{\lambda_i t}$$
 
-Each mode evolves independently — that is what the animation below captures:
+Each mode evolves independently — that is what the diagram on this card captures:
 
 ```gif-scene
 {

@@ -67,6 +67,25 @@ code
     expect(screen.getByText(/: detail one/)).toBeInTheDocument();
   });
 
+  // Regression (/investigate, 2026-09-03, live-QA screenshot): a
+  // `| Condition | Solutions |` GFM table in systems-of-equations's
+  // formal_definition atom rendered as literal pipe-and-dash text — the
+  // remark pipeline had no `remark-gfm`, so a table was never a table to
+  // begin with, just an ordinary (unrecognized) paragraph.
+  it('renders a GFM table as a real <table>, not literal pipe text', () => {
+    const md = `| Condition | Solutions |
+|---|---|
+| rank(A) != rank([A\\|b]) | Zero |
+| rank(A) = rank([A\\|b]) = n | Exactly one |`;
+    render(<MarkdownAtomRenderer atomId="test.table" content={md} />);
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getAllByRole('columnheader')).toHaveLength(2);
+    expect(screen.getByText('Condition').tagName).toBe('TH');
+    expect(screen.getByText('Exactly one').tagName).toBe('TD');
+    // The raw markdown syntax must not leak through as visible text.
+    expect(screen.queryByText(/\|---\|/)).toBeNull();
+  });
+
   it('memoizes parse — same content+id renders identical tree on re-render', () => {
     const { rerender, container } = render(
       <MarkdownAtomRenderer atomId="test.memo" content="Stable content" />,

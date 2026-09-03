@@ -8,10 +8,16 @@ exam_ids: ["*"]
 modality: visual
 ---
 
-Every linear equation in three unknowns, $ax+by+cz=d$, is a flat plane. A $3\times3$ system asks: where do three planes meet?
+The diagram on this card is the 2D version of this concept — three planes crossing in 3D can't be honestly drawn on a flat image, but the same rank story shows up one dimension down, where it can.
 
-Three stories, decided entirely by rank. **Unique solution:** the three planes meet at a single point, like three walls of a room meeting at one corner — $\text{rank}(A)=\text{rank}([A\mid\mathbf{b}])=3$. **Infinitely many:** the planes share a common line, like three pages of a book sharing the spine — ranks agree but fall short of $3$, leaving free variables. **No solution:** the planes arrange so no single point satisfies all three — like a triangular prism, where each pair of faces meets in a line but the three lines are parallel and never share a point — $\text{rank}(A)\neq\text{rank}([A\mid\mathbf{b}])$.
+Picture three flat sheets of glass floating in space instead — each linear equation in three unknowns, $ax+by+cz=d$, is one sheet. Solving a $3\times3$ system just asks: where do all three sheets meet? Rank alone decides which of the diagram's three outcomes you're in:
 
-In 2D the same logic drops a dimension: each equation is a line. Two lines cross at one point (unique), overlap entirely (infinitely many), or run parallel without meeting (no solution) — the identical rank arithmetic, one dimension down.
+- **One point.** The sheets meet at a single spot, like three walls meeting in the corner of a room — $\text{rank}(A)=\text{rank}([A\mid\mathbf{b}])=3$.
+- **A whole line.** The sheets share one common edge, like three pages of a book sharing the spine — the ranks still agree, but fall short of $3$, so a free variable slides you along that shared line.
+- **Nowhere.** The sheets sit so no single point touches all three — like the three side-faces of a triangular prism, where each pair of faces meets in a line, but the three lines run parallel and never cross — $\text{rank}(A)\neq\text{rank}([A\mid\mathbf{b}])$.
 
-No single plot captures three planes intersecting at once, so this analogy stays verbal rather than reaching for a fenced 2D scene that couldn't show the real geometry honestly.
+```gif-scene
+{"type":"line-panels","title":"Three ways a linear system can resolve","panels":[{"label":"One point","lines":[[[-1.3,-0.5],[1.3,0.9]],[[-1.3,0.9],[1.3,-0.5]]]},{"label":"A whole line","lines":[[[-1.3,-0.6],[1.3,0.6]],[[-1.3,-0.6],[1.3,0.6]]]},{"label":"Nowhere","lines":[[[-1.3,-0.4],[1.3,-0.4]],[[-1.3,0.4],[1.3,0.4]]]}]}
+```
+
+*A point becomes a corner, a shared line becomes a shared edge, and two parallel lines become three faces that never all meet.*

@@ -42,7 +42,7 @@ No matrix inversion needed — just $n$ dot products. This is the efficiency gif
 
 ## Orthogonal Functions: $\cos$ and $\sin$
 
-Orthogonality extends beyond vectors. Functions $f$ and $g$ on $[-\pi, \pi]$ are orthogonal when $\int_{-\pi}^{\pi} f(x)g(x)\,dx = 0$. The trigonometric identity below illustrates a key orthogonal pair:
+Orthogonality extends beyond vectors. Functions $f$ and $g$ on $[-\pi, \pi]$ are orthogonal when $\int_{-\pi}^{\pi} f(x)g(x)\,dx = 0$. The trigonometric identity on this card illustrates a key orthogonal pair:
 
 ```gif-scene
 {

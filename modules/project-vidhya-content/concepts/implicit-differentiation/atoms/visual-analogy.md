@@ -28,7 +28,7 @@ Differentiating implicitly gives:
 
 $$2x + 2y\,\frac{dy}{dx} = 0 \implies \frac{dy}{dx} = -\frac{x}{y}$$
 
-The upper semicircle traced below is the "visible" portion $y = \sqrt{4 - x^2}$:
+The upper semicircle traced in the diagram on this card is the "visible" portion $y = \sqrt{4 - x^2}$:
 
 ```gif-scene
 {

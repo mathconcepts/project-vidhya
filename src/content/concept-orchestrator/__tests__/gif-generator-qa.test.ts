@@ -121,6 +121,65 @@ describe('computeLabelBoxes (scene → bounding boxes, no rendering)', () => {
   });
 });
 
+describe("'line-panels' scene (static side-by-side comparison)", () => {
+  const THREE_OUTCOMES: SceneDescription = {
+    type: 'line-panels',
+    title: 'Three outcomes',
+    panels: [
+      { label: 'One point', lines: [[[-1.3, -0.3], [1.3, 0.3]], [[-1.3, 0.6], [1.3, -0.6]]] },
+      { label: 'A shared line', lines: [[[-1.3, -0.5], [1.3, 0.5]], [[-1.3, -0.5], [1.3, 0.5]]] },
+      { label: 'No crossing', lines: [[[-1.3, -0.3], [1.3, -0.3]], [[-1.3, 0.3], [1.3, 0.3]]] },
+    ],
+  };
+
+  it('renders without throwing and defaults to a single static frame', () => {
+    const result = renderScene(THREE_OUTCOMES);
+    expect(result.frames).toBe(1);
+    expect(result.buffer.length).toBeGreaterThan(0);
+  });
+
+  it('passes QA — no label overlaps, no near-blank/low-contrast final frame', () => {
+    const result = renderScene(THREE_OUTCOMES);
+    expect(result.qa.hard_fail).toBe(false);
+    expect(result.qa.warnings).toEqual([]);
+  });
+
+  it('renders a caption box per panel, centered under that panel', () => {
+    const boxes = computeLabelBoxes(THREE_OUTCOMES, 0, 480, 320);
+    const panelLabels = boxes.filter((b) => b.source === 'panel-label');
+    expect(panelLabels).toHaveLength(3);
+    expect(panelLabels.map((b) => b.text)).toEqual(['One point', 'A shared line', 'No crossing']);
+    // Left-to-right order matches authoring order.
+    expect(panelLabels[0].x).toBeLessThan(panelLabels[1].x);
+    expect(panelLabels[1].x).toBeLessThan(panelLabels[2].x);
+  });
+
+  it('an explicit frames count is honored (author opts into re-encoding it)', () => {
+    const result = renderScene({ ...THREE_OUTCOMES, frames: 3 });
+    expect(result.frames).toBe(3);
+  });
+
+  it('skips a panel with no lines without throwing (defensive — not an authored case)', () => {
+    const scene: SceneDescription = {
+      type: 'line-panels',
+      panels: [{ label: 'Empty', lines: [] }],
+    };
+    expect(() => renderScene(scene)).not.toThrow();
+  });
+
+  it('lays out cleanly for panel counts other than 3 (e.g. 2)', () => {
+    const scene: SceneDescription = {
+      type: 'line-panels',
+      panels: [
+        { label: 'A', lines: [[[-1, -1], [1, 1]]] },
+        { label: 'B', lines: [[[-1, -1], [1, 1]]] },
+      ],
+    };
+    const result = renderScene(scene);
+    expect(result.qa.hard_fail).toBe(false);
+  });
+});
+
 describe('computeInkDensity (synthetic RGBA frames)', () => {
   const bg = [11, 13, 16, 255];
 

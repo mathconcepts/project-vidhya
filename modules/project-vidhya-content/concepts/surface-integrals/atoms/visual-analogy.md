@@ -21,7 +21,7 @@ If the net is horizontal, maximum water passes through. If you tilt it parallel 
 
 In divergence theorem problems, you're often asked: "How much field leaves a closed region?" The surface integral is your answer. For example, given an electric field $\mathbf{E}$, the flux through a closed spherical surface measures the total charge enclosed (Gauss's Law in integral form).
 
-The animation below shows how a vector field varies as you move across a parametric surface—representing the dynamic nature of flux calculation:
+The animation on this card shows how a vector field varies as you move across a parametric surface—representing the dynamic nature of flux calculation:
 
 ```gif-scene
 {"type":"parametric","expression":"sin(x)*cos(t)","x_range":[-3.14,3.14],"y_range":[-1.5,1.5],"t_range":[0,6.28],"frames":30,"fps":12}

@@ -38,7 +38,7 @@ For $\frac{dy}{dx} + P(x)y = Q(x)$, the term $P(x)y$ represents a "leakage" prop
 
 ## The Solution Curve: Damped Oscillation
 
-The ODE $\frac{dy}{dx} + 2y = 0$ has solution $y = Ce^{-2x}$ — pure exponential decay. Adding a forcing term like $e^{-x}\sin(2x)$ creates the richer pattern below:
+The ODE $\frac{dy}{dx} + 2y = 0$ has solution $y = Ce^{-2x}$ — pure exponential decay. Adding a forcing term like $e^{-x}\sin(2x)$ creates the richer pattern on this card:
 
 ```gif-scene
 {

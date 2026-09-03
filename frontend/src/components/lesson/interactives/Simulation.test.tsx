@@ -495,6 +495,35 @@ describe('Simulation — trap row + ghost (design contract items 6, 7, 8)', () =
     expect(screen.getByText('Where marks are lost')).toBeInTheDocument(); // scene keeps working
     expect(container.querySelector('path[stroke-dasharray]')).toBeNull(); // ghost just isn't drawn
   });
+
+  // Regression (/investigate, 2026-09-03, live-QA screenshot): a trap
+  // authored with inline math ("Check $\text{rank}(A)$ once...") rendered
+  // the literal `$\text{rank}(A)$` source to students — TrapRow used raw
+  // JSX string interpolation instead of MarkdownAtomRenderer.
+  it('renders inline math in the trap text/avoid lines through KaTeX, not as raw source', () => {
+    const spec: SimulationSpec = {
+      ...BEAT_SPEC,
+      narration_steps: BEAT_SPEC.narration_steps!.map((s, i) =>
+        i === 2
+          ? {
+              ...s,
+              trap: {
+                text: 'Students forget to check $\\text{rank}(A)$ first.',
+                avoid: 'Check $\\text{rank}(A)$ once before hunting for constants.',
+              },
+            }
+          : s,
+      ),
+    };
+    render(<Simulation spec={spec} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+    expect(screen.getByText('Where marks are lost')).toBeInTheDocument();
+    // The raw LaTeX source must never appear as literal text.
+    expect(screen.queryByText(/\$\\text\{rank\}/)).toBeNull();
+    // KaTeX rendered it as real math instead.
+    expect(document.querySelectorAll('.vidhya-resonance-trap .katex').length).toBeGreaterThanOrEqual(2);
+  });
 });
 
 describe('Simulation — beat bar visibility (design contract item 9)', () => {

@@ -608,7 +608,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         </div>
       )}
 
-      {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} />}
+      {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} atomId={`${resolvedId}::trap`} />}
     </div>
   );
 }
@@ -920,14 +920,25 @@ function ArrowGlyph({
   );
 }
 
-/** Design contract item 6: "Where marks are lost" label, trap text +
- *  Avoid line, hairline above, no icon, ink/grey only. */
-function TrapRow({ trap }: { trap: NonNullable<Beat['trap']> }) {
+/**
+ * Design contract item 6: "Where marks are lost" label, trap text +
+ * Avoid line, hairline above, no icon, ink/grey only.
+ *
+ * `trap.text`/`trap.avoid` now route through `MarkdownAtomRenderer` rather
+ * than raw string interpolation — root-caused by /investigate (2026-09-03):
+ * a trap authored with inline math (e.g. "Check $\text{rank}(A)$ once...")
+ * rendered the literal `$\text{rank}(A)$` source to students, since plain
+ * JSX text interpolation never reaches KaTeX. "Avoid: " stays a plain-text
+ * prefix folded into the SAME markdown string (not a separate element) so
+ * the label and the (possibly math-bearing) reason read as one sentence,
+ * exactly as before.
+ */
+function TrapRow({ trap, atomId }: { trap: NonNullable<Beat['trap']>; atomId: string }) {
   return (
     <div className="vidhya-resonance-trap">
       <p className="vidhya-resonance-trap__label">Where marks are lost</p>
-      <p className="vidhya-resonance-trap__text">{trap.text}</p>
-      <p className="vidhya-resonance-trap__avoid">Avoid: {trap.avoid}</p>
+      <MarkdownAtomRenderer atomId={`${atomId}::text`} content={trap.text} className="vidhya-atom-body--trap" />
+      <MarkdownAtomRenderer atomId={`${atomId}::avoid`} content={`Avoid: ${trap.avoid}`} className="vidhya-atom-body--trap" />
     </div>
   );
 }
@@ -1017,7 +1028,7 @@ function ReducedMotionStoryboard({
             content={resolveBeatText(step, servedStance)}
             className="vidhya-atom-body--beat-caption"
           />
-          {step.trap && <TrapRow trap={step.trap} />}
+          {step.trap && <TrapRow trap={step.trap} atomId={`${atomId}::beat-${i}::trap`} />}
         </li>
       ))}
       {spec.ghost && (

@@ -4,6 +4,7 @@
  * Replaces the v2 `whitespace-pre-wrap` rendering with a real markdown
  * pipeline that handles:
  *   - $inline$ and $$display$$ math via KaTeX (remark-math + rehype-katex)
+ *   - GFM tables, strikethrough, autolinks (remark-gfm)
  *   - :::directive{attrs} blocks resolved through INTERACTIVE_PROVIDER_REGISTRY
  *   - :::interactive{ref=name} references the prefilled interactives library
  *   - Standard markdown (headings, lists, code, emphasis, links)
@@ -16,6 +17,8 @@
  *   unified()
  *      ↓
  *   remark-parse → mdast
+ *      ↓
+ *   remark-gfm → GFM extensions (tables, strikethrough, task lists)
  *      ↓
  *   remark-math → math nodes
  *      ↓
@@ -31,12 +34,20 @@
  *
  * On parse error: fall back to plain text rendering with a console.warn.
  * Atoms NEVER fail to render — the upfront-baseline contract from eng review.
+ *
+ * Root-caused by /investigate (2026-09-03, live-QA screenshot): a
+ * `| Condition | Solutions |` markdown table in `systems-of-equations`'s
+ * `formal_definition` atom rendered as literal pipe-and-dash text — remark
+ * only understands GFM tables with the `remark-gfm` plugin loaded, and this
+ * renderer never had it. Every atom with an authored table across the whole
+ * corpus was silently broken the same way; this fixes all of them at once.
  */
 
 import { useMemo, lazy, Suspense } from 'react';
 import { unified } from 'unified';
 import remarkParse from 'remark-parse';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import remarkDirective from 'remark-directive';
 import remarkRehype from 'remark-rehype';
 import rehypeKatex from 'rehype-katex';
@@ -267,6 +278,7 @@ export function MarkdownAtomRenderer({ content, atomId, structured = false, clas
     try {
       const processor = unified()
         .use(remarkParse)
+        .use(remarkGfm)
         .use(remarkMath)
         .use(remarkDirective)
         .use(remarkDirectiveTransform)

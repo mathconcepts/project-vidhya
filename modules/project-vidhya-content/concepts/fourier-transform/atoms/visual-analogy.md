@@ -52,7 +52,7 @@ A narrow Gaussian in time ($\alpha$ large) produces a broad Gaussian in frequenc
 }
 ```
 
-The curve above shows $e^{-x^2/2}$ — the canonical standard normal shape. Its Fourier transform has exactly the same bell-curve shape, scaled by $\sqrt{2\pi}$. No other function family has this self-reproducing property under the Fourier transform.
+The diagram on this card shows $e^{-x^2/2}$ — the canonical standard normal shape. Its Fourier transform has exactly the same bell-curve shape, scaled by $\sqrt{2\pi}$. No other function family has this self-reproducing property under the Fourier transform.
 
 ---
 

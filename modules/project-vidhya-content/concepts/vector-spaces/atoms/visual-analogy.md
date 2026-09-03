@@ -18,4 +18,4 @@ The span of a set of vectors is the smallest subspace-region containing all of t
 {"type":"function-trace","expression":"2*sin(x)","x_range":[-6,6],"y_range":[-3,3],"frames":30,"fps":12}
 ```
 
-The curve above traces $2\sin(x)$ inside the (much larger) space of all functions on $[-\pi,\pi]$: every point on it is just $\sin(x)$ scaled, so the whole curve stays inside the one-dimensional subspace $\{c\cdot\sin(x):c\in\mathbb{R}\}$ — a single "road" through the origin, spanned by $\sin(x)$ alone.
+The diagram on this card traces $2\sin(x)$ inside the (much larger) space of all functions on $[-\pi,\pi]$: every point on it is just $\sin(x)$ scaled, so the whole curve stays inside the one-dimensional subspace $\{c\cdot\sin(x):c\in\mathbb{R}\}$ — a single "road" through the origin, spanned by $\sin(x)$ alone.

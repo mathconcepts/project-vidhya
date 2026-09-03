@@ -14,7 +14,7 @@ Imagine a composite function as a wrapped gift—the inner function is the box, 
 
 When you see $\sin(2x)$, the "2x" is the inner wrapping. If the integrand has $\sin(2x)$ paired with a "2" (the derivative of 2x), substitution $u = 2x$ unwraps it instantly: $\int 2\sin(2x) \, dx = -\cos(u) + C = -\cos(2x) + C$.
 
-The visualization below shows a composite function oscillating at twice the rate. Substitution compresses this scaled behavior into standard form—the gift unwrapped.
+The diagram on this card shows a composite function oscillating at twice the rate. Substitution compresses this scaled behavior into standard form—the gift unwrapped.
 
 ```gif-scene
 {"type":"function-trace","expression":"sin(2*x)","x_range":[-3.14,3.14],"y_range":[-1.5,1.5],"frames":30,"fps":12}

@@ -2237,6 +2237,156 @@ today; threading one through is real, separate selection-logic work.
 query-param propagation test on `PracticeAttemptPage`, 5 wizard-page
 context/CTA tests). Full frontend suite 2584/2584. `tsc --noEmit` clean.
 
+---
+
+### Two systemic rendering bugs: raw LaTeX and dead markdown tables (2026-09-03)
+
+`/investigate` on a live-QA screenshot ("Poor formatting... $/text is
+rendered??") of the systems-of-equations lesson. Root-caused BEFORE any
+content rewrite, per the skill's Iron Law — most of what looked like a
+content-quality problem turned out to be two rendering bugs.
+
+**Bug 1 — trap rows leaked raw LaTeX.** `Simulation.tsx`'s `TrapRow`
+("Where marks are lost") rendered `trap.text`/`trap.avoid` as plain JSX
+string interpolation — `{trap.text}` — never through
+`MarkdownAtomRenderer`. Any trap authored with inline math (every one of
+them; `$\text{rank}(A)$` is a completely ordinary trap sentence) leaked
+the literal LaTeX source to students instead of typeset math. Fixed: both
+lines now route through `MarkdownAtomRenderer` with a new
+`.vidhya-atom-body--trap` modifier class reproducing the prior plain
+styling; `"Avoid: "` stays a plain-text prefix folded into the SAME
+markdown string rather than a separate element, so label and reason still
+read as one sentence.
+
+**Bug 2 — every authored table in the corpus rendered as literal pipes.**
+`MarkdownAtomRenderer.tsx`'s remark pipeline (`remark-parse` +
+`remark-math` + `remark-directive` + `remark-rehype`) never had
+`remark-gfm` — GFM tables are not CommonMark, so a `| Condition |
+Solutions |` block was never recognized as a table at all, just an
+unparsed paragraph. This wasn't a one-atom bug: EVERY table across the
+whole content corpus was silently broken the same way, on every deploy,
+since the renderer was written. Installed `remark-gfm@4.0.1`, added it to
+the pipeline right after `remark-parse`. The CSS
+(`.vidhya-atom-body table/th/td`, wide-table horizontal scroll) was
+already fully written in `globals.css` — someone had anticipated tables
+and it was simply waiting on the plugin the whole time.
+
+**Content pilot, same concept the screenshot named.**
+`systems-of-equations/atoms/visual-analogy.md` rewritten: leads with a
+concrete "three sheets of glass" picture instead of the formal definition,
+splits the three-outcome paragraph into a scannable bulleted list (every
+rank formula kept, just reordered after the plain-English shape), and
+closes by connecting back to the concept's own hook animation instead of
+a bare "stays verbal" disclaimer. `intuition.md`'s dense closing paragraph
+(homogeneous-systems fact + GATE exam-pattern facts crammed together) got
+a one-line split into two paragraphs.
+
+**Design brainstorm, published as an artifact — not code.** A short
+"One Idea Per Screen" page (Vidhya Clarity's own tokens, no new palette)
+laying out: the two bugs' before/after, a 4-rule density-reduction
+principle (LEAD/SPLIT/DEFER/CONNECT), and a real capsule-hook layout
+mockup — folding the current 3-stacked-cards hook (animation card, prose
+card, trap card) into one bounded capsule object with the beat-bar and a
+tap-to-expand trap pill inside it, built from the concept's own now-fixed
+content. Explicitly a mockup, not a build — a real capsule layout is its
+own `Simulation.tsx` change plus a design-system scope decision (every
+hook, or only revisit cards?), named as future work.
+
+**Predict-before-reveal wave — complete, all 29 remaining scenes.** The
+prior pass (CLAUDE.md, "Content teaching arc") fixed exactly one reported
+scene (spectral-theorem) and named the rest as deferred content debt. This
+pass found the precise, closed worklist first — every `simulation`-kind
+scene lives exclusively in a `hook.md` (none in any other atom type),
+29 concepts remaining — then dispatched 6 parallel background agents (5
+concepts each) to audit and split any combined-observe-reveal beat.
+**22 of 29 concepts had a real defect and were fixed**; 7 were already
+clean (`determinants`, `eigenvalues`, `null-space-column-space`,
+`orthogonality`, `quadratic-forms`, `rank-nullity`, `cayley-hamilton`) and
+were left untouched rather than forced into an unneeded split. Every
+touched concept got the identical fence applied byte-for-byte across
+`hook.md`/`hook-shaken.md`/`hook-assured.md`. One agent (batch 3) also
+trimmed a pre-existing 287-char `linear-independence` beat that was
+blocking its own validation run — a real, in-scope fix, not scope creep.
+
+Every batch validated its own concepts against `ci:interactive-specs`,
+`ci:variant-agreement`, `ci:katex-fences`, `ci:content-integrity` before
+reporting done; a final full-repo run of all four plus `npm run ci`
+(18 gates) and both test suites confirmed the combined result — no commit
+happened until every batch had actually reported back, per the standing
+rule against fabricating results from work still in flight.
+
+**Tests:** 2 new (GFM table renders as a real `<table>`,
+`MarkdownAtomRenderer.test.tsx`; trap math renders through KaTeX,
+`Simulation.test.tsx`). Full frontend suite 2586/2586, backend
+4672/4672. `tsc --noEmit` clean both sides. `npm run ci` (18 gates) clean.
+Content gates (`ci:interactive-specs` 383 blocks, `ci:variant-agreement`
+610 pairs, `ci:katex-fences` 1723, `ci:content-integrity` 1729) clean,
+unchanged counts throughout.
+
+**Same-day follow-up: a `line-panels` gif-scene type, for the one thing
+prose genuinely can't do.** The systems-of-equations `visual-analogy.md`
+rewrite above still described its three rank outcomes one at a time —
+resonant enough per-outcome, but the actual point (three ways a system can
+go, compare them) needs to be seen side by side, not read serially. No
+existing scene type supported that: `parametric`/`function-trace`/
+`parametric-curve`/`level-set` all plot ONE curve (or two, on `level-set`'s
+shared axes) on a single canvas; `discrete-bars` draws literal bars, not
+line geometry.
+
+`src/content/concept-orchestrator/gif-generator.ts` gains `'line-panels'`
+— N independent static panels (default 1 frame; a new
+`DEFAULT_FRAMES_BY_TYPE` map plus a shared `resolveTotalFrames()` helper
+replacing four copies of the same `scene.frames ?? DEFAULTS.frames` line,
+so line-panels doesn't have to re-encode 30 identical frames just because
+an author forgot to write `"frames": 1`), each with literal `[x,y]` line
+endpoints (same no-new-eval-surface discipline as `discrete-bars`' literal
+`values` — this never touches `compileExpression`) and a caption
+underneath. A panel naming exactly two lines gets a small accent dot at
+their intersection when one exists and falls inside the panel — free
+reinforcement of "this is where they agree," computed via `lineIntersection()`,
+not authored by hand. Panel-caption placement reuses the
+`computeBarGeometry`-style pattern: one `computeLinePanelGeometry()`
+function feeds both the draw pass and `computeSceneLabels`, so a caption
+can never drift from the panel it names. Wired into `KNOWN_SCENE_TYPES` /
+`SceneDescription`, so the existing CI gate (`ci:gif-scenes`) and QA
+pipeline (label-overlap + near-blank/low-contrast checks) cover it for
+free — no parallel validation path.
+
+`systems-of-equations/atoms/visual-analogy.md`'s closing paragraph (which
+restated the hook's own opening sentence — "two lines cross once, sit on
+top of each other, or run parallel," near-verbatim) is replaced with a
+`line-panels` scene showing exactly that, side by side: one point, a
+shared line, no crossing. 88/88 gif-scenes render clean (was 87), 0 new
+QA findings.
+
+**Tests:** 6 new (`gif-generator-qa.test.ts`) — static single-frame
+default, QA passes clean, per-panel caption boxes in left-to-right order,
+an explicit `frames` override is honored, a panel with no lines doesn't
+throw, layout holds for panel counts other than 3. Backend suite
+4672/4672 → 4678/4678. Frontend untouched (server-side render; MediaSidecar
+serves any `kind: gif` generically regardless of scene type), 2586/2586.
+`npm run ci` (18 gates) clean.
+
+**Same-day follow-up: the text/diagram mismatch, corpus-wide.** The
+systems-of-equations fix above (prose written as if the diagram appeared
+inline at the `gif-scene` fence's position, when `visual_analogy` atoms
+are actually `stage: 'above'` in `ATOM_PRESENTATION_MAP` — figure always
+before the prose on mobile, sticky beside it on desktop, never at the
+fence's literal position) turned out to be a real pattern, not a one-off.
+Audited all 87 other `visual_analogy` atoms carrying a `gif-scene` block
+for the same defect class: deictic real-time-reveal language ("watch",
+"notice how", "let's see") and explicit-but-wrong positional claims
+("below" — always wrong, the figure never trails; "above" — only
+accurate on mobile, wrong on desktop's sticky side column) pointing at a
+diagram the reader had already scrolled past. Dispatched 6 parallel
+background agents (14-15 concepts each); **39 of 87 had a real defect and
+were fixed, 48 were already clean and left untouched** — every fix a
+minimal single-phrase rewording to "the diagram/curve/bars on this card,"
+matching the systems-of-equations precedent; no LaTeX, JSON, or unrelated
+prose touched. `ci:content-integrity` (1729), `ci:katex-fences` (1723),
+`ci:gif-scenes` (88 render + 88 QA clean), `ci:variant-agreement` (610
+pairs) all clean, unchanged counts.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

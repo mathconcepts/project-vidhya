@@ -20,7 +20,7 @@ The exact ODE $M\,dx + N\,dy = 0$ says: **move so that altitude stays constant**
 
 **When the analogy breaks down.** If $\frac{\partial M}{\partial y} \neq \frac{\partial N}{\partial x}$, the "force field" has curl — there is no single altitude function, and the ODE is not exact. An integrating factor "flattens" the field to restore a potential.
 
-**The plot below** shows $F(x,y) = e^{-x} + \sin(x)$ evaluated along the $x$-axis. Each horizontal level $F = C$ corresponds to one solution curve of an exact ODE whose gradient reproduces $(M, N)$.
+**The plot on this card** shows $F(x,y) = e^{-x} + \sin(x)$ evaluated along the $x$-axis. Each horizontal level $F = C$ corresponds to one solution curve of an exact ODE whose gradient reproduces $(M, N)$.
 
 ```gif-scene
 {

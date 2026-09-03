@@ -12,7 +12,7 @@ modality: visual
 
 Imagine a stadium of 50,000 people with wildly different heights — the population distribution could look like anything: skewed, bimodal, lumpy. Now send 1,000 volunteers out, each grabbing a random sample of 30 people and reporting the sample's average height. Plot those 1,000 reported averages. Even though the *population* of individual heights was lumpy, the *distribution of averages* comes out looking like a clean bell curve, tightly centered on the true population mean. That's the Central Limit Theorem in action: averaging smooths out individual randomness, and the more people each volunteer samples ($n$), the tighter that bell curve gets — its spread shrinks like $\frac{1}{\sqrt{n}}$.
 
-The curve below is that bell — the sampling distribution of $\bar{X}$ once $n$ is large enough for the normal approximation to hold:
+The diagram on this card is that bell — the sampling distribution of $\bar{X}$ once $n$ is large enough for the normal approximation to hold:
 
 ```gif-scene
 {"type":"function-trace","expression":"exp(-(x*x)/2)","x_range":[-4,4],"y_range":[0,1.1],"title":"Sampling distribution of the sample mean"}

@@ -48,7 +48,7 @@ $$f(t) = e^{-t/2}\cos t + \tfrac{1}{2}\,e^{-t/2}\sin t$$
 
 ## The Recovered Signal
 
-The animation below traces the decoded signal — an exponentially damped oscillation, characteristic of under-damped electrical circuits and control systems.
+The diagram on this card traces the decoded signal — an exponentially damped oscillation, characteristic of under-damped electrical circuits and control systems.
 
 ```gif-scene
 {

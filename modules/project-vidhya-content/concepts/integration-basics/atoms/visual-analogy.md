@@ -14,7 +14,7 @@ Imagine you're tracking an object's velocity over time. **Differentiation** is c
 
 If I tell you "at each instant your speed was exactly $x$ meters per second," you can work backwards to ask "how far have I traveled?" The answer is the integral $\int x \, dx = \frac{x^2}{2} + C$. The position depends on where you started (the constant $C$).
 
-The visual below shows the antiderivative $F(x) = \frac{x^2}{2}$ — the shape you get when integrating $f(x) = x$. Notice how it curves upward: integration "accumulates" information. Each point on this curve represents the total area swept out under the line $y = x$ up to that $x$-value. This parabolic curve is the source of all exam problems about areas, volumes, and accumulation.
+The diagram on this card shows the antiderivative $F(x) = \frac{x^2}{2}$ — the shape you get when integrating $f(x) = x$. It curves upward: integration "accumulates" information. Each point on this curve represents the total area swept out under the line $y = x$ up to that $x$-value. This parabolic curve is the source of all exam problems about areas, volumes, and accumulation.
 
 ```gif-scene
 {"type":"function-trace","expression":"x^2/2","x_range":[-4,4],"y_range":[-0.5,8],"frames":30,"fps":12}

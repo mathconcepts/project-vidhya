@@ -60,7 +60,7 @@ By the product rule:
 
 $$f'(x) = (1)\cdot\sin(x) + x \cdot \cos(x) = \sin(x) + x\cos(x)$$
 
-Watch how the curve grows and oscillates — the derivative captures the interplay between the linear growth of $x$ and the oscillation of $\sin(x)$:
+The curve grows and oscillates — the derivative captures the interplay between the linear growth of $x$ and the oscillation of $\sin(x)$:
 
 ```gif-scene
 {
@@ -72,7 +72,7 @@ Watch how the curve grows and oscillates — the derivative captures the interpl
 }
 ```
 
-Notice how the amplitude of oscillation grows with $x$ — that's the $x$ factor in the product amplifying $\sin(x)$ over time.
+The amplitude of oscillation grows with $x$ — that's the $x$ factor in the product amplifying $\sin(x)$ over time.
 
 ---
 

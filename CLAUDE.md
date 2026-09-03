@@ -2367,6 +2367,26 @@ throw, layout holds for panel counts other than 3. Backend suite
 serves any `kind: gif` generically regardless of scene type), 2586/2586.
 `npm run ci` (18 gates) clean.
 
+**Same-day follow-up: the text/diagram mismatch, corpus-wide.** The
+systems-of-equations fix above (prose written as if the diagram appeared
+inline at the `gif-scene` fence's position, when `visual_analogy` atoms
+are actually `stage: 'above'` in `ATOM_PRESENTATION_MAP` — figure always
+before the prose on mobile, sticky beside it on desktop, never at the
+fence's literal position) turned out to be a real pattern, not a one-off.
+Audited all 87 other `visual_analogy` atoms carrying a `gif-scene` block
+for the same defect class: deictic real-time-reveal language ("watch",
+"notice how", "let's see") and explicit-but-wrong positional claims
+("below" — always wrong, the figure never trails; "above" — only
+accurate on mobile, wrong on desktop's sticky side column) pointing at a
+diagram the reader had already scrolled past. Dispatched 6 parallel
+background agents (14-15 concepts each); **39 of 87 had a real defect and
+were fixed, 48 were already clean and left untouched** — every fix a
+minimal single-phrase rewording to "the diagram/curve/bars on this card,"
+matching the systems-of-equations precedent; no LaTeX, JSON, or unrelated
+prose touched. `ci:content-integrity` (1729), `ci:katex-fences` (1723),
+`ci:gif-scenes` (88 render + 88 QA clean), `ci:variant-agreement` (610
+pairs) all clean, unchanged counts.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

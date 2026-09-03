@@ -14,4 +14,4 @@ Picture standing on a mountainside in dense fog, feeling only the slope directly
 {"type": "function-trace", "expression": "exp(-2*x)", "x_range": [0, 1], "y_range": [0, 1.1]}
 ```
 
-The smooth curve above, $y=e^{-2t}$, is the true path down the mountainside for $y'=-2y$, $y(0)=1$ — it's what Euler's method is trying to trace using only straight-line steps, each one committing fully to the slope felt at its starting point rather than following the curve's actual bend.
+The smooth curve on this card, $y=e^{-2t}$, is the true path down the mountainside for $y'=-2y$, $y(0)=1$ — it's what Euler's method is trying to trace using only straight-line steps, each one committing fully to the slope felt at its starting point rather than following the curve's actual bend.

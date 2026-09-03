@@ -28,7 +28,7 @@ If the landscape is the product of two separate ridges — one running left-righ
 
 Restrict the sand to the triangle $0 < x < y < 1$: a right triangle where $X$ is always smaller than $Y$. Inside it $f(x,y) = 2$ (total volume $= 2 \times \tfrac{1}{2} = 1$); outside, $f = 0$. These variables **cannot** be independent — the range of $X$ shrinks as $Y$ shrinks. The triangular wall rules out independence before the formula is even inspected.
 
-The contour plot below traces level curves of a correlated bivariate density $x^2 - xy + y^2 = c$: tilted ellipses, not circles — the visible signature of $\text{Cov}(X,Y) \ne 0$.
+The contour plot on this card traces level curves of a correlated bivariate density $x^2 - xy + y^2 = c$: tilted ellipses, not circles — the visible signature of $\text{Cov}(X,Y) \ne 0$.
 
 ```gif-scene
 {"type":"level-set","expression":"x**2 - x*y + y**2","x_range":[-3,3],"y_range":[-3,3],"c_range":[0.5,7],"title":"Level curves of a correlated density: x^2 - xy + y^2 = c"}

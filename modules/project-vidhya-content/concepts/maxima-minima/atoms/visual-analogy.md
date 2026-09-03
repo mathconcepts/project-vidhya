@@ -54,7 +54,7 @@ The function $f(x) = x^3 - 3x$ has:
 }
 ```
 
-Watch the curve: it rises to a local peak at $(-1, 2)$, then dips to a local valley at $(1, -2)$, then rises again. The "flat" moments at both critical points are where the hiker pauses at the top of a hill or the bottom of a valley.
+The curve on this card rises to a local peak at $(-1, 2)$, then dips to a local valley at $(1, -2)$, then rises again. The "flat" moments at both critical points are where the hiker pauses at the top of a hill or the bottom of a valley.
 
 ---
 

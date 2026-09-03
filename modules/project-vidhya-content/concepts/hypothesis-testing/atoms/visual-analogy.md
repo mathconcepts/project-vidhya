@@ -32,7 +32,7 @@ Imagine a criminal court. The defendant walks in with the presumption of **innoc
 
 A court sets a *high* standard ("beyond reasonable doubt") to protect the innocent — that is choosing a *small* $\alpha$ to guard against false alarms. But a stricter standard also means more guilty people go free (higher $\beta$): the fundamental **trade-off between Type I and Type II errors**.
 
-Under $H_0$, the test statistic follows a known curve — the standard normal below. The shaded tails beyond $\pm 1.96$ are the rejection region at $\alpha=0.05$: land there, and the "verdict" is reject $H_0$.
+Under $H_0$, the test statistic follows a known curve — the standard normal shown in the diagram on this card. The shaded tails beyond $\pm 1.96$ are the rejection region at $\alpha=0.05$: land there, and the "verdict" is reject $H_0$.
 
 ```gif-scene
 {"type":"function-trace","expression":"exp(-(x*x)/2)","x_range":[-4,4],"y_range":[0,1.1],"title":"Standard normal under H0: tails past ±1.96 rejected"}

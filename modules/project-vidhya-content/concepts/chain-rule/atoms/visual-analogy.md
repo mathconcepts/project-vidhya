@@ -35,7 +35,7 @@ A faster inner oscillation gets amplified in the derivative. When we differentia
 
 $$\frac{d}{dx}\sin(2x) = \cos(2x) \cdot 2 = 2\cos(2x)$$
 
-The gif below traces $\sin(2x)$ across one full period. Notice the oscillation is **twice as fast** as plain $\sin(x)$ — and the derivative $2\cos(2x)$ is twice as large in amplitude, reflecting that speed:
+The diagram on this card traces $\sin(2x)$ across one full period. The oscillation is **twice as fast** as plain $\sin(x)$ — and the derivative $2\cos(2x)$ is twice as large in amplitude, reflecting that speed:
 
 ```gif-scene
 {

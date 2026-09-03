@@ -20,7 +20,7 @@ The formula $\int u \, dv = uv - \int v \, du$ is like the mechanical advantage 
 
 ## Seeing the Trade-Off
 
-Look at $\int x \sin(x) \, dx$ below. The graph shows how the original function oscillates with growing amplitude. Integration by parts lets us break this into pieces: we "reduce the weight" by differentiating the polynomial $x$, leaving us with a purely trigonometric integral on the right side—much more tractable.
+The diagram on this card plots $\int x \sin(x) \, dx$, showing how the original function oscillates with growing amplitude. Integration by parts lets us break this into pieces: we "reduce the weight" by differentiating the polynomial $x$, leaving us with a purely trigonometric integral on the right side—much more tractable.
 
 ```gif-scene
 {"type":"function-trace","expression":"x*sin(x)","x_range":[0,10],"y_range":[-10,10],"frames":30,"fps":12}

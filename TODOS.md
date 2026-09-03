@@ -4,6 +4,146 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## `solution_steps` has no LaTeX/tone rendering pipeline
+
+**Trigger:** the next live-QA report on a practice item whose
+`solution_steps` contains real LaTeX, or a decision to standardize
+practice-item authoring before the next content wave.
+
+`PracticeAttemptPage.tsx` renders `result.solution_steps` as plain strings
+(`<li>{s}</li>`) — never through `MarkdownAtomRenderer`. Atom bodies and
+resonance-beat narration both get KaTeX + the tone-register pipeline;
+`solution_steps` is a third, independently-drifted content surface (same
+bug class as `ConceptMathViz`'s pre-2026-09-02 disconnection and the
+bracket-array-vs-LaTeX bug in `guided_walkthrough` specs, both fixed
+earlier this session). Every `solution_steps` array across all 505 practice
+items in `data/practice-items/*.json` is currently authored in literal
+Unicode math notation (Λ, ᵀ, ³, —) rather than `$...$` LaTeX, specifically
+BECAUSE the renderer can't handle LaTeX there — so this is silently
+constraining every future item's authoring style, not just a rendering
+polish item.
+
+**What:** wire `PracticeAttemptPage.tsx`'s solution-steps `<ol>` through
+`MarkdownAtomRenderer` (same component `AtomCardRenderer.tsx` and
+`GuidedWalkthrough.tsx` already use), confirm it doesn't choke on the 505
+already-Unicode-authored items (it shouldn't — plain text renders fine
+through a markdown+KaTeX pipeline), then the authoring convention can move
+to real LaTeX for anything written after.
+
+**Where to start:** `frontend/src/pages/app/PracticeAttemptPage.tsx` around
+the `solution_steps.map` block (~line 495 pre-this-pass); the
+`MarkdownAtomRenderer` import + `className` prop pattern `GuidedWalkthrough.tsx`
+already uses is the template.
+
+**Effort:** S human / CC ~30 min (one component swap + a render-regression
+test pass over existing items to confirm nothing breaks).
+**Priority:** P2 — cosmetic today (Unicode notation reads fine), but blocks
+better-notated practice-item authoring and is the same drift pattern this
+repo has fixed twice already; worth closing before a third surface drifts
+the same way.
+**Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
+`claude/content-strategy-framework-o9afoc`. See
+`docs/designs/2026-09-03-content-teaching-arc-framework.md`.
+
+## Audit remaining concepts' resonance beats for reveal-without-predict
+
+**Trigger:** the next content wave, or another live-QA report naming a
+specific concept.
+
+This pass fixed exactly one reported scene (`spectral-theorem/atoms/
+hook.md`'s "flipped arrow" beat, which combined OBSERVE and REVEAL into one
+beat with no prior prediction cue). The same defect class — a resonance
+beat stating a rule/sign/classification with nothing before it inviting a
+guess — has not been systematically audited across the other ~33 scenes
+carrying `simulation`-kind beats (`ci:interactive-specs` reports 383 total
+interactive-spec blocks; the `simulation` subset is documented per-topic in
+`docs/designs/2026-09-03-motion-and-plain-language-strategy.md`'s table).
+The new `ped_predict_before_reveal` pedagogy pattern (`data/registry/
+pedagogy-patterns.yml`) shapes future LLM-GENERATED atoms automatically,
+but does nothing for already-committed hand-authored scenes.
+
+**What:** read each existing `simulation`-kind scene's `narration_steps`,
+identify any beat that both shows a result AND states the rule/sign/
+classification for the first time (the same "combined observe+reveal"
+shape), and split it per this pass's pattern — one predict-cue beat, one
+reveal+why beat.
+
+**Where to start:** `docs/designs/2026-09-03-motion-and-plain-language-
+strategy.md`'s per-topic table for the scene inventory; this pass's
+`spectral-theorem/atoms/hook.md` fix (5-beat structure) as the worked
+template.
+
+**Effort:** M human / CC ~5-6 concepts per batch (same pattern as every
+other content wave in this repo's history).
+**Priority:** P2 — real pedagogical debt, but the reported instance is
+fixed; no evidence yet that the other beats are causing the same confusion.
+**Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## ELI5/register pass over the other ~500 practice items' `solution_steps`
+
+**Trigger:** the `solution_steps` LaTeX-pipeline item above lands, or
+another live-QA report names a specific item.
+
+This pass rewrote exactly one item's `solution_steps`
+(`pi-spectral-theorem-002` in `data/practice-items/gate-ma-la-eigen.json`)
+to match the lesson-content register (plain-English reason before each
+computational move, referencing the concept's own worked demo rather than
+a generic proof). The other ~504 items across 16 banks have not been
+audited for the same register gap — most were authored before the
+2026-09-02 ELI5/Indian-English tone directive landed in `orchestrator.ts`'s
+`buildPrompt()`, and `solution_steps` specifically is authored by a
+different code path than atom generation (see the pipeline gap above), so
+the tone directive never reached it even for items generated after that
+date.
+
+**What:** same discipline as the `common_traps` rewrite pass (CLAUDE.md,
+2026-09-02): batch by concept (5-6 at a time), rewrite `solution_steps`
+prose only (never the underlying math, answer key, or `verification_method`),
+validate against `ci:practice-items`'s self-re-grade check after each batch.
+
+**Effort:** L human / CC — 500 items ÷ ~5 per batch ≈ 100 batches; likely
+worth prioritizing by which concepts get the most practice-attempt traffic
+once real usage data exists, rather than doing all 16 banks uniformly.
+**Priority:** P3 — no volume signal yet on which items students actually
+see wrong-answer solutions for.
+**Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Extend `THEOREM_WIZARD_TRAINERS` past linear-algebra/vector-calculus
+
+**Trigger:** a live-QA report on a wrong answer in a topic with no trainer,
+or a decision to build out method-selection coverage systematically.
+
+`frontend/src/data/method-selection-trainers.ts` has trainers for only 2 of
+10 topic families (plus the standalone `DISTRIBUTION_TRAINER` for
+probability-statistics). This pass wired `PracticeAttemptPage.tsx`'s
+wrong-answer screen to link to whichever trainer exists for the item's
+topic (`wizardRouteForTopic()`) — for the other 7 topics (calculus,
+differential-equations, complex-variables, numerical-methods, discrete-
+mathematics, transform-theory, graph-theory), a wrong answer today shows no
+wizard link at all (fails closed, not a broken link) simply because there
+is nothing to link to yet.
+
+**What:** author a `MethodSelectionTrainer` (branching `guided_walkthrough`
+spec, per `method-selection-trainers.ts`'s existing shape) for each
+remaining topic's most common method-selection confusion — the same
+territory `ped_method_selector` (Pedagogy Pattern Library) already
+identifies as a cross-topic pain point.
+
+**Where to start:** `frontend/src/data/method-selection-trainers.ts`'s
+existing 3 trainers as the template; `data/registry/pedagogy-patterns.yml`'s
+`ped_method_selector` evidence field cites the specific per-topic confusion
+patterns (L'Hospital eligibility, Green's/Stokes'/Gauss' selection, etc.)
+to build trainers around.
+
+**Effort:** M human / CC ~1 trainer per session (each is a real content-
+authoring task — a decision tree with genuine wrong-answer reasoning, not
+boilerplate).
+**Priority:** P3 — no per-topic demand signal yet.
+**Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
+`claude/content-strategy-framework-o9afoc`.
+
 ## Motion coverage wave: vector-calculus, probability-statistics, transform-theory, numerical-methods
 
 **Trigger:** operator time for the next content wave, or a fresh live-QA

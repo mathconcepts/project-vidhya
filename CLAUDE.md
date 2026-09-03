@@ -2089,6 +2089,85 @@ descriptions (several symbol-dense); probability-statistics's
 `ci:katex-fences`, `ci:content-integrity`, `ci:variant-agreement` (610
 pairs) all clean.
 
+---
+
+### Content teaching arc: predict-before-reveal + solver discoverability (2026-09-03)
+
+Live-QA report (2 screenshots) on spectral-theorem, plus a broader ask to
+"reimagine content delivery from first principles" as "a common framework
+across all topics for any exam." Full root-cause + honest scoping:
+`docs/designs/2026-09-03-content-teaching-arc-framework.md`.
+
+**Bug 1 — a resonance beat revealed the rule with no prior prediction.**
+`spectral-theorem/atoms/hook.md`'s "flipped arrow" scene combined OBSERVE
+and REVEAL in one beat (`at_progress: 0.55`): showed the eigenvector flip
+AND stated the rule AND gave the eigenvalue's sign, together. Split into a
+5-beat Predict-Observe-Explain sequence (`hook.md` + `hook-shaken.md` +
+`hook-assured.md`, byte-identical fences per `ci:variant-agreement`): a
+narrow, answerable predict cue ("does a flipped arrow still count?") now
+precedes the reveal, which is followed by its own why-beat, with the
+trace/det cross-check moved to a separate beat and the existing
+perpendicularity trap unchanged.
+
+**Bug 2 — a practice-item solution read out of register with the lesson.**
+`pi-spectral-theorem-002` in `data/practice-items/gate-ma-la-eigen.json`
+had `solution_steps` written as a compressed proof dump. Rewritten to
+reference the concept page's own demo matrix/eigenvalues and state each
+computational move's reason in plain English before the arithmetic. A
+structural finding surfaced alongside it, NOT fixed in this pass:
+`PracticeAttemptPage.tsx` renders `solution_steps` as plain strings with no
+`MarkdownAtomRenderer`/KaTeX pipeline — the same "independently-drifted
+content surface" bug class as `ConceptMathViz`'s pre-2026-09-02
+disconnection and the `guided_walkthrough` bracket-array bug, both fixed
+earlier the same day. Tracked in TODOS.md.
+
+**The "solver for different problem types" ask was already built —
+just undiscoverable.** `GuidedWalkthrough.tsx`'s `branches` extension
+(W2.5/D1-D3, `TheoremWizardPage`/`DistributionSelectorPage`) already IS a
+method-selection solver — `THEOREM_WIZARD_TRAINERS['linear-algebra']`'s
+`la_power`/`la_definite` nodes already cover exactly the eigenvalue-power/
+definiteness territory spectral-theorem sits in. The gap was that
+`/theorem-wizard/:module` and `/distribution-selector` were reachable only
+via direct URL — no lesson or practice page ever linked to them.
+`PracticeAttemptPage.tsx` now shows a "Which method applies? Work through
+it" CTA on a wrong answer when the item's `topic` maps to a trainer
+(`wizardRouteForTopic()`, normalizing casing since one bank drifted to
+`"Linear Algebra"` where the rest use the kebab-case slug). Fails closed —
+an unmapped topic (7 of 10 topic families have no trainer yet) shows no
+button rather than a guessed link.
+
+**The "common framework" ask, honestly scoped.** An audit found most of
+the requested loop already exists platform-wide and pre-dates this pass:
+diagnosis (Elo, `error-taxonomy.ts`, `distractor_failure_tags`,
+`diagnostic-probe.ts`), intervention (`nextBestAction()`'s four-arm loop,
+`MotivationAwareTeachingPolicy`, FIRe, personalization's 5-layer
+re-ranker), tracking (FSRS-6, mastery snapshots, `attempt_facts`), and
+next-action (the same `nextBestAction()`, wired live). The real, closable
+gap was **presentation sequencing** — closed as a new reusable pedagogy
+pattern rather than a one-off content edit: `ped_predict_before_reveal`
+in `data/registry/pedagogy-patterns.yml` (Track E4's Pedagogy Pattern
+Library — the same real, tested mechanism `ped_method_selector` uses, not
+a new system). Full-catalogue reach across all 10 topic families,
+`blueprint_stages: [intuition, discovery]`; directives require a separate
+narrowly-cued predict beat before any reveal, explicitly reject open-ended
+"what do you think happens?" prompts (Sweller's worked-example effect —
+novices need scaffolding, not blank-page discovery), and distinguish a
+predict cue from a trap/misconception callout so a future generator
+doesn't conflate the two. Evidence cites White & Gunstone 1992 (POE) and
+Slamecka & Graf 1978 (generation effect). Verified via
+`buildPatternPromptBlock()` — every future `intuition`/`discovery` atom
+generated for any topic now carries this directive automatically.
+
+**Deliberately not done, named in TODOS.md:** auditing the other ~33
+`simulation`-kind scenes for the same reveal-without-predict defect; an
+ELI5/register pass over the other ~504 practice items' `solution_steps`;
+the `solution_steps` LaTeX-pipeline fix; extending
+`THEOREM_WIZARD_TRAINERS` to the 7 topics with no trainer yet.
+
+**Tests:** 5 new (`PracticeAttemptPage.test.tsx`, 11→16). Full suite
+backend 4672/4672, frontend 2572/2572. `npm run ci` (18 gates) clean.
+`tsc --noEmit` clean both sides.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -4,6 +4,51 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.53.0] — 2026-09-03 — Content teaching arc: predict-before-reveal + solver discoverability
+
+No new env vars, no migrations.
+
+Live-QA report (2 screenshots) on spectral-theorem plus a broader ask to
+reimagine content delivery as "a common framework across all topics for
+any exam." Full root-cause + honest scoping:
+`docs/designs/2026-09-03-content-teaching-arc-framework.md`.
+
+Root-caused two bugs. (1) `spectral-theorem/atoms/hook.md`'s "flipped
+arrow" resonance beat combined OBSERVE and REVEAL in one beat, stating the
+eigenvector-sign rule with no prior moment for the student to predict —
+split into a 5-beat Predict-Observe-Explain sequence (base + shaken +
+assured, byte-identical fences). (2) practice item
+`pi-spectral-theorem-002`'s `solution_steps` read as a compressed proof out
+of register with the lesson — rewritten to reference the concept's own
+demo matrix and state each move's reason in plain English; a deeper
+structural finding (the page renders `solution_steps` with no KaTeX/
+markdown pipeline at all) is named but not fixed, tracked in TODOS.md.
+
+Found the "solver for different problem types" ask was already built:
+`GuidedWalkthrough`'s branching method-selection wizard
+(`TheoremWizardPage`/`DistributionSelectorPage`) already covers exactly
+this territory (`la_power`/`la_definite` nodes) but was reachable only by
+direct URL. `PracticeAttemptPage.tsx` now links a wrong answer to the
+matching wizard when the item's topic has one, normalizing topic casing
+across practice-item banks. 5 new tests.
+
+Closed the "common framework" ask as one new reusable mechanism rather
+than a rewrite: `ped_predict_before_reveal`, a full-catalogue pedagogy
+pattern (`data/registry/pedagogy-patterns.yml`, Track E4) grounded in
+Predict-Observe-Explain (White & Gunstone 1992) and the generation effect
+(Slamecka & Graf 1978), tempered by Sweller's worked-example effect for
+novices (narrow-cued prediction only, never open discovery) — every future
+`intuition`/`discovery` atom generated for any topic now carries this
+directive via `buildPatternPromptBlock()`. An audit found most of the
+requested loop (diagnosis, intervention, tracking, next-action) already
+exists platform-wide; presentation sequencing and solver discoverability
+were the real, closable gaps.
+
+Deferred, named in TODOS.md: auditing the other ~33 `simulation`-kind
+scenes for the same defect; an ELI5 pass over the other ~504 items'
+`solution_steps`; the `solution_steps` LaTeX-pipeline fix; extending the
+method-selection wizard to the 7 topics with no trainer.
+
 ## [4.52.0] — 2026-09-03 — Motion coverage + plain-language strategy
 
 No new env vars, no migrations.

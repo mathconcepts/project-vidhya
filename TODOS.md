@@ -4,6 +4,79 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Motion coverage wave: vector-calculus, probability-statistics, transform-theory, numerical-methods
+
+**Trigger:** operator time for the next content wave, or a fresh live-QA
+report on one of these topics.
+
+`docs/designs/2026-09-03-motion-and-plain-language-strategy.md` found these
+4 topics are 100% covered by the passive `gif-scene` system but have ZERO
+`simulation`-kind (scrubbable, narrated, signaling) scenes — the
+pedagogically active layer research ties to real effect sizes. Priority
+order (subject-motion fit × gap, full rationale in the doc):
+1. vector-calculus (7 concepts remaining after `line-integrals`, this
+   pass's pilot) — flux/curl/divergence/Green's/Stokes/Gauss are literal
+   motion-through-space; best-suited topic in the curriculum.
+2. numerical-methods (6 concepts) — root-finding, integration, ODE solvers
+   are iterative-convergence processes, the textbook system-paced case.
+3. probability-statistics (9 concepts) — distribution-vs-parameter is a
+   `manipulable`-slider case (also 0/9 there); sampling-distributions'
+   CLT convergence is a classic animated demonstration.
+4. transform-theory (6 concepts) — lower subject-fit (abstract, frequency-
+   domain) but still fully passive-only.
+
+Same 5-6-concept-per-batch subagent pattern as the common_traps ELI5 pass:
+read the concept's real worked-example numbers (never invent new ones —
+`line-integrals`' pilot reused the exact field/path already verified in
+`hook-shaken.md`), write one honest `narration_steps` sequence per concept,
+respect `MAX_BEAT_TEXT_CHARS=280` and the 8-beat cap, add a `why` line.
+
+**Also:** complex-variables has the worst DEPTH coverage — 4 of 6 concepts
+(`analytic-functions`, `complex-integration`, `residue-calculus`,
+`taylor-laurent`) have neither `simulation` nor `guided_walkthrough` at
+all. Fixing those is arguably higher-urgency than adding a 2nd/3rd scene
+to an already-covered topic.
+
+**Effort:** M per 5-6-concept batch, L+ for all 4 topics.
+
+## New interactive-spec kind needed for graph-theory's discrete-traversal concepts
+
+**Trigger:** an operator wants graph-theory's 3 fully-uncovered concepts
+(Eulerian & Hamiltonian, Connectivity, Trees) visualized, or a live-QA
+report flags one of them specifically.
+
+None of the 3 existing kinds fit honestly: `manipulable` has no notion of
+a graph, `guided_walkthrough` has no visual, and `simulation`'s
+`parametric`/`linear_map` modes are built for continuous curves and 2×2
+matrix transforms — a graph traversal (walk an Euler circuit, grow a
+spanning tree edge by edge, flood-fill a connected component) is discrete,
+not continuous, and forcing it into `parametric` risks exactly the
+"fictional steps" failure the research in the design doc warns about.
+
+This needs a real schema decision: a new `InteractiveKind` (e.g.
+`graph_walk` — nodes/edges + a sequence of highlighted-node/edge steps),
+a renderer component, and validator rules (reachability/well-formedness,
+mirroring `validateBranches`' precedent). Bigger than a content pass —
+scope it as its own mini-plan before touching `types.ts`.
+
+**Effort:** M for the schema+renderer, S per concept once it exists.
+
+## `ConceptMathViz`: 52 of 53 descriptions still unaudited for the plain-language rule
+
+**Trigger:** same content-wave cadence as above.
+
+The rule from `docs/designs/2026-09-03-motion-and-plain-language-strategy.md`
+§4 (description = what to do/see, ≤~20 words, active voice; why = the
+simplification framing, never duplicated in both fields; gloss symbol
+chains even when short) was applied and self-corrected on
+`matrix-operations` only. The corpus average is 14 words (mostly not
+word-dense) but several entries are symbol-dense in the way the readability
+research flags (e.g. `determinants`: "det(A - λI) = 0 gives eigenvalues...
+λ²-trace·λ+det=0" — zero gloss). Needs a per-entry read against the rule,
+not a blanket rewrite.
+
+**Effort:** S per entry, M-L for all 52.
+
 ## Why-first interactive framing: 362 of 380 interactive-spec blocks still have no `why`
 
 **Trigger:** an operator wants to spend agent time on the next wave, or a

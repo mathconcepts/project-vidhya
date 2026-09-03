@@ -142,8 +142,8 @@ const CONCEPT_VIZ: Record<string, VizSpec> = {
   // ── Linear Algebra ───────────────────────────────────────────────────────
   'matrix-operations': {
     title: 'The simplest possible matrix: just one number',
-    description: 'A full matrix stretches and tilts a whole plane (see the animation above). This plot shrinks that idea down to one dimension — a "1×1 matrix" is just a single number a, and multiplying by it is the whole story: drag a and watch the line get steeper or flatter, the simplest version of what every bigger matrix does.',
-    why: 'This is a simplification, not the real thing — a 2×2 matrix acts on a whole plane, which a straight-line plot can\'t show. This 1-number version isolates the "stretch by a factor" idea from everything else a matrix can do, before the sixteen-arrow animation above puts it back together.',
+    description: 'Drag a to make the line steeper or flatter — that is what multiplying by a single number does.',
+    why: 'A 2×2 matrix acts on the whole plane, which a straight-line plot cannot show. This 1-number version isolates just the "stretch by a factor" idea, before the animation above puts it back together.',
     equation: '2*x',
     sliders: 'a:0.5,3,2',
     xRange: '-3,3',

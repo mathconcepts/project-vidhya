@@ -24,7 +24,7 @@ describe('ConceptMathViz', () => {
   it('renders the matrix-operations entry with its why-framing and an honest simplification note', () => {
     render(<ConceptMathViz conceptId="matrix-operations" />);
     expect(screen.getByText('The simplest possible matrix: just one number')).toBeInTheDocument();
-    expect(screen.getByText(/This is a simplification, not the real thing/)).toBeInTheDocument();
+    expect(screen.getByText(/A 2×2 matrix acts on the whole plane/)).toBeInTheDocument();
     expect(screen.getByText('Hide these tips')).toBeInTheDocument();
   });
 
@@ -44,7 +44,7 @@ describe('ConceptMathViz', () => {
     const user = userEvent.setup();
     render(<ConceptMathViz conceptId="matrix-operations" />);
     await user.click(screen.getByText('Hide these tips'));
-    expect(screen.queryByText(/This is a simplification, not the real thing/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/A 2×2 matrix acts on the whole plane/)).not.toBeInTheDocument();
     expect(localStorage.getItem('vidhya.eli_framing')).toBe('0');
   });
 });

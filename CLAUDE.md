@@ -2003,6 +2003,92 @@ here since the live-QA report was scoped to matrix-operations.
 regression included). Backend untouched, 362 files / 4672 tests. `tsc
 --noEmit` clean both sides.
 
+---
+
+### Motion coverage + plain-language strategy (2026-09-03)
+
+Follow-up ask: research where more motion helps (topic-wise), simplify
+exploration language further, and add a rule for long text (chunk it or
+animate it). Full research + audit + priority ranking:
+`docs/designs/2026-09-03-motion-and-plain-language-strategy.md`.
+
+**Research (4 sources, fresh-searched):** Mayer's segmenting principle
+(learner-paced segments beat one continuous unit) and signaling principle
+(cues that direct attention) — this repo's resonance-beat mechanism
+(`narration_steps`+`emphasize`+`trap`+`why`) already encodes both
+correctly. Betrancourt/Tversky meta-analyses: animation isn't inherently
+better than static — the "substantial effect size" cases are specifically
+learner-paced, narrated, interactive ones, and passive looping animation
+sits closer to the "not encouraging" end; a caution that motion can add
+"fictional steps" that mislead if it implies a process the math doesn't
+have. Linear algebra specifically is called out as animation's best-suited
+subject. Math readability research: more concepts per sentence than any
+other text type — short sentences, common words, active voice.
+
+**Audit corrected an assumption before it shipped:** a first grep for
+`simulation`-kind blocks per topic said "6 topics have zero motion" — wrong,
+because it ignored `gif-scene` (the older §4.15 passive-GIF system), which
+covers nearly every concept already. Re-run against both systems: the real
+gap isn't "no motion," it's that 5 topics — vector-calculus,
+probability-statistics, transform-theory, numerical-methods, and largely
+discrete-mathematics/graph-theory — are 100% passive-GIF with **zero**
+`simulation`-kind (scrubbable, narrated, signaling) coverage, while
+linear-algebra alone holds 21 of the platform's 34 `simulation` scenes.
+10 concepts are genuinely visual-free; 2 of those (Change of Basis, LU
+Factorization) are documented deliberate exclusions from the original
+resonance-beats pass, not oversights.
+
+**Topic-wise priority** (subject-motion fit × current gap):
+1. vector-calculus — flux/flow IS motion through space; 0/8 `simulation`.
+2. numerical-methods — iterative convergence is the textbook system-paced-
+   animation case; 0/6.
+3. probability-statistics — distribution-vs-parameter is a `manipulable`
+   case; CLT convergence a classic animated demo; 0/9 on both kinds.
+4. complex-variables — geometric by nature; worst DEPTH coverage (4 of 6
+   concepts have neither `simulation` nor `guided_walkthrough`).
+5. calculus — already 7/19, real but lower-urgency extension.
+6. discrete-mathematics — LOWER priority for continuous motion on purpose;
+   discrete/symbolic content risks the "fictional steps" failure mode;
+   wants segmented reveal, not animation.
+7. graph-theory — its 3 fully-uncovered concepts (Eulerian & Hamiltonian,
+   Connectivity, Trees) need a node-highlight-sequence primitive the
+   current schema doesn't have — flagged as a real schema gap, not forced
+   into the wrong widget kind.
+
+**Language rule:** `description` says what to do/see (active voice, ≤~20
+words); `why` alone carries the "this is a simplification" framing — never
+duplicate it across both fields; a short symbol chain is not simplified
+just because it's short (gloss notation on first use). Caught and fixed
+the previous pass's own miss: `ConceptMathViz`'s `matrix-operations`
+description had drifted to 59 words, one block, repeating its own `why`
+line — rewritten to 19 words, redundancy removed.
+
+**Segment-or-motion rule:** a process/transformation over time → prefer a
+`simulation` scene's `narration_steps` (the segmenting mechanism already
+built) over a wall of static prose; a set of discrete facts/conditions →
+segment via `guided_walkthrough`'s paced reveal or short progressive-
+stagger paragraphs; never leave a long paragraph undivided next to an
+animation it should have deferred to.
+
+**Shipped:** the doc itself (the deliverable for "topic-wise" as asked);
+the `ConceptMathViz` self-correction above; one new `simulation` scene on
+`line-integrals/atoms/hook.md` (+ shaken/assured, byte-identical) — vector-
+calculus's #1 priority slot, animating $\mathbf F(x,y)=(-y,x)$ along the
+unit circle (reusing the exact field + path already verified in
+`hook-shaken.md`'s prose) to show the "closed loop, still nonzero work"
+paradox, with a `trap` beat and a `why` line.
+
+**Deliberately deferred, tracked in TODOS.md:** the other 7 vector-
+calculus concepts and all of probability-statistics/transform-theory/
+numerical-methods/complex-variables' gaps; a new interactive-spec kind for
+graph-theory's discrete-traversal case; the remaining 52 `ConceptMathViz`
+descriptions (several symbol-dense); probability-statistics's
+`manipulable`-slider opportunity.
+
+**Verification:** `ci:interactive-specs` (383 blocks, +3),
+`ci:katex-fences`, `ci:content-integrity`, `ci:variant-agreement` (610
+pairs) all clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

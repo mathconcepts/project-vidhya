@@ -22,4 +22,6 @@ Three outcomes, decided entirely by ranks:
 
 **Two ways to solve.** Gaussian elimination: reduce $[A\mid\mathbf{b}]$ to row echelon form with row swaps, row scaling, and adding a multiple of one row to another, then back-substitute. Cramer's rule (square, $\det(A)\neq0$): $x_i = \det(A_i)/\det(A)$, where $A_i$ replaces column $i$ with $\mathbf{b}$ — fine for 2 or 3 unknowns, impractical beyond.
 
-**Homogeneous systems** ($\mathbf{b}=\mathbf{0}$) always have the trivial solution $\mathbf{x}=\mathbf{0}$; a non-trivial one exists iff $\text{rank}(A)<n$ — for square $A$, the same as $\det(A)=0$. GATE tests: row-reducing to find rank, deciding solution count from ranks, solving a $3\times3$ system inside a larger question, and recognizing $(A-\lambda I)\mathbf{x}=\mathbf{0}$ as a homogeneous system.
+**Homogeneous systems** ($\mathbf{b}=\mathbf{0}$) always have the trivial solution $\mathbf{x}=\mathbf{0}$; a non-trivial one exists iff $\text{rank}(A)<n$ — for square $A$, the same as $\det(A)=0$.
+
+**What GATE actually tests:** row-reducing to find rank, deciding solution count from ranks, solving a $3\times3$ system inside a larger question, and recognizing $(A-\lambda I)\mathbf{x}=\mathbf{0}$ as a homogeneous system.

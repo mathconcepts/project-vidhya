@@ -8,10 +8,14 @@ exam_ids: ["*"]
 modality: visual
 ---
 
-Every linear equation in three unknowns, $ax+by+cz=d$, is a flat plane. A $3\times3$ system asks: where do three planes meet?
+Picture three flat sheets of glass floating in space — each linear equation in three unknowns, $ax+by+cz=d$, is one sheet. Solving a $3\times3$ system just asks: where do all three sheets meet?
 
-Three stories, decided entirely by rank. **Unique solution:** the three planes meet at a single point, like three walls of a room meeting at one corner — $\text{rank}(A)=\text{rank}([A\mid\mathbf{b}])=3$. **Infinitely many:** the planes share a common line, like three pages of a book sharing the spine — ranks agree but fall short of $3$, leaving free variables. **No solution:** the planes arrange so no single point satisfies all three — like a triangular prism, where each pair of faces meets in a line but the three lines are parallel and never share a point — $\text{rank}(A)\neq\text{rank}([A\mid\mathbf{b}])$.
+There are exactly three ways this can go, and rank alone decides which:
 
-In 2D the same logic drops a dimension: each equation is a line. Two lines cross at one point (unique), overlap entirely (infinitely many), or run parallel without meeting (no solution) — the identical rank arithmetic, one dimension down.
+- **One point.** The sheets meet at a single spot, like three walls meeting in the corner of a room — $\text{rank}(A)=\text{rank}([A\mid\mathbf{b}])=3$.
+- **A whole line.** The sheets share one common edge, like three pages of a book sharing the spine — the ranks still agree, but fall short of $3$, so a free variable slides you along that shared line.
+- **Nowhere.** The sheets sit so no single point touches all three — like the three side-faces of a triangular prism, where each pair of faces meets in a line, but the three lines run parallel and never cross — $\text{rank}(A)\neq\text{rank}([A\mid\mathbf{b}])$.
 
-No single plot captures three planes intersecting at once, so this analogy stays verbal rather than reaching for a fenced 2D scene that couldn't show the real geometry honestly.
+Drop to two dimensions and it's the same picture, one size down: each equation is a line instead of a plane. Two lines cross once, sit exactly on top of each other, or run parallel — the same three outcomes, easier to draw, and exactly what the animation above this card already showed you.
+
+*No single flat picture can honestly show three planes crossing in 3D, so this stays a mental picture in words rather than reaching for a diagram it can't draw truthfully.*

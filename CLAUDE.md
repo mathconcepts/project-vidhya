@@ -2501,6 +2501,48 @@ TODOS.md rather than expanded into this pass.
 **Tests:** frontend 2604/2604 unchanged (component swap, not new
 behavior). `tsc --noEmit` clean.
 
+**Second pass, same day — the deferred items above, closed.** "Check for
+other buttons similarly" audited every remaining `<button>` in
+`frontend/src/components/lesson/` (10 files) individually rather than
+mechanically swapping all of them onto `Button`/`IconButton`. Two classes
+came back:
+
+- **Same shape family, fixed:** `DecisionTreeWalkthrough.tsx`'s Back
+  (leading icon via `Button`'s `icon` prop) and Restart buttons — its
+  OPTION buttons stay hand-rolled on purpose (the file's own docblock:
+  "Full-width 44px choice buttons", a list-row shape `Button`'s centered
+  pill doesn't fit). `AtomCardRenderer.tsx`'s "Not yet"/"Got it" recall
+  pair (`Button` with `full` for the existing flex-1 half-width layout —
+  "Got it" needed no style override at all, since `variant="filled"
+  tone="mastery"` already resolves to exactly `var(--green)` /
+  `var(--text-on-accent)`), its prev/next nav chevrons, and its
+  show-visually-first toggle — all three were genuine **44px touch-target
+  violations** (~36px hand-rolled tap zones), not just missing press
+  feedback, so this doubled as a `touch-target-size` fix per
+  `ui-ux-pro-max`'s own severity-High guideline. `Verify.tsx`'s inline
+  "Check" submit button got `Button size="sm"` rather than the 44px `md`
+  used everywhere else — it sits beside a compact text input in one row,
+  and a full-height button there would tower over its own input rather
+  than fix anything.
+- **Different shape family, correctly left alone:** `ConceptMathViz.tsx`'s
+  accordion header, `ProblemStatementBlock.tsx`/`AnswerReveal.tsx`'s
+  full-width disclosure rows, `WhyThisHelps.tsx`'s plain underlined text
+  link, `interactives/Recall.tsx`'s whole-card flashcard flip, and
+  `interactives/Quiz.tsx`'s full-width MCQ option rows are all
+  deliberately NOT the centered-pill/circle shape `Button`/`IconButton`
+  render — forcing the swap there would have been a visual regression,
+  not a fix, so they were reviewed and excluded rather than silently
+  skipped.
+
+`IconButton.tsx` gained two props it needed to keep pace with `Button.tsx`:
+`style` (so a caller can keep a token-driven background — e.g. the
+show-visually toggle's green "on" tint — the same way every `Button` call
+in this pass already could) and `disabled` (opacity + `cursor: not-allowed`
++ suppressed press-scale, matching `Button`'s existing contract; the
+prev-arrow at index 0 needed it).
+
+**Tests:** frontend 2604/2604 unchanged. `tsc --noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

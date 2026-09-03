@@ -43,41 +43,6 @@ is insufficient after a wizard visit.
 2026-09-03, branch `claude/content-strategy-framework-o9afoc`. See
 `docs/designs/2026-09-03-adaptive-pacing-and-wizard-mistake-loop.md`.
 
-## Hand-rolled advance/nav buttons remain outside the three fixed in the 2026-09-03 UX pass
-
-**Trigger:** the next `/design-review` or `/ui-ux-pro-max` pass on lesson
-interactives, or a decision to do this systematically before the next
-content wave.
-
-The 2026-09-03 `/ui-ux-pro-max` pass ("look at the continue button and
-other buttons") wired `Simulation.tsx`'s Continue + play/pause/reset,
-`AtomCardRenderer.tsx`'s "Show next step", and `GuidedWalkthrough.tsx`'s
-advance button onto the app's own `Button`/`IconButton` design-system
-components (`frontend/src/components/ui/`) — both existed with
-press-scale feedback already built in; `IconButton` was imported nowhere
-in the app before this pass. It did NOT touch the same hand-rolled
-`<button>` pattern (`background: var(--surface-fill-strong)`, no press
-feedback) still present in `DecisionTreeWalkthrough.tsx` (option buttons,
-Back, Restart) or `AtomCardRenderer.tsx`'s prev/next nav arrows and
-"Not yet"/"Got it" recall buttons.
-
-**What:** the same swap — hand-rolled `<button>` → `<Button>`/`<IconButton>`
-with a `style` override for `background: var(--surface-fill-strong)`
-where the card's own wrapper background is `var(--surface-fill)` (needed
-so the button doesn't nearly vanish against its own card).
-
-**Where to start:** `frontend/src/components/lesson/interactives/DecisionTreeWalkthrough.tsx`
-(3 buttons) and the prev/next/recall buttons in
-`frontend/src/components/lesson/AtomCardRenderer.tsx` (~4 buttons).
-
-**Effort:** S — same mechanical swap already proven on 3 other files;
-watch for locked style-assertion tests the way `GuidedWalkthrough.test.tsx`
-had (`fontSize`/`minHeight` overrides needed there).
-**Priority:** P3 — visual/interaction polish, no reported breakage.
-**Deferred from:** `/ui-ux-pro-max` Continue-button pass, 2026-09-03.
-
----
-
 ## Static-text motion audit is incomplete outside AtomCardRenderer
 
 **Trigger:** the next live-QA report naming a specific static/dense

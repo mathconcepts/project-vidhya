@@ -38,6 +38,7 @@ import { useMemo, useState } from 'react';
 import { ArrowLeft, Check, CornerUpLeft, RotateCcw } from 'lucide-react';
 import type { BranchLeaf, BranchNode, GuidedWalkthroughSpec } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
+import { Button } from '@/components/ui/Button';
 
 /** The label a student sees on a leaf they should not have reached. */
 export const NOT_BEST_HEADING = 'Not the best route here — here’s why';
@@ -192,42 +193,39 @@ export function DecisionTreeWalkthrough({ spec }: Props) {
         </div>
       )}
 
+      {/* Back/Restart are pill CTAs (unlike the option buttons above, which
+          stay deliberately full-width per this file's own design note) —
+          the same shape family as Simulation.tsx's Continue and
+          GuidedWalkthrough's advance button, so they get the same shared
+          Button component and press-scale feedback. */}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
+        <Button
+          variant="grey"
+          tone="neutral"
+          size="md"
           onClick={back}
           disabled={trail.length === 0}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'var(--surface-fill-strong)',
-            color: 'var(--text-primary)',
-            fontSize: 'var(--text-body)',
-            minHeight: 44,
-            paddingLeft: 16,
-            paddingRight: 16,
-          }}
+          icon={leaf ? <CornerUpLeft size={16} aria-hidden /> : <ArrowLeft size={16} aria-hidden />}
+          style={{ background: 'var(--surface-fill-strong)', fontSize: 'var(--text-body)' }}
         >
-          {leaf ? <CornerUpLeft size={16} aria-hidden /> : <ArrowLeft size={16} aria-hidden />}
           {leaf ? 'Walk back' : 'Back'}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="grey"
+          tone="neutral"
+          size="md"
           onClick={restart}
           disabled={trail.length === 0}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+          icon={<RotateCcw size={16} aria-hidden />}
           style={{
             background: 'var(--surface-fill)',
             color: 'var(--text-secondary)',
             fontSize: 'var(--text-body)',
-            minHeight: 44,
-            paddingLeft: 16,
-            paddingRight: 16,
             border: 'var(--hairline) solid var(--separator)',
           }}
         >
-          <RotateCcw size={16} aria-hidden />
           Start over
-        </button>
+        </Button>
       </div>
 
       <p

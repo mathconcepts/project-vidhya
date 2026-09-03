@@ -28,6 +28,7 @@ import {
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_BASE_S, DUR_SLOW_S, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
 // Single source of truth for "3 consecutive misses" — read by both the
@@ -1079,19 +1080,21 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             );
           })}
         </div>
-        <button
+        {/* Was a hand-rolled 36px circle (w-9 h-9) — below the 44px touch
+            target floor. IconButton is 44px by default and carries
+            press-scale feedback; the style override keeps the green
+            "visual mode on" tint this toggle needs. */}
+        <IconButton
+          label={showVisually ? 'Show all atoms' : 'Show visual atoms first'}
+          tone={showVisually ? 'mastery' : 'neutral'}
           onClick={toggleVisual}
-          aria-label={showVisually ? 'Show all atoms' : 'Show visual atoms first'}
-          aria-pressed={showVisually}
-          className="flex items-center justify-center w-9 h-9 rounded-full border transition-colors"
           style={showVisually
-            ? { background: 'rgba(52,199,89,.12)', borderColor: 'rgba(52,199,89,.4)', color: 'var(--green-ink)' }
-            : { background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)' }
+            ? { background: 'rgba(52,199,89,.12)', border: '1px solid rgba(52,199,89,.4)' }
+            : { background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)' }
           }
-          title={showVisually ? 'Visual mode on' : 'Show me visually'}
         >
-          {showVisually ? <Eye size={14} /> : <EyeOff size={14} />}
-        </button>
+          {showVisually ? <Eye size={16} /> : <EyeOff size={16} />}
+        </IconButton>
       </div>
 
       <AnimatePresence mode="wait">
@@ -1215,44 +1218,42 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               twice would put two copies of the same scene on one card. */}
           {!promotedSimSpec && <InteractiveSidecar body={current.content} />}
 
-          {/* Recall buttons for retrieval-style atoms */}
+          {/* Recall buttons for retrieval-style atoms. Both were hand-rolled
+              with no press feedback; now the shared Button component (`full`
+              matches the previous flex-1 half-width layout, `md` size lifts
+              the touch target from ~36px to the 44px floor). */}
           {(current.atom_type === 'micro_exercise' || current.atom_type === 'retrieval_prompt') && (
             <div className="flex gap-2 mt-4 pt-3 border-t" style={{ borderColor: 'var(--separator)' }}>
-              <button
+              <Button
+                variant="grey"
+                tone="neutral"
+                size="md"
+                full
                 onClick={() => next(false)}
-                className="flex-1 px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 Not yet
-              </button>
-              <button
-                onClick={() => next(true)}
-                className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
-                // Green, not indigo: this confirms the student got the
-                // answer right — mastery/correctness, not an AI/tutor
-                // surface. DESIGN-SYSTEM.md reserves indigo for AI, tutor,
-                // and study plan only; green is mastery/correct/primary
-                // action, which is exactly what this button means.
-                style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
-              >
+              </Button>
+              {/* Green, not indigo: this confirms the student got the
+                  answer right — mastery/correctness, not an AI/tutor
+                  surface. DESIGN-SYSTEM.md reserves indigo for AI, tutor,
+                  and study plan only; green is mastery/correct/primary
+                  action, which is exactly what this button means. */}
+              <Button variant="filled" tone="mastery" size="md" full onClick={() => next(true)}>
                 Got it
-              </button>
+              </Button>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Nav */}
+      {/* Nav — was a hand-rolled ~36px tap zone (p-2 around a 20px icon,
+          below the 44px floor) with no press feedback; IconButton fixes
+          both at once. */}
       <div className="flex items-center justify-between mt-4">
-        <button
-          onClick={prev}
-          disabled={index === 0}
-          className="p-2 rounded-lg disabled:opacity-30"
-          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
-          aria-label="Previous"
-        >
+        <IconButton label="Previous" onClick={prev} disabled={index === 0}>
           <ChevronLeft size={20} />
-        </button>
+        </IconButton>
         <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {index + 1} of {atoms.length}
           {/* Adversarial review (/ship, 2026-09-01): must also require
@@ -1266,14 +1267,9 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             <span className="ml-2" style={{ color: 'var(--orange)' }}>· streak switched modality</span>
           )}
         </div>
-        <button
-          onClick={() => next()}
-          className="p-2 rounded-lg"
-          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
-          aria-label="Next"
-        >
+        <IconButton label="Next" onClick={() => next()}>
           <ChevronRight size={20} />
-        </button>
+        </IconButton>
       </div>
     </div>
   );

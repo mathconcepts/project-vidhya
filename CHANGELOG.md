@@ -4,6 +4,47 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.52.0] — 2026-09-03 — Motion coverage + plain-language strategy
+
+No new env vars, no migrations.
+
+Research-backed follow-up: where does more motion genuinely help
+(topic-wise), simplify exploration language further, and what to do when
+text runs long. Full writeup: `docs/designs/2026-09-03-motion-and-plain-
+language-strategy.md`.
+
+Grounded in 4 fresh-searched sources — Mayer's segmenting/signaling
+principles, Betrancourt/Tversky meta-analyses on when animation actually
+helps (learner-paced, narrated, interactive — not passive), linear-
+algebra-specific findings on dynamic visualization, and math-readability
+research. A first internal audit ("6 topics have zero motion") was wrong —
+it ignored the older `gif-scene` passive-animation system, which already
+covers nearly every concept. Corrected audit: the real gap is a coverage
+**tier**, not presence — 5 topics (vector-calculus, probability-
+statistics, transform-theory, numerical-methods, and largely discrete-
+mathematics/graph-theory) are 100% passive-GIF with zero scrubbable/
+narrated `simulation`-kind scenes, the layer research ties to real effect
+sizes.
+
+Topic-wise priority ranked by subject-motion fit × coverage gap
+(vector-calculus first — flux/flow is literally motion through space;
+graph-theory last, needing a discrete-traversal widget kind the schema
+doesn't have yet, flagged rather than forced). Language rule: `description`
+says what to do/see in ≤~20 words, `why` alone carries the simplification
+framing — never both. Self-caught and fixed: the prior release's own
+`ConceptMathViz` `matrix-operations` description had drifted to 59 words,
+duplicating its `why` line — now 19 words.
+
+Piloted: one new `simulation` scene on `line-integrals` (vector-calculus's
+top-priority slot), animating $\mathbf F(x,y)=(-y,x)$ along the unit
+circle — reusing the exact field and path already verified in the
+concept's own `hook-shaken.md` prose — to show the "closed loop, still
+nonzero work" paradox, with a trap beat and a `why` line.
+
+Deferred, tracked in TODOS.md: the other 7 vector-calculus concepts + 3
+more topics' motion gaps, a new interactive-spec kind for graph-theory,
+and the remaining 52 `ConceptMathViz` descriptions.
+
 ## [4.51.0] — 2026-09-03 — Why-first interactive framing
 
 No new env vars, no migrations.

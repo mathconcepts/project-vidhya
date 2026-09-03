@@ -6,7 +6,15 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+
+// Echoes the query string so tests can assert the wizard link carries
+// concept/mistake context (/investigate, 2026-09-03), without needing the
+// real TheoremWizardPage/DistributionSelectorPage wired into this test.
+function WizardStub({ label }: { label: string }) {
+  const [params] = useSearchParams();
+  return <div>{label} concept={params.get('concept') ?? ''} mistake={params.get('mistake') ?? ''}</div>;
+}
 
 vi.mock('@/lib/auth/client', () => ({ authFetch: vi.fn() }));
 vi.mock('@/lib/demoPersona', () => ({ setDemoOutcome: vi.fn() }));
@@ -37,8 +45,8 @@ async function renderPage() {
         <Route path="/attempt/:objectId" element={<Page />} />
         <Route path="/lesson/:conceptId" element={<div>LESSON PAGE: matrix-operations</div>} />
         <Route path="/smart-practice" element={<div>SMART PRACTICE PAGE</div>} />
-        <Route path="/theorem-wizard/:module" element={<div>THEOREM WIZARD</div>} />
-        <Route path="/distribution-selector" element={<div>DISTRIBUTION SELECTOR</div>} />
+        <Route path="/theorem-wizard/:module" element={<WizardStub label="THEOREM WIZARD" />} />
+        <Route path="/distribution-selector" element={<WizardStub label="DISTRIBUTION SELECTOR" />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -347,7 +355,15 @@ describe('PracticeAttemptPage — method-selection wizard link (one learn-more s
     expect(screen.queryByText('Explore this concept')).toBeNull();
     const link = screen.getByText(/Which method applies/);
     fireEvent.click(link);
-    await waitFor(() => expect(screen.getByText('THEOREM WIZARD')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/THEOREM WIZARD/)).toBeInTheDocument());
+  });
+
+  it('carries the concept and mistake label into the wizard link so it connects to the actual problem', async () => {
+    await submitWrong(LA_ITEM, 'method_selection');
+    fireEvent.click(screen.getByText(/Which method applies/));
+    await waitFor(() =>
+      expect(screen.getByText(`THEOREM WIZARD concept=${LA_ITEM.node_id} mistake=picking the wrong approach`)).toBeInTheDocument(),
+    );
   });
 
   it('also treats the plain "method" tag as a method-selection miss', async () => {
@@ -365,7 +381,7 @@ describe('PracticeAttemptPage — method-selection wizard link (one learn-more s
     await submitWrong(PS_ITEM, 'method_selection');
     const link = screen.getByText(/Which method applies/);
     fireEvent.click(link);
-    await waitFor(() => expect(screen.getByText('DISTRIBUTION SELECTOR')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/DISTRIBUTION SELECTOR/)).toBeInTheDocument());
   });
 
   it('falls back to "Explore this concept" for a non-method miss, even on a topic with a trainer', async () => {

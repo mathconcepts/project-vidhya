@@ -16,9 +16,9 @@ import TheoremWizardPage from './TheoremWizardPage';
 import DistributionSelectorPage from './DistributionSelectorPage';
 import { SELF_CHECK_LABEL } from '@/components/lesson/interactives/DecisionTreeWalkthrough';
 
-function renderWizard(moduleId: string) {
+function renderWizard(moduleId: string, search = '') {
   return render(
-    <MemoryRouter initialEntries={[`/theorem-wizard/${moduleId}`]}>
+    <MemoryRouter initialEntries={[`/theorem-wizard/${moduleId}${search}`]}>
       <Routes>
         <Route path="/theorem-wizard/:module" element={<TheoremWizardPage />} />
       </Routes>
@@ -92,12 +92,36 @@ describe('TheoremWizardPage', () => {
     renderWizard('vector-calculus');
     expect(screen.getByText(SELF_CHECK_LABEL)).toBeInTheDocument();
   });
+
+  // Regression (/investigate, 2026-09-03): "the walkthrough decision tree
+  // ... must help them connect to the concept in the problem" — arriving
+  // here with no context read as a disconnected generic tool.
+  describe('context from a wrong practice answer', () => {
+    it('shows no context banner or practice CTA when opened directly (no query params)', () => {
+      renderWizard('vector-calculus');
+      expect(screen.queryByText(/You got a/)).toBeNull();
+      expect(screen.queryByText('Practice more like this')).toBeNull();
+    });
+
+    it('names the concept and mistake when arriving from a wrong answer', () => {
+      renderWizard('vector-calculus', '?concept=greens-theorem&mistake=picking%20the%20wrong%20approach');
+      expect(
+        screen.getByText((_, node) => node?.textContent === 'You got a greens theorem question wrong — picking the wrong approach. Work through the questions below to find where the mix-up happened.'),
+      ).toBeInTheDocument();
+    });
+
+    it('shows the concept-scoped practice CTA regardless of whether a leaf has been reached', () => {
+      renderWizard('vector-calculus', '?concept=greens-theorem');
+      const cta = screen.getByRole('link', { name: /practice more like this/i });
+      expect(cta).toHaveAttribute('href', '/smart-practice?concept=greens-theorem');
+    });
+  });
 });
 
 describe('DistributionSelectorPage', () => {
-  function renderPage() {
+  function renderPage(search = '') {
     return render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[`/distribution-selector${search}`]}>
         <DistributionSelectorPage />
       </MemoryRouter>,
     );
@@ -156,5 +180,20 @@ describe('DistributionSelectorPage', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Exponential(λ=1/200)' }));
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  describe('context from a wrong practice answer', () => {
+    it('shows no context banner or practice CTA when opened directly (no query params)', () => {
+      renderPage();
+      expect(screen.queryByText(/You got a/)).toBeNull();
+      expect(screen.queryByText('Practice more like this')).toBeNull();
+    });
+
+    it('shows the concept-scoped practice CTA when arriving from a wrong answer', () => {
+      renderPage('?concept=binomial-distribution&mistake=picking%20the%20wrong%20approach');
+      expect(screen.getByText(/binomial distribution/)).toBeInTheDocument();
+      const cta = screen.getByRole('link', { name: /practice more like this/i });
+      expect(cta).toHaveAttribute('href', '/smart-practice?concept=binomial-distribution');
+    });
   });
 });

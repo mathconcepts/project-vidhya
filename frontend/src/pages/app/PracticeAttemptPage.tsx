@@ -558,7 +558,14 @@ export default function PracticeAttemptPage() {
                     <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
                       {!result.grade.correct && (() => {
                         const isMethodMiss = result.failure_tag === 'method_selection' || result.failure_tag === 'method';
-                        const wizardRoute = isMethodMiss ? wizardRouteForTopic(item.topic) : null;
+                        const wizardBaseRoute = isMethodMiss ? wizardRouteForTopic(item.topic) : null;
+                        // Carries the concept + diagnosed mistake so the
+                        // wizard can connect the tree back to what actually
+                        // went wrong (/investigate, 2026-09-03) instead of
+                        // opening as a disconnected generic tool.
+                        const wizardRoute = wizardBaseRoute
+                          ? `${wizardBaseRoute}?concept=${encodeURIComponent(item.node_id)}&mistake=${encodeURIComponent(COMMON_MISTAKE_LABEL[result.failure_tag!] ?? '')}`
+                          : null;
                         return wizardRoute ? (
                           <button
                             type="button"

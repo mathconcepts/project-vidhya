@@ -15,15 +15,22 @@
  * fails.
  *
  * Self-check only (E5) — no marks are recorded.
+ *
+ * /investigate (2026-09-03): same `?concept=&mistake=` context + practice
+ * loop as TheoremWizardPage — see WizardMistakeLoop.tsx's doc comment.
  */
 
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Sigma } from 'lucide-react';
 import { GuidedWalkthrough } from '@/components/lesson/interactives/GuidedWalkthrough';
 import { DISTRIBUTION_TRAINER } from '@/data/method-selection-trainers';
+import { WizardContextBanner, WizardPracticeCTA } from '@/components/app/WizardMistakeLoop';
 
 export default function DistributionSelectorPage() {
   const trainer = DISTRIBUTION_TRAINER;
+  const [searchParams] = useSearchParams();
+  const concept = searchParams.get('concept');
+  const mistakeLabel = searchParams.get('mistake');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 640, margin: '0 auto' }}>
@@ -58,7 +65,11 @@ export default function DistributionSelectorPage() {
         {trainer.description}
       </p>
 
+      <WizardContextBanner concept={concept} mistakeLabel={mistakeLabel} />
+
       <GuidedWalkthrough spec={trainer.spec} />
+
+      <WizardPracticeCTA concept={concept} />
     </div>
   );
 }

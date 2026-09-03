@@ -451,9 +451,10 @@
       "answer_range": [18.905, 19.095],
       "correct_answer": "19",
       "solution_steps": [
-        "By the spectral theorem, A = QΛQᵀ with Λ = diag(3,-2), so A³ = QΛ³Qᵀ has eigenvalues 3³=27 and (-2)³=-8.",
-        "trace(A³) = 27 + (-8) = 19.",
-        "Cross-check by direct multiplication: A² = [[2,2],[2,-1]]² = [[8,2],[2,5]] (trace 13 = 3²+(-2)² = 9+4, matches). A³ = A²·A = [[8,2],[2,5]]·[[2,2],[2,-1]] = [[20,14],[14,-1]], trace = 20 + (-1) = 19 — matches."
+        "Same matrix as the concept page's flipped-arrow demo: eigenvalues 3 and -2 (the -2 is just the flipped arrow — still a real eigenvalue, sign and all).",
+        "Cubing a matrix cubes its eigenvalues — that's the whole point of finding them. So A³'s eigenvalues are 3³ = 27 and (-2)³ = -8.",
+        "The trace of a matrix is just the sum of its eigenvalues, so trace(A³) = 27 + (-8) = 19.",
+        "Cross-check by multiplying it out directly: A² = [[2,2],[2,-1]]² = [[8,2],[2,5]] — trace 13, matching 3²+(-2)² = 9+4. Then A³ = A²·A = [[20,14],[14,-1]] — trace 20+(-1) = 19. Matches."
       ],
       "verification_method": "hand_checkable_spectral_decomposition_power"
     },

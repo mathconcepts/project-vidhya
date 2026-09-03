@@ -2610,6 +2610,81 @@ that atom type's own length discipline, not the selector.
 **Tests:** backend 4678 → 4692 (+14). `tsc --noEmit` clean.
 `ci:variant-agreement` unchanged (610 pairs, clean).
 
+---
+
+### `/investigate` on a live-QA report: cramped CTAs + Cayley-Hamilton silo (2026-09-03)
+
+Three screenshots, four numbered asks: the practice-page CTA row reads
+cramped; explanation content isn't resonant (mandatory: motion/animation/
+progression); Cayley-Hamilton's intuition and its interactive hook read as
+two disconnected pieces, not one; static text + unglossed jargon is
+"non-negotiable" to fix; `mnemonic`/`intuition`/`hook` should replace
+static text with a more intuitive interface. Root-caused each before
+touching anything.
+
+**Cramped CTAs — root cause confirmed, not assumed.**
+`PracticeAttemptPage.tsx`'s `NEXT_MOVE_BUTTON_BASE` set two multi-word
+labels ("Explore this concept", "Practice more like this", each with a
+leading icon) at `flex: 1` inside a narrow card — on a phone-width screen
+each pill got ~150-170px, not enough for either label on one line, so text
+wrapped 2-3 lines inside a nominally-44px pill. `fontSize` was also
+`var(--text-caption)` (12px) — below DESIGN-SYSTEM.md's own 13px floor for
+anything a student reads. Fixed: the row is now `flexDirection: 'column'`
+(each button full-width, stacked) at `var(--text-subhead)` (15px). The
+floating `TutorFab` visually crowding the row in the screenshot is not a
+FAB bug — it sits at a fixed, safe-area-aware screen position; the crowding
+was a symptom of the same cramped row scrolling into that spot, not a
+separate defect, so it wasn't touched.
+
+**Cayley-Hamilton — the concrete worked example the report asked to
+"generate."** `intuition.md` was a wall of static prose (274 real prose
+words: a formal definition, a 3-item "Why This Matters" numbered list, a
+closing paragraph) with zero interactive content and zero connection to
+`hook.md`'s own resonance-beat scene — literally the "interactive and text
+are in silos" complaint, verified by reading both files side by side.
+Rewritten: the new `intuition.md`/`-shaken.md`/`-assured.md` triple carries
+a NEW resonance-beat scene (predict-before-reveal, matching the
+`ped_predict_before_reveal` pedagogy pattern) that reuses the SAME matrix
+$A=\begin{pmatrix}1&1\\0&2\end{pmatrix}$ and the SAME eigen-directions
+`hook.md` already established — closing the silo by continuing one thread
+instead of introducing a second disconnected example. The scene's own
+"why" IS the theorem's intuition: on each eigen-direction $A$ acts like its
+eigenvalue, both eigenvalues are roots of $p(\lambda)$, and since the two
+eigen-directions span the plane, $p(A)$ must be zero everywhere — watched,
+not asserted. A trap beat is honest about scope: this argument only
+directly works for a diagonalizable matrix; the general proof (any size)
+goes through the adjugate identity instead, named explicitly in the
+`assured` variant rather than left as a silent overclaim. Every numeric
+claim (eigenvalues 1 and 2, $p(1)=0$, $p(2)=0$, $A^2=\begin{pmatrix}1&3\\0&4\end{pmatrix}$)
+verified live against Wolfram|Alpha before authoring. Base prose word
+count: 274 → 70 (the interactive scene now carries what the numbered list
+used to spell out) — a real, measured "explain more in less," not a claim.
+`mnemonic.md` (no stance variants to keep in sync) got a lighter pass:
+"trace" and "determinant" glossed in plain words on first use, the
+unexplained "adjugate method" comparison removed rather than left dangling.
+
+**Verified against the real gates, not just typechecked.**
+`ci:interactive-specs` (386 blocks, +3), `ci:variant-agreement` (610 pairs,
+unchanged — the new fence is byte-identical across all three stance
+files), `ci:katex-fences` (1723 files), `ci:content-integrity` (1729
+files), `ci:la-walkthrough` (26/26, cayley-hamilton's interactive-leg
+count 6→9) all clean. Full suites: backend 4692/4692, frontend 2604/2604,
+`tsc --noEmit` clean both sides, `npm run ci` (18 gates) clean.
+
+**Scope, named honestly — this fixed ONE concrete example, not the
+corpus.** The report's "mnemonic, intuition, hook... wherever needed" and
+"non-negotiable" language reads as a corpus-wide standard, but only
+Cayley-Hamilton's `intuition`/`mnemonic` were touched (hook already had a
+real scene, confirmed by reading it before assuming otherwise). No second
+interactive scene was built for `mnemonic.md` — a slider-driven
+`manipulable` widget (trace/determinant → $A^{-1}$) is a real, distinct
+next step, not attempted here given the same authoring + Wolfram-verification
+cost as the intuition scene. The same wall-of-text pattern almost
+certainly recurs on other concepts' `intuition`/`mnemonic` atoms — not
+audited corpus-wide in this pass. Both tracked in TODOS.md with the exact
+pattern that worked here (reuse the hook's own example, verify every
+number, keep fences byte-identical across stance triples) as the template.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

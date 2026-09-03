@@ -118,11 +118,22 @@ function wizardRouteForTopic(topic: string | null | undefined): string | null {
 
 // Shared base for the two post-wrong-answer CTA buttons below — only
 // background/border/color differ per button (indigo vs. green).
+//
+// /investigate (live-QA screenshot, cramped CTA row): these used to sit
+// side by side at `flex: 1`, each squeezed to roughly half the card's
+// width. "Explore this concept" and "Practice more like this" are both
+// multi-word labels plus a leading icon, so on a phone-width card they
+// wrapped to 2-3 lines inside a nominally-44px pill — the exact cramped
+// look in the report. Full-width, stacked rows give each label the room
+// to sit on one line. `--text-caption` (12px) was also below
+// DESIGN-SYSTEM.md's own 13px floor for anything a student reads —
+// bumped to `--text-subhead` (15px), appropriate for an actionable CTA
+// rather than metadata.
 const NEXT_MOVE_BUTTON_BASE: CSSProperties = {
-  flex: 1, minHeight: 44, padding: '0 12px', borderRadius: 'var(--radius-sm)',
-  fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
+  width: '100%', minHeight: 44, padding: '0 16px', borderRadius: 'var(--radius-sm)',
+  fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)',
   fontFamily: 'var(--font-sans)', cursor: 'pointer',
-  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
 };
 
 const fmt = (n: number) => {
@@ -555,7 +566,7 @@ export default function PracticeAttemptPage() {
                       guessed diagnosis is worse than the safe generic
                       default — gets the concept lesson instead. */}
                   {item?.node_id && (
-                    <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
                       {!result.grade.correct && (() => {
                         const isMethodMiss = result.failure_tag === 'method_selection' || result.failure_tag === 'method';
                         const wizardBaseRoute = isMethodMiss ? wizardRouteForTopic(item.topic) : null;

@@ -2168,6 +2168,18 @@ the `solution_steps` LaTeX-pipeline fix; extending
 backend 4672/4672, frontend 2572/2572. `npm run ci` (18 gates) clean.
 `tsc --noEmit` clean both sides.
 
+**Same-day follow-up fix (v4.53.1):** live-QA screenshot showed the wizard
+link stacked ABOVE "Explore this concept" and "Practice more like this",
+plus the "What's next for me?" text link below — 3 buttons + a link on a
+wrong answer, decision overload against Vidhya Clarity's one-focal-action
+rule. Fixed: the wizard link and "Explore this concept" are both "go
+learn" moves and now share ONE slot — the wizard wins only when the
+server's diagnosis (`failure_tag === 'method_selection' || 'method'`) says
+the miss was actually a method choice and the topic has a trainer; every
+other wrong answer (including an untagged one — a guessed diagnosis is
+worse than the safe generic default) gets the lesson instead, never both.
+3 new tests (16 → 19).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

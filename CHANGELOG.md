@@ -4,6 +4,24 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.53.1] — 2026-09-03 — Fix: one learn-more slot on a wrong practice answer
+
+No new env vars, no migrations.
+
+Live-QA screenshot flagged 4.53.0's post-answer CTA row as decision
+overload: on a wrong answer the page stacked "Which method applies? Work
+through it" above "Explore this concept" / "Practice more like this", plus
+a "What's next for me?" text link below — 3 buttons and a link competing
+for attention, against Vidhya Clarity's one-focal-action rule.
+
+Root cause: the wizard link and "Explore this concept" are both "go learn"
+moves and were never meant to stack. `PracticeAttemptPage.tsx` now shows
+exactly one of them per learn-more slot: the wizard wins only when the
+server's own diagnosis (`failure_tag === 'method_selection' || 'method'`)
+says the miss WAS a method choice and the topic has a real trainer; every
+other wrong answer — including an untagged one — gets the concept lesson,
+never both. 3 new tests (16 → 19) lock the exclusivity.
+
 ## [4.53.0] — 2026-09-03 — Content teaching arc: predict-before-reveal + solver discoverability
 
 No new env vars, no migrations.

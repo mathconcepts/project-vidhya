@@ -532,44 +532,59 @@ export default function PracticeAttemptPage() {
                       choosing between "I don't understand this concept" (go
                       learn it) and "I get it, let me try another" (go
                       practice it); a correct answer only needs the second —
-                      offering "Explore this concept" as remediation for
-                      something the student just proved they know would be
-                      backwards. (/investigate, 2026-09-02 first added this
-                      for wrong answers only; a follow-up the same day found
-                      the row was unconditionally hidden after a correct
-                      answer too — "Smart Practice gives no way to keep
-                      practicing after getting it right" — so the row now
-                      always renders, and only the remediation button is
-                      gated on the miss.) */}
-                  {!result.grade.correct && wizardRouteForTopic(item?.topic) && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(wizardRouteForTopic(item?.topic)!)}
-                      style={{
-                        ...NEXT_MOVE_BUTTON_BASE,
-                        flex: 'none', width: '100%', marginTop: 4,
-                        background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
-                        color: 'var(--indigo-ink)',
-                      }}
-                    >
-                      <GitBranch size={14} /> Which method applies? Work through it
-                    </button>
-                  )}
+                      offering remediation for something the student just
+                      proved they know would be backwards. (/investigate,
+                      2026-09-02 first added this for wrong answers only; a
+                      follow-up the same day found the row was
+                      unconditionally hidden after a correct answer too —
+                      "Smart Practice gives no way to keep practicing after
+                      getting it right" — so the row now always renders, and
+                      only the remediation button is gated on the miss.)
+
+                      /investigate (2026-09-03) found a THIRD button —
+                      "Which method applies?" stacked above this row — read
+                      as decision overload right after a miss (3 buttons + a
+                      text link competing for the one focal action Vidhya
+                      Clarity calls for). The wizard link and "Explore this
+                      concept" are both "go learn" moves, so they now share
+                      ONE slot instead of stacking: the wizard wins only when
+                      the server's own diagnosis says the miss WAS a method
+                      choice (`failure_tag` is 'method_selection' or
+                      'method') and the topic has a real trainer; every other
+                      wrong answer — including an untagged one, since a
+                      guessed diagnosis is worse than the safe generic
+                      default — gets the concept lesson instead. */}
                   {item?.node_id && (
                     <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
-                      {!result.grade.correct && (
-                        <button
-                          type="button"
-                          onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
-                          style={{
-                            ...NEXT_MOVE_BUTTON_BASE,
-                            background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
-                            color: 'var(--indigo-ink)',
-                          }}
-                        >
-                          <GraduationCap size={14} /> Explore this concept
-                        </button>
-                      )}
+                      {!result.grade.correct && (() => {
+                        const isMethodMiss = result.failure_tag === 'method_selection' || result.failure_tag === 'method';
+                        const wizardRoute = isMethodMiss ? wizardRouteForTopic(item.topic) : null;
+                        return wizardRoute ? (
+                          <button
+                            type="button"
+                            onClick={() => navigate(wizardRoute)}
+                            style={{
+                              ...NEXT_MOVE_BUTTON_BASE,
+                              background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
+                              color: 'var(--indigo-ink)',
+                            }}
+                          >
+                            <GitBranch size={14} /> Which method applies?
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
+                            style={{
+                              ...NEXT_MOVE_BUTTON_BASE,
+                              background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
+                              color: 'var(--indigo-ink)',
+                            }}
+                          >
+                            <GraduationCap size={14} /> Explore this concept
+                          </button>
+                        );
+                      })()}
                       <button
                         type="button"
                         onClick={() => navigate(`/smart-practice?concept=${encodeURIComponent(item.node_id)}`)}

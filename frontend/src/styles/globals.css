@@ -312,6 +312,22 @@
   .vidhya-atom-body--beat-caption p {
     margin: 0;
   }
+
+  /*
+   * TrapRow's text/avoid lines (Simulation.tsx) — root-caused by
+   * /investigate (2026-09-03, live-QA screenshot): these two lines were
+   * plain `{trap.text}`/`{trap.avoid}` string interpolation, never routed
+   * through MarkdownAtomRenderer, so any $inline math$ an author wrote in
+   * a trap (e.g. "Check $\text{rank}(A)$ once...") rendered as the literal
+   * source string instead of typeset math. Now real markdown/KaTeX;
+   * matches .vidhya-resonance-trap__text/__avoid's prior plain styling.
+   */
+  .vidhya-atom-body--trap,
+  .vidhya-atom-body--trap p {
+    margin: 0 0 var(--space-1);
+    font-size: var(--text-subhead);
+    color: var(--text-secondary);
+  }
 }
 
 /* ── Resonance beats: trap row + segmented beat bar (Simulation.tsx, plan

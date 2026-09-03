@@ -17,6 +17,7 @@
 import { Manipulable } from './Manipulable';
 import { Simulation } from './Simulation';
 import { GuidedWalkthrough } from './GuidedWalkthrough';
+import { WhyThisHelps } from './WhyThisHelps';
 import { parseInteractiveSpec } from './types';
 
 interface Props {
@@ -45,14 +46,23 @@ export function InteractiveSidecar({ body, showAuthoringErrors }: Props) {
   }
 
   const { spec } = result;
-  switch (spec.kind) {
-    case 'manipulable':
-      return <Manipulable spec={spec} />;
-    case 'simulation':
-      return <Simulation spec={spec} />;
-    case 'guided_walkthrough':
-      return <GuidedWalkthrough spec={spec} />;
-  }
+  const widget = (() => {
+    switch (spec.kind) {
+      case 'manipulable':
+        return <Manipulable spec={spec} />;
+      case 'simulation':
+        return <Simulation spec={spec} />;
+      case 'guided_walkthrough':
+        return <GuidedWalkthrough spec={spec} />;
+    }
+  })();
+
+  return (
+    <div>
+      <WhyThisHelps why={spec.why} idHint={spec.title} />
+      {widget}
+    </div>
+  );
 }
 
 // Re-export for convenience so consumers can `import from interactives`

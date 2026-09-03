@@ -21,6 +21,18 @@ export const INTERACTIVE_SPEC_VERSION = 1 as const;
 
 export type InteractiveKind = 'manipulable' | 'simulation' | 'guided_walkthrough';
 
+/** A framing sentence, not a second paragraph — bounded like every other LLM-reachable string in this schema. */
+export const MAX_WHY_CHARS = 220;
+
+/** Shared shape check for the optional `why` field, common to all three kinds. */
+function checkWhy(raw: any): ParseFailure | null {
+  if (raw.why === undefined) return null;
+  if (typeof raw.why !== 'string' || raw.why.trim().length === 0 || raw.why.length > MAX_WHY_CHARS) {
+    return { ok: false, reason: `${raw.kind}.why must be a non-empty string of at most ${MAX_WHY_CHARS} characters` };
+  }
+  return null;
+}
+
 /**
  * Slider-driven derived value. Operator drags the input → live formula
  * evaluation updates the displayed output. Useful for "what's the
@@ -31,6 +43,16 @@ export interface ManipulableSpec {
   kind: 'manipulable';
   /** Display title above the widget. Concise. */
   title: string;
+  /**
+   * ELI5 framing sentence: why this widget exists and what dragging it
+   * teaches. Rendered above the widget by InteractiveSidecar, one line,
+   * before the title — a student should never meet an interactive with no
+   * idea why it's there (live-QA finding, 2026-09-03). Optional so a v1
+   * spec authored before this field still validates; every NEW spec should
+   * carry one. Capped at MAX_WHY_CHARS — a framing sentence, not a second
+   * paragraph.
+   */
+  why?: string;
   /** One slider per controllable parameter. */
   inputs: Array<{
     id: string;             // referenced inside `formula`
@@ -114,6 +136,8 @@ export interface SimulationSpec {
   v: typeof INTERACTIVE_SPEC_VERSION;
   kind: 'simulation';
   title: string;
+  /** ELI5 framing sentence: why this animation exists. See ManipulableSpec.why. */
+  why?: string;
   /**
    * Parametric expressions in t ∈ [t_min, t_max]. Required unless
    * `linear_map` is present (the validator enforces exactly that); a
@@ -247,6 +271,8 @@ export interface GuidedWalkthroughSpec {
   v: typeof INTERACTIVE_SPEC_VERSION;
   kind: 'guided_walkthrough';
   title: string;
+  /** ELI5 framing sentence: why this walkthrough exists. See ManipulableSpec.why. */
+  why?: string;
   steps: Array<{
     prompt: string;          // shown immediately
     hint?: string;           // shown on first click
@@ -343,10 +369,14 @@ function validateSpec(raw: any): ParseSuccess | ParseFailure {
     return { ok: false, reason: `unsupported spec version: ${raw.v}` };
   }
   const kind = raw.kind;
+  if (kind !== 'manipulable' && kind !== 'simulation' && kind !== 'guided_walkthrough') {
+    return { ok: false, reason: `unknown interactive kind: ${kind}` };
+  }
+  const whyFailure = checkWhy(raw);
+  if (whyFailure) return whyFailure;
   if (kind === 'manipulable') return validateManipulable(raw);
   if (kind === 'simulation') return validateSimulation(raw);
-  if (kind === 'guided_walkthrough') return validateGuided(raw);
-  return { ok: false, reason: `unknown interactive kind: ${kind}` };
+  return validateGuided(raw);
 }
 
 function validateManipulable(raw: any): ParseSuccess | ParseFailure {

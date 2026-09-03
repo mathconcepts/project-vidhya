@@ -8,8 +8,9 @@
  * phases — just confirms the initial prompt renders.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { InteractiveSidecar } from './InteractiveSidecar';
 
 const M_BODY = (json: object) => `# heading\n\n\`\`\`interactive-spec\n${JSON.stringify(json)}\n\`\`\``;
@@ -83,5 +84,67 @@ describe('InteractiveSidecar dispatcher', () => {
     const body = M_BODY({ v: 1, kind: 'glow-stick' });
     const { container } = render(<InteractiveSidecar body={body} />);
     expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('InteractiveSidecar "why" framing (live-QA, 2026-09-03)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('renders no why-framing line when the spec has no why field', () => {
+    const body = M_BODY({
+      v: 1,
+      kind: 'manipulable',
+      title: 'Eigenvalue explorer',
+      inputs: [{ id: 'a', label: 'a', min: -3, max: 3, initial: 1 }],
+      outputs: [{ label: 'λ', formula: 'a + 2' }],
+    });
+    render(<InteractiveSidecar body={body} />);
+    expect(screen.queryByText('Hide these tips')).not.toBeInTheDocument();
+  });
+
+  it('renders the why-framing line when the spec carries one', () => {
+    const body = M_BODY({
+      v: 1,
+      kind: 'manipulable',
+      title: 'Eigenvalue explorer',
+      why: 'Drag this to see how the eigenvalue changes before we name the pattern.',
+      inputs: [{ id: 'a', label: 'a', min: -3, max: 3, initial: 1 }],
+      outputs: [{ label: 'λ', formula: 'a + 2' }],
+    });
+    render(<InteractiveSidecar body={body} />);
+    expect(screen.getByText(/Drag this to see how the eigenvalue changes/)).toBeInTheDocument();
+    expect(screen.getByText('Hide these tips')).toBeInTheDocument();
+  });
+
+  it('"Hide these tips" removes the framing line and persists the choice', async () => {
+    const user = userEvent.setup();
+    const body = M_BODY({
+      v: 1,
+      kind: 'manipulable',
+      title: 'Eigenvalue explorer',
+      why: 'Drag this to see how the eigenvalue changes before we name the pattern.',
+      inputs: [{ id: 'a', label: 'a', min: -3, max: 3, initial: 1 }],
+      outputs: [{ label: 'λ', formula: 'a + 2' }],
+    });
+    render(<InteractiveSidecar body={body} />);
+    await user.click(screen.getByText('Hide these tips'));
+    expect(screen.queryByText(/Drag this to see how the eigenvalue changes/)).not.toBeInTheDocument();
+    expect(localStorage.getItem('vidhya.eli_framing')).toBe('0');
+  });
+
+  it('respects a previously-disabled preference on mount', () => {
+    localStorage.setItem('vidhya.eli_framing', '0');
+    const body = M_BODY({
+      v: 1,
+      kind: 'manipulable',
+      title: 'Eigenvalue explorer',
+      why: 'Drag this to see how the eigenvalue changes before we name the pattern.',
+      inputs: [{ id: 'a', label: 'a', min: -3, max: 3, initial: 1 }],
+      outputs: [{ label: 'λ', formula: 'a + 2' }],
+    });
+    render(<InteractiveSidecar body={body} />);
+    expect(screen.queryByText(/Drag this to see how the eigenvalue changes/)).not.toBeInTheDocument();
   });
 });

@@ -11,6 +11,7 @@
 
 import { useState } from 'react';
 import { DesmosLite } from './interactives/DesmosLite';
+import { WhyThisHelps } from './interactives/WhyThisHelps';
 import { ExternalLink, ChevronDown, ChevronUp, BarChart2 } from 'lucide-react';
 
 interface VizSpec {
@@ -20,6 +21,16 @@ interface VizSpec {
   sliders?: string;
   xRange?: string;
   wolframQuery: string;
+  /**
+   * ELI5 framing: why this specific plot is worth exploring, and (where the
+   * plot is a simplification of the real object — e.g. a 2x2 matrix reduced
+   * to a 1x1 slice) an honest bridge back to what the concept actually is.
+   * Optional so the other 52 not-yet-audited entries below still render
+   * exactly as before (live-QA finding, 2026-09-03: "why linear map is
+   * there? not just explanation, even exploration must be ELI5" — see
+   * TODOS.md for the rest of this audit).
+   */
+  why?: string;
 }
 
 // ── Concept-to-visualization map ─────────────────────────────────────────────
@@ -130,8 +141,9 @@ const CONCEPT_VIZ: Record<string, VizSpec> = {
 
   // ── Linear Algebra ───────────────────────────────────────────────────────
   'matrix-operations': {
-    title: 'Linear map y = Ax (1D slice)',
-    description: 'A 1×1 linear map multiplies inputs by a constant. Sliders show the effect.',
+    title: 'The simplest possible matrix: just one number',
+    description: 'A full matrix stretches and tilts a whole plane (see the animation above). This plot shrinks that idea down to one dimension — a "1×1 matrix" is just a single number a, and multiplying by it is the whole story: drag a and watch the line get steeper or flatter, the simplest version of what every bigger matrix does.',
+    why: 'This is a simplification, not the real thing — a 2×2 matrix acts on a whole plane, which a straight-line plot can\'t show. This 1-number version isolates the "stretch by a factor" idea from everything else a matrix can do, before the sixteen-arrow animation above puts it back together.',
     equation: '2*x',
     sliders: 'a:0.5,3,2',
     xRange: '-3,3',
@@ -476,6 +488,8 @@ export function ConceptMathViz({ conceptId }: ConceptMathVizProps) {
 
       {expanded && (
         <div style={{ padding: '0 14px 14px' }}>
+          <WhyThisHelps why={spec.why} idHint={`concept-math-viz.${conceptId}`} />
+
           {/* Description */}
           <p style={{ margin: '0 0 12px', fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
             {spec.description}

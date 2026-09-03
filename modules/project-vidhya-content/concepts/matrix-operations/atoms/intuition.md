@@ -20,24 +20,25 @@ GATE tests three things here: computing a single entry without building the whol
 {
   "v": 1,
   "kind": "guided_walkthrough",
+  "why": "Reading about matrix multiplication isn't the same as doing it with your own hand — try these three questions yourself before moving on.",
   "title": "Try It: 2×2 Matrix Multiplication",
   "steps": [
     {
-      "prompt": "Compute (AB)₁₁ for A = [[1,2],[3,4]] and B = [[5,6],[7,8]].",
-      "hint": "Row 1 of A is [1, 2]. Column 1 of B is [5, 7]. The (1,1) entry is their dot product.",
-      "answer": "(AB)₁₁ = 1·5 + 2·7 = 5 + 14 = 19"
+      "prompt": "Compute $(AB)_{11}$ for $A=\\begin{pmatrix}1&2\\\\3&4\\end{pmatrix}$ and $B=\\begin{pmatrix}5&6\\\\7&8\\end{pmatrix}$.",
+      "hint": "Row 1 of $A$ is $(1,2)$. Column 1 of $B$ is $(5,7)$. The $(1,1)$ entry is their dot product.",
+      "answer": "$(AB)_{11} = 1\\cdot5 + 2\\cdot7 = 5+14 = 19$"
     },
     {
-      "prompt": "Now compute (AB)₁₂.",
-      "hint": "Row 1 of A is [1, 2]. Column 2 of B is [6, 8].",
-      "answer": "(AB)₁₂ = 1·6 + 2·8 = 6 + 16 = 22"
+      "prompt": "Now compute $(AB)_{12}$.",
+      "hint": "Row 1 of $A$ is $(1,2)$. Column 2 of $B$ is $(6,8)$.",
+      "answer": "$(AB)_{12} = 1\\cdot6 + 2\\cdot8 = 6+16 = 22$"
     },
     {
-      "prompt": "Does AB = BA? Compute (BA)₁₁ to check.",
-      "hint": "Row 1 of B is [5, 6]. Column 1 of A is [1, 3].",
-      "answer": "(BA)₁₁ = 5·1 + 6·3 = 5 + 18 = 23 ≠ 19. Order matters — matrix multiplication is not commutative."
+      "prompt": "Does $AB=BA$? Compute $(BA)_{11}$ to check.",
+      "hint": "Row 1 of $B$ is $(5,6)$. Column 1 of $A$ is $(1,3)$.",
+      "answer": "$(BA)_{11} = 5\\cdot1 + 6\\cdot3 = 5+18 = 23 \\neq 19$. Order matters — matrix multiplication is not commutative."
     }
   ],
-  "caption": "Each entry (AB)ᴵⱼ = dot product of row i of A with column j of B."
+  "caption": "Each entry $(AB)_{ij}$ = dot product of row $i$ of $A$ with column $j$ of $B$."
 }
 ```

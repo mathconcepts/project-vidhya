@@ -4,6 +4,42 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.51.0] — 2026-09-03 — Why-first interactive framing
+
+No new env vars, no migrations.
+
+Live-QA report (4 screenshots, matrix-operations lesson) via `/investigate`,
+followed by `/autoplan` on the resulting content-strategy question. Full
+root-cause writeup: `docs/designs/2026-09-03-why-first-interactive-
+framing.md`.
+
+Four issues, root-caused rather than patched: an interactive widget never
+explained why it was on the page (`InteractiveSidecar.tsx` framed none of
+the platform's 380 interactive-spec blocks); `ConceptMathViz.tsx`'s
+`matrix-operations` entry showed a scope-mismatched 1×1 "linear map"
+simplification for a 2×2-matrix lesson with zero explanation; the "Try It:
+2×2 Matrix Multiplication" walkthrough authored matrices as un-delimited
+bracket arrays instead of LaTeX, so KaTeX never rendered them — cramped,
+wrapping text in a box sized for short prose; and a resonance-beat scene's
+"circle has become a tilted ellipse" line explained why only in its
+advanced register, never the one a struggling student reads.
+
+**A reusable field, not four patches.** `why?: string` added to all 3
+`InteractiveSpec` kinds (`types.ts`, validated, capped at
+`MAX_WHY_CHARS=220`) and to `ConceptMathViz`'s `VizSpec`. `WhyThisHelps.tsx`
+is the one shared framing component, rendered by both `InteractiveSidecar`
+and `ConceptMathViz`; renders nothing when `why` is absent so unaudited
+content is unchanged. `useEliFraming.ts` backs a "Hide these tips" toggle
+(mirrors `useCalmMode.ts`'s persistence pattern), defaulting on.
+
+**Pilot slice:** `matrix-operations`'s guided walkthrough, hook scene, and
+`ConceptMathViz` entry, plus 4 other concepts sharing the same
+bracket-array bug (`lu-factorization`, `eigenvalues`, `change-of-basis`,
+`numerical-linear-algebra` — 15 files). 18 of 380 interactive-spec blocks
+now carry `why`; the other 362, plus 52 of 53 `ConceptMathViz` entries and
+a matching ellipse scene on `matrix-inverse`, are the next wave — tracked
+in TODOS.md.
+
 ## [4.50.0] — 2026-09-02 — Five live-QA fixes + a Wolfram-inspired prompt resource registry with 5 real modifiers
 
 No new env vars, no migrations.

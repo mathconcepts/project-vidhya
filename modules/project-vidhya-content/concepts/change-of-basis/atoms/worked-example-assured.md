@@ -31,22 +31,23 @@ $$P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}, \qquad [x]_E = P[x]_B = \begin{pmatri
 {
   "v": 1,
   "kind": "guided_walkthrough",
+  "why": "Try rebuilding this exact coordinate change yourself, one step at a time, before trusting the shortcut on a new problem.",
   "title": "Walk through: converting coordinates from basis B to standard basis E",
   "steps": [
     {
-      "prompt": "What are the columns of the change-of-basis matrix P?",
-      "hint": "The columns of P are the basis vectors v1 and v2, written in standard coordinates.",
-      "answer": "P = [v1 | v2] = [[1, 1], [1, -1]]"
+      "prompt": "What are the columns of the change-of-basis matrix $P$?",
+      "hint": "The columns of $P$ are the basis vectors $v_1$ and $v_2$, written in standard coordinates.",
+      "answer": "$P = [v_1 \\mid v_2] = \\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}$"
     },
     {
-      "prompt": "Now compute P times [x]_B. Multiply [[1,1],[1,-1]] by [[2],[1]].",
-      "hint": "Row 1: (1)(2) + (1)(1) = 3. Row 2: (1)(2) + (-1)(1) = 1.",
-      "answer": "[x]_E = [[3], [1]]"
+      "prompt": "Now compute $P[x]_B$. Multiply $\\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}$ by $\\begin{pmatrix}2\\\\1\\end{pmatrix}$.",
+      "hint": "Row 1: $(1)(2)+(1)(1)=3$. Row 2: $(1)(2)+(-1)(1)=1$.",
+      "answer": "$[x]_E = \\begin{pmatrix}3\\\\1\\end{pmatrix}$"
     },
     {
-      "prompt": "Verify: compute 2v1 + 1v2 directly and check you get [[3],[1]].",
-      "hint": "2[[1],[1]] + 1[[1],[-1]] = [[2],[2]] + [[1],[-1]] = [[3],[1]]",
-      "answer": "Verification complete: 2v1 + 1v2 = [[3],[1]]"
+      "prompt": "Verify: compute $2v_1+1v_2$ directly and check you get $\\begin{pmatrix}3\\\\1\\end{pmatrix}$.",
+      "hint": "$2\\begin{pmatrix}1\\\\1\\end{pmatrix}+1\\begin{pmatrix}1\\\\-1\\end{pmatrix}=\\begin{pmatrix}2\\\\2\\end{pmatrix}+\\begin{pmatrix}1\\\\-1\\end{pmatrix}=\\begin{pmatrix}3\\\\1\\end{pmatrix}$",
+      "answer": "Verification complete: $2v_1+1v_2=\\begin{pmatrix}3\\\\1\\end{pmatrix}$"
     }
   ],
   "caption": "Converting a vector's coordinates when you switch from basis B to the standard basis E"

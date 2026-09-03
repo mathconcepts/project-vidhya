@@ -4,6 +4,84 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
+
+**Trigger:** the next live-QA report naming a different concept's
+intuition or mnemonic card, or a decision to sweep this systematically
+before the next content wave.
+
+`/investigate` (2026-09-03, "explanation is not resonant... interactive
+and text are in silos") found `cayley-hamilton/atoms/intuition.md` was a
+274-word static wall (formal definition + numbered list) with zero
+connection to its own concept's `hook.md` resonance-beat scene, and fixed
+it by threading ONE shared worked example through both atoms via a new
+predict-before-reveal scene (see CLAUDE.md's 2026-09-03 "cramped CTAs +
+Cayley-Hamilton silo" section for the exact pattern and Wolfram-verification
+discipline used). This was NOT audited corpus-wide — Cayley-Hamilton was
+the one concrete example the report named. The same pattern (an
+`intuition`/`mnemonic` atom authored independently of its concept's hook,
+with no shared example or interactive element) likely recurs elsewhere;
+`scripts/check-reading-load.ts` (`npm run content:reading-load-report`)
+already flags atoms with zero beat coverage and can seed the worklist.
+
+**What:** for each flagged concept, read its `hook.md` (does it already
+carry a resonance scene? what matrix/example does it use?) before writing
+anything — the fix is threading the SAME example through `intuition.md`,
+not inventing a new one. Follow the exact discipline used on
+cayley-hamilton: verify every numeric claim live (Wolfram or by hand),
+keep the new fence byte-identical across base/shaken/assured, validate
+against `ci:interactive-specs`/`ci:variant-agreement`/`ci:katex-fences`/
+`ci:content-integrity`/`ci:la-walkthrough` before committing.
+
+**Where to start:** `modules/project-vidhya-content/concepts/<id>/atoms/hook.md`
++ `intuition.md` pairs, prioritized by `npm run content:reading-load-report`'s
+output (atoms with the highest real-vs-gate-visible reading-load ratio are
+the ones most likely authored independently of their hook).
+
+**Effort:** M per concept (authoring + Wolfram verification + the 5-gate
+validation pass), same shape repeated across however many concepts the
+audit flags.
+**Priority:** P2 — the report's core complaint, fixed for one worked
+example; scope was explicitly one concept, not the corpus.
+**Deferred from:** `/investigate` live-QA pass, 2026-09-03, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Mnemonic atoms could carry a `manipulable` interactive widget, not just prose
+
+**Trigger:** the audit above lands and a pattern emerges for which
+mnemonic atoms would actually benefit (a formula with 2+ free numbers,
+like Cayley-Hamilton's trace/determinant shortcut, is the natural
+candidate — a mnemonic that's just one fact doesn't need a slider).
+
+`/investigate` (2026-09-03) gave `cayley-hamilton/atoms/mnemonic.md` a
+prose-only pass (glossed "trace"/"determinant" on first use, dropped an
+unexplained "adjugate method" comparison) rather than building a second
+interactive scene — `AtomCardRenderer.tsx`'s figure-promotion logic is NOT
+gated by atom_type (confirmed by reading `promotedSimSpec`'s condition:
+`parsedSpec.spec.kind === 'simulation' && presentation.stage !== 'in_disclosure'`,
+and `mnemonic`'s own `ATOM_PRESENTATION_MAP` entry is `stage: 'above'`, not
+`in_disclosure`), so a `mnemonic.md` authored with a `manipulable` or
+`simulation` fence would already render exactly like a hook's. The gap is
+content, not code. A natural first candidate: a `manipulable` slider over
+$\text{tr}(A)$ and $\det(A)$ that live-updates $A^{-1}=\frac{1}{\det(A)}(\text{tr}(A)I-A)$
+as the reader drags — reinforcing "read the trace, read the determinant,
+done" by feel instead of by re-reading the sentence.
+
+**What:** author + Wolfram-verify a `manipulable` spec for
+`cayley-hamilton/atoms/mnemonic.md` (no stance variants exist for this
+atom today, so no byte-identical-fence constraint to satisfy), then decide
+whether the pattern generalizes to other concepts' mnemonic atoms.
+
+**Where to start:** `frontend/src/components/lesson/interactives/types.ts`'s
+`validateManipulable()` for the exact schema; `Manipulable.tsx` for how it
+renders.
+
+**Effort:** S for the one Cayley-Hamilton case; M+ if generalized corpus-wide.
+**Priority:** P3 — a real enhancement, not a reported defect (the prose
+pass already closed the "unglossed jargon" complaint for this atom).
+**Deferred from:** `/investigate` live-QA pass, 2026-09-03, branch
+`claude/content-strategy-framework-o9afoc`.
+
 ## `common_traps` needs a `stances:` guidance block and a prose budget
 
 **Trigger:** an editorial decision on the right word ceiling (this review

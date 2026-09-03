@@ -16,6 +16,7 @@ import {
   MAX_SIMULATION_BEATS,
   MAX_BEAT_TEXT_CHARS,
   MAX_GHOST_EXPR_CHARS,
+  MAX_WHY_CHARS,
   __testing,
 } from './types';
 import type { SimulationSpec } from './types';
@@ -951,5 +952,76 @@ describe('validateSimulation — linear_map mode', () => {
     const result = parse(bad);
     expect(result.ok).toBe(false);
     expect((result as { reason: string }).reason).toContain('area_label requires unit_square: true');
+  });
+});
+
+// ============================================================================
+// `why` framing field (live-QA finding, 2026-09-03: "the interactive — why
+// it's used is not clear"). Shared across all three kinds, so tested once
+// via validateSpec directly rather than duplicated per-kind.
+// ============================================================================
+
+describe('why framing field', () => {
+  const manipulableBase = {
+    v: INTERACTIVE_SPEC_VERSION,
+    kind: 'manipulable',
+    title: 'x',
+    inputs: [{ id: 'a', label: 'a', min: 0, max: 1 }],
+    outputs: [{ label: 'y', formula: 'a' }],
+  };
+
+  it('is optional — a spec with no why still validates', () => {
+    const r = __testing.validateSpec(manipulableBase);
+    expect(r.ok).toBe(true);
+  });
+
+  it('accepts a real why sentence', () => {
+    const r = __testing.validateSpec({ ...manipulableBase, why: 'Drag this to see the pattern before we name it.' });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect((r.spec as { why?: string }).why).toBe('Drag this to see the pattern before we name it.');
+  });
+
+  it('rejects an empty why string', () => {
+    const r = __testing.validateSpec({ ...manipulableBase, why: '' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain('why must be a non-empty string');
+  });
+
+  it('rejects a why longer than MAX_WHY_CHARS', () => {
+    const r = __testing.validateSpec({ ...manipulableBase, why: 'x'.repeat(MAX_WHY_CHARS + 1) });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toContain(`at most ${MAX_WHY_CHARS} characters`);
+  });
+
+  it('rejects a non-string why', () => {
+    const r = __testing.validateSpec({ ...manipulableBase, why: 42 as unknown as string });
+    expect(r.ok).toBe(false);
+  });
+
+  it('applies identically on a simulation spec', () => {
+    const spec = {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'simulation',
+      title: 'x',
+      x_expr: 't',
+      y_expr: 't',
+      t_min: 0,
+      t_max: 1,
+      why: 'Watch what multiplying by this matrix actually does to the whole plane.',
+    };
+    const r = __testing.validateSpec(spec);
+    expect(r.ok).toBe(true);
+  });
+
+  it('applies identically on a guided_walkthrough spec', () => {
+    const spec = {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'guided_walkthrough',
+      title: 'x',
+      why: 'Try it yourself before moving on — reading is not the same as doing.',
+      steps: [{ prompt: 'p', answer: 'a' }],
+    };
+    const r = __testing.validateSpec(spec);
+    expect(r.ok).toBe(true);
   });
 });

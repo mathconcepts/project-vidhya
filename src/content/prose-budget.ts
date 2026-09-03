@@ -28,6 +28,8 @@
  * is dense.
  */
 
+import { loadInteractiveSpecParser } from './interactive-spec-loader';
+
 /**
  * Words a student actually reads: LaTeX, fenced blocks and directive markers
  * removed.
@@ -53,6 +55,88 @@ export function countProseWords(content: string): number {
   stripped = stripped.replace(/:::[\s\S]+?:::/g, '');
 
   return stripped.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Counts words in a bare string of already-extracted text (a beat's `text`,
+ * a trap's `text`/`avoid`) — the same LaTeX-stripping rule as
+ * `countProseWords`, minus the fenced-block/directive stripping those never
+ * contain. A beat routinely carries inline `$...$` (see any resonance hook),
+ * and counting the LaTeX source as "words" would measure notation density,
+ * not reading load — the exact distortion `countProseWords` was built to
+ * avoid for atom bodies.
+ */
+function countWordsInBareText(text: string): number {
+  if (!text) return 0;
+  const stripped = text.replace(/\$\$[\s\S]+?\$\$/g, '').replace(/\$[^\n$]+\$/g, '');
+  return stripped.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * /design-review (2026-09-03, "content delivery... how to explain more in
+ * less"): a resonance-beat scene's `narration_steps` text lives inside the
+ * `` ```interactive-spec``` `` fence that `countProseWords` strips whole —
+ * by design, since that fence is normally 15-30 lines of layout JSON never
+ * shown as text. For a beat-carrying hook/intuition atom this is no longer
+ * true: the narration text INSIDE the fence is the majority of what a
+ * student actually reads, and `countProseWords`/`ASSURED_PROSE_BUDGET` are
+ * completely blind to it. Verified on `eigenvalues.hook`: the gate reports
+ * 64 words (the one intro paragraph); the real reading load for a single
+ * playthrough — one stance's text per beat, summed, plus the trap once
+ * revealed — is closer to 220.
+ *
+ * Mirrors `resolveBeatText`'s exact per-stance fallback
+ * (`frontend/src/components/lesson/interactives/Simulation.tsx`) rather than
+ * a second copy of that rule: `text_<stance>` when present for a matching
+ * stance, else the base `text`. `trap.text`/`trap.avoid` are counted
+ * unconditionally — `TrapRow` renders them for every stance once the trap
+ * beat is reached, never a stance-varied trap. Async because the shared
+ * `interactive-spec-loader` import is; returns 0 (never throws) when no
+ * fence is present, the fence isn't a `simulation` kind, or the validator is
+ * unreachable in this process (the demo-image degradation case) — a caller
+ * measuring reading load must treat that as "couldn't measure", same
+ * contract as the loader's own doc comment, not "zero beats".
+ */
+export async function countBeatProseWords(
+  content: string,
+  stance?: 'shaken' | 'assured',
+): Promise<number> {
+  if (!content || !content.includes('```interactive-spec')) return 0;
+  const parse = await loadInteractiveSpecParser();
+  if (!parse) return 0;
+  const result = parse(content);
+  if (!result.ok) return 0;
+  const spec = result.spec;
+  if (spec?.kind !== 'simulation' || !Array.isArray(spec.narration_steps)) return 0;
+
+  let total = 0;
+  for (const step of spec.narration_steps) {
+    const text =
+      (stance === 'shaken' && step.text_shaken) ||
+      (stance === 'assured' && step.text_assured) ||
+      step.text ||
+      '';
+    total += countWordsInBareText(text);
+    if (step.trap) {
+      total += countWordsInBareText(step.trap.text ?? '');
+      total += countWordsInBareText(step.trap.avoid ?? '');
+    }
+  }
+  return total;
+}
+
+/**
+ * The real reading load of an atom body for one served stance: the prose
+ * outside any fence, plus (for a beat-carrying atom) the narration text the
+ * fence hides from `countProseWords`. Async for the same reason
+ * `countBeatProseWords` is — see its doc comment for what a 0 beat
+ * contribution can mean when the validator is unreachable.
+ */
+export async function countTotalReadingLoad(
+  content: string,
+  stance?: 'shaken' | 'assured',
+): Promise<number> {
+  return countProseWords(content) + (await countBeatProseWords(content, stance));
 }
 
 /**

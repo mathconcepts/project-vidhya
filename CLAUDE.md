@@ -2543,6 +2543,73 @@ prev-arrow at index 0 needed it).
 
 **Tests:** frontend 2604/2604 unchanged. `tsc --noEmit` clean.
 
+---
+
+### Content delivery: a first-principles review (2026-09-03)
+
+`/design-review`, invoked not on a live URL but on the question "why did
+content delivery get it right/wrong, where to concentrate, how to explain
+more in less." Full findings, evidence, and priority order:
+`docs/designs/2026-09-03-content-delivery-first-principles-review.md`. No
+live browser in this sandbox — source-level review against the real
+pedagogy/generation code and the real corpus (101 concepts, 1,723 atom
+files), not a screenshot audit.
+
+**Verdict, in one line:** the density discipline this platform already
+built (stance guidance blocks, `ASSURED_PROSE_BUDGET`, the
+`ci:variant-agreement` gate) is real and works — it just has a coverage
+gap wide enough to miss the platform's own newest content, and one atom
+type slipped through without ever being covered at all.
+
+**Finding 1 — the prose-budget gate can't see resonance-beat text.**
+`countProseWords()` strips every fenced block before counting, on the
+(once-true) assumption a fence is 15-30 lines of JSON, never prose. Since
+resonance beats (v4.44.0), a beat-carrying hook's `narration_steps[].text`
+— what a student actually reads while the scene plays — lives inside that
+same fence. Measured corpus-wide with two new pure functions,
+`countBeatProseWords()`/`countTotalReadingLoad()`
+(`src/content/prose-budget.ts`): 102 of 1,723 atoms carry a beat scene, and
+the gate undercounts every one, up to 6.1x (`matrix-inverse/hook-assured.md`:
+gate sees 28 words, real reading load 172). `matrix-operations/hook.md`
+reads at 287 words in practice against a 64-word gate reading — more than
+the platform's *widest* existing ceiling (worked_example's 220), reported
+as under a third of it.
+
+**Finding 2 — `common_traps` is the longest atom type and the only
+unbudgeted one.** No `ASSURED_PROSE_BUDGET` entry, no `stances:` guidance
+block in any topic template, no density check anywhere. Measured across
+all 101 concepts: average 146 words, 18 of 101 already exceed 220 (every
+*other* atom type's widest ceiling) with no ceiling of their own; worst
+case 406 words (`symmetric-matrices`). This is the wrong atom type to
+leave undisciplined: `pedagogy-engine.ts`'s error-streak handling (E5)
+force-injects a student's `common_traps` atom to the front of the queue
+after 3 consecutive wrong answers — exactly the moment cognitive load is
+already highest (Eysenck's Attentional Control Theory: anxiety consumes
+the working-memory capacity a task needs).
+
+**Shipped, report-only by design.** `countBeatProseWords()`/
+`countTotalReadingLoad()` (`src/content/prose-budget.ts`, 10 new tests) —
+mirrors `resolveBeatText`'s exact per-stance fallback rather than a second
+copy of that rule, via the existing shared `interactive-spec-loader.ts`.
+`scripts/check-reading-load.ts` (`npm run content:reading-load-report`, 4
+new tests on its pure filename-parsing helper) is the corpus-wide report
+this doc's numbers came from — always exits 0, never a CI gate. Turning
+either finding into a blocking gate needs an editorial ceiling decision
+(what SHOULD a beat-carrying hook or a `common_traps` atom cost in words)
+this review measured but did not make unilaterally — see the design doc's
+"Where to concentrate" section and TODOS.md for the scoped follow-up.
+
+**Deliberately not done:** no content was rewritten (every number is a
+measurement, not a rewrite instruction); the intro-paragraph/beat-1
+redundancy check ran on one example (`eigenvalues.hook.md`), not the
+corpus; `common_traps`'s guidance block and budget entry were not
+authored; `pedagogy-engine.ts`'s error-streak behavior is untouched — it
+correctly prioritizes `common_traps` when a student struggles, the gap is
+that atom type's own length discipline, not the selector.
+
+**Tests:** backend 4678 → 4692 (+14). `tsc --noEmit` clean.
+`ci:variant-agreement` unchanged (610 pairs, clean).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

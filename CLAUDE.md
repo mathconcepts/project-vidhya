@@ -2323,6 +2323,50 @@ Content gates (`ci:interactive-specs` 383 blocks, `ci:variant-agreement`
 610 pairs, `ci:katex-fences` 1723, `ci:content-integrity` 1729) clean,
 unchanged counts throughout.
 
+**Same-day follow-up: a `line-panels` gif-scene type, for the one thing
+prose genuinely can't do.** The systems-of-equations `visual-analogy.md`
+rewrite above still described its three rank outcomes one at a time —
+resonant enough per-outcome, but the actual point (three ways a system can
+go, compare them) needs to be seen side by side, not read serially. No
+existing scene type supported that: `parametric`/`function-trace`/
+`parametric-curve`/`level-set` all plot ONE curve (or two, on `level-set`'s
+shared axes) on a single canvas; `discrete-bars` draws literal bars, not
+line geometry.
+
+`src/content/concept-orchestrator/gif-generator.ts` gains `'line-panels'`
+— N independent static panels (default 1 frame; a new
+`DEFAULT_FRAMES_BY_TYPE` map plus a shared `resolveTotalFrames()` helper
+replacing four copies of the same `scene.frames ?? DEFAULTS.frames` line,
+so line-panels doesn't have to re-encode 30 identical frames just because
+an author forgot to write `"frames": 1`), each with literal `[x,y]` line
+endpoints (same no-new-eval-surface discipline as `discrete-bars`' literal
+`values` — this never touches `compileExpression`) and a caption
+underneath. A panel naming exactly two lines gets a small accent dot at
+their intersection when one exists and falls inside the panel — free
+reinforcement of "this is where they agree," computed via `lineIntersection()`,
+not authored by hand. Panel-caption placement reuses the
+`computeBarGeometry`-style pattern: one `computeLinePanelGeometry()`
+function feeds both the draw pass and `computeSceneLabels`, so a caption
+can never drift from the panel it names. Wired into `KNOWN_SCENE_TYPES` /
+`SceneDescription`, so the existing CI gate (`ci:gif-scenes`) and QA
+pipeline (label-overlap + near-blank/low-contrast checks) cover it for
+free — no parallel validation path.
+
+`systems-of-equations/atoms/visual-analogy.md`'s closing paragraph (which
+restated the hook's own opening sentence — "two lines cross once, sit on
+top of each other, or run parallel," near-verbatim) is replaced with a
+`line-panels` scene showing exactly that, side by side: one point, a
+shared line, no crossing. 88/88 gif-scenes render clean (was 87), 0 new
+QA findings.
+
+**Tests:** 6 new (`gif-generator-qa.test.ts`) — static single-frame
+default, QA passes clean, per-panel caption boxes in left-to-right order,
+an explicit `frames` override is honored, a panel with no lines doesn't
+throw, layout holds for panel counts other than 3. Backend suite
+4672/4672 → 4678/4678. Frontend untouched (server-side render; MediaSidecar
+serves any `kind: gif` generically regardless of scene type), 2586/2586.
+`npm run ci` (18 gates) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

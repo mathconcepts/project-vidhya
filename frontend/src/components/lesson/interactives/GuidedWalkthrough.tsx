@@ -28,6 +28,7 @@ import { DecisionTreeWalkthrough } from './DecisionTreeWalkthrough';
 import type { GuidedWalkthroughSpec } from './types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
+import { Button } from '@/components/ui/Button';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 
 // Re-exported for this component's existing tests; the source of truth now
@@ -186,23 +187,23 @@ function LinearWalkthrough({ spec }: Props) {
       </div>
 
       <div className="flex justify-end">
-        <button
-          type="button"
+        {/* This is the app's one advance-button convention (variant="grey",
+            press-scale feedback baked into the shared Button component) —
+            Simulation.tsx's "Continue" and WorkedExampleCard's "Show next
+            step" both mirror this exact call rather than hand-rolling their
+            own copy, so a future style change to "tap when you're ready"
+            only has to happen here. */}
+        <Button
+          variant="grey"
+          tone="neutral"
+          size="md"
           onClick={advance}
           disabled={buttonDisabled}
-          className="inline-flex items-center justify-center gap-1.5 rounded-md font-medium disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{
-            background: 'var(--surface-fill-strong)',
-            color: 'var(--text-primary)',
-            fontSize: 'var(--text-body)',
-            minHeight: 44,
-            paddingLeft: 20,
-            paddingRight: 20,
-          }}
+          iconAfter={!buttonDisabled ? <ChevronRight size={16} /> : undefined}
+          style={{ background: 'var(--surface-fill-strong)', fontSize: 'var(--text-body)', minHeight: 44 }}
         >
           {buttonLabel}
-          {!buttonDisabled && <ChevronRight size={16} />}
-        </button>
+        </Button>
       </div>
 
       {spec.caption && (

@@ -2454,6 +2454,53 @@ TODOS.md rather than claimed as covered.
 **Tests:** frontend 2586 → 2604 (+18). `tsc --noEmit` clean. Backend
 untouched (frontend-only change).
 
+---
+
+### `/ui-ux-pro-max` on Continue/advance buttons: adopting the unused design-system Button (2026-09-03)
+
+Follow-up to the pacing pass above: "look at the continue button and other
+buttons and design them for an intuitive ux." Audit found the "Continue" /
+"Show next step" / GuidedWalkthrough's "Show hint"/"Show answer" buttons —
+three copies of the same hand-rolled advance-button style object — never
+used `frontend/src/components/ui/Button.tsx`, the app's own design-system
+button (press-scale feedback via `--press-scale`, `disabled` opacity/cursor
+handling, tone/variant system) already wired into 8 other pages. Same root
+cause for the play/pause/reset icon buttons: `IconButton.tsx` existed,
+carried the same press-scale polish, and was imported **nowhere in the
+app** — every icon-only control (including Simulation.tsx's) was a raw
+`<button>` with no hover/press feedback and a 12px icon, below the
+`ui-ux-pro-max` skill's own icon-legibility guidance.
+
+**Fixed by wiring the existing components, not writing new ones:**
+`Simulation.tsx`'s two play/pause/reset control pairs now render
+`<IconButton tone="neutral" filled>` (icons bumped 12px → 16px — legible
+inside a 44px target, matches the touch-target-size guideline the file's
+own comment already cited); its "Continue" button, `AtomCardRenderer.tsx`'s
+"Show next step", and `GuidedWalkthrough.tsx`'s advance button (the
+convention's origin, which the other two explicitly "reuse verbatim") all
+now render `<Button variant="grey" tone="neutral" size="md">` with a
+`style` override for `background: var(--surface-fill-strong)` (needed
+because each of these three cards' own wrapper background is
+`var(--surface-fill)` — the `Button` component's default `grey` fill would
+nearly vanish stacked on the same token). GuidedWalkthrough's call also
+overrides `fontSize`/`minHeight` to satisfy its own locked test invariants
+(17px body floor, 44px touch target via `minHeight` specifically — `Button`
+sets `height`, not `minHeight`, so the two coexist rather than conflict).
+
+**One button language now has one implementation.** A future restyle of
+"tap when you're ready" changes `Button.tsx` once instead of three
+independently-drifting copies — closes the exact "parallel truths that
+drift" bug class named elsewhere in this doc (v4.25.0's model-id drift).
+
+**Deliberately not touched, named honestly:** `DecisionTreeWalkthrough.tsx`
+has the same hand-rolled pattern on its option/back/restart buttons, and
+`AtomCardRenderer.tsx` has more of it on the prev/next nav arrows and the
+"Not yet"/"Got it" recall buttons — same fix, different files, tracked in
+TODOS.md rather than expanded into this pass.
+
+**Tests:** frontend 2604/2604 unchanged (component swap, not new
+behavior). `tsc --noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

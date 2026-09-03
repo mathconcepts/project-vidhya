@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_BASE_S, DUR_SLOW_S, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
+import { Button } from '@/components/ui/Button';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
 // Single source of truth for "3 consecutive misses" — read by both the
@@ -537,22 +538,16 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
       })}
       {!reducedMotion && revealedCount < visibleCount && (
         <div className="flex justify-end pt-1">
-          <button
-            type="button"
+          <Button
+            variant="grey"
+            tone="neutral"
+            size="md"
             onClick={() => setRevealedCount((c) => Math.min(c + 1, visibleCount))}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md font-medium"
-            style={{
-              background: 'var(--surface-fill-strong)',
-              color: 'var(--text-primary)',
-              fontSize: 'var(--text-body)',
-              minHeight: 44,
-              paddingLeft: 20,
-              paddingRight: 20,
-            }}
+            iconAfter={<ChevronRight size={16} />}
+            style={{ background: 'var(--surface-fill-strong)' }}
           >
             Show next step
-            <ChevronRight size={16} />
-          </button>
+          </Button>
         </div>
       )}
     </div>

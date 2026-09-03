@@ -32,6 +32,8 @@ import { Play, Pause, RotateCcw, ChevronRight } from 'lucide-react';
 import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type Mat2 } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { EASE_STANDARD, DUR_INSTANT_S, framerDuration } from '@/lib/motion-tokens';
 
 const SVG_W = 320;
@@ -473,27 +475,18 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
       {!hasBeats && (
         <header className="flex items-center justify-between gap-2">
           <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
+          <div className="flex items-center gap-1" style={{ opacity: reducedMotion ? 0.35 : 1, pointerEvents: reducedMotion ? 'none' : 'auto' }}>
+            <IconButton
+              label={playing ? 'Pause simulation' : 'Play simulation'}
+              tone="neutral"
+              filled
               onClick={() => (playing ? setPlaying(false) : play())}
-              disabled={reducedMotion}
-              className="p-1.5 rounded-md border disabled:opacity-50"
-              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              aria-label={playing ? 'Pause simulation' : 'Play simulation'}
             >
-              {playing ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              disabled={reducedMotion}
-              className="p-1.5 rounded-md border disabled:opacity-50"
-              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              aria-label="Reset simulation"
-            >
-              <RotateCcw size={12} />
-            </button>
+              {playing ? <Pause size={16} /> : <Play size={16} />}
+            </IconButton>
+            <IconButton label="Reset simulation" tone="neutral" filled onClick={reset}>
+              <RotateCcw size={16} />
+            </IconButton>
           </div>
         </header>
       )}
@@ -558,33 +551,20 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
             <BeatBar sortedSteps={sortedSteps} progress={effectiveProgress} servedStance={servedStance} onSeek={seekTo} />
           )}
           <div className="flex items-center flex-shrink-0">
-            {/* 44px tap zones (design-system floor) around visually compact controls */}
-            <button
-              type="button"
+            {/* IconButton is already 44px (design-system floor) and carries its
+                own press-scale feedback — no more hand-rolled 44px tap zone
+                wrapping a visually tiny, unresponsive icon. */}
+            <IconButton
+              label={playing ? 'Pause simulation' : 'Play simulation'}
+              tone="neutral"
+              filled
               onClick={() => (playing ? setPlaying(false) : play())}
-              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-              aria-label={playing ? 'Pause simulation' : 'Play simulation'}
             >
-              <span
-                className="p-1.5 rounded-md border inline-flex"
-                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              >
-                {playing ? <Pause size={12} /> : <Play size={12} />}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-              aria-label="Reset simulation"
-            >
-              <span
-                className="p-1.5 rounded-md border inline-flex"
-                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              >
-                <RotateCcw size={12} />
-              </span>
-            </button>
+              {playing ? <Pause size={16} /> : <Play size={16} />}
+            </IconButton>
+            <IconButton label="Reset simulation" tone="neutral" filled onClick={reset}>
+              <RotateCcw size={16} />
+            </IconButton>
           </div>
         </div>
       )}
@@ -640,30 +620,25 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
 
       {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} atomId={`${resolvedId}::trap`} />}
 
-      {/* Primary "keep going" action once a beat holds — reuses
-          GuidedWalkthrough's own advance-button convention (same colors,
-          44px height, trailing chevron) rather than inventing a second
-          button language for the same "tap when you're ready" gesture
-          elsewhere in the app. Only the caption's own icon Play/Pause stays
-          reversible mid-scene; this one is the unmissable next step. */}
+      {/* Primary "keep going" action once a beat holds — the design-system
+          Button component (variant="grey"), same one GuidedWalkthrough's
+          advance button now also uses, so every "tap when you're ready"
+          gesture in the app shares one button language AND one press-scale
+          feedback implementation instead of each surface hand-rolling its
+          own copy. Only the caption's own icon Play/Pause stays reversible
+          mid-scene; this one is the unmissable next step. */}
       {showLiveBeatUI && !playing && progress < 1 && (
         <div className="flex justify-end">
-          <button
-            type="button"
+          <Button
+            variant="grey"
+            tone="neutral"
+            size="md"
             onClick={play}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md font-medium"
-            style={{
-              background: 'var(--surface-fill-strong)',
-              color: 'var(--text-primary)',
-              fontSize: 'var(--text-body)',
-              minHeight: 44,
-              paddingLeft: 20,
-              paddingRight: 20,
-            }}
+            iconAfter={<ChevronRight size={16} />}
+            style={{ background: 'var(--surface-fill-strong)' }}
           >
             Continue
-            <ChevronRight size={16} />
-          </button>
+          </Button>
         </div>
       )}
     </div>

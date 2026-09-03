@@ -18,6 +18,7 @@
 import { useState } from 'react';
 import type { DirectiveProps } from './registry';
 import { CheckCircle2, XCircle, HelpCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 interface VerifyAttrs {
   expected?: string;
@@ -111,14 +112,20 @@ export default function Verify({ attrs }: DirectiveProps) {
           }}
           aria-label="Your answer"
         />
-        <button
+        {/* size="sm" keeps this aligned with the adjacent input's compact
+            row height (a full 44px button here would tower over the text
+            field it sits beside) — Button still adds press-scale feedback
+            and disabled handling the old hand-rolled button never had. */}
+        <Button
           type="submit"
+          variant="grey"
+          tone="neutral"
+          size="sm"
           disabled={status === 'pending' || !input.trim()}
-          className="px-3 py-1.5 rounded text-sm font-semibold disabled:opacity-40"
-          style={{ background: 'var(--surface-fill-strong)', color: 'var(--text-primary)' }}
+          style={{ background: 'var(--surface-fill-strong)' }}
         >
           Check
-        </button>
+        </Button>
       </div>
       <div className="flex items-center justify-between min-h-[18px]">
         <StatusBadge />

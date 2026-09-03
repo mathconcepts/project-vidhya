@@ -30,5 +30,6 @@
   "verify:budget",
   "content:bundle",
   "content:verification-report",
-  "content:registry-audit"
+  "content:registry-audit",
+  "content:reading-load-report"
 ]

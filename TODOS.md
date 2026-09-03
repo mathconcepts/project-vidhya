@@ -4,6 +4,106 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## `common_traps` needs a `stances:` guidance block and a prose budget
+
+**Trigger:** an editorial decision on the right word ceiling (this review
+measured the gap; it did not decide the number), or before the next
+content wave touches `common_traps` atoms.
+
+`/design-review`'s first-principles content review (2026-09-03,
+`docs/designs/2026-09-03-content-delivery-first-principles-review.md`)
+measured `common_traps` as the longest atom type in the corpus (average
+146 words across 101 concepts, worst case 406) and the only one of 11 atom
+types with zero density discipline anywhere: no `ASSURED_PROSE_BUDGET`
+entry (`src/content/prose-budget.ts`), no `stances:` guidance block in any
+topic template (`modules/project-vidhya-content/templates/*.yaml` —
+contrast its bare one-line `guidance:` with `hook`/`intuition`/
+`worked_example`'s multi-paragraph stance instructions). This is the
+highest-cognitive-load atom type in the system by delivery timing —
+`pedagogy-engine.ts`'s error-streak handling (E5) force-injects it to the
+front of the queue after 3 consecutive wrong answers.
+
+**What:** author a `stances:` block for `common_traps` in every topic
+template matching the existing pattern (absolute ceiling for
+assured/base, "capped against its own base" for shaken), and add its
+entry to `ASSURED_PROSE_BUDGET`. Re-run `npm run content:reading-load-report`
+after to see how many existing atoms would need trimming under the new
+ceiling before deciding whether to gate it in `ci:variant-agreement`.
+
+**Where to start:** `modules/project-vidhya-content/templates/linear-algebra.yaml`'s
+`common_traps:` block (line ~75) as the template; `src/content/prose-budget.ts`'s
+`ASSURED_PROSE_BUDGET`.
+
+**Effort:** M — editorial ceiling decision + template authoring across 10
+topics + likely content trims once the real numbers are visible.
+**Priority:** P2 — the review's #1 "where to concentrate" finding: real,
+measured, and touches the highest-load moment in the delivery pipeline.
+**Deferred from:** `/design-review` first-principles content review,
+2026-09-03, branch `claude/content-strategy-framework-o9afoc`.
+
+## Beat-text reading load should gate `ci:variant-agreement`, once ceilings exist
+
+**Trigger:** the `common_traps` budget item above lands, or a separate
+editorial decision on real per-atom-type beat-text ceilings.
+
+The same review that measured `common_traps` also found
+`ci:variant-agreement`'s prose gate blind to resonance-beat narration text
+— `countProseWords()` strips the `` ```interactive-spec``` `` fence whole,
+so a beat-carrying hook's real reading load (prose outside the fence +
+`narration_steps[].text` for the served stance) can run 4-6x what the
+gate reports (`matrix-inverse/hook-assured.md`: gate sees 28 words, real
+load 172). `countBeatProseWords()`/`countTotalReadingLoad()`
+(`src/content/prose-budget.ts`, shipped this review) measure it correctly;
+nothing gates on it yet.
+
+**What:** once real per-atom-type beat-text ceilings are decided
+(editorial, not this item), wire `countTotalReadingLoad()` into
+`scripts/check-variant-agreement.ts` in place of (or alongside)
+`countProseWords()`. Turning this on before ceilings exist would fail
+every one of the 102 beat-carrying atoms retroactively against a budget
+they were honestly authored against a broken counter — not a fix, a
+punishment for a measurement bug that wasn't theirs.
+
+**Where to start:** `scripts/check-reading-load.ts` (the measurement tool,
+already built) and `scripts/check-variant-agreement.ts` (the gate this
+would extend). `npm run content:reading-load-report` gives current
+per-atom numbers to calibrate a ceiling against.
+
+**Effort:** S once ceilings are decided — the measurement functions
+already exist and are tested.
+**Priority:** P2 — same review, second-highest finding; blocked on an
+editorial decision, not an engineering one.
+**Deferred from:** `/design-review` first-principles content review,
+2026-09-03, branch `claude/content-strategy-framework-o9afoc`.
+
+## Hook intro-paragraph/beat-1 redundancy check should run corpus-wide
+
+**Trigger:** the two budget items above land, or a decision to do this
+systematically before the next resonance-beat authoring wave.
+
+`/design-review`'s content review (2026-09-03) observed that
+`eigenvalues/atoms/hook.md`'s pre-fence intro paragraph and its first
+narration beat both re-introduce the same setup ("sixteen arrows...
+watch what changes" said twice, once outside the fence and once inside
+beat 1) — the opposite of "explain more in less." This was confirmed on
+ONE example, not measured across all 102 beat-carrying atoms.
+
+**What:** a report (matching `check-reading-load.ts`'s report-only
+pattern) that extracts a beat-carrying atom's pre-fence prose and its
+first beat's text, and flags pairs with high lexical overlap (a simple
+shared-4-gram check, same technique `variant-agreement.ts`'s
+`repeatedPhrases` already uses for a different redundancy problem) for
+human review.
+
+**Where to start:** `src/content/variant-agreement.ts`'s `repeatedPhrases`
+function is the closest existing implementation to adapt.
+
+**Effort:** S — one new report script reusing an existing technique.
+**Priority:** P3 — confirmed on one example, not yet known how common it
+is corpus-wide.
+**Deferred from:** `/design-review` first-principles content review,
+2026-09-03, branch `claude/content-strategy-framework-o9afoc`.
+
 ## Practice CTA after a wizard mistake should target the misconception, not just the concept
 
 **Trigger:** a decision to deepen the mistake-diagnosis loop, or evidence
@@ -42,6 +142,38 @@ is insufficient after a wizard visit.
 **Deferred from:** adaptive-pacing + wizard-mistake-loop investigation,
 2026-09-03, branch `claude/content-strategy-framework-o9afoc`. See
 `docs/designs/2026-09-03-adaptive-pacing-and-wizard-mistake-loop.md`.
+
+## Static-text motion audit is incomplete outside AtomCardRenderer
+
+**Trigger:** the next live-QA report naming a specific static/dense
+screen, or a decision to do this systematically before the next content
+wave.
+
+The 2026-09-03 `/design-review` pass ("look at all places where static
+text is displayed... think about a better motion/animation/progression")
+fixed the two screens actually reported (hook beat pacing, worked-example
+step reveal) and confirmed `DefaultAtomCard`'s `.vidhya-atom-body--progressive`
+paragraph-stagger already reaches every other atom type in
+`AtomCardRenderer.tsx` (the two 2026-09-02 holdouts, `formal_definition`
+and `exam_pattern`, are deliberate, not gaps). It did NOT audit surfaces
+outside that one file: `PracticeAttemptPage`/mock-exam question rendering,
+`CommonTrapsCard`'s row content beyond its existing `structured` stagger,
+and any lesson-adjacent card type not routed through `AtomCardRenderer`.
+
+**What:** the same grep-then-read audit pattern used for the visual_analogy
+positional-mismatch wave (CLAUDE.md, "the text/diagram mismatch, corpus-
+wide") — inventory every remaining static-text screen, judge each on
+its own merits (some genuinely don't need motion; `formal_definition`
+proves that), fix the ones that do.
+
+**Where to start:** grep for `MarkdownAtomRenderer` / raw `<p>`/`<li>`
+usages outside `frontend/src/components/lesson/AtomCardRenderer.tsx`.
+
+**Effort:** M — mostly reading, some component-level changes.
+**Priority:** P3 — no specific screen reported broken beyond the two
+already fixed.
+**Deferred from:** hook-pacing + worked-example-progression investigation,
+2026-09-03, branch `claude/content-strategy-framework-o9afoc`.
 
 ## `solution_steps` has no LaTeX/tone rendering pipeline
 

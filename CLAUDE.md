@@ -2387,6 +2387,229 @@ prose touched. `ci:content-integrity` (1729), `ci:katex-fences` (1723),
 `ci:gif-scenes` (88 render + 88 QA clean), `ci:variant-agreement` (610
 pairs) all clean, unchanged counts.
 
+---
+
+### Student-paced hook beats + progressive worked-example reveal (2026-09-03)
+
+`/design-review` on two live-QA screenshots (hook mid-scroll, worked
+example) plus the note "look at all places where static text is
+displayed, think about a better motion/animation/progression/transition."
+Both fixes reuse existing machinery rather than inventing new interaction
+languages; no live browser was available in this sandbox (Chromium
+revision mismatch, `playwright install` off-limits per environment
+policy), so this was a source-level review against the real render code
+and the two supplied screenshots, not a live `browse` audit.
+
+**Hook: every beat now holds for the student, not a clock.**
+`Simulation.tsx`'s resonance-beat scenes autoplayed straight through every
+beat on one author-time `duration_sec` (stance-adjusted, but still a
+single fixed pace) — a confident student waited on text they'd already
+read, an anxious one got swept past text they hadn't. `shouldHoldForTrap`'s
+own crossing-detection was already exactly the right primitive, just
+scoped to the trap beat alone; generalized to `shouldHoldAtBeatArrival`,
+called once per beat boundary in the tick loop. Arrival at ANY beat now
+pauses (indefinitely, not `DUR_SLOW_S`'s old timed re-arm) until the
+student taps a new "Continue" button — reusing `GuidedWalkthrough`'s own
+advance-button convention verbatim (same colors, 44px height, trailing
+chevron) rather than a second button language for the same gesture. The
+arc WITHIN a beat still autoplays (the motion stays the delight); only
+the transition INTO the next beat waits for the reader. Net simplification,
+not just an addition: the trap's bespoke timed-hold + `heldTrapRef`/
+`holdUntilRef` bookkeeping is gone — every beat's hold already covers the
+trap moment, and progress being monotonic during normal playback means no
+"already held" guard is needed (a crossed boundary can't re-trigger).
+11 new tests (`shouldHoldAtBeatArrival`'s boundary cases + the Continue
+button's presence/absence across play/pause/reset/finished states).
+
+**Worked example: steps reveal one tap at a time, not one paint.**
+`WorkedExampleCard` faded every step in within the same render pass
+(`delay: i * 0.05` — a stagger, not a reveal) even on a first view, so the
+entire solution, boxed final answer included, was on screen almost
+immediately. `applyScaffoldingFade`'s blank-out ceiling for REPEAT views
+is untouched (`visibleCount` still gates what a returning student can see
+at all); steps within that ceiling now reveal one at a time via the same
+"Show next step" advance-button convention as the hook's Continue button.
+Reduced motion collapses straight to every workable step visible at once,
+matching every other reduced-motion surface in the app. One added delight:
+a step containing `\boxed{...}` (KaTeX's own final-answer command, no new
+authoring convention) gets a brief green settle-flash instead of the flat
+fade every other step gets — `--green` (mastery/correct, DESIGN-SYSTEM.md),
+never indigo (AI/tutor only), since this is a verified result. 7 new
+tests; 3 existing tests (T19a/T19b/T20) updated to click through the new
+reveal rather than asserting instant full visibility — their original
+intent (no JSON leak, hairline-row styling, shaken-stance exemption) is
+unchanged, only the interaction path to reach later steps.
+
+**Scope, named honestly.** The broader "audit all static text" note is
+NOT fully executed — `DefaultAtomCard`'s `.vidhya-atom-body--progressive`
+paragraph-stagger already reaches every atom type except the two
+deliberate holdouts (`formal_definition`, `exam_pattern` — see the
+2026-09-02 sections above), so those surfaces were already covered before
+this pass. `GuidedWalkthrough`/`DecisionTreeWalkthrough` were already
+progressive. What's still genuinely static and un-audited: practice/mock-
+exam question pages, `CommonTrapsCard`'s row content beyond the existing
+`structured` stagger, and any card type outside this file. Tracked in
+TODOS.md rather than claimed as covered.
+
+**Tests:** frontend 2586 → 2604 (+18). `tsc --noEmit` clean. Backend
+untouched (frontend-only change).
+
+---
+
+### `/ui-ux-pro-max` on Continue/advance buttons: adopting the unused design-system Button (2026-09-03)
+
+Follow-up to the pacing pass above: "look at the continue button and other
+buttons and design them for an intuitive ux." Audit found the "Continue" /
+"Show next step" / GuidedWalkthrough's "Show hint"/"Show answer" buttons —
+three copies of the same hand-rolled advance-button style object — never
+used `frontend/src/components/ui/Button.tsx`, the app's own design-system
+button (press-scale feedback via `--press-scale`, `disabled` opacity/cursor
+handling, tone/variant system) already wired into 8 other pages. Same root
+cause for the play/pause/reset icon buttons: `IconButton.tsx` existed,
+carried the same press-scale polish, and was imported **nowhere in the
+app** — every icon-only control (including Simulation.tsx's) was a raw
+`<button>` with no hover/press feedback and a 12px icon, below the
+`ui-ux-pro-max` skill's own icon-legibility guidance.
+
+**Fixed by wiring the existing components, not writing new ones:**
+`Simulation.tsx`'s two play/pause/reset control pairs now render
+`<IconButton tone="neutral" filled>` (icons bumped 12px → 16px — legible
+inside a 44px target, matches the touch-target-size guideline the file's
+own comment already cited); its "Continue" button, `AtomCardRenderer.tsx`'s
+"Show next step", and `GuidedWalkthrough.tsx`'s advance button (the
+convention's origin, which the other two explicitly "reuse verbatim") all
+now render `<Button variant="grey" tone="neutral" size="md">` with a
+`style` override for `background: var(--surface-fill-strong)` (needed
+because each of these three cards' own wrapper background is
+`var(--surface-fill)` — the `Button` component's default `grey` fill would
+nearly vanish stacked on the same token). GuidedWalkthrough's call also
+overrides `fontSize`/`minHeight` to satisfy its own locked test invariants
+(17px body floor, 44px touch target via `minHeight` specifically — `Button`
+sets `height`, not `minHeight`, so the two coexist rather than conflict).
+
+**One button language now has one implementation.** A future restyle of
+"tap when you're ready" changes `Button.tsx` once instead of three
+independently-drifting copies — closes the exact "parallel truths that
+drift" bug class named elsewhere in this doc (v4.25.0's model-id drift).
+
+**Deliberately not touched, named honestly:** `DecisionTreeWalkthrough.tsx`
+has the same hand-rolled pattern on its option/back/restart buttons, and
+`AtomCardRenderer.tsx` has more of it on the prev/next nav arrows and the
+"Not yet"/"Got it" recall buttons — same fix, different files, tracked in
+TODOS.md rather than expanded into this pass.
+
+**Tests:** frontend 2604/2604 unchanged (component swap, not new
+behavior). `tsc --noEmit` clean.
+
+**Second pass, same day — the deferred items above, closed.** "Check for
+other buttons similarly" audited every remaining `<button>` in
+`frontend/src/components/lesson/` (10 files) individually rather than
+mechanically swapping all of them onto `Button`/`IconButton`. Two classes
+came back:
+
+- **Same shape family, fixed:** `DecisionTreeWalkthrough.tsx`'s Back
+  (leading icon via `Button`'s `icon` prop) and Restart buttons — its
+  OPTION buttons stay hand-rolled on purpose (the file's own docblock:
+  "Full-width 44px choice buttons", a list-row shape `Button`'s centered
+  pill doesn't fit). `AtomCardRenderer.tsx`'s "Not yet"/"Got it" recall
+  pair (`Button` with `full` for the existing flex-1 half-width layout —
+  "Got it" needed no style override at all, since `variant="filled"
+  tone="mastery"` already resolves to exactly `var(--green)` /
+  `var(--text-on-accent)`), its prev/next nav chevrons, and its
+  show-visually-first toggle — all three were genuine **44px touch-target
+  violations** (~36px hand-rolled tap zones), not just missing press
+  feedback, so this doubled as a `touch-target-size` fix per
+  `ui-ux-pro-max`'s own severity-High guideline. `Verify.tsx`'s inline
+  "Check" submit button got `Button size="sm"` rather than the 44px `md`
+  used everywhere else — it sits beside a compact text input in one row,
+  and a full-height button there would tower over its own input rather
+  than fix anything.
+- **Different shape family, correctly left alone:** `ConceptMathViz.tsx`'s
+  accordion header, `ProblemStatementBlock.tsx`/`AnswerReveal.tsx`'s
+  full-width disclosure rows, `WhyThisHelps.tsx`'s plain underlined text
+  link, `interactives/Recall.tsx`'s whole-card flashcard flip, and
+  `interactives/Quiz.tsx`'s full-width MCQ option rows are all
+  deliberately NOT the centered-pill/circle shape `Button`/`IconButton`
+  render — forcing the swap there would have been a visual regression,
+  not a fix, so they were reviewed and excluded rather than silently
+  skipped.
+
+`IconButton.tsx` gained two props it needed to keep pace with `Button.tsx`:
+`style` (so a caller can keep a token-driven background — e.g. the
+show-visually toggle's green "on" tint — the same way every `Button` call
+in this pass already could) and `disabled` (opacity + `cursor: not-allowed`
++ suppressed press-scale, matching `Button`'s existing contract; the
+prev-arrow at index 0 needed it).
+
+**Tests:** frontend 2604/2604 unchanged. `tsc --noEmit` clean.
+
+---
+
+### Content delivery: a first-principles review (2026-09-03)
+
+`/design-review`, invoked not on a live URL but on the question "why did
+content delivery get it right/wrong, where to concentrate, how to explain
+more in less." Full findings, evidence, and priority order:
+`docs/designs/2026-09-03-content-delivery-first-principles-review.md`. No
+live browser in this sandbox — source-level review against the real
+pedagogy/generation code and the real corpus (101 concepts, 1,723 atom
+files), not a screenshot audit.
+
+**Verdict, in one line:** the density discipline this platform already
+built (stance guidance blocks, `ASSURED_PROSE_BUDGET`, the
+`ci:variant-agreement` gate) is real and works — it just has a coverage
+gap wide enough to miss the platform's own newest content, and one atom
+type slipped through without ever being covered at all.
+
+**Finding 1 — the prose-budget gate can't see resonance-beat text.**
+`countProseWords()` strips every fenced block before counting, on the
+(once-true) assumption a fence is 15-30 lines of JSON, never prose. Since
+resonance beats (v4.44.0), a beat-carrying hook's `narration_steps[].text`
+— what a student actually reads while the scene plays — lives inside that
+same fence. Measured corpus-wide with two new pure functions,
+`countBeatProseWords()`/`countTotalReadingLoad()`
+(`src/content/prose-budget.ts`): 102 of 1,723 atoms carry a beat scene, and
+the gate undercounts every one, up to 6.1x (`matrix-inverse/hook-assured.md`:
+gate sees 28 words, real reading load 172). `matrix-operations/hook.md`
+reads at 287 words in practice against a 64-word gate reading — more than
+the platform's *widest* existing ceiling (worked_example's 220), reported
+as under a third of it.
+
+**Finding 2 — `common_traps` is the longest atom type and the only
+unbudgeted one.** No `ASSURED_PROSE_BUDGET` entry, no `stances:` guidance
+block in any topic template, no density check anywhere. Measured across
+all 101 concepts: average 146 words, 18 of 101 already exceed 220 (every
+*other* atom type's widest ceiling) with no ceiling of their own; worst
+case 406 words (`symmetric-matrices`). This is the wrong atom type to
+leave undisciplined: `pedagogy-engine.ts`'s error-streak handling (E5)
+force-injects a student's `common_traps` atom to the front of the queue
+after 3 consecutive wrong answers — exactly the moment cognitive load is
+already highest (Eysenck's Attentional Control Theory: anxiety consumes
+the working-memory capacity a task needs).
+
+**Shipped, report-only by design.** `countBeatProseWords()`/
+`countTotalReadingLoad()` (`src/content/prose-budget.ts`, 10 new tests) —
+mirrors `resolveBeatText`'s exact per-stance fallback rather than a second
+copy of that rule, via the existing shared `interactive-spec-loader.ts`.
+`scripts/check-reading-load.ts` (`npm run content:reading-load-report`, 4
+new tests on its pure filename-parsing helper) is the corpus-wide report
+this doc's numbers came from — always exits 0, never a CI gate. Turning
+either finding into a blocking gate needs an editorial ceiling decision
+(what SHOULD a beat-carrying hook or a `common_traps` atom cost in words)
+this review measured but did not make unilaterally — see the design doc's
+"Where to concentrate" section and TODOS.md for the scoped follow-up.
+
+**Deliberately not done:** no content was rewritten (every number is a
+measurement, not a rewrite instruction); the intro-paragraph/beat-1
+redundancy check ran on one example (`eigenvalues.hook.md`), not the
+corpus; `common_traps`'s guidance block and budget entry were not
+authored; `pedagogy-engine.ts`'s error-streak behavior is untouched — it
+correctly prioritizes `common_traps` when a student struggles, the gap is
+that atom type's own length discipline, not the selector.
+
+**Tests:** backend 4678 → 4692 (+14). `tsc --noEmit` clean.
+`ci:variant-agreement` unchanged (610 pairs, clean).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

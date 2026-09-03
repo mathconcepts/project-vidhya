@@ -10,21 +10,31 @@
  *
  * Extended for "resonance beats" (plan §W1, 2026-08-30): a scene whose
  * `narration_steps` are present is no longer a passive figure with a
- * caption underneath — it autoplays once on mount, the caption is the
- * primary sentence of the experience (17px, through the markdown
- * pipeline), a beat can carry a per-scene "trap" that eases into a hold
- * and reveals a dashed ghost path for the wrong turn, and a segmented
- * beat bar lets the student seek/step through the moments. See the plan's
- * "design contract" for the pixel-level decisions this file implements.
+ * caption underneath — it autoplays into the first beat on mount, the
+ * caption is the primary sentence of the experience (17px, through the
+ * markdown pipeline), a beat can carry a per-scene "trap" that reveals a
+ * dashed ghost path for the wrong turn, and a segmented beat bar lets the
+ * student seek/step through the moments. See the plan's "design contract"
+ * for the pixel-level decisions this file implements.
+ *
+ * Student-paced beats (/investigate, 2026-09-03): a scene no longer plays
+ * straight through every beat on one fixed timer — arrival at EACH beat
+ * holds playback (indefinitely, not a timed pause) until the student taps
+ * Continue. "Grasping" isn't uniform across students or across beats of
+ * the same scene, so the pace is now a tap, not a clock; the arc WITHIN a
+ * beat still autoplays (the motion is still the delight), only the
+ * transition INTO the next beat waits for the reader.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, ChevronRight } from 'lucide-react';
 import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type Mat2 } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { EASE_STANDARD, DUR_INSTANT_S, DUR_SLOW_S, framerDuration } from '@/lib/motion-tokens';
+import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
+import { EASE_STANDARD, DUR_INSTANT_S, framerDuration } from '@/lib/motion-tokens';
 
 const SVG_W = 320;
 const SVG_H = 200;
@@ -124,6 +134,32 @@ export function shouldHoldForTrap(params: {
   const { prevProgress, nextProgress, trapAtProgress, isSeek, reducedMotion, alreadyHeld } = params;
   if (trapAtProgress === null || isSeek || reducedMotion || alreadyHeld) return false;
   return prevProgress < trapAtProgress && nextProgress >= trapAtProgress;
+}
+
+/**
+ * /investigate (2026-09-03, live-QA on the hook card): a fixed-duration
+ * autoplay races through every beat at one author-time pace regardless of
+ * how long a given student needs to actually read one — "grasping" isn't
+ * uniform across students OR across beats of the same scene. Generalizes
+ * the trap's own crossing-detection (`shouldHoldForTrap`, kept as-is and
+ * still separately tested — this is the same boundary math, just checked
+ * against ANY beat's `at_progress`, not only the trap's) so EVERY beat now
+ * holds when natural playback arrives at it. Unlike the trap's old
+ * `DUR_SLOW_S` timed hold, this hold is indefinite — pacing becomes
+ * genuinely student-paced (tap Continue when ready) rather than a longer
+ * fixed wait. A seek never holds (design contract item 10, unchanged);
+ * reduced motion never holds (nothing is playing to interrupt).
+ */
+export function shouldHoldAtBeatArrival(params: {
+  prevProgress: number;
+  nextProgress: number;
+  beatAtProgress: number;
+  isSeek: boolean;
+  reducedMotion: boolean;
+}): boolean {
+  const { prevProgress, nextProgress, beatAtProgress, isSeek, reducedMotion } = params;
+  if (isSeek || reducedMotion) return false;
+  return prevProgress < beatAtProgress && nextProgress >= beatAtProgress;
 }
 
 /**
@@ -282,12 +318,14 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   const hasBeats = sortedSteps.length > 0;
   const trapStep = useMemo(() => sortedSteps.find((s) => s.trap) ?? null, [sortedSteps]);
 
-  // Design contract item 1: a scene WITH beats autoplays once on mount
-  // (progress=0, playing=true); without beats, today's tap-to-play stays
-  // (progress=1, playing=false — a finished static trace). Reduced motion
-  // never autoplays either way. Computed once in the initializer so there
-  // is no flash of the wrong state — `usePrefersReducedMotion` resolves
-  // its own initial value synchronously the same way.
+  // Design contract item 1: a scene WITH beats autoplays into its first
+  // beat on mount (progress=0, playing=true), then holds there for the
+  // student to tap Continue once that beat's own arc finishes — see the
+  // tick loop below; without beats, today's tap-to-play stays (progress=1,
+  // playing=false — a finished static trace). Reduced motion never
+  // autoplays either way. Computed once in the initializer so there is no
+  // flash of the wrong state — `usePrefersReducedMotion` resolves its own
+  // initial value synchronously the same way.
   const [playing, setPlaying] = useState(() => hasBeats && !reducedMotion);
   const [progress, setProgress] = useState(() => (hasBeats && !reducedMotion ? 0 : 1));
   // Sticky once true — "Once the trap beat is reached (by play or seek),
@@ -296,9 +334,6 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
 
   const rafRef = useRef<number | null>(null);
   const lastTickRef = useRef<number>(0);
-  // "Hold once per mount": NOT cleared by reset()/replay, only by remount.
-  const heldTrapRef = useRef(false);
-  const holdUntilRef = useRef<number | null>(null);
   // Mirror of `progress` so the tick loop never mutates refs inside a
   // setProgress functional updater — StrictMode double-invokes updaters, and
   // an impure one silently defeated the once-per-mount trap hold in dev.
@@ -313,39 +348,37 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     setProgress(v);
   }
 
-  // Tick loop
+  // Tick loop. Holds indefinitely (playing → false) the first time playback
+  // arrives at any beat boundary ahead of the current progress — the student
+  // taps Continue to advance, rather than a fixed-duration timer deciding
+  // for them. Progress is monotonic during normal playback (only reset()
+  // sets it back to 0), so a given boundary can only be crossed once per
+  // run — no extra "already held" bookkeeping needed the way the trap's old
+  // timed hold required.
   useEffect(() => {
     if (!playing) return;
     function tick(now: number) {
       const dt = lastTickRef.current ? now - lastTickRef.current : 0;
       lastTickRef.current = now;
 
-      if (holdUntilRef.current !== null) {
-        if (now < holdUntilRef.current) {
-          rafRef.current = requestAnimationFrame(tick);
-          return;
-        }
-        holdUntilRef.current = null;
-      }
-
       // All side effects live in the tick body, not a setProgress updater —
       // updaters must stay pure (StrictMode double-invokes them).
       const p = progressRef.current;
       const next = p + dt / duration;
+      const upcomingBeat = sortedSteps.find((s) => s.at_progress > p);
       if (
-        trapStep &&
-        shouldHoldForTrap({
+        upcomingBeat &&
+        shouldHoldAtBeatArrival({
           prevProgress: p,
           nextProgress: next,
-          trapAtProgress: trapStep.at_progress,
+          beatAtProgress: upcomingBeat.at_progress,
           isSeek: false,
           reducedMotion,
-          alreadyHeld: heldTrapRef.current,
         })
       ) {
-        heldTrapRef.current = true;
-        holdUntilRef.current = now + DUR_SLOW_S * 1000;
-        applyProgress(trapStep.at_progress);
+        applyProgress(upcomingBeat.at_progress);
+        setPlaying(false);
+        return;
       } else if (next >= 1) {
         applyProgress(1);
         setPlaying(false);
@@ -359,7 +392,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     return () => {
       if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
     };
-  }, [playing, duration, trapStep, reducedMotion]);
+  }, [playing, duration, sortedSteps, reducedMotion]);
 
   // Trap reveal is a function of progress alone — fires from natural
   // playback OR a seek, and (being state, not a derived value) stays true
@@ -376,10 +409,9 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     setPlaying(false);
     applyProgress(reducedMotion ? 1 : 0);
     setTrapRevealed(false);
-    holdUntilRef.current = null;
   }
   /** Seek — design contract item 10: playing stays playing, paused stays
-   *  paused; never triggers the trap hold (that only fires from the tick
+   *  paused; never triggers a beat hold (that only fires from the tick
    *  loop's own natural-crossing check above). */
   function seekTo(atProgress: number) {
     lastTickRef.current = 0;
@@ -443,27 +475,18 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
       {!hasBeats && (
         <header className="flex items-center justify-between gap-2">
           <h4 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{spec.title}</h4>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
+          <div className="flex items-center gap-1" style={{ opacity: reducedMotion ? 0.35 : 1, pointerEvents: reducedMotion ? 'none' : 'auto' }}>
+            <IconButton
+              label={playing ? 'Pause simulation' : 'Play simulation'}
+              tone="neutral"
+              filled
               onClick={() => (playing ? setPlaying(false) : play())}
-              disabled={reducedMotion}
-              className="p-1.5 rounded-md border disabled:opacity-50"
-              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              aria-label={playing ? 'Pause simulation' : 'Play simulation'}
             >
-              {playing ? <Pause size={12} /> : <Play size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              disabled={reducedMotion}
-              className="p-1.5 rounded-md border disabled:opacity-50"
-              style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              aria-label="Reset simulation"
-            >
-              <RotateCcw size={12} />
-            </button>
+              {playing ? <Pause size={16} /> : <Play size={16} />}
+            </IconButton>
+            <IconButton label="Reset simulation" tone="neutral" filled onClick={reset}>
+              <RotateCcw size={16} />
+            </IconButton>
           </div>
         </header>
       )}
@@ -528,33 +551,20 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
             <BeatBar sortedSteps={sortedSteps} progress={effectiveProgress} servedStance={servedStance} onSeek={seekTo} />
           )}
           <div className="flex items-center flex-shrink-0">
-            {/* 44px tap zones (design-system floor) around visually compact controls */}
-            <button
-              type="button"
+            {/* IconButton is already 44px (design-system floor) and carries its
+                own press-scale feedback — no more hand-rolled 44px tap zone
+                wrapping a visually tiny, unresponsive icon. */}
+            <IconButton
+              label={playing ? 'Pause simulation' : 'Play simulation'}
+              tone="neutral"
+              filled
               onClick={() => (playing ? setPlaying(false) : play())}
-              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-              aria-label={playing ? 'Pause simulation' : 'Play simulation'}
             >
-              <span
-                className="p-1.5 rounded-md border inline-flex"
-                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              >
-                {playing ? <Pause size={12} /> : <Play size={12} />}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-              aria-label="Reset simulation"
-            >
-              <span
-                className="p-1.5 rounded-md border inline-flex"
-                style={{ background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-secondary)' }}
-              >
-                <RotateCcw size={12} />
-              </span>
-            </button>
+              {playing ? <Pause size={16} /> : <Play size={16} />}
+            </IconButton>
+            <IconButton label="Reset simulation" tone="neutral" filled onClick={reset}>
+              <RotateCcw size={16} />
+            </IconButton>
           </div>
         </div>
       )}
@@ -609,6 +619,28 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
       )}
 
       {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} atomId={`${resolvedId}::trap`} />}
+
+      {/* Primary "keep going" action once a beat holds — the design-system
+          Button component (variant="grey"), same one GuidedWalkthrough's
+          advance button now also uses, so every "tap when you're ready"
+          gesture in the app shares one button language AND one press-scale
+          feedback implementation instead of each surface hand-rolling its
+          own copy. Only the caption's own icon Play/Pause stays reversible
+          mid-scene; this one is the unmissable next step. */}
+      {showLiveBeatUI && !playing && progress < 1 && (
+        <div className="flex justify-end">
+          <Button
+            variant="grey"
+            tone="neutral"
+            size="md"
+            onClick={play}
+            iconAfter={<ChevronRight size={16} />}
+            style={{ background: 'var(--surface-fill-strong)' }}
+          >
+            Continue
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

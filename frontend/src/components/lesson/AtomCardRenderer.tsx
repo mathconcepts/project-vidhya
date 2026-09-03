@@ -27,6 +27,8 @@ import {
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { EASE_STANDARD, DUR_BASE_S, DUR_SLOW_S, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
+import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 
 const VISUAL_PREF_KEY = 'vidhya.show_visually';
 // Single source of truth for "3 consecutive misses" — read by both the
@@ -402,6 +404,68 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
   );
 }
 
+/**
+ * A `\boxed{...}` in KaTeX already draws its own border around the formula
+ * — this just adds a brief green settle-flash to the row it lands in, so
+ * the "here's the answer" moment reads as distinct from every other step's
+ * identical fade-in. --green (mastery/correct, DESIGN-SYSTEM.md), never
+ * indigo (AI/tutor only) — this is a verified result, not a suggestion.
+ * The literal rgb (not `var(--green)`) matches `reveal-highlight`'s own
+ * precedent in `buildPresetVariants`: framer-motion tweens concrete rgba
+ * values frame to frame, not a CSS custom property string.
+ */
+function BoxedAnswerStep({
+  content,
+  atomId,
+  reducedMotion,
+}: {
+  content: string;
+  atomId: string;
+  reducedMotion: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ backgroundColor: 'rgba(52,199,89,0.14)' }}
+      animate={{ backgroundColor: 'rgba(52,199,89,0)' }}
+      transition={{ duration: framerDuration(DUR_SLOW_S, reducedMotion), ease: EASE_STANDARD }}
+      className="rounded-lg px-2 -mx-2"
+    >
+      <MarkdownAtomRenderer content={content} atomId={atomId} />
+    </motion.div>
+  );
+}
+
+/**
+ * Detects a step whose rendered content lands the final boxed answer —
+ * `\boxed{` is the standard KaTeX/LaTeX command for it, so this is a
+ * reliable signal without any new authoring convention. Exported for
+ * testing.
+ */
+function stepHasBoxedAnswer(step: string): boolean {
+  return step.includes('\\boxed{');
+}
+
+/**
+ * /investigate (2026-09-03, live-QA screenshot: "Solve like a progression.
+ * A visual delight can provide better context"). Every step used to fade
+ * in within the same render pass, `delay: i * 0.05` apart — visually a
+ * stagger, but all of it lands inside a second, so a worked example dumped
+ * its entire solution (every step, including the boxed final answer) on
+ * first view. `applyScaffoldingFade` already blanks the LAST steps on a
+ * REPEAT view, forcing the student to work them out — but on the very
+ * first view, `blanked` is 0, so nothing was ever progressive; the effect
+ * was cosmetic motion on a wall of text already fully present, not an
+ * actual reveal.
+ *
+ * Now the steps within `visibleCount` (the scaffold-fade ceiling — repeat
+ * views still can't see more than they could before) reveal one tap at a
+ * time via a "Show next step" button, the same advance-button convention
+ * GuidedWalkthrough already uses elsewhere in the app (identical colors,
+ * 44px height, trailing chevron — one button language for "tap when
+ * you're ready", not a second one invented here). Reduced motion collapses
+ * straight to every workable step visible at once, matching every other
+ * reduced-motion surface in this file (there is no "moment" to hold back).
+ */
 function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   // T19a: strip the fenced interactive-spec block BEFORE splitting on `---`
   // step delimiters. Without this, a spec-carrying worked_example (96/97
@@ -414,6 +478,19 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   const prose = stripGifSceneBlock(stripAllInteractiveSpecFences(atom.content));
   const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
+  const reducedMotion = usePrefersReducedMotion();
+
+  const [revealedCount, setRevealedCount] = useState(() => Math.min(1, visibleCount));
+  // Re-arm at step 1 when the atom itself changes (navigating to a
+  // different worked example) — this component instance can be reused
+  // across atoms by its parent, so state must not carry over.
+  useEffect(() => {
+    setRevealedCount(Math.min(1, visibleCount));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset keys on atom identity, not on every visibleCount recompute
+  }, [atom.id]);
+
+  const shownCount = reducedMotion ? visibleCount : Math.min(revealedCount, visibleCount);
+
   return (
     <div>
       {blanked > 0 && (
@@ -429,26 +506,51 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
         a hairline top border rather than its own filled/bordered box —
         holds whether a worked example has 2 steps or 8.
       */}
-      {steps.map((step, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.05 }}
-          className="py-3 text-sm leading-relaxed"
-          style={{
-            borderTop: i === 0 ? 'none' : 'var(--hairline) solid var(--separator)',
-            color: i < visibleCount ? 'var(--text-primary)' : 'var(--text-tertiary)',
-            fontStyle: i < visibleCount ? 'normal' : 'italic',
-          }}
-        >
-          {i < visibleCount ? (
-            <MarkdownAtomRenderer content={step} atomId={`${atom.id}.step.${i}`} />
-          ) : (
-            '(work this step out yourself)'
-          )}
-        </motion.div>
-      ))}
+      {steps.map((step, i) => {
+        const isScaffoldBlanked = i >= visibleCount;
+        // Not yet tapped through and not one of the scaffold-blanked
+        // placeholder rows — render nothing rather than an empty slot, so
+        // the layout never reserves space for a step the student hasn't
+        // earned yet.
+        if (!isScaffoldBlanked && i >= shownCount) return null;
+        const atomId = `${atom.id}.step.${i}`;
+        return (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: framerDuration(DUR_BASE_S, reducedMotion), ease: EASE_STANDARD }}
+            className="py-3 text-sm leading-relaxed"
+            style={{
+              borderTop: i === 0 ? 'none' : 'var(--hairline) solid var(--separator)',
+              color: isScaffoldBlanked ? 'var(--text-tertiary)' : 'var(--text-primary)',
+              fontStyle: isScaffoldBlanked ? 'italic' : 'normal',
+            }}
+          >
+            {isScaffoldBlanked ? (
+              '(work this step out yourself)'
+            ) : stepHasBoxedAnswer(step) ? (
+              <BoxedAnswerStep content={step} atomId={atomId} reducedMotion={reducedMotion} />
+            ) : (
+              <MarkdownAtomRenderer content={step} atomId={atomId} />
+            )}
+          </motion.div>
+        );
+      })}
+      {!reducedMotion && revealedCount < visibleCount && (
+        <div className="flex justify-end pt-1">
+          <Button
+            variant="grey"
+            tone="neutral"
+            size="md"
+            onClick={() => setRevealedCount((c) => Math.min(c + 1, visibleCount))}
+            iconAfter={<ChevronRight size={16} />}
+            style={{ background: 'var(--surface-fill-strong)' }}
+          >
+            Show next step
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -978,19 +1080,21 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             );
           })}
         </div>
-        <button
+        {/* Was a hand-rolled 36px circle (w-9 h-9) — below the 44px touch
+            target floor. IconButton is 44px by default and carries
+            press-scale feedback; the style override keeps the green
+            "visual mode on" tint this toggle needs. */}
+        <IconButton
+          label={showVisually ? 'Show all atoms' : 'Show visual atoms first'}
+          tone={showVisually ? 'mastery' : 'neutral'}
           onClick={toggleVisual}
-          aria-label={showVisually ? 'Show all atoms' : 'Show visual atoms first'}
-          aria-pressed={showVisually}
-          className="flex items-center justify-center w-9 h-9 rounded-full border transition-colors"
           style={showVisually
-            ? { background: 'rgba(52,199,89,.12)', borderColor: 'rgba(52,199,89,.4)', color: 'var(--green-ink)' }
-            : { background: 'var(--surface-card)', borderColor: 'var(--separator)', color: 'var(--text-tertiary)' }
+            ? { background: 'rgba(52,199,89,.12)', border: '1px solid rgba(52,199,89,.4)' }
+            : { background: 'var(--surface-card)', border: '1px solid var(--separator)', color: 'var(--text-tertiary)' }
           }
-          title={showVisually ? 'Visual mode on' : 'Show me visually'}
         >
-          {showVisually ? <Eye size={14} /> : <EyeOff size={14} />}
-        </button>
+          {showVisually ? <Eye size={16} /> : <EyeOff size={16} />}
+        </IconButton>
       </div>
 
       <AnimatePresence mode="wait">
@@ -1114,44 +1218,42 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               twice would put two copies of the same scene on one card. */}
           {!promotedSimSpec && <InteractiveSidecar body={current.content} />}
 
-          {/* Recall buttons for retrieval-style atoms */}
+          {/* Recall buttons for retrieval-style atoms. Both were hand-rolled
+              with no press feedback; now the shared Button component (`full`
+              matches the previous flex-1 half-width layout, `md` size lifts
+              the touch target from ~36px to the 44px floor). */}
           {(current.atom_type === 'micro_exercise' || current.atom_type === 'retrieval_prompt') && (
             <div className="flex gap-2 mt-4 pt-3 border-t" style={{ borderColor: 'var(--separator)' }}>
-              <button
+              <Button
+                variant="grey"
+                tone="neutral"
+                size="md"
+                full
                 onClick={() => next(false)}
-                className="flex-1 px-3 py-2 rounded-lg text-sm"
-                style={{ background: 'var(--surface-fill)', color: 'var(--text-secondary)' }}
+                style={{ color: 'var(--text-secondary)' }}
               >
                 Not yet
-              </button>
-              <button
-                onClick={() => next(true)}
-                className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
-                // Green, not indigo: this confirms the student got the
-                // answer right — mastery/correctness, not an AI/tutor
-                // surface. DESIGN-SYSTEM.md reserves indigo for AI, tutor,
-                // and study plan only; green is mastery/correct/primary
-                // action, which is exactly what this button means.
-                style={{ background: 'var(--green)', color: 'var(--text-on-accent)' }}
-              >
+              </Button>
+              {/* Green, not indigo: this confirms the student got the
+                  answer right — mastery/correctness, not an AI/tutor
+                  surface. DESIGN-SYSTEM.md reserves indigo for AI, tutor,
+                  and study plan only; green is mastery/correct/primary
+                  action, which is exactly what this button means. */}
+              <Button variant="filled" tone="mastery" size="md" full onClick={() => next(true)}>
                 Got it
-              </button>
+              </Button>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
-      {/* Nav */}
+      {/* Nav — was a hand-rolled ~36px tap zone (p-2 around a 20px icon,
+          below the 44px floor) with no press feedback; IconButton fixes
+          both at once. */}
       <div className="flex items-center justify-between mt-4">
-        <button
-          onClick={prev}
-          disabled={index === 0}
-          className="p-2 rounded-lg disabled:opacity-30"
-          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
-          aria-label="Previous"
-        >
+        <IconButton label="Previous" onClick={prev} disabled={index === 0}>
           <ChevronLeft size={20} />
-        </button>
+        </IconButton>
         <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
           {index + 1} of {atoms.length}
           {/* Adversarial review (/ship, 2026-09-01): must also require
@@ -1165,14 +1267,9 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             <span className="ml-2" style={{ color: 'var(--orange)' }}>· streak switched modality</span>
           )}
         </div>
-        <button
-          onClick={() => next()}
-          className="p-2 rounded-lg"
-          style={{ color: 'var(--text-secondary)', background: 'none', border: 'none', cursor: 'pointer' }}
-          aria-label="Next"
-        >
+        <IconButton label="Next" onClick={() => next()}>
           <ChevronRight size={20} />
-        </button>
+        </IconButton>
       </div>
     </div>
   );

@@ -127,6 +127,30 @@ export function shouldHoldForTrap(params: {
 }
 
 /**
+ * Autoplay pace multiplier by served stance (/investigate, 2026-09-03:
+ * "hook transition is faster — needs to adapt to different students'
+ * grasping and attention level"). Root cause: `duration_sec` was a single
+ * author-time constant applied identically to every student, even though
+ * `servedStance` was already threaded into this component and used for
+ * per-beat TEXT (`resolveBeatText`) — the pacing never got the same
+ * treatment. Mirrors the philosophy `framingInstructions()`
+ * (`src/sessions/learner-framing.ts`) already codifies for register: a
+ * shaken student gets a smaller, slower first step and no rush; an assured
+ * student gets the sharper, faster form because padding wastes their time.
+ * `steady`/undefined plays at the authored pace, unchanged. A value > 1
+ * SLOWS playback (more wall-clock time per beat); < 1 speeds it up.
+ */
+export const STANCE_PACE_MULTIPLIER: Record<'shaken' | 'assured', number> = {
+  shaken: 1.35,
+  assured: 0.75,
+};
+
+export function paceMultiplierForStance(stance: Stance): number {
+  if (stance === 'shaken' || stance === 'assured') return STANCE_PACE_MULTIPLIER[stance];
+  return 1;
+}
+
+/**
  * Fill fraction [0,1] for beat `index`'s segment of the beat bar, given the
  * current progress. A segment spans [this beat's at_progress, the next
  * beat's at_progress, or 1 for the last beat) — fully filled once progress
@@ -280,7 +304,9 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // an impure one silently defeated the once-per-mount trap hold in dev.
   const progressRef = useRef(hasBeats && !reducedMotion ? 0 : 1);
 
-  const duration = (spec.duration_sec ?? 4) * 1000;
+  // Beats-only: a linear (non-beat) scene has no stance-driven register
+  // difference to begin with, so its pace stays exactly as authored.
+  const duration = (spec.duration_sec ?? 4) * 1000 * (hasBeats ? paceMultiplierForStance(servedStance) : 1);
 
   function applyProgress(v: number) {
     progressRef.current = v;

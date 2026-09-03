@@ -22,6 +22,7 @@ import {
   resolveBeatText,
   shouldHoldForTrap,
   beatSegmentFill,
+  paceMultiplierForStance,
   stripMarkdownForAria,
   morphFraction,
   applyLerpedMat2,
@@ -202,6 +203,27 @@ describe('shouldHoldForTrap', () => {
 
   it('boundary: a natural tick landing exactly ON the trap point counts as crossing it', () => {
     expect(shouldHoldForTrap({ ...common, prevProgress: 0.4, nextProgress: 0.45, isSeek: false })).toBe(true);
+  });
+});
+
+// Regression (/investigate, 2026-09-03): "hook transition is faster — needs
+// to adapt to different students grasping and attention level". Root cause
+// was that `duration_sec` was a single author-time constant applied
+// identically to every student, even though `servedStance` was already
+// threaded into this component for per-beat TEXT. Mirrors
+// `framingInstructions()`'s existing shaken=slower/assured=faster register
+// philosophy (src/sessions/learner-framing.ts) into playback pace.
+describe('paceMultiplierForStance', () => {
+  it('slows playback down for a shaken student', () => {
+    expect(paceMultiplierForStance('shaken')).toBeGreaterThan(1);
+  });
+
+  it('speeds playback up for an assured student', () => {
+    expect(paceMultiplierForStance('assured')).toBeLessThan(1);
+  });
+
+  it('plays at the authored pace for steady/undefined', () => {
+    expect(paceMultiplierForStance(undefined)).toBe(1);
   });
 });
 

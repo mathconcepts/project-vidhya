@@ -2685,6 +2685,82 @@ audited corpus-wide in this pass. Both tracked in TODOS.md with the exact
 pattern that worked here (reuse the hook's own example, verify every
 number, keep fences byte-identical across stance triples) as the template.
 
+### `/investigate` follow-up: the "revert" claim was false, and the trace-concept silo is the same pattern again (2026-09-03)
+
+Second `/investigate` pass the same day, on a new report: "static
+unintuitive text" on `trace`'s intuition card, an ELI5/Indian-English
+register ask, and a claim that a prior motion/progression fix "got
+reverted." The revert claim was investigated before anything else was
+touched, per the skill's Iron Law and the "claimed limitations need
+evidence" rule — checked against two independent primary sources, not
+agreed with or dismissed on the user's word alone.
+
+**The Cayley-Hamilton fix was NOT reverted.** `git log origin/main` shows
+no revert commit; `git show origin/main:.../cayley-hamilton/atoms/
+intuition.md` confirms the fixed content is on `main` right now. More
+directly: Render's own deploy history shows commit `13efd76` — the commit
+that shipped the Cayley-Hamilton fix — as the service's current `live`
+deploy, finished `2026-09-03T13:40:50Z`. Nothing regressed; the resonance-
+beat mechanism is exactly as live as it was when it shipped. The likely
+explanation for the report: the attached Cayley-Hamilton screenshot is
+byte-for-byte the same one from the PREVIOUS `/investigate` turn earlier
+the same day (a stale/reused screenshot, not a fresh repro), and/or it
+predates that turn's deploy.
+
+**The `trace` concept has the exact same silo defect Cayley-Hamilton had,
+independently confirmed by reading `hook.md` first.** `trace/atoms/
+hook.md` is genuine, working resonance-beat content — matrix
+$A=\begin{pmatrix}5&1\\2&4\end{pmatrix}$, a 5-beat scene establishing
+eigenvalues $6$ and $3$ on directions $(1,1)$/$(1,-2)$, a trap about
+summing all four entries instead of the diagonal. `intuition.md` was a
+single dense abstract paragraph with zero shared numbers and zero
+interactivity — the same "interactive and text are in silos" pattern,
+found for the second time, confirming the TODOS.md item's prediction that
+it "likely recurs." `intuition-shaken.md` was a second, independent
+instance: it used an entirely different (already-triangular) matrix than
+the concept's own hook.
+
+**Fixed with the now-twice-proven template.** All three files
+(`intuition.md`/`-shaken.md`/`-assured.md`) get a byte-identical new
+`interactive-spec` fence reusing hook's exact matrix and parametric
+formula, this time telling the WHY hook doesn't cover: trace is
+basis-independent — change the axes you describe $A$ in and the diagonal
+entries change, but their sum never does, because the eigenvalues (the
+real stretch factors) don't move under a change of basis. A predict cue
+("would that $9$ still show up under different axes?") precedes the
+reveal, an explain-why beat states the similar-matrices/shared-
+characteristic-polynomial reason, and a trap beat calls out the false
+inference (seeing the diagonal entries change and assuming the trace
+changed). Every numeric claim (eigenvalues $6$/$3$, trace $9$, the exact
+plotted points at $t=45°$ and progress $0.824$) is reused verbatim from
+hook's own already-shipped, already-verified values — hand-verified again
+independently via a local Python script (Wolfram MCP was disconnected
+this session) before authoring, not re-derived from scratch. Base prose:
+ELI5, Indian-English register, short sentences, ~90 words total (intro +
+closing) — down from one 175-word paragraph with no interactivity.
+`intuition-shaken.md` is rewritten onto the SAME matrix as hook (closing
+its own independent silo instance) rather than the old unrelated
+triangular example. `intuition-assured.md` keeps its existing
+Vieta's-formula/similarity-invariance content — genuinely good, terse,
+exam-relevant — and only gains a one-line bridge plus the shared fence.
+
+**Verified against the real gates.** `ci:interactive-specs` (389 blocks,
++3), `ci:variant-agreement` (610 pairs, unchanged — fence byte-identical
+across the trio), `ci:katex-fences` (1723), `ci:content-integrity` (1729),
+`ci:la-walkthrough` (26/26, trace's own interactive-leg count 6→9,
+matching the Cayley-Hamilton precedent's identical delta) all clean. Full
+suites: backend 4692/4692, frontend 2604/2604, `tsc --noEmit` clean both
+sides, `npm run ci` (18 gates) clean.
+
+**Scope, named honestly — one more concrete example, still not the
+corpus.** This is the SECOND of an open-ended set of concepts likely to
+have the same silo defect. `npm run content:reading-load-report` (shipped
+earlier the same day) remains the designated worklist source for a
+systematic audit; not run as a triggered sweep in this pass, since the
+report named one specific concept (`trace`), not a corpus-wide ask.
+TODOS.md's existing "audit other concepts" entry stands, now with a
+second confirmed instance as evidence rather than a prediction.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

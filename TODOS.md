@@ -17,12 +17,16 @@ connection to its own concept's `hook.md` resonance-beat scene, and fixed
 it by threading ONE shared worked example through both atoms via a new
 predict-before-reveal scene (see CLAUDE.md's 2026-09-03 "cramped CTAs +
 Cayley-Hamilton silo" section for the exact pattern and Wolfram-verification
-discipline used). This was NOT audited corpus-wide — Cayley-Hamilton was
-the one concrete example the report named. The same pattern (an
-`intuition`/`mnemonic` atom authored independently of its concept's hook,
-with no shared example or interactive element) likely recurs elsewhere;
-`scripts/check-reading-load.ts` (`npm run content:reading-load-report`)
-already flags atoms with zero beat coverage and can seed the worklist.
+discipline used). A second, same-day `/investigate` follow-up found the
+IDENTICAL defect on `trace/atoms/intuition.md` (a dense abstract paragraph
+sharing zero numbers with `hook.md`'s own matrix) plus a second silo
+instance in `trace/atoms/intuition-shaken.md` (a different matrix than the
+hook's), both fixed with the same template — see CLAUDE.md's 2026-09-03
+"revert claim was false, trace silo" section. Two confirmed instances now,
+not a prediction: this pattern recurs and is worth a systematic sweep, not
+just reactive per-report fixes. `scripts/check-reading-load.ts`
+(`npm run content:reading-load-report`) already flags atoms with zero beat
+coverage and can seed the worklist.
 
 **What:** for each flagged concept, read its `hook.md` (does it already
 carry a resonance scene? what matrix/example does it use?) before writing

@@ -2387,6 +2387,73 @@ prose touched. `ci:content-integrity` (1729), `ci:katex-fences` (1723),
 `ci:gif-scenes` (88 render + 88 QA clean), `ci:variant-agreement` (610
 pairs) all clean, unchanged counts.
 
+---
+
+### Student-paced hook beats + progressive worked-example reveal (2026-09-03)
+
+`/design-review` on two live-QA screenshots (hook mid-scroll, worked
+example) plus the note "look at all places where static text is
+displayed, think about a better motion/animation/progression/transition."
+Both fixes reuse existing machinery rather than inventing new interaction
+languages; no live browser was available in this sandbox (Chromium
+revision mismatch, `playwright install` off-limits per environment
+policy), so this was a source-level review against the real render code
+and the two supplied screenshots, not a live `browse` audit.
+
+**Hook: every beat now holds for the student, not a clock.**
+`Simulation.tsx`'s resonance-beat scenes autoplayed straight through every
+beat on one author-time `duration_sec` (stance-adjusted, but still a
+single fixed pace) — a confident student waited on text they'd already
+read, an anxious one got swept past text they hadn't. `shouldHoldForTrap`'s
+own crossing-detection was already exactly the right primitive, just
+scoped to the trap beat alone; generalized to `shouldHoldAtBeatArrival`,
+called once per beat boundary in the tick loop. Arrival at ANY beat now
+pauses (indefinitely, not `DUR_SLOW_S`'s old timed re-arm) until the
+student taps a new "Continue" button — reusing `GuidedWalkthrough`'s own
+advance-button convention verbatim (same colors, 44px height, trailing
+chevron) rather than a second button language for the same gesture. The
+arc WITHIN a beat still autoplays (the motion stays the delight); only
+the transition INTO the next beat waits for the reader. Net simplification,
+not just an addition: the trap's bespoke timed-hold + `heldTrapRef`/
+`holdUntilRef` bookkeeping is gone — every beat's hold already covers the
+trap moment, and progress being monotonic during normal playback means no
+"already held" guard is needed (a crossed boundary can't re-trigger).
+11 new tests (`shouldHoldAtBeatArrival`'s boundary cases + the Continue
+button's presence/absence across play/pause/reset/finished states).
+
+**Worked example: steps reveal one tap at a time, not one paint.**
+`WorkedExampleCard` faded every step in within the same render pass
+(`delay: i * 0.05` — a stagger, not a reveal) even on a first view, so the
+entire solution, boxed final answer included, was on screen almost
+immediately. `applyScaffoldingFade`'s blank-out ceiling for REPEAT views
+is untouched (`visibleCount` still gates what a returning student can see
+at all); steps within that ceiling now reveal one at a time via the same
+"Show next step" advance-button convention as the hook's Continue button.
+Reduced motion collapses straight to every workable step visible at once,
+matching every other reduced-motion surface in the app. One added delight:
+a step containing `\boxed{...}` (KaTeX's own final-answer command, no new
+authoring convention) gets a brief green settle-flash instead of the flat
+fade every other step gets — `--green` (mastery/correct, DESIGN-SYSTEM.md),
+never indigo (AI/tutor only), since this is a verified result. 7 new
+tests; 3 existing tests (T19a/T19b/T20) updated to click through the new
+reveal rather than asserting instant full visibility — their original
+intent (no JSON leak, hairline-row styling, shaken-stance exemption) is
+unchanged, only the interaction path to reach later steps.
+
+**Scope, named honestly.** The broader "audit all static text" note is
+NOT fully executed — `DefaultAtomCard`'s `.vidhya-atom-body--progressive`
+paragraph-stagger already reaches every atom type except the two
+deliberate holdouts (`formal_definition`, `exam_pattern` — see the
+2026-09-02 sections above), so those surfaces were already covered before
+this pass. `GuidedWalkthrough`/`DecisionTreeWalkthrough` were already
+progressive. What's still genuinely static and un-audited: practice/mock-
+exam question pages, `CommonTrapsCard`'s row content beyond the existing
+`structured` stagger, and any card type outside this file. Tracked in
+TODOS.md rather than claimed as covered.
+
+**Tests:** frontend 2586 → 2604 (+18). `tsc --noEmit` clean. Backend
+untouched (frontend-only change).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

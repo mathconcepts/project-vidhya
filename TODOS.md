@@ -43,6 +43,38 @@ is insufficient after a wizard visit.
 2026-09-03, branch `claude/content-strategy-framework-o9afoc`. See
 `docs/designs/2026-09-03-adaptive-pacing-and-wizard-mistake-loop.md`.
 
+## Static-text motion audit is incomplete outside AtomCardRenderer
+
+**Trigger:** the next live-QA report naming a specific static/dense
+screen, or a decision to do this systematically before the next content
+wave.
+
+The 2026-09-03 `/design-review` pass ("look at all places where static
+text is displayed... think about a better motion/animation/progression")
+fixed the two screens actually reported (hook beat pacing, worked-example
+step reveal) and confirmed `DefaultAtomCard`'s `.vidhya-atom-body--progressive`
+paragraph-stagger already reaches every other atom type in
+`AtomCardRenderer.tsx` (the two 2026-09-02 holdouts, `formal_definition`
+and `exam_pattern`, are deliberate, not gaps). It did NOT audit surfaces
+outside that one file: `PracticeAttemptPage`/mock-exam question rendering,
+`CommonTrapsCard`'s row content beyond its existing `structured` stagger,
+and any lesson-adjacent card type not routed through `AtomCardRenderer`.
+
+**What:** the same grep-then-read audit pattern used for the visual_analogy
+positional-mismatch wave (CLAUDE.md, "the text/diagram mismatch, corpus-
+wide") — inventory every remaining static-text screen, judge each on
+its own merits (some genuinely don't need motion; `formal_definition`
+proves that), fix the ones that do.
+
+**Where to start:** grep for `MarkdownAtomRenderer` / raw `<p>`/`<li>`
+usages outside `frontend/src/components/lesson/AtomCardRenderer.tsx`.
+
+**Effort:** M — mostly reading, some component-level changes.
+**Priority:** P3 — no specific screen reported broken beyond the two
+already fixed.
+**Deferred from:** hook-pacing + worked-example-progression investigation,
+2026-09-03, branch `claude/content-strategy-framework-o9afoc`.
+
 ## `solution_steps` has no LaTeX/tone rendering pipeline
 
 **Trigger:** the next live-QA report on a practice item whose

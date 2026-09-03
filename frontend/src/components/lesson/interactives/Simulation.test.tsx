@@ -21,6 +21,7 @@ import {
   activeBeatIndex,
   resolveBeatText,
   shouldHoldForTrap,
+  shouldHoldAtBeatArrival,
   beatSegmentFill,
   paceMultiplierForStance,
   stripMarkdownForAria,
@@ -206,6 +207,36 @@ describe('shouldHoldForTrap', () => {
   });
 });
 
+// Regression (/investigate, 2026-09-03: "hook might need to be as per each
+// individual's level of grasping... better to progress manually?"). Every
+// beat now holds on arrival, not just the trap — this is the same crossing
+// math as shouldHoldForTrap, generalized to any beat's at_progress, with no
+// `alreadyHeld` guard needed (progress is monotonic during normal playback,
+// so a given beat's boundary is naturally crossed at most once per run).
+describe('shouldHoldAtBeatArrival', () => {
+  const common = { beatAtProgress: 0.5, reducedMotion: false };
+
+  it('holds when natural playback arrives at a beat boundary', () => {
+    expect(shouldHoldAtBeatArrival({ ...common, prevProgress: 0.49, nextProgress: 0.51, isSeek: false })).toBe(true);
+  });
+
+  it('does not hold while still inside the current beat (no crossing yet)', () => {
+    expect(shouldHoldAtBeatArrival({ ...common, prevProgress: 0.1, nextProgress: 0.2, isSeek: false })).toBe(false);
+  });
+
+  it('does not hold on a seek, even landing exactly on the beat boundary', () => {
+    expect(shouldHoldAtBeatArrival({ ...common, prevProgress: 0.49, nextProgress: 0.5, isSeek: true })).toBe(false);
+  });
+
+  it('does not hold under reduced motion', () => {
+    expect(shouldHoldAtBeatArrival({ ...common, prevProgress: 0.49, nextProgress: 0.51, isSeek: false, reducedMotion: true })).toBe(false);
+  });
+
+  it('boundary: a natural tick landing exactly ON the beat point counts as crossing it', () => {
+    expect(shouldHoldAtBeatArrival({ ...common, prevProgress: 0.4, nextProgress: 0.5, isSeek: false })).toBe(true);
+  });
+});
+
 // Regression (/investigate, 2026-09-03): "hook transition is faster — needs
 // to adapt to different students grasping and attention level". Root cause
 // was that `duration_sec` was a single author-time constant applied
@@ -334,6 +365,52 @@ describe('Simulation — chrome hierarchy (design contract item 3)', () => {
     render(<Simulation spec={BEAT_SPEC} />);
     expect(screen.queryByText('Watch the trace')).toBeNull();
     expect(screen.getByLabelText('Watch the trace')).toBeInTheDocument(); // the <svg>
+  });
+});
+
+// Regression (/investigate, 2026-09-03: "hook might need to be as per each
+// individual's level of grasping... better to progress manually?"). The
+// Continue button is the unmissable "keep going" action once a beat holds —
+// it must be absent while autoplay is actively running (nothing to resume)
+// and absent once the scene has fully finished (nothing left to continue
+// to), present in every other paused-mid-scene state.
+describe('Simulation — Continue button (student-paced beats)', () => {
+  it('is absent while autoplay is actively playing', () => {
+    render(<Simulation spec={BEAT_SPEC} />); // autoplay: playing
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+  });
+
+  it('appears once the student pauses mid-scene', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    fireEvent.click(screen.getByLabelText('Pause simulation'));
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+  });
+
+  it('clicking Continue resumes playback', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    fireEvent.click(screen.getByLabelText('Pause simulation'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.getByLabelText('Pause simulation')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+  });
+
+  it('appears after reset (paused at the start, ready to begin again)', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    fireEvent.click(screen.getByLabelText('Reset simulation'));
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+  });
+
+  it('is absent once the scene has fully finished (scrubbed to the end)', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    // scrub() both pauses and seeks in one action (see Simulation.tsx).
+    fireEvent.change(screen.getByLabelText('Drag to move through the scene at your own pace'), { target: { value: '1' } });
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
+  });
+
+  it('is absent under reduced motion (no live playback UI at all)', () => {
+    mockMatchMedia(true);
+    render(<Simulation spec={BEAT_SPEC} />);
+    expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
   });
 });
 

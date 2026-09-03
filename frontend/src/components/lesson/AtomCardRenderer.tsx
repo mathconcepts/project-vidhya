@@ -402,6 +402,68 @@ function CommonTrapsCard({ atom }: { atom: ContentAtom }) {
   );
 }
 
+/**
+ * A `\boxed{...}` in KaTeX already draws its own border around the formula
+ * — this just adds a brief green settle-flash to the row it lands in, so
+ * the "here's the answer" moment reads as distinct from every other step's
+ * identical fade-in. --green (mastery/correct, DESIGN-SYSTEM.md), never
+ * indigo (AI/tutor only) — this is a verified result, not a suggestion.
+ * The literal rgb (not `var(--green)`) matches `reveal-highlight`'s own
+ * precedent in `buildPresetVariants`: framer-motion tweens concrete rgba
+ * values frame to frame, not a CSS custom property string.
+ */
+function BoxedAnswerStep({
+  content,
+  atomId,
+  reducedMotion,
+}: {
+  content: string;
+  atomId: string;
+  reducedMotion: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ backgroundColor: 'rgba(52,199,89,0.14)' }}
+      animate={{ backgroundColor: 'rgba(52,199,89,0)' }}
+      transition={{ duration: framerDuration(DUR_SLOW_S, reducedMotion), ease: EASE_STANDARD }}
+      className="rounded-lg px-2 -mx-2"
+    >
+      <MarkdownAtomRenderer content={content} atomId={atomId} />
+    </motion.div>
+  );
+}
+
+/**
+ * Detects a step whose rendered content lands the final boxed answer —
+ * `\boxed{` is the standard KaTeX/LaTeX command for it, so this is a
+ * reliable signal without any new authoring convention. Exported for
+ * testing.
+ */
+function stepHasBoxedAnswer(step: string): boolean {
+  return step.includes('\\boxed{');
+}
+
+/**
+ * /investigate (2026-09-03, live-QA screenshot: "Solve like a progression.
+ * A visual delight can provide better context"). Every step used to fade
+ * in within the same render pass, `delay: i * 0.05` apart — visually a
+ * stagger, but all of it lands inside a second, so a worked example dumped
+ * its entire solution (every step, including the boxed final answer) on
+ * first view. `applyScaffoldingFade` already blanks the LAST steps on a
+ * REPEAT view, forcing the student to work them out — but on the very
+ * first view, `blanked` is 0, so nothing was ever progressive; the effect
+ * was cosmetic motion on a wall of text already fully present, not an
+ * actual reveal.
+ *
+ * Now the steps within `visibleCount` (the scaffold-fade ceiling — repeat
+ * views still can't see more than they could before) reveal one tap at a
+ * time via a "Show next step" button, the same advance-button convention
+ * GuidedWalkthrough already uses elsewhere in the app (identical colors,
+ * 44px height, trailing chevron — one button language for "tap when
+ * you're ready", not a second one invented here). Reduced motion collapses
+ * straight to every workable step visible at once, matching every other
+ * reduced-motion surface in this file (there is no "moment" to hold back).
+ */
 function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   // T19a: strip the fenced interactive-spec block BEFORE splitting on `---`
   // step delimiters. Without this, a spec-carrying worked_example (96/97
@@ -414,6 +476,19 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   const prose = stripGifSceneBlock(stripAllInteractiveSpecFences(atom.content));
   const { steps, blanked } = applyScaffoldingFade(atom, prose);
   const visibleCount = steps.length - blanked;
+  const reducedMotion = usePrefersReducedMotion();
+
+  const [revealedCount, setRevealedCount] = useState(() => Math.min(1, visibleCount));
+  // Re-arm at step 1 when the atom itself changes (navigating to a
+  // different worked example) — this component instance can be reused
+  // across atoms by its parent, so state must not carry over.
+  useEffect(() => {
+    setRevealedCount(Math.min(1, visibleCount));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset keys on atom identity, not on every visibleCount recompute
+  }, [atom.id]);
+
+  const shownCount = reducedMotion ? visibleCount : Math.min(revealedCount, visibleCount);
+
   return (
     <div>
       {blanked > 0 && (
@@ -429,26 +504,57 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
         a hairline top border rather than its own filled/bordered box —
         holds whether a worked example has 2 steps or 8.
       */}
-      {steps.map((step, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.05 }}
-          className="py-3 text-sm leading-relaxed"
-          style={{
-            borderTop: i === 0 ? 'none' : 'var(--hairline) solid var(--separator)',
-            color: i < visibleCount ? 'var(--text-primary)' : 'var(--text-tertiary)',
-            fontStyle: i < visibleCount ? 'normal' : 'italic',
-          }}
-        >
-          {i < visibleCount ? (
-            <MarkdownAtomRenderer content={step} atomId={`${atom.id}.step.${i}`} />
-          ) : (
-            '(work this step out yourself)'
-          )}
-        </motion.div>
-      ))}
+      {steps.map((step, i) => {
+        const isScaffoldBlanked = i >= visibleCount;
+        // Not yet tapped through and not one of the scaffold-blanked
+        // placeholder rows — render nothing rather than an empty slot, so
+        // the layout never reserves space for a step the student hasn't
+        // earned yet.
+        if (!isScaffoldBlanked && i >= shownCount) return null;
+        const atomId = `${atom.id}.step.${i}`;
+        return (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: framerDuration(DUR_BASE_S, reducedMotion), ease: EASE_STANDARD }}
+            className="py-3 text-sm leading-relaxed"
+            style={{
+              borderTop: i === 0 ? 'none' : 'var(--hairline) solid var(--separator)',
+              color: isScaffoldBlanked ? 'var(--text-tertiary)' : 'var(--text-primary)',
+              fontStyle: isScaffoldBlanked ? 'italic' : 'normal',
+            }}
+          >
+            {isScaffoldBlanked ? (
+              '(work this step out yourself)'
+            ) : stepHasBoxedAnswer(step) ? (
+              <BoxedAnswerStep content={step} atomId={atomId} reducedMotion={reducedMotion} />
+            ) : (
+              <MarkdownAtomRenderer content={step} atomId={atomId} />
+            )}
+          </motion.div>
+        );
+      })}
+      {!reducedMotion && revealedCount < visibleCount && (
+        <div className="flex justify-end pt-1">
+          <button
+            type="button"
+            onClick={() => setRevealedCount((c) => Math.min(c + 1, visibleCount))}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md font-medium"
+            style={{
+              background: 'var(--surface-fill-strong)',
+              color: 'var(--text-primary)',
+              fontSize: 'var(--text-body)',
+              minHeight: 44,
+              paddingLeft: 20,
+              paddingRight: 20,
+            }}
+          >
+            Show next step
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

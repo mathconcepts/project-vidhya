@@ -649,10 +649,272 @@ const DISTRIBUTIONS: MethodSelectionTrainer = {
   },
 };
 
+/**
+ * NUMERICAL_METHODS / TRANSFORM_THEORY / GRAPH_THEORY (micro-solver wave 1,
+ * 2026-09-03) — the first three trainers built as SINGLE-fork trees rather
+ * than a whole topic classification chain (TODOS.md's "Micro-solver
+ * authoring pass" entry). Each is exactly one `BranchNode` + its leaves —
+ * the same schema a 6-fork tree uses, just with `nodes.length === 1` — so
+ * a topic gets tailored guidance for one concrete concept without anyone
+ * drafting a full multi-fork tree first. `steps[0]` (required by
+ * `GuidedWalkthroughSpec` so a non-branch-aware renderer still has
+ * something to show) is derived directly from the node/best-leaf pair
+ * below it, not independently authored — there is no second copy of this
+ * content to keep in sync. Authored via Claude Sonnet subagents (one per
+ * topic, isolated worktrees, no shared file access) per the user's
+ * explicit direction; every mathematical/technical claim was hand-verified
+ * by each subagent (Wolfram MCP was unavailable this session) before this
+ * file incorporated it — see each trainer's `caption` for how the check
+ * was performed.
+ */
+const NUMERICAL_METHODS: MethodSelectionTrainer = {
+  id: 'numerical-methods',
+  title: 'Which Numerical Method Applies?',
+  description:
+    'Pick the right root-finding method for exactly what you know about f(x) — a bracket, a derivative, or just two guesses.',
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Bisection, Newton-Raphson or Secant?',
+    steps: [
+      {
+        prompt:
+          'You want the root of f(x) = x² − 2 = 0 (i.e. √2). You know the derivative f′(x) = 2x, and you have one good starting guess x₀ = 1.5, already close to the true root ≈ 1.41421. Which method is the right tool here?',
+        hint: 'You were handed a derivative AND a single close guess — which method asks for exactly that pair?',
+        answer:
+          'Newton-Raphson: x₁ = x₀ − f(x₀)/f′(x₀) = 1.5 − 0.25/3 ≈ 1.41667, already within 0.0025 of √2. A second step gives x₂ ≈ 1.414216 — the number of correct digits roughly doubles each step (quadratic convergence), the fastest of the three when it applies.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'nm_root_pick',
+          question:
+            'You want the root of f(x) = x² − 2 = 0 (i.e. √2). You know the derivative f′(x) = 2x, and you have one good starting guess x₀ = 1.5, already close to the true root ≈ 1.41421. Which method is the right tool here?',
+          options: [
+            { label: 'Newton-Raphson method', next: 'nm_leaf_newton' },
+            { label: 'Bisection method', next: 'nm_leaf_bisection' },
+            { label: 'Secant method', next: 'nm_leaf_secant' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'nm_leaf_newton',
+          method: 'Newton-Raphson method',
+          reason:
+            'You have exactly what Newton-Raphson asks for: a formula for f′(x) and a single guess already close to the root. It replaces the curve near x₀ with its tangent line and jumps to where that line crosses zero: x₁ = x₀ − f(x₀)/f′(x₀). Starting at x₀ = 1.5, f(1.5) = 0.25 and f′(1.5) = 3, so x₁ = 1.5 − 0.25/3 ≈ 1.41667 — already within 0.0025 of √2. One more step gives x₂ ≈ 1.414216, accurate to five decimal places. That is the signature of Newton-Raphson: once you are close, the number of correct digits roughly doubles every step (quadratic convergence) — the fastest of the three methods when it applies.',
+          best: true,
+        },
+        {
+          id: 'nm_leaf_bisection',
+          method: 'Bisection method',
+          reason:
+            'Bisection needs two points a and b where f(a) and f(b) have opposite signs, so you know a root is trapped somewhere between them. You were not given a bracketing pair here, only a single starting value — so before you could even begin, you would have to go hunting for two such points. And even after finding one, bisection would ignore the derivative you were already handed and just repeatedly halve the interval, gaining roughly one more correct digit every 3-4 steps (linear convergence). It is the reliable fallback when you have no derivative and only a bracket — not the right choice when you already have both f′(x) and a good single guess.',
+        },
+        {
+          id: 'nm_leaf_secant',
+          method: 'Secant method',
+          reason:
+            'Secant is the natural substitute for Newton-Raphson precisely when you do NOT have (or do not want to compute) f′(x) — it approximates the tangent line’s slope using two nearby points instead. But here f′(x) = 2x was already handed to you for free, so switching to secant means throwing that away for no reason: it needs a second starting guess you do not have yet, and even once running it only converges superlinearly (order ≈ 1.618, the golden ratio) — slower than the quadratic convergence Newton-Raphson gets from the exact derivative you already have.',
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const TRANSFORM_THEORY: MethodSelectionTrainer = {
+  id: 'transform-theory',
+  title: 'Laplace, Fourier or Z-Transform?',
+  description: 'Read the signal, then commit to the transform built for it.',
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Which transform is the natural tool?',
+    steps: [
+      {
+        prompt:
+          'You have a continuous function y(t), defined for t ≥ 0 and not periodic, and you are given initial conditions y(0), y′(0) for a linear ODE it satisfies. Which transform is the natural tool for solving it?',
+        hint: 'Continuous, not periodic, and initial conditions matter — which transform’s derivative rule actually uses f(0)?',
+        answer:
+          'The Laplace transform. Its derivative rule L{f′(t)} = sF(s) − f(0) puts f(0) directly into the algebra, so an ODE plus initial conditions becomes one algebraic equation in s.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'tt_transform_pick',
+          question:
+            'You have a continuous function y(t), defined for t ≥ 0 and not periodic, and you are given initial conditions y(0), y′(0) for a linear ODE it satisfies. Which transform is the natural tool for solving it?',
+          options: [
+            { label: 'Laplace transform', next: 'tt_leaf_laplace' },
+            { label: 'Fourier series / Fourier transform', next: 'tt_leaf_fourier' },
+            { label: 'Z-transform', next: 'tt_leaf_z' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'tt_leaf_laplace',
+          method: 'Laplace transform — L{f(t)} = ∫₀^∞ f(t)e^{−st} dt',
+          reason:
+            'This is exactly the setup Laplace is built for: a continuous-time function on t ≥ 0, with no periodicity assumed, where you are handed initial data. The derivative rule L{f′(t)} = sF(s) − f(0) puts f(0) directly into the algebra, so an ODE plus initial conditions becomes one algebraic equation in s — solve for Y(s), then invert. That is precisely why Laplace, not Fourier, is the standard tool for initial-value problems.',
+          best: true,
+        },
+        {
+          id: 'tt_leaf_fourier',
+          method: 'Fourier series / Fourier transform',
+          reason:
+            'Fourier series needs the function to be periodic, which this one is not — there is no interval to expand it over. The Fourier transform does not require periodicity, but it is built for a different job: decomposing a signal into frequencies, not carrying initial-condition data. Its derivative rule, F{f′(t)} = iω F(ω), has no term for f(0) — it is derived by integrating by parts over all of ℝ, where boundary contributions vanish, so there is simply nowhere for an initial condition to enter the algebra the way it does for Laplace.',
+        },
+        {
+          id: 'tt_leaf_z',
+          method: 'Z-transform',
+          reason:
+            'The Z-transform is for discrete-time sequences x[n] — it is the discrete analogue of Laplace, used to turn linear difference equations into algebraic ones in z. Here y(t) is a continuous function of a real variable t, not a sequence, so there is nothing indexed by n to transform. Reach for the Z-transform only once the problem is genuinely discrete-time.',
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const GRAPH_THEORY: MethodSelectionTrainer = {
+  id: 'graph-theory',
+  title: 'Which Shortest-Path Algorithm Applies?',
+  description:
+    "Match the graph's weight structure and what the question actually asks for (single-source or all-pairs) to the correct shortest-path algorithm.",
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'BFS, Dijkstra, Bellman-Ford or Floyd-Warshall?',
+    steps: [
+      {
+        prompt:
+          'A directed graph models currency conversions between accounts: each edge’s weight is the cost of that conversion, and some weights are negative (a conversion that turns a profit), though no cycle of conversions anywhere in the graph is profitable overall (no negative-weight cycle is reachable from the source account). You need the cheapest path from one specific source account to every other account — not the full table of cheapest paths between every pair of accounts. Which algorithm is the right tool?',
+        hint: 'Negative weights rule out one usual favourite; single-source (not all-pairs) rules out another.',
+        answer:
+          'Bellman-Ford: it relaxes every edge V−1 times (O(V·E)) and correctly propagates shortest distances from a single source even with negative edges, as long as no negative-weight cycle is reachable from the source.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'gt_shortest_pick',
+          question:
+            'A directed graph models currency conversions between accounts: each edge’s weight is the cost of that conversion, and some weights are negative (a conversion that turns a profit), though no cycle of conversions anywhere in the graph is profitable overall (no negative-weight cycle is reachable from the source account). You need the cheapest path from one specific source account to every other account — not the full table of cheapest paths between every pair of accounts. Which algorithm is the right tool?',
+          options: [
+            { label: 'BFS (breadth-first search)', next: 'gt_leaf_bfs' },
+            { label: "Dijkstra's algorithm", next: 'gt_leaf_dijkstra' },
+            { label: 'Bellman-Ford algorithm', next: 'gt_leaf_bellman_ford' },
+            { label: 'Floyd-Warshall algorithm', next: 'gt_leaf_floyd_warshall' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'gt_leaf_bfs',
+          method: 'BFS (breadth-first search)',
+          reason:
+            "BFS finds shortest paths correctly only when every edge costs the same — its level-by-level expansion is implicitly counting hops, which equals true shortest distance only in an unweighted graph (or one where every weight is equal, e.g. all 1s). Here the edges carry different costs, some even negative, so a hop count would not match the actual cheapest-path cost at all. This isn't a speed problem — BFS in O(V+E) is fast — it's the wrong quantity to compute.",
+        },
+        {
+          id: 'gt_leaf_dijkstra',
+          method: "Dijkstra's algorithm",
+          reason:
+            "Dijkstra greedily finalizes each vertex's distance in increasing order, on the assumption that once a vertex has the smallest current tentative distance, no edge discovered later can ever produce a shorter path to it. A negative edge weight can break that assumption: a later negative-weight edge can create a cheaper route to a vertex Dijkstra has already 'locked in', so it can report a distance that is simply wrong. Dijkstra requires all edge weights to be non-negative, which this graph does not guarantee.",
+        },
+        {
+          id: 'gt_leaf_bellman_ford',
+          method: 'Bellman-Ford algorithm',
+          reason:
+            'Bellman-Ford relaxes every edge V−1 times (O(V·E) total), which is enough to correctly propagate shortest distances from a single source even when some edges are negative, provided no negative-weight cycle is reachable from that source (which the scenario states, and which one further relaxation pass could confirm by detecting any violation). That is exactly this situation — single-source shortest paths where negative weights are possible — so Bellman-Ford is the right choice, even though it costs more than Dijkstra’s roughly O(E log V) on a graph that happened to have only non-negative weights.',
+          best: true,
+        },
+        {
+          id: 'gt_leaf_floyd_warshall',
+          method: 'Floyd-Warshall algorithm',
+          reason:
+            "Floyd-Warshall's dynamic program computes shortest paths between EVERY pair of vertices in one O(V³) pass, and it does tolerate negative edge weights (again, as long as there's no negative cycle) — so it wouldn't give a wrong answer here. But the question asks for distances from only one specific source, not the full V×V distance matrix, so Floyd-Warshall computes far more than is needed, at a higher time cost than Bellman-Ford's O(V·E), which solves exactly the single-source problem being asked.",
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const DIFFERENTIAL_EQUATIONS: MethodSelectionTrainer = {
+  id: 'differential-equations',
+  title: 'Which First-Order ODE Method Applies?',
+  description:
+    "Given a first-order ODE, decide whether to separate variables, use an integrating factor, or test for exactness — and see why the other two methods don't fit this equation.",
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Separable, linear or exact?',
+    steps: [
+      {
+        prompt: "You're given the differential equation dy/dx = 2xy². Which method should you use to solve it?",
+        hint: 'Try to split the right side into a function of x times a function of y.',
+        answer:
+          'Separate: 2xy² = (2x)·(y²), so (1/y²) dy = 2x dx. Integrate: −1/y = x² + C, so y = −1/(x² + C).',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'de_method_pick',
+          question: "You're given the differential equation dy/dx = 2xy². Which method should you use to solve it?",
+          options: [
+            { label: 'Separate the variables', next: 'de_leaf_separable' },
+            { label: 'Use an integrating factor (treat it as linear)', next: 'de_leaf_linear' },
+            { label: 'Test for exactness and find a potential function', next: 'de_leaf_exact' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'de_leaf_separable',
+          method: 'Separation of variables',
+          reason:
+            'The right side factors cleanly into a function of x times a function of y: 2xy² = (2x)·(y²). Divide both sides by y² to get (1/y²) dy = 2x dx, then integrate directly: −1/y = x² + C, so y = −1/(x² + C). Whenever f(x,y) splits into h(x)·g(y) like this, separation is the fastest route — no integrating factor or potential function needed.',
+          best: true,
+        },
+        {
+          id: 'de_leaf_linear',
+          method: 'Linear-equation integrating factor',
+          reason:
+            "Try to force this into the standard linear form dy/dx + P(x)y = Q(x) and it won't go: that form needs y to appear only to the first power, but here y appears as y² — the equation is degree 2 in y, so it's a Bernoulli equation, not a linear one. (A genuine Bernoulli equation can be tamed with the substitution v = y^(1−n), but that's a longer detour this equation doesn't need — it's already separable as it stands.) Reach for the integrating-factor method only once you've confirmed the y-term is actually linear.",
+        },
+        {
+          id: 'de_leaf_exact',
+          method: 'Exact-equation method',
+          reason:
+            "Rewrite as M dx + N dy = 0: 2xy² dx − dy = 0, so M = 2xy² and N = −1. The exactness test asks whether ∂M/∂y = ∂N/∂x. Here ∂M/∂y = 4xy while ∂N/∂x = 0 — they agree only along x = 0 or y = 0, not identically, so the equation fails the exactness test and there's no potential function F(x,y) with F_x = M and F_y = N. Don't reach for the exactness method until ∂M/∂y and ∂N/∂x actually match everywhere, not just at isolated points.",
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
 /** Trainers behind /theorem-wizard/:module. */
 export const THEOREM_WIZARD_TRAINERS: Record<string, MethodSelectionTrainer> = {
   'linear-algebra': LINEAR_ALGEBRA,
   'vector-calculus': VECTOR_CALCULUS,
+  'numerical-methods': NUMERICAL_METHODS,
+  'transform-theory': TRANSFORM_THEORY,
+  'graph-theory': GRAPH_THEORY,
+  'differential-equations': DIFFERENTIAL_EQUATIONS,
 };
 
 /** The trainer behind /distribution-selector. */
@@ -663,6 +925,10 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
   LINEAR_ALGEBRA,
   VECTOR_CALCULUS,
   DISTRIBUTIONS,
+  NUMERICAL_METHODS,
+  TRANSFORM_THEORY,
+  GRAPH_THEORY,
+  DIFFERENTIAL_EQUATIONS,
 ];
 
 /**
@@ -720,6 +986,26 @@ export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
   'distribution-selector': {
     'discrete-distributions': 'ds_discrete',
     'continuous-distributions': 'ds_continuous',
+  },
+  // Micro-solver wave 1 (2026-09-03) — each of these trainers is a single
+  // fork, so its one concept (or shared concepts, for transform-theory)
+  // maps to that one node id. Trivial today, but keeping the same map
+  // shape as the multi-fork trainers means a future added fork needs no
+  // routing changes here — only a new map entry.
+  'numerical-methods': {
+    'root-finding': 'nm_root_pick',
+  },
+  'transform-theory': {
+    'laplace-transform': 'tt_transform_pick',
+    'fourier-transform': 'tt_transform_pick',
+    'z-transform': 'tt_transform_pick',
+  },
+  'graph-theory': {
+    'shortest-paths': 'gt_shortest_pick',
+  },
+  'differential-equations': {
+    'ode-first-order': 'de_method_pick',
+    'ode-exact': 'de_method_pick',
   },
 };
 

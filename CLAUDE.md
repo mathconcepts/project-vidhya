@@ -2816,6 +2816,50 @@ Wolfram/hand-verification on every claim before any content ships.
 hatch cases, `method-selection-trainers.test.ts` +3 map-resolution/self-
 consistency cases). Frontend suite 2604 → 2614/2614. `tsc --noEmit` clean.
 
+### Micro-solver wave 1: 4 more topics get a tailored wizard (2026-09-03)
+
+`/loop` continuation of the wizard brainstorm above — the "close coverage
+for the other topic families" half. 4 parallel Claude Sonnet subagents
+(isolated worktrees, no shared file access, real content only — no repo
+edits, drafts written to a scratch path) each authored ONE single-fork
+`MethodSelectionTrainer` for a topic with no wizard before this: root-
+finding method choice (`numerical-methods`), which-transform choice
+(`transform-theory`), first-order-ODE method choice
+(`differential-equations`), shortest-path algorithm choice
+(`graph-theory`). Every claim was hand-verified by the authoring agent
+(Wolfram MCP was disconnected all session) before this file incorporated
+it — Newton-Raphson's two iteration steps checked against direct
+arithmetic, the ODE's separability/non-linearity/non-exactness checked via
+∂M/∂y vs ∂N/∂x and a degree check (confirmed with SymPy locally), the
+Laplace/Fourier derivative identities and the four shortest-path
+algorithms' complexity/correctness conditions checked against standard
+results. All four merged in, wired, and validated by this session, not
+committed sight-unseen.
+
+**Same mechanism, no new component.** A "tree" with one node is the
+identical `BranchesSpec` shape a 6-fork tree uses — `DecisionTreeWalkthrough`
+needs no changes to render it, and the `steps[0]` `GuidedWalkthroughSpec`
+still requires (fallback path) is derived directly from the node/best-leaf
+pair, never a second independently-authored copy. `THEOREM_WIZARD_TRAINERS`
+grew from 2 keys to 6; `wizardRouteForTopic()`
+(`PracticeAttemptPage.tsx`) grew its allowlist to match;
+`CONCEPT_TO_WIZARD_NODE` gained one entry per new trainer's concept(s) —
+`transform-theory` tags all three transform concepts
+(`laplace-transform`/`fourier-transform`/`z-transform`) to its one shared
+fork, mirroring how `la_invertible` was already shared by two LA concepts.
+
+**Coverage after wave 1:** 6 of 10 topic families have a wizard
+(linear-algebra, vector-calculus, distributions, numerical-methods,
+transform-theory, differential-equations, graph-theory — 7, not counting
+distributions' different route). Still bare: calculus, complex-variables,
+discrete-mathematics — tracked in TODOS.md as the next batch, same pattern.
+
+**Tests:** 15 new (`method-selection-trainers.test.ts` +15: per-wave-1-
+trainer single-node-tree assertions, steps-derived-not-duplicated checks,
+concept-map self-consistency, the shared transform-theory fork). Full
+route-key list test updated (2 keys → 6). Frontend suite 2614 → 2636/2636.
+`tsc --noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -4,41 +4,63 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
-## Micro-solver authoring pass: close wizard coverage for the other 8 topic families
+## Micro-solver authoring pass wave 2: close wizard coverage for the last 3 topic families
 
 **Trigger:** ready to start the next content wave, or a live-QA report
-naming a method-selection miss on a topic with no wizard today.
+naming a method-selection miss on calculus, complex-variables, or
+discrete-mathematics.
 
 `/office-hours` (2026-09-03) brainstormed the tailored-mistake-wizard
 redesign; the `startAt` deep-link mechanism (CLAUDE.md's 2026-09-03
 "Method-selection wizard: `startAt` deep link" section) is shipped and
-covers the 3 existing trainers (linear-algebra, vector-calculus,
-distributions). The other half of the recommended approach — treating a
-single fork + its leaves as its own authorable unit, so a topic gets
-tailored guidance one concept at a time instead of needing a whole
-multi-fork tree drafted up front — is NOT started.
+covers linear-algebra/vector-calculus/distributions. Wave 1 (CLAUDE.md's
+2026-09-03 "Micro-solver wave 1" section, same-day `/loop` continuation)
+used 4 parallel Claude Sonnet subagents to author one single-fork
+`MethodSelectionTrainer` each for numerical-methods, transform-theory,
+differential-equations, and graph-theory — 6 of 10 topic families now have
+a wizard. Three remain bare: **calculus, complex-variables,
+discrete-mathematics.**
 
-**What:** for a topic with no `MethodSelectionTrainer` yet (everything
-outside linear-algebra/vector-calculus/distributions — calculus,
-complex-variables, numerical-methods, discrete-mathematics, graph-theory,
-transform-theory, and the rest), pick the concept most likely to produce a
-real method-selection miss, author ONE `BranchNode` + 2-3 `BranchLeaf`s
-(same schema `DecisionTreeWalkthrough` already renders — a 1-node tree
-needs no new component or renderer change), register it under a new or
-existing trainer keyed by that topic's module id, and add the concept's
-entry to `CONCEPT_TO_WIZARD_NODE`. Every leaf's `reason` must say why the
-plausible wrong method fails, same discipline as the 3 shipped trainers —
-verify every mathematical claim (Wolfram or by hand) before authoring.
+**What:** same pattern as wave 1, one subagent per topic (isolated
+worktree, no repo edits — draft to a scratch JSON path, merge by hand
+after review). Pick the concept most likely to produce a real
+method-selection miss, author ONE `BranchNode` + 2-3 `BranchLeaf`s (same
+schema `DecisionTreeWalkthrough` already renders — a 1-node tree needs no
+new component or renderer change), register it under a new trainer keyed
+by the topic's module id in `THEOREM_WIZARD_TRAINERS`, and add the
+concept's entry to `CONCEPT_TO_WIZARD_NODE`. Every leaf's `reason` must
+say why the plausible wrong method fails, same discipline as all 6 shipped
+trainers — verify every mathematical claim (Wolfram or by hand) before
+authoring; wave 1's subagents all hand-verified via SymPy/direct
+arithmetic since Wolfram MCP was disconnected that session too.
+
+**Candidate decisions, not yet picked/verified — a starting point, not a
+commitment:**
+- calculus: series-convergence test selection (ratio/root/comparison/
+  integral test), or a critical-point classification decision
+  (second-derivative test vs. first-derivative sign chart) — concept ids
+  confirmed real: `series`, `maxima-minima`.
+- complex-variables: contour-integration method choice (Cauchy's theorem
+  vs. Cauchy's integral formula vs. residue theorem, by singularity
+  location relative to the contour) — concept id `complex-integration` or
+  `residue-calculus`.
+- discrete-mathematics: proof-technique selection (direct vs. induction
+  vs. contradiction) is the classic fit but may not map cleanly to one
+  practice-item concept; `recurrence-relations` (which solving technique —
+  characteristic equation vs. substitution vs. master theorem — applies)
+  is a more concrete alternative worth checking against the real
+  practice-item bank first.
 
 **Where to start:** `frontend/src/data/method-selection-trainers.ts` for
-the data shape and the 3 existing trainers as templates;
-`frontend/src/pages/app/TheoremWizardPage.tsx`'s routing (`:module` param
-→ `THEOREM_WIZARD_TRAINERS[moduleId]`) is already generic enough to add a
-4th+ module with no page changes.
+the data shape and all 6 existing trainers as templates (the wave-1 four
+are the closest style match, being single-fork themselves);
+`frontend/src/pages/app/TheoremWizardPage.tsx`'s routing and
+`wizardRouteForTopic()`'s allowlist in `PracticeAttemptPage.tsx` both need
+the new topic slugs added, same as wave 1's diff.
 
 **Effort:** S per concept (one fork + its leaves, roughly a `common_traps`
-atom's worth of authoring + verification), following the same 5-6-concept
-subagent batch pattern used for content waves elsewhere in this doc.
+atom's worth of authoring + verification) — wave 1's 4 subagents each took
+roughly 1-2 minutes of wall time and under 170k tokens.
 
 ## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
 

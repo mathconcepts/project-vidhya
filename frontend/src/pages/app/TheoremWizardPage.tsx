@@ -17,15 +17,24 @@
  *
  * Self-check only (E5) — the widget records no marks. The honesty label
  * inside the widget says so.
+ *
+ * /investigate (2026-09-03): when `PracticeAttemptPage` links here off a
+ * wrong answer, it carries `?concept=<node_id>&mistake=<label>` — read via
+ * `useSearchParams` and handed to `WizardContextBanner`/`WizardPracticeCTA`
+ * (both no-ops when absent, so a directly-visited wizard is unchanged).
  */
 
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { GuidedWalkthrough } from '@/components/lesson/interactives/GuidedWalkthrough';
 import { THEOREM_WIZARD_TRAINERS } from '@/data/method-selection-trainers';
+import { WizardContextBanner, WizardPracticeCTA } from '@/components/app/WizardMistakeLoop';
 
 export default function TheoremWizardPage() {
   const { module: moduleId } = useParams<{ module: string }>();
+  const [searchParams] = useSearchParams();
+  const concept = searchParams.get('concept');
+  const mistakeLabel = searchParams.get('mistake');
   const trainer = THEOREM_WIZARD_TRAINERS[moduleId ?? ''];
 
   if (!trainer) {
@@ -77,7 +86,11 @@ export default function TheoremWizardPage() {
         {trainer.description}
       </p>
 
+      <WizardContextBanner concept={concept} mistakeLabel={mistakeLabel} />
+
       <GuidedWalkthrough spec={trainer.spec} />
+
+      <WizardPracticeCTA concept={concept} />
     </div>
   );
 }

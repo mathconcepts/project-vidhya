@@ -2168,6 +2168,75 @@ the `solution_steps` LaTeX-pipeline fix; extending
 backend 4672/4672, frontend 2572/2572. `npm run ci` (18 gates) clean.
 `tsc --noEmit` clean both sides.
 
+**Same-day follow-up fix (v4.53.1):** live-QA screenshot showed the wizard
+link stacked ABOVE "Explore this concept" and "Practice more like this",
+plus the "What's next for me?" text link below — 3 buttons + a link on a
+wrong answer, decision overload against Vidhya Clarity's one-focal-action
+rule. Fixed: the wizard link and "Explore this concept" are both "go
+learn" moves and now share ONE slot — the wizard wins only when the
+server's diagnosis (`failure_tag === 'method_selection' || 'method'`) says
+the miss was actually a method choice and the topic has a trainer; every
+other wrong answer (including an untagged one — a guessed diagnosis is
+worse than the safe generic default) gets the lesson instead, never both.
+3 new tests (16 → 19).
+
+---
+
+### Adaptive hook pacing + wizard-to-practice mistake loop (2026-09-03)
+
+`/investigate` on three follow-ups: hook animations play at one fixed
+speed for every student; the method-selection wizard is a good idea but
+doesn't connect to the actual problem or correct the misunderstanding;
+reimagine it as identify-the-mistake → correct-it → practice-more. Full
+root-cause + honest scoping:
+`docs/designs/2026-09-03-adaptive-pacing-and-wizard-mistake-loop.md`.
+
+**Pacing.** `Simulation.tsx`'s `duration_sec` was a single author-time
+constant applied identically to every student, even though `servedStance`
+was already threaded into the component for per-beat TEXT
+(`resolveBeatText`) and never for pacing. `paceMultiplierForStance()` (new,
+pure, exported) scales playback speed by the same shaken=slower/
+assured=faster philosophy `framingInstructions()`
+(`src/sessions/learner-framing.ts`) already codifies for register — 1.35×
+for shaken, 0.75× for assured, 1× (unchanged) for steady/undefined, beat-
+carrying scenes only. No new tracking: `servedStance` was already
+server-derived from `motivation_state`/`consecutive_failures`/mastery band
+and already reaching this exact component.
+
+**Wizard context + practice loop.** `PracticeAttemptPage.tsx`'s wizard
+link now carries `?concept=<node_id>&mistake=<label>` (the same
+plain-language label the wrong-answer screen already shows via
+`COMMON_MISTAKE_LABEL`). `TheoremWizardPage`/`DistributionSelectorPage`
+read it and render `WizardContextBanner` (names the concept + mistake
+above the tree) and `WizardPracticeCTA` (a "Practice more like this" link
+to `/smart-practice?concept=<concept>`) — both new,
+`frontend/src/components/app/WizardMistakeLoop.tsx`, both no-ops when the
+wizard is opened directly with no query params.
+
+**A real constraint surfaced mid-build and was respected, not routed
+around.** The first draft added an `onLeaf` callback to
+`DecisionTreeWalkthrough` so the practice CTA could reveal only once a
+leaf was reached. `DecisionTreeWalkthrough.test.tsx` already has an
+explicit structural guard against exactly this: "A future onLeaf/onGraded
+prop would be the hole E5 closes" — even a non-grading callback is a
+foothold for a future caller to report the client-visible `leaf.best` as
+a correctness signal, reopening the client-trusted-grading class of bug
+the mock-exam fix closed. The callback was dropped rather than renamed to
+dodge the guard's regex; `WizardPracticeCTA` is instead always available
+once a concept is known (an honest "when you're ready" door, not a gated
+"you're done" reward). `DecisionTreeWalkthrough.tsx` and
+`GuidedWalkthrough.tsx` are unchanged in this pass — verified via `git
+status`, not asserted.
+
+**Deliberately not done, named in TODOS.md:** the practice CTA routes to
+the concept's whole practice pool, not problems selected for the specific
+diagnosed misconception — `ProtoCATSelector` has no misconception filter
+today; threading one through is real, separate selection-logic work.
+
+**Tests:** 9 new (3 pace-multiplier unit tests, 1 concept/mistake
+query-param propagation test on `PracticeAttemptPage`, 5 wizard-page
+context/CTA tests). Full frontend suite 2584/2584. `tsc --noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -4,6 +4,62 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.54.0] — 2026-09-03 — Adaptive hook pacing + wizard-to-practice mistake loop
+
+No new env vars, no migrations.
+
+`/investigate` on three follow-ups: hook animations play at one fixed
+speed for every student; the method-selection wizard doesn't connect to
+the actual problem or correct the misunderstanding; reimagine it as
+identify-the-mistake → correct-it → practice-more. Full writeup:
+`docs/designs/2026-09-03-adaptive-pacing-and-wizard-mistake-loop.md`.
+
+Root-caused the pacing complaint to `Simulation.tsx`'s `duration_sec`
+being a single author-time constant applied identically to every student,
+even though `servedStance` was already threaded into the component for
+per-beat TEXT and never for pacing. `paceMultiplierForStance()` (new,
+pure) scales playback speed by the same shaken=slower/assured=faster
+philosophy `framingInstructions()` already codifies for register — no new
+tracking, reusing a signal already server-derived and already reaching
+this component.
+
+Root-caused the wizard complaint to two gaps: it opened with zero
+knowledge of which problem sent the student there, and reaching a result
+was a dead end with no path back into practice. `PracticeAttemptPage.tsx`'s
+wizard link now carries `?concept=&mistake=`; `TheoremWizardPage`/
+`DistributionSelectorPage` render a context banner and a "Practice more
+like this" CTA (new `WizardMistakeLoop.tsx`) around the unchanged widget.
+
+A real constraint surfaced mid-build: the first draft added an `onLeaf`
+callback to `DecisionTreeWalkthrough` so the CTA could gate on reaching a
+result. `DecisionTreeWalkthrough.test.tsx` already has an explicit
+structural guard against exactly this — even a non-grading leaf-visibility
+callback is a foothold for reopening the client-trusted-grading hole the
+mock-exam fix closed. Dropped rather than routed around; the CTA is
+instead always available once a concept is known.
+
+9 new tests. Deferred to TODOS.md: the practice CTA targets the concept's
+whole pool, not problems selected for the specific diagnosed
+misconception — `ProtoCATSelector` has no misconception filter today.
+
+## [4.53.1] — 2026-09-03 — Fix: one learn-more slot on a wrong practice answer
+
+No new env vars, no migrations.
+
+Live-QA screenshot flagged 4.53.0's post-answer CTA row as decision
+overload: on a wrong answer the page stacked "Which method applies? Work
+through it" above "Explore this concept" / "Practice more like this", plus
+a "What's next for me?" text link below — 3 buttons and a link competing
+for attention, against Vidhya Clarity's one-focal-action rule.
+
+Root cause: the wizard link and "Explore this concept" are both "go learn"
+moves and were never meant to stack. `PracticeAttemptPage.tsx` now shows
+exactly one of them per learn-more slot: the wizard wins only when the
+server's own diagnosis (`failure_tag === 'method_selection' || 'method'`)
+says the miss WAS a method choice and the topic has a real trainer; every
+other wrong answer — including an untagged one — gets the concept lesson,
+never both. 3 new tests (16 → 19) lock the exclusivity.
+
 ## [4.53.0] — 2026-09-03 — Content teaching arc: predict-before-reveal + solver discoverability
 
 No new env vars, no migrations.

@@ -6,7 +6,15 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { MemoryRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+
+// Echoes the query string so tests can assert the wizard link carries
+// concept/mistake context (/investigate, 2026-09-03), without needing the
+// real TheoremWizardPage/DistributionSelectorPage wired into this test.
+function WizardStub({ label }: { label: string }) {
+  const [params] = useSearchParams();
+  return <div>{label} concept={params.get('concept') ?? ''} mistake={params.get('mistake') ?? ''}</div>;
+}
 
 vi.mock('@/lib/auth/client', () => ({ authFetch: vi.fn() }));
 vi.mock('@/lib/demoPersona', () => ({ setDemoOutcome: vi.fn() }));
@@ -37,8 +45,8 @@ async function renderPage() {
         <Route path="/attempt/:objectId" element={<Page />} />
         <Route path="/lesson/:conceptId" element={<div>LESSON PAGE: matrix-operations</div>} />
         <Route path="/smart-practice" element={<div>SMART PRACTICE PAGE</div>} />
-        <Route path="/theorem-wizard/:module" element={<div>THEOREM WIZARD</div>} />
-        <Route path="/distribution-selector" element={<div>DISTRIBUTION SELECTOR</div>} />
+        <Route path="/theorem-wizard/:module" element={<WizardStub label="THEOREM WIZARD" />} />
+        <Route path="/distribution-selector" element={<WizardStub label="DISTRIBUTION SELECTOR" />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -309,13 +317,21 @@ describe('PracticeAttemptPage — post-wrong-answer next-move CTAs', () => {
 // method-selection wizard (which already covers this exact territory via
 // its `la_power`/`la_definite` nodes) existed but was reachable only by
 // typing its URL directly.
-describe('PracticeAttemptPage — method-selection wizard link', () => {
+//
+// A same-day follow-up found that stacking the wizard link ABOVE "Explore
+// this concept" produced 3 buttons + a text link fighting for attention
+// right after a miss — decision overload, against Vidhya Clarity's one-
+// focal-action rule. Both buttons are "go learn" moves, so they now share
+// one slot: the wizard wins only when the server's own diagnosis
+// (`failure_tag`) says the miss WAS a method choice; every other wrong
+// answer gets the concept lesson instead, never both.
+describe('PracticeAttemptPage — method-selection wizard link (one learn-more slot)', () => {
   const LA_ITEM = { ...MCQ_ITEM, id: 'obj-la', topic: 'linear-algebra' };
   const LA_ITEM_TITLE_CASE = { ...MCQ_ITEM, id: 'obj-la2', topic: 'Linear Algebra' };
   const PS_ITEM = { ...MCQ_ITEM, id: 'obj-ps', topic: 'probability-statistics' };
   const UNMAPPED_ITEM = { ...MCQ_ITEM, id: 'obj-cx', topic: 'complex-variables' };
 
-  async function submitWrong(item: typeof MCQ_ITEM) {
+  async function submitWrong(item: typeof MCQ_ITEM, failureTag: string | null) {
     const { authFetch } = await import('@/lib/auth/client');
     vi.mocked(authFetch)
       .mockResolvedValueOnce(jsonResponse(item))
@@ -325,7 +341,7 @@ describe('PracticeAttemptPage — method-selection wizard link', () => {
         solution_steps: [],
         recorded: true,
         xp_minutes_awarded: null,
-        failure_tag: null,
+        failure_tag: failureTag,
       }));
     await renderPage();
     await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
@@ -334,28 +350,56 @@ describe('PracticeAttemptPage — method-selection wizard link', () => {
     await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
   }
 
-  it('links a wrong linear-algebra answer to the theorem-selection wizard', async () => {
-    await submitWrong(LA_ITEM);
+  it('links a method-selection miss on a linear-algebra item to the theorem wizard, not the lesson', async () => {
+    await submitWrong(LA_ITEM, 'method_selection');
+    expect(screen.queryByText('Explore this concept')).toBeNull();
     const link = screen.getByText(/Which method applies/);
     fireEvent.click(link);
-    await waitFor(() => expect(screen.getByText('THEOREM WIZARD')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/THEOREM WIZARD/)).toBeInTheDocument());
+  });
+
+  it('carries the concept and mistake label into the wizard link so it connects to the actual problem', async () => {
+    await submitWrong(LA_ITEM, 'method_selection');
+    fireEvent.click(screen.getByText(/Which method applies/));
+    await waitFor(() =>
+      expect(screen.getByText(`THEOREM WIZARD concept=${LA_ITEM.node_id} mistake=picking the wrong approach`)).toBeInTheDocument(),
+    );
+  });
+
+  it('also treats the plain "method" tag as a method-selection miss', async () => {
+    await submitWrong(LA_ITEM, 'method');
+    expect(screen.getByText(/Which method applies/)).toBeInTheDocument();
+    expect(screen.queryByText('Explore this concept')).toBeNull();
   });
 
   it('normalizes a title-case topic to the same slug', async () => {
-    await submitWrong(LA_ITEM_TITLE_CASE);
+    await submitWrong(LA_ITEM_TITLE_CASE, 'method_selection');
     expect(screen.getByText(/Which method applies/)).toBeInTheDocument();
   });
 
-  it('links a wrong probability-statistics answer to the distribution selector', async () => {
-    await submitWrong(PS_ITEM);
+  it('links a method-selection miss on a probability-statistics item to the distribution selector', async () => {
+    await submitWrong(PS_ITEM, 'method_selection');
     const link = screen.getByText(/Which method applies/);
     fireEvent.click(link);
-    await waitFor(() => expect(screen.getByText('DISTRIBUTION SELECTOR')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/DISTRIBUTION SELECTOR/)).toBeInTheDocument());
   });
 
-  it('shows no wizard link for a topic with no trainer', async () => {
-    await submitWrong(UNMAPPED_ITEM);
+  it('falls back to "Explore this concept" for a non-method miss, even on a topic with a trainer', async () => {
+    await submitWrong(LA_ITEM, 'sign');
     expect(screen.queryByText(/Which method applies/)).toBeNull();
+    expect(screen.getByText('Explore this concept')).toBeInTheDocument();
+  });
+
+  it('falls back to "Explore this concept" when the server has no diagnosis at all', async () => {
+    await submitWrong(LA_ITEM, null);
+    expect(screen.queryByText(/Which method applies/)).toBeNull();
+    expect(screen.getByText('Explore this concept')).toBeInTheDocument();
+  });
+
+  it('shows no wizard link for a topic with no trainer, even on a method-selection miss', async () => {
+    await submitWrong(UNMAPPED_ITEM, 'method_selection');
+    expect(screen.queryByText(/Which method applies/)).toBeNull();
+    expect(screen.getByText('Explore this concept')).toBeInTheDocument();
   });
 
   it('never shows the wizard link on a correct answer', async () => {
@@ -368,7 +412,7 @@ describe('PracticeAttemptPage — method-selection wizard link', () => {
         solution_steps: [],
         recorded: true,
         xp_minutes_awarded: 1,
-        failure_tag: null,
+        failure_tag: 'method_selection',
       }));
     await renderPage();
     await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
@@ -376,5 +420,6 @@ describe('PracticeAttemptPage — method-selection wizard link', () => {
     fireEvent.click(screen.getByText('Submit'));
     await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
     expect(screen.queryByText(/Which method applies/)).toBeNull();
+    expect(screen.queryByText('Explore this concept')).toBeNull();
   });
 });

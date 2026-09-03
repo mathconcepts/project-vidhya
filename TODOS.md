@@ -4,6 +4,45 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Practice CTA after a wizard mistake should target the misconception, not just the concept
+
+**Trigger:** a decision to deepen the mistake-diagnosis loop, or evidence
+that generic concept practice isn't closing the specific gap a wizard
+visit surfaced.
+
+`WizardPracticeCTA` (`frontend/src/components/app/WizardMistakeLoop.tsx`,
+2026-09-03) routes a student who just worked through the method-selection
+wizard to `/smart-practice?concept=<concept>` — the concept's whole
+practice pool, not problems selected for the SPECIFIC misconception the
+wizard diagnosed (e.g. "picking the wrong approach" vs. a sign error).
+`ProtoCATSelector` (`src/scoring/proto-cat-selector.ts`) doesn't currently
+accept a misconception/failure_tag filter — it selects by desirable-
+difficulty band, not by error type.
+
+**What:** thread the diagnosed `failure_tag`/`mistake` context from the
+wizard link through to item selection, so "practice more like this" means
+"practice problems shaped like the mistake you made," not just "practice
+this concept generally." Needs either a query param `SmartPracticePage`
+reads and forwards, or a dedicated endpoint.
+
+**Why not done here:** this investigation's scope was closing the
+wizard's two acute gaps (no context, no path back to practice) —
+`ProtoCATSelector` gaining a misconception filter is real, separate
+selection-logic work with its own design questions (does every
+`failure_tag` have enough tagged practice items to filter on? what's the
+fallback when it doesn't?).
+
+**Where to start:** `src/scoring/proto-cat-selector.ts`'s `ItemSelector`
+interface; `distractor_failure_tags` on `generated_problems` (migration
+054) is the existing per-item tagging this would need to query against.
+
+**Effort:** M — a real selection-logic change, not a wiring change.
+**Priority:** P3 — no usage data yet on whether generic concept practice
+is insufficient after a wizard visit.
+**Deferred from:** adaptive-pacing + wizard-mistake-loop investigation,
+2026-09-03, branch `claude/content-strategy-framework-o9afoc`. See
+`docs/designs/2026-09-03-adaptive-pacing-and-wizard-mistake-loop.md`.
+
 ## `solution_steps` has no LaTeX/tone rendering pipeline
 
 **Trigger:** the next live-QA report on a practice item whose

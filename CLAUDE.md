@@ -2860,6 +2860,56 @@ concept-map self-consistency, the shared transform-theory fork). Full
 route-key list test updated (2 keys → 6). Frontend suite 2614 → 2636/2636.
 `tsc --noEmit` clean.
 
+### Wizard surfaced in the knowledge graph, not just after a wrong answer (2026-09-03)
+
+Follow-up ask: "see if this is connected to any knowledge graph, or if not,
+something can be done here." Researched before building anything —
+`src/constants/concept-graph.ts`/`data/curriculum/gate-ma.yml` is the real
+prerequisite DAG (every wizard-covered concept has declared
+`prerequisites:`, e.g. `diagonalization` needs `[eigenvalues,
+vector-spaces]`); `FrontierSpine.tsx` is its one visual surface (a
+topological spine, never a literal graph — see the T13 section above). A
+repo-wide grep for `"theorem-wizard"`/`"distribution-selector"` found
+exactly one linker outside the wizard's own files: `PracticeAttemptPage`'s
+reactive post-wrong-answer CTA. The wizard was invisible to the knowledge
+graph in both directions — not reachable from browsing it, and not
+consulting its prerequisite edges at all (`CONCEPT_TO_WIZARD_NODE` is a
+flat id→node lookup, confirmed unchanged).
+
+**Shipped:** `FrontierSpine.tsx`'s per-concept bottom sheet (the existing
+"Builds on: …" detail view, opened by tapping any row) now also renders a
+"Which method applies?" link when the tapped concept resolves through
+`wizardStartNodeForConcept('linear-algebra', concept)` — nothing when it
+doesn't, since a guessed/generic link would be worse than none. Lives in
+the sheet, not the row itself, to keep ONE focal element per screen (the
+row's own tap target stays "open detail", not "open detail OR launch a
+wizard"). Reuses the exact indigo-tint/`GitBranch` visual identity
+`PracticeAttemptPage`'s reactive wizard CTA already established, for one
+consistent "this leads to the wizard" affordance app-wide rather than two
+independently-styled ones. `FrontierSpine` is LA-only today (its own H1 is
+hardcoded "Linear Algebra" — see the T13 doc comment), so the trainer id is
+always `'linear-algebra'`; a future multi-topic frontier would need to
+thread the topic through instead of hardcoding it.
+
+**Deliberately not done, and why:** routing FROM the live prerequisite-
+alert path (`traceWeakestPrerequisite`/`refreshPrerequisiteAlerts` in
+`concept-graph.ts`/`student-model.ts`) into the wizard when a WEAK
+PREREQUISITE of a wizard-covered concept is flagged — a real forward-
+looking nudge, not just a reactive one — was considered and deferred as
+separate, larger wiring into an active production path (TODOS.md). Feeding
+a wizard leaf INTO `StudentModel`/FIRe credit was considered and rejected
+outright, not deferred: `DecisionTreeWalkthrough.test.tsx` has a structural
+guard against exactly this (`"A future onLeaf/onGraded prop would be the
+hole E5 closes"`) — the leaf's `best` flag is client-visible, so treating
+it as a trusted grading signal would reopen the client-trusted-grading
+class of bug the mock-exam fix closed.
+
+**Tests:** 3 new (`FrontierSpine.test.tsx` — link present for a mapped
+concept with the right href, absent for an unmapped one, 44px touch
+target). Existing 7 tests now render through `MemoryRouter` (the sheet's
+link requires a Router context). Frontend suite 2636 → 2639/2639.
+`tsc --noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

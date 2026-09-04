@@ -4,6 +4,44 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Route the wizard from weak prerequisites, not only wrong answers
+
+**Trigger:** the prerequisite-alert path gets its next real feature pass,
+or a `student-audit`/cohort report shows students sitting on a weak
+prerequisite of a wizard-covered concept with no nudge toward it.
+
+`/investigate`-style research (2026-09-03, "is this connected to any
+knowledge graph") confirmed the wizard is now reachable from the knowledge
+graph in the FORWARD direction — `FrontierSpine`'s per-concept sheet links
+to a concept's wizard fork (CLAUDE.md's 2026-09-03 "Wizard surfaced in the
+knowledge graph" section). The BACKWARD direction is still open: the live
+prerequisite-alert path (`traceWeakestPrerequisite` +
+`refreshPrerequisiteAlerts` in `src/constants/concept-graph.ts` /
+`src/gbrain/student-model.ts`) never consults `CONCEPT_TO_WIZARD_NODE`, so
+a student flagged as weak in a PREREQUISITE of a wizard-covered concept
+(e.g. weak in `eigenvalues`, which is a prerequisite of `diagonalization` —
+a wizard-covered concept) gets no forward-looking nudge toward the wizard
+before they ever attempt a `diagonalization` question and miss it.
+
+**What:** where `refreshPrerequisiteAlerts` (or the `student-audit` report
+that reads its output) surfaces a weak concept, check whether any concept
+it is a prerequisite FOR has a `CONCEPT_TO_WIZARD_NODE` entry, and if so
+surface the wizard as part of that alert/report — a real, new wiring point
+between a currently-inert lookup and an active production path, so treat
+it with the same care as any other change to `student-model.ts`. Decide
+deliberately whether this belongs in the live alert path itself or only in
+the `student-audit`/cohort reporting surfaces — the live path affects real
+students immediately, the report surfaces are lower-stakes to get wrong.
+
+**Explicitly out of scope, not just deferred:** feeding a wizard LEAF
+result into `StudentModel`/FIRe credit. `DecisionTreeWalkthrough.test.tsx`
+has a structural guard against exactly this (search for "onLeaf" in that
+file) — the leaf's `best` flag is client-visible, so treating it as a
+trusted grading signal reopens the client-trusted-grading bug class the
+mock-exam fix closed. Nothing about this TODO should route a leaf answer
+into grading; it's about surfacing the wizard's EXISTENCE earlier, not
+scoring what a student does inside it.
+
 ## Micro-solver authoring pass wave 2: close wizard coverage for the last 3 topic families
 
 **Trigger:** ready to start the next content wave, or a live-QA report

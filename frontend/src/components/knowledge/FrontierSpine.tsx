@@ -9,12 +9,21 @@
  * eigenvalues") — never the word "locked". Cross-branch prerequisite info
  * lives only in a per-concept bottom sheet, tapped open, never drawn
  * globally.
+ *
+ * Knowledge-graph <-> wizard link (2026-09-03): the bottom sheet also
+ * surfaces a "Which method applies?" link when the tapped concept has a
+ * method-selection fork (CONCEPT_TO_WIZARD_NODE) — see WizardSheetLink
+ * below. Previously the wizard was reachable only reactively, after a
+ * wrong practice answer; this makes it part of browsing the graph itself.
  */
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { GitBranch } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ListRow } from '@/components/ui/ListRow';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { wizardStartNodeForConcept } from '@/data/method-selection-trainers';
 import {
   groupByCluster,
   rollupLabel,
@@ -259,6 +268,38 @@ function FrontierSheet({ node, onClose }: { node: FrontierNode; onClose: () => v
           Placed by your warmup — one practice session confirms it.
         </p>
       )}
+      <WizardSheetLink conceptId={node.id} />
     </div>
+  );
+}
+
+/**
+ * The wizard-mistake-loop's `startAt` deep link (CLAUDE.md, 2026-09-03) was
+ * reachable only reactively — after a wrong practice answer — with no way
+ * to browse into it from the knowledge graph itself. `CONCEPT_TO_WIZARD_NODE`
+ * already keys every fork by concept id, so a concept the frontier already
+ * knows about can resolve straight to its fork with no new data. Renders
+ * nothing when the concept has no mapped fork — most of linear algebra
+ * doesn't, and a guessed/generic link would be worse than none. Lives in
+ * the per-concept sheet, not the row itself, to keep ONE focal element per
+ * screen — this is detail, not a second competing action next to "Learn".
+ */
+function WizardSheetLink({ conceptId }: { conceptId: string }) {
+  const startAt = wizardStartNodeForConcept('linear-algebra', conceptId);
+  if (!startAt) return null;
+  return (
+    <Link
+      to={`/theorem-wizard/linear-algebra?concept=${encodeURIComponent(conceptId)}`}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        marginTop: 10, minHeight: 'var(--touch-min)', padding: '0 14px',
+        borderRadius: 'var(--radius-sm)',
+        background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',
+        color: 'var(--indigo-ink)', fontSize: 'var(--text-subhead)', fontWeight: 'var(--weight-semibold)',
+        textDecoration: 'none',
+      }}
+    >
+      <GitBranch size={14} aria-hidden /> Which method applies?
+    </Link>
   );
 }

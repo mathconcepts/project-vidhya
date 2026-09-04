@@ -4,6 +4,61 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.61.0] — 2026-09-04 — Two real Simulation.tsx label bugs fixed corpus-wide; motion-free definition layout
+
+No new env vars, no migrations.
+
+`/design-review` on 9 live-QA screenshots of the rank-nullity lesson (4
+numbered findings: region-specific focus missing, definition reads as a
+static wall, hook numbers not distinctly visible, visual card has too much
+text). `/ui-ux-pro-max` consulted for layout guidance before any fix.
+Root-caused each finding before touching anything — two turned out to be
+real code-level bugs reaching every `linear_map` scene in the corpus.
+
+- **Low-contrast eigenvalue/area labels, fixed corpus-wide.**
+  `Simulation.tsx`'s post-reveal `×λ` and unit-square area labels filled
+  with `var(--text-secondary)` (~3.5:1 contrast, below the 4.5:1 floor for
+  normal text) at 12px with no halo — the literal reason hook numbers read
+  as "not distinctly visible." Now `var(--text-primary)` + `fontWeight:
+  600` + an opaque `var(--surface-fill)` stroke halo (`paintOrder:
+  "stroke"`) so the number reads over any line/grid it lands on. The
+  pre-reveal `focus_eigen` coordinate label got the same halo.
+- **A zero eigenvalue's label collapsed onto the origin, fixed
+  corpus-wide.** A crushed eigenvalue's tip lands exactly at the origin,
+  so the old tip-minus-origin offset math degenerated to `(0,0)` and the
+  "×0" label rendered on top of the origin crosshair — invisible in
+  practice. Now falls back to the eigenvector's own screen direction when
+  the tip-to-origin distance is under 4px. New regression test renders
+  rank-nullity's own matrix (`[[1,2],[0.5,1]]`, eigenvalues 2 and 0) and
+  asserts the `×0` label sits >10px from the origin.
+- **`focus_eigen` added to rank-nullity's hook** — its beat at
+  `at_progress: 0.22` already names a specific pre-reveal coordinate
+  (`(1,0.5)`), exactly the pattern the mechanism (shipped earlier the same
+  day) exists for. Fence kept byte-identical across stance variants.
+- **New `.vidhya-atom-body--definition` CSS modifier** — hairline rule +
+  padding between each `formal_definition` atom's blank-line-separated
+  "**Term**: detail" paragraph, reaching every concept's definition atom.
+  Deliberately carries **zero animation**, unlike `--structured`/
+  `--progressive`: a definition's job is to be instantly whole and
+  referenceable (Sweller's split-attention effect), so the fix is pure
+  visual separation, not pacing. Rank-nullity's own definition content
+  (118 words) was already well under budget — this was a rendering gap,
+  not a content-volume problem.
+- **`visual-analogy.md` trimmed** for rank-nullity: its closing paragraph
+  restated the curve-explanation paragraph's own point in different
+  words; merged and cut, ~150 words → ~110, no math changed.
+
+**Tests:** frontend 2691 → 2692/2692 (1 new regression test). Backend
+untouched (frontend + content only), 4701/4701. `tsc --noEmit` clean.
+`npm run ci` (18 gates, including `ci:boot`, `ci:la-walkthrough` 26/26,
+`ci:variant-agreement` 610 pairs) clean.
+
+**Still open:** a corpus-wide `visual_analogy` redundant-paragraph sweep
+and a re-check of the 2026-09-04 `/loop` LA `focus_eigen` audit's
+conclusions post-fix are both tracked in TODOS.md, not attempted here —
+this pass was scoped to the reported concept plus the two code-level bugs
+its screenshots exposed.
+
 ## [4.60.0] — 2026-09-04 — Hook/intuition silo audit closed for all 26 Linear Algebra concepts
 
 No new env vars, no migrations. Content-only release (no backend or

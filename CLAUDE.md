@@ -3349,6 +3349,102 @@ was already independently correct — `change-of-basis-shaken` had already
 adopted the hook's own example, so it was left alone rather than
 re-touched for the sake of uniformity).
 
+### `/design-review` on rank-nullity live-QA screenshots: a real contrast bug, a zero-eigenvalue label bug, and a motion-free definition layout (2026-09-04)
+
+Four numbered findings on 9 screenshots of the rank-nullity lesson (drill,
+hook, common-traps, quick-check, exam-pattern, worked-example, definition,
+visual): region-specific focus missing, the definition card reading as a
+wall of static text, hook numbers not distinctly visible, and the visual
+card carrying too much prose. `/ui-ux-pro-max` was consulted for layout
+guidance (contrast, chunking, line-length) before any fix, per the ask.
+Root-caused each before touching anything — two turned out to be real
+code-level bugs reaching every `linear_map` scene in the corpus, not just
+this one concept.
+
+**Bug 1 — the ×λ/area labels were low-contrast by construction.**
+`Simulation.tsx`'s post-reveal eigenvalue label (`×2`, `×0`, …) and the
+unit-square area label both filled with `var(--text-secondary)`
+(`rgba(60,60,67,0.6)` — roughly 3.5:1 against the card's own
+`var(--surface-fill)` background, below the 4.5:1 floor for normal text)
+at 12px with no weight boost. Every number these labels exist to show was
+authored to fail contrast from day one — this is why "hook numbers are not
+distinctly visible" reads as a real, measured defect rather than a
+one-screenshot fluke. Fixed: both now fill `var(--text-primary)` (full
+ink) at `fontWeight: 600`, with a `stroke="var(--surface-fill)"
+strokeWidth={3} paintOrder="stroke"` halo so the number still reads
+cleanly wherever it lands on top of a rail, grid line, or the morphing
+ellipse outline. The pre-reveal `focus_eigen` coordinate label (already
+`text-primary`) got the same halo for consistency.
+
+**Bug 2 — a crushed (zero) eigenvalue's label collapsed onto the origin
+crosshair.** `eigen.map()`'s label-offset math computed `ox/oy` from
+`(tip - origin)`, normalized by `len || 1`. For an eigenvalue of exactly
+`0` the tip IS the origin, so `len` underflows to the `|| 1` fallback and
+`ox/oy` come out as `(0, 0)` — the "×0" label renders exactly on top of
+the origin dot, indistinguishable from it. Rank-nullity's own hook matrix
+(`[[1,2],[0.5,1]]`, eigenvalues 2 and 0) hits this exactly: the reported
+"numbers not visible" screenshot's missing number was one honestly-drawn
+label sitting invisibly underneath the axis crossing. Fixed: when the
+tip-to-origin distance is under 4px, the offset falls back to the
+eigenvector's own screen direction (`e.u`, still meaningful even at zero
+stretch) instead of the degenerate tip-minus-origin vector, so the label
+lands where the arrow would have pointed rather than stacking on the
+crosshair. A new regression test (`Simulation.test.tsx`) renders exactly
+this matrix and asserts the `×0` label's screen position is >10px from the
+origin (derived from the eigen "rail" lines' own midpoint — for this
+particular pair of eigenvectors, neither lands on one of the 16
+evenly-spaced sampled arrows, so no arrow shaft is a usable origin
+reference; the rails always are).
+
+**Finding 1, "region-specific focus is missing" — the `focus_eigen`
+mechanism (shipped 2026-09-04, earlier the same day) hadn't reached
+rank-nullity yet.** Its hook's beat at `at_progress: 0.22` already names a
+specific eigen-coordinate pre-reveal (`text_assured`: "$Av$ for every $v$
+is a multiple of $(1,0.5)$ here") — exactly the pattern the mechanism
+exists for. Added `"focus_eigen":[0]` to that beat across
+`hook.md`/`-shaken`/`-assured` (fence kept byte-identical, verified via
+Python `re.DOTALL`, never `grep -o`), so the surviving direction now draws
+with a heavier stroke and a coordinate label the instant the narration
+names it, before the reveal shows the payoff.
+
+**Finding 2, "definition, too much of static text" — a rendering gap, not
+a content-volume problem.** Rank-nullity's `formal-definition.md` is 118
+words across 5 short entries — well under every other atom type's prose
+ceiling — so the fix is NOT a trim. `AtomCardRenderer.tsx` gave
+`formal_definition` atoms zero visual treatment at all (no `structured`,
+no `progressive` — both deliberately excluded, the latter for Sweller's
+split-attention effect per the definition/mnemonic engagement-framework
+doc), so five blank-line-separated "**Term**: detail" paragraphs rendered
+as one continuous flow with nothing marking where one definition ends and
+the next begins. New `.vidhya-atom-body--definition` CSS modifier
+(`globals.css`) — hairline rule between each paragraph, generous vertical
+padding, **zero animation** (unlike `--structured`/`--progressive`, this
+one carries no `@keyframes` at all, on purpose: a definition's job is to
+be instantly whole and referenceable, and pacing that in would be the
+exact split-attention mistake the Sweller holdout exists to avoid).
+`AtomCardRenderer.tsx`'s `className` ternary now routes `formal_definition`
+to this class instead of `undefined`, reaching every concept's definition
+atom, not just rank-nullity's.
+
+**Finding 4, "visual — too much text" — a genuine content trim.**
+`visual-analogy.md`'s three paragraphs (filter analogy, curve explanation,
+closing "not continuous" remark) had real redundancy: the closing
+paragraph restated the curve paragraph's own point in different words.
+Merged the discontinuity observation into the curve paragraph's closing
+clause, tightened the filter analogy's phrasing ("comes out zero" instead
+of "however large, is swallowed to zero"), and dropped the redundant third
+paragraph entirely — no math or numbers changed, ~150 words down to
+~110. Scoped to this one concept; a corpus-wide `visual_analogy` density
+pass is separately tracked in TODOS.md.
+
+**Verified against the real gates, not asserted.** `ci:interactive-specs`
+(404 blocks), `ci:variant-agreement` (610 pairs, byte-identical fence
+confirmed via a standalone Python parse+compare before touching CI),
+`ci:katex-fences` (1723), `ci:content-integrity` (1729), `ci:la-walkthrough`
+(26/26) all clean. `tsc --noEmit` clean. `npm run ci` (18 gates, including
+`ci:boot`) clean. Frontend suite 2691 → 2692/2692 (the new zero-eigenvalue
+regression test). Backend untouched (frontend + content only), 4701/4701.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

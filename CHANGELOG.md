@@ -4,6 +4,41 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.59.0] — 2026-09-04 — Restructuring Jordan Normal Form and eigenvalues into the wizard
+
+No new env vars, no migrations.
+
+Direct same-day follow-up to v4.58.0's LA audit ("restructure jordan
+normal and others"): closes the two genuine near-misses that audit
+flagged instead of leaving them as documented gaps.
+
+1. **`la_power` restructured into a two-level decision.** A new 4th
+   option, "A is NOT diagonalisable — what now?", leads to a new node
+   `la_power_not_diag`: Cayley-Hamilton reduction (best — less machinery)
+   vs. full Jordan Normal Form (also correct, more structural) vs.
+   concluding the power can't be computed (wrong). Both correct answers
+   verified with SymPy on A=[[4,1],[-1,2]] (repeated eigenvalue 3,
+   confirmed not diagonalizable): Cayley-Hamilton's A³=27A−54I and
+   Jordan's PJ³P⁻¹ give the identical result. `jordan-normal-form` now
+   deep-links straight past `la_power`'s own gate to this node.
+2. **New fork `la_eigenvalue_method`** closes the `eigenvalues` gap: read
+   the diagonal directly for a triangular matrix (fastest, correct) vs.
+   full characteristic-polynomial expansion (correct but wasteful here)
+   vs. trace/determinant alone (a real trap — 2 numbers can't pin down 3+
+   eigenvalues). Verified on A=[[5,3,7],[0,2,4],[0,0,-1]]: eigenvalues are
+   exactly the diagonal, 5/2/−1.
+
+LA wizard coverage: 17/26 → 19/26 concepts mapped to a specific fork. The
+remaining 7 were reconsidered once more, not just carried forward, and
+still correctly have no genuine competing-method decision.
+
+One real knock-on fix: `FrontierSpine.test.tsx`'s "no wizard fork" example
+used `eigenvalues`, now mapped — swapped for a genuinely still-unmapped
+fixture concept.
+
+4 new/updated tests. Frontend suite 2688 → 2691/2691. Backend untouched.
+`tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+
 ## [4.58.0] — 2026-09-04 — `/loop`: full Linear Algebra audit against all four asks
 
 No new env vars, no migrations.

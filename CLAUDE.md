@@ -3198,6 +3198,82 @@ pairs) clean. `tsc --noEmit` clean. Frontend suite 2678 → 2688/2688 (10
 new tests: the 5-new-fork contract checks, concept-map resolution, and
 the exhaustive 26-concept accounting test). Backend untouched.
 
+### Same-day follow-up: restructuring Jordan Normal Form and eigenvalues into the wizard (2026-09-04)
+
+Direct follow-up to the `/loop` audit above: "restructure jordan normal
+and others." The audit had already named `jordan-normal-form` as a real
+near-miss rather than a clean exclusion — this pass closed it, plus one
+more near-miss found on reconsideration (`eigenvalues`).
+
+**`la_power` restructured into a genuine two-level decision.** The old
+`la_leaf_diag` leaf just SAID "if A is not diagonalisable, use
+Cayley-Hamilton" in prose — a real second decision with no fork of its
+own. `la_power` gained a 4th option, "A is NOT diagonalisable — what
+now?", leading to a new node `la_power_not_diag` that asks the genuine
+follow-up: Cayley-Hamilton reduction vs. full Jordan Normal Form. Both
+are CORRECT here — a different shape than every other fork in this file,
+where exactly one option is right and the rest are wrong — so "best"
+marks the less-machinery answer (Cayley-Hamilton needs only the
+characteristic polynomial; Jordan form needs the full change-of-basis
+matrix P and a generalized eigenvector), not the only-correct one.
+Verified on A=[[4,1],[-1,2]] (eigenvalue 3, repeated, confirmed NOT
+diagonalizable via SymPy's `.diagonalize()` throwing): char. poly
+λ²−6λ+9=0 gives A²=6A−9I, and the Cayley-Hamilton recurrence gives
+A³=27A−54I; independently, the Jordan form J=[[3,1],[0,3]] with
+P=[[1,1],[-1,0]] and the 2×2 Jordan-block power formula
+Jⁿ=[[λⁿ,nλⁿ⁻¹],[0,λⁿ]] gives J³=[[27,27],[0,27]], and PJ³P⁻¹ matches the
+same A³ exactly. `jordan-normal-form` deep-links straight to
+`la_power_not_diag`, skipping `la_power`'s own "is it diagonalizable?"
+gate — its own content already assumes non-diagonalizability, so asking
+again would be a wasted step.
+
+**`eigenvalues` closed as a second near-miss, found on
+reconsideration.** The prior pass's doc comment said "GATE-EM teaches ONE
+method for eigenvalues — the characteristic polynomial — not a
+competitive choice among several," which undersold a real, commonly
+GATE-tested shortcut: for a TRIANGULAR matrix, the eigenvalues ARE the
+diagonal entries, directly — no cofactor expansion needed at all. New
+top-level fork `la_eigenvalue_method`: "read the diagonal" (correct and
+fastest for a triangular matrix) vs. "solve det(A−λI)=0 by full cofactor
+expansion" (correct for ANY matrix, but strictly more work than necessary
+here) vs. "use trace and determinant alone" (a real trap — 2 numbers
+cannot pin down 3+ unknowns in general, useful only as a sanity check on
+eigenvalues already found some other way). Verified on
+A=[[5,3,7],[0,2,4],[0,0,-1]] (upper triangular): eigenvalues are exactly
+5, 2, −1, matching trace=6=5+2−1 and det=−10=5·2·(−1).
+
+**Coverage after this pass: 19 of 26 LA concepts mapped to a specific
+fork** (up from 17). The remaining 7 — `matrix-operations`,
+`vector-spaces`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+`change-of-basis`, `matrix-norms` — were reconsidered once more (not just
+carried forward from the prior pass) and still correctly have no genuine
+competing-method decision at GATE-EM's level; `matrix-norms` in
+particular was weighed seriously (different norms — spectral, Frobenius,
+1-norm — DO exist) but GATE-EM tests "compute this specific norm," never
+"which norm applies here," so a fork there would misrepresent the real
+exam shape rather than fix a gap.
+
+**Real, expected knock-on effects, not incidental breakage.**
+`FrontierSpine.test.tsx`'s "no mapped wizard fork" example used
+`eigenvalues` — now mapped, so the test would have silently asserted the
+wrong thing (a link genuinely present, but the test expecting absence)
+had it not been caught. Swapped for a new fixture node (`trace`,
+genuinely still unmapped) rather than reusing `matrix-operations` (also
+still unmapped, but that node sits in a fully-collapsed "1 of 1 mastered"
+cluster in the test fixture and never renders as a clickable row at all —
+confirmed by reading the component, not guessed after a confusing
+failure).
+
+**Tests:** 3 new/updated in `method-selection-trainers.test.ts` (the
+`la_start` option count 9→10, a `la_power_not_diag` reachability check, a
+"9 new/restructured concepts resolve correctly" check covering both
+`jordan-normal-form`'s deep-link and `eigenvalues`' new fork) plus the
+exhaustive 26-concept accounting test's expected-mapped-count updated
+17→19; 1 test fixture fix in `FrontierSpine.test.tsx`. Frontend suite
+2688 → 2691/2691. Backend untouched (frontend-only change). `tsc
+--noEmit` clean. `npm run ci` (18 gates, including `ci:la-walkthrough`
+26/26) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

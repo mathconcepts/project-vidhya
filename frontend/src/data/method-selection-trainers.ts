@@ -113,6 +113,13 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
         answer:
           'The Gram-Schmidt process: keep e₁ = u = (1,1,0), then w₂ = v − (v·e₁/e₁·e₁)e₁ = (1,0,1) − ½(1,1,0) = (½,−½,1). Check: e₁·w₂ = ½−½+0 = 0 — exactly orthogonal, and still spans the same plane as u, v.',
       },
+      {
+        prompt:
+          'You need the eigenvalues of A = [[5,3,7],[0,2,4],[0,0,-1]] (upper triangular). Which is the fastest correct method?',
+        hint: 'For a triangular matrix, det(A − λI) is a product of (diagonal entry − λ) terms — nothing else contributes.',
+        answer:
+          'Read them straight off the diagonal: 5, 2, and −1. For a triangular matrix, det(A − λI) collapses to the product (5−λ)(2−λ)(−1−λ), so the roots ARE the diagonal entries — no cofactor expansion needed. Check: trace = 6 = 5+2−1 and det = −10 = 5×2×(−1), both consistent.',
+      },
     ],
     branches: {
       v: 1,
@@ -130,6 +137,7 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'Which decomposition to use on A', next: 'la_decomposition' },
             { label: 'Ax = b has no exact solution — what now', next: 'la_least_squares' },
             { label: 'Making a set of vectors orthogonal', next: 'la_orthogonalize' },
+            { label: 'Finding the eigenvalues of a matrix', next: 'la_eigenvalue_method' },
           ],
         },
         {
@@ -160,6 +168,26 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'A is diagonalisable — A = PDP⁻¹', next: 'la_leaf_diag' },
             { label: 'A is symmetric', next: 'la_leaf_symmetric' },
             { label: 'A is invertible', next: 'la_leaf_invertible_power' },
+            { label: 'A is NOT diagonalisable — what now?', next: 'la_power_not_diag' },
+          ],
+        },
+        // /loop restructure (2026-09-04): the old la_leaf_diag answer just
+        // SAID "use Cayley-Hamilton" for the not-diagonalizable case in
+        // prose — a real second decision (Cayley-Hamilton reduction vs.
+        // full Jordan Normal Form) with no fork of its own. This node is
+        // that fork, closing the jordan-normal-form gap named in TODOS.md
+        // as a genuine near-miss rather than force-fitting it as a 4th
+        // option at la_power's own level (a different question: "why is
+        // the power cheap" vs. "given it's NOT cheap the easy way, what
+        // now").
+        {
+          id: 'la_power_not_diag',
+          question:
+            'A is not diagonalizable (a repeated eigenvalue with too few independent eigenvectors) — you still need Aⁿ for large n. Which technique?',
+          options: [
+            { label: 'Cayley-Hamilton: reduce Aⁿ using the characteristic polynomial', next: 'la_leaf_cayley_hamilton' },
+            { label: 'Jordan Normal Form: A = PJP⁻¹, use the Jordan-block power formula', next: 'la_leaf_jordan_form' },
+            { label: 'Conclude Aⁿ cannot be computed', next: 'la_leaf_power_impossible' },
           ],
         },
         {
@@ -217,6 +245,16 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'The Gram-Schmidt process', next: 'la_leaf_gram_schmidt' },
             { label: 'Normalize each vector separately', next: 'la_leaf_normalize_only' },
             { label: 'Take their cross product', next: 'la_leaf_cross_product' },
+          ],
+        },
+        {
+          id: 'la_eigenvalue_method',
+          question:
+            'You need the eigenvalues of A = [[5,3,7],[0,2,4],[0,0,-1]] (upper triangular). Which is the fastest correct method?',
+          options: [
+            { label: 'Read them off the diagonal', next: 'la_leaf_diagonal_read' },
+            { label: 'Solve det(A − λI) = 0 by full cofactor expansion', next: 'la_leaf_full_charpoly' },
+            { label: 'Use trace and determinant alone', next: 'la_leaf_trace_det_only' },
           ],
         },
       ],
@@ -391,6 +429,44 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
           method: 'Take their cross product',
           reason:
             'u × v does produce a vector orthogonal to BOTH u and v — but it is a genuinely NEW third direction, perpendicular to the plane u and v span, not a replacement for either one. It cannot give you an orthogonal PAIR still spanning that same original plane, which is what the question asks for; it is the right tool for building a third basis vector in 3-D, not for fixing up two vectors already in a plane.',
+        },
+        {
+          id: 'la_leaf_cayley_hamilton',
+          method: 'Cayley-Hamilton: reduce Aⁿ using the characteristic polynomial',
+          reason:
+            'Every matrix satisfies its own characteristic polynomial, which turns into a recurrence for computing powers without ever building P or finding generalized eigenvectors. For A=[[4,1],[-1,2]] (eigenvalue 3, repeated, not diagonalizable): char. poly is λ²−6λ+9=0, so A²=6A−9I. Writing Aⁿ=aₙA+bₙI, the recurrence aₙ₊₁=6aₙ+bₙ, bₙ₊₁=−9aₙ gives A³=27A−54I — matching A³ computed directly. Less machinery than Jordan form for the same answer.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_jordan_form',
+          method: 'Jordan Normal Form: A = PJP⁻¹, use the Jordan-block power formula',
+          reason:
+            'This also works and is the more STRUCTURAL answer: A=[[4,1],[-1,2]] has Jordan form J=[[3,1],[0,3]] with P=[[1,1],[-1,0]], and a 2×2 Jordan block\'s power formula Jⁿ=[[λⁿ,nλⁿ⁻¹],[0,λⁿ]] gives J³=[[27,27],[0,27]] — reconstructing A³=PJ³P⁻¹ matches the direct computation exactly, same answer Cayley-Hamilton gives. It is correct, just more machinery (finding P and the generalized eigenvector) than the question needs for a single power.',
+        },
+        {
+          id: 'la_leaf_power_impossible',
+          method: 'Conclude Aⁿ cannot be computed',
+          reason:
+            'Not diagonalizable does not mean stuck — it only rules out the SHORTCUT (A=PDP⁻¹). Every square matrix satisfies its own characteristic polynomial (Cayley-Hamilton) and has a Jordan form, either of which computes Aⁿ exactly, repeated eigenvalue and all. "Not diagonalizable" is a fork in the road, not a dead end.',
+        },
+        {
+          id: 'la_leaf_diagonal_read',
+          method: 'Read them off the diagonal',
+          reason:
+            'For a triangular matrix, det(A − λI) is built entirely from the diagonal — the entries above (or below) it contribute nothing to the determinant of a triangular matrix. det(A−λI) collapses to the product (5−λ)(2−λ)(−1−λ), so the roots are exactly 5, 2, −1, the diagonal entries themselves. Check: trace 6=5+2−1, det −10=5·2·(−1), both consistent — no cofactor expansion needed at all.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_full_charpoly',
+          method: 'Solve det(A − λI) = 0 by full cofactor expansion',
+          reason:
+            'This gives the right answer for any matrix — triangular or not — but for a triangular one it is strictly more arithmetic than necessary: expanding a full 3×3 determinant symbolically just to rediscover that the off-diagonal terms all vanish. The correct general-purpose fallback, not the fastest tool when the matrix is already triangular.',
+        },
+        {
+          id: 'la_leaf_trace_det_only',
+          method: 'Use trace and determinant alone',
+          reason:
+            'Trace (sum) and determinant (product) are only 2 numbers, but a 3×3 matrix can have 3 different eigenvalues — 2 equations cannot pin down 3 unknowns in general. They are a fast SANITY CHECK on eigenvalues you already found some other way, never a method for finding them from scratch once there are 3 or more.',
         },
       ],
     },
@@ -1320,28 +1396,31 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
  *    not a gap to close.
  *
  *    Linear algebra carries the SAME kind of exception, audited concept by
- *    concept for all 26 GATE-EM LA concepts (`/loop`, 2026-09-04): 17 map
- *    to one of `la_invertible`/`la_injective`/`la_power`/`la_definite`/
- *    `la_system_solve`/`la_independence_test`/`la_decomposition`/
- *    `la_least_squares`/`la_orthogonalize`. The other 9 —
- *    `matrix-operations`, `vector-spaces`, `eigenvalues`, `trace`,
- *    `symmetric-matrices`, `inner-product-spaces`, `change-of-basis`,
- *    `jordan-normal-form`, `matrix-norms` — are property-checks or
+ *    concept for all 26 GATE-EM LA concepts (`/loop`, 2026-09-04, extended
+ *    2026-09-04 with the `la_power` restructure): 19 map to one of
+ *    `la_invertible`/`la_injective`/`la_power`/`la_power_not_diag`/
+ *    `la_definite`/`la_system_solve`/`la_independence_test`/
+ *    `la_decomposition`/`la_least_squares`/`la_orthogonalize`/
+ *    `la_eigenvalue_method`. The other 7 — `matrix-operations`,
+ *    `vector-spaces`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+ *    `change-of-basis`, `matrix-norms` — are property-checks or
  *    single-procedure computations with no genuine competing-method
  *    decision behind them at GATE-EM's level (e.g. `trace` is "add the
- *    diagonal," not a choice between approaches; GATE-EM teaches ONE
- *    method for eigenvalues — the characteristic polynomial — not a
- *    competitive choice among several); forcing a fork for each would
- *    produce a mismatched or fabricated question, not a real one. They
- *    correctly fall through to `la_start`'s classification root, same as
- *    vector-calculus's foundational concepts — a deliberate, audited
- *    exclusion, not an oversight. `jordan-normal-form` is the one
- *    borderline case: it genuinely belongs as a 4th path under
- *    `la_power`'s "A is not diagonalizable" branch (Jordan form is the
- *    standard alternative to Cayley-Hamilton reduction there), but doing
- *    that well means restructuring `la_power` into a two-level decision
- *    rather than bolting on a mismatched leaf — named here as real,
- *    scoped future work, not silently dropped.
+ *    diagonal," not a choice between approaches); forcing a fork for each
+ *    would produce a mismatched or fabricated question, not a real one.
+ *    They correctly fall through to `la_start`'s classification root, same
+ *    as vector-calculus's foundational concepts — a deliberate, audited
+ *    exclusion, not an oversight. `jordan-normal-form` and `eigenvalues`
+ *    were the two near-misses from the first pass and are now closed:
+ *    `la_power` gained a genuine 4th option ("A is NOT diagonalizable —
+ *    what now?") leading to `la_power_not_diag`, a real two-way decision
+ *    between Cayley-Hamilton reduction and full Jordan Normal Form (both
+ *    correct, Cayley-Hamilton is less machinery — SymPy-verified on
+ *    A=[[4,1],[-1,2]], eigenvalue 3 repeated, not diagonalizable); and
+ *    `la_eigenvalue_method` (a new top-level fork) covers the genuine
+ *    "read off the diagonal of a triangular matrix" shortcut vs. full
+ *    characteristic-polynomial expansion vs. the trace/det insufficiency
+ *    trap.
  *
  *  - Distributions: the curriculum's concept granularity for this topic is
  *    `discrete-distributions` / `continuous-distributions` — there is no
@@ -1378,6 +1457,11 @@ export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
     'least-squares': 'la_least_squares',
     orthogonality: 'la_orthogonalize',
     'gram-schmidt': 'la_orthogonalize',
+    // /loop restructure (2026-09-04): jordan-normal-form deep-links past
+    // la_power's "is A diagonalizable?" gate straight to the not-
+    // diagonalizable follow-up — its own content already assumes that.
+    'jordan-normal-form': 'la_power_not_diag',
+    eigenvalues: 'la_eigenvalue_method',
   },
   'vector-calculus': {
     'greens-theorem': 'vc_plane_pick',

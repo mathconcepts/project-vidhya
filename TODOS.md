@@ -78,40 +78,35 @@ numerical-methods, transform-theory, graph-theory,
 differential-equations, vector-calculus, probability-statistics) is
 real, scoped future work — not attempted here.
 
-## Jordan Normal Form as a 4th path under `la_power`
+## Jordan Normal Form / eigenvalues-shortcut restructure — closed (2026-09-04)
 
-**Trigger:** the next linear-algebra wizard pass, or a live-QA report on
-`jordan-normal-form` specifically.
+Same-day follow-up ("restructure jordan normal and others"): `la_power`
+gained a genuine 4th option — "A is NOT diagonalisable — what now?" —
+leading to a new node `la_power_not_diag`, a real two-way decision between
+Cayley-Hamilton reduction (best — less machinery) and full Jordan Normal
+Form (also correct, more structural). Verified on A=[[4,1],[-1,2]]
+(eigenvalue 3, repeated, confirmed not diagonalizable via SymPy
+`.diagonalize()` throwing): both A²=6A−9I (Cayley-Hamilton) and the Jordan
+form J=[[3,1],[0,3]] with P=[[1,1],[-1,0]] give the identical A³, checked
+against direct matrix exponentiation. `jordan-normal-form` now deep-links
+straight to `la_power_not_diag`, skipping `la_power`'s own diagonalizable
+gate since its content already assumes non-diagonalizability.
 
-Found during the 2026-09-04 `/loop` LA-coverage audit: `jordan-normal-form`
-is the one concept among LA's 9 deliberately-unmapped concepts that is
-genuinely a near-miss, not a clean exclusion. `la_power`'s existing
-"best" leaf (`la_leaf_diag`, in `frontend/src/data/method-selection-
-trainers.ts`) already says "If A is not diagonalisable, use Cayley-
-Hamilton to reduce high powers modulo the characteristic polynomial" —
-but Jordan Normal Form is the OTHER standard technique for exactly that
-situation (computing high powers of a non-diagonalizable matrix via
-generalized eigenvectors and the closed form for a Jordan block's power),
-and today's leaf doesn't mention it at all.
+`eigenvalues` — the other item this same section had NOT yet flagged as a
+near-miss, found on reconsideration — closed the same way: a new
+top-level fork `la_eigenvalue_method` covers the genuine "read the
+diagonal of a triangular matrix directly, no cofactor expansion needed"
+shortcut vs. full characteristic-polynomial expansion (correct but
+wasteful here) vs. the trace/determinant-alone trap (2 equations can't
+pin down 3+ unknowns). Verified on A=[[5,3,7],[0,2,4],[0,0,-1]]
+(eigenvalues 5, 2, −1 — the diagonal entries exactly, trace 6, det −10,
+both consistent).
 
-**Why this wasn't just bolted on:** `la_power`'s node asks "which
-structural property of A makes A¹⁰⁰ cheap?" with 3 options (diagonalizable
-/ symmetric / invertible) — a ONE-LEVEL decision. Jordan form only
-becomes the relevant question ONE STEP DEEPER, after a student has
-already concluded "A is NOT diagonalizable" — that's a second decision
-("Cayley-Hamilton or Jordan form?"), not a 4th option at the same level
-as the other three. Doing this properly means either restructuring
-`la_power` into a two-level branch (the `la_leaf_diag` "not
-diagonalizable" case growing its own sub-fork) or authoring
-`jordan-normal-form` a dedicated small fork of its own with a concrete
-non-diagonalizable example (verify: a Jordan block's power formula,
-e.g. for $J=\begin{pmatrix}\lambda&1\\0&\lambda\end{pmatrix}$,
-$J^n=\begin{pmatrix}\lambda^n&n\lambda^{n-1}\\0&\lambda^n\end{pmatrix}$ —
-verify this identity with SymPy before authoring, same discipline as
-every other fork in this file).
-
-**Effort:** S — one fork, one hand-verified worked example, matching the
-size of the 5 forks the 2026-09-04 pass already added.
+LA wizard coverage after this pass: **19 of 26 concepts** mapped to a
+specific fork (up from 17). The other 7 — `matrix-operations`,
+`vector-spaces`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+`change-of-basis`, `matrix-norms` — were reconsidered once more and still
+correctly have no genuine competing-method decision at GATE-EM's level.
 
 ## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
 

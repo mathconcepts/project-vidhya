@@ -18,7 +18,7 @@ variant_of: matrix-inverse.intuition
 for_stance: assured
 ---
 
-$A^{-1}$ exists iff $A$ is square and $\det(A) \neq 0$ — really one condition, since a non-square map can't have a two-sided inverse and a singular square matrix has already discarded a dimension nothing can restore.
+For the invertible matrix in the scene above, $A=\begin{pmatrix}3&1\\1&1\end{pmatrix}$, $\det(A)=2\neq0$ confirms what the animation already showed geometrically — the plane stays spread out, so $A^{-1}=\begin{pmatrix}0.5&-0.5\\-0.5&1.5\end{pmatrix}$ exists. The ghost matrix $\begin{pmatrix}2&1\\4&2\end{pmatrix}$ has $\det=0$: row 2 is $2\times$ row 1, rank 1, and no adjugate formula rescues that — the collapse is real, not a rounding artefact. More generally: $A^{-1}$ exists iff $A$ is square and $\det(A) \neq 0$ — really one condition, since a non-square map can't have a two-sided inverse and a singular square matrix has already discarded a dimension nothing can restore.
 
 Two routes to compute it: the adjugate formula $A^{-1} = \frac{1}{\det A}\text{adj}(A)$ is fast at $2\times2$ and workable at $3\times3$; past that, Gauss-Jordan on $[A \mid I]$ dominates, since cofactor-based methods are $O(n!)$.
 

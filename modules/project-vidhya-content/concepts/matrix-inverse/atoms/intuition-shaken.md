@@ -19,11 +19,13 @@ variant_of: matrix-inverse.intuition
 for_stance: shaken
 ---
 
-Start concrete: $A=\begin{pmatrix}1&2\\3&4\end{pmatrix}$ has determinant $1(4)-2(3)=-2$. Not zero, so $A$ has an inverse — a matrix $A^{-1}$ that undoes it.
+Start concrete: $A=\begin{pmatrix}3&1\\1&1\end{pmatrix}$ — the same matrix from the animation above. Its determinant: $\det(A)=3(1)-1(1)=2$.
 
-The check: $A\cdot A^{-1}=I$, the identity matrix. Multiply $A$ by its inverse and every trace of the transformation vanishes — you're back where you started.
+Not zero, so $A$ has an inverse — a matrix $A^{-1}$ that undoes it: $A^{-1}=\begin{pmatrix}0.5&-0.5\\-0.5&1.5\end{pmatrix}$.
 
-Why do some matrices have no inverse? Picture a matrix squashing every vector onto one line. Two different inputs can land on the same output point, and once that happens there's no way to run the process backward — you can't tell which input it came from. That is what $\det(A)=0$ means: information got lost, permanently.
+The check: $A\cdot A^{-1}=I$, the **identity matrix** (the matrix version of "do nothing"). Multiply $A$ by its inverse and every trace of the transformation vanishes — you're back where you started.
+
+Now the dashed ghost matrix from the same scene, $\begin{pmatrix}2&1\\4&2\end{pmatrix}$. Its determinant: $2(2)-1(4)=0$. Picture what this one does: it squashes every vector onto one line. Two different inputs can land on the same output point, and once that happens there's no way to run the process backward — you can't tell which input it came from. A matrix like this is called **singular**, and $\det(A)=0$ is the sign: information got lost, permanently.
 
 So the rule is short: square matrix, non-zero determinant, invertible. Miss either condition and $A^{-1}$ simply does not exist.
 

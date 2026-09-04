@@ -18,7 +18,7 @@ variant_of: change-of-basis.intuition
 for_stance: assured
 ---
 
-$[x]_{B'}=P^{-1}[x]_B$ where $P=[\,[v_1]_{B'}\mid\cdots\mid[v_n]_{B'}\,]$ — columns are $B$'s vectors, expressed in $B'$. The one thing worth internalizing beyond the formula: this is a *passive* transformation. Nothing in the space moves; only the labeling scheme changes.
+$[x]_{B'}=P^{-1}[x]_B$ where $P=[\,[v_1]_{B'}\mid\cdots\mid[v_n]_{B'}\,]$ — columns are $B$'s vectors, expressed in $B'$. Check it on the hook's own numbers: $B=\{(1,1),(1,-1)\}$, standard coordinates $x=(3,1)$, $P=\begin{pmatrix}1&1\\1&-1\end{pmatrix}$, and $P^{-1}x=(2,1)=[x]_B$ exactly. The one thing worth internalizing beyond the formula: this is a *passive* transformation. Nothing in the space moves; only the labeling scheme changes.
 
 **Where it earns marks.** For an operator $T$, $[T]_{B'}=P^{-1}[T]_BP$ — a similarity transform. If $B$ happens to be an eigenbasis of $T$, $[T]_B$ is diagonal, and every subsequent computation ($T^k$, solving linear ODE systems) collapses to per-entry arithmetic on the diagonal. Choosing $B$ well is not cosmetic — it's the entire content of diagonalization, restated.
 

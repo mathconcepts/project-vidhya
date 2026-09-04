@@ -18,7 +18,7 @@ variant_of: null-space-column-space.intuition
 for_stance: assured
 ---
 
-$\text{Null}(A)=\{x \in \mathbb{R}^n : Ax=0\}$ and $\text{Col}(A)=\{Ax : x \in \mathbb{R}^n\} \subseteq \mathbb{R}^m$ for an $m\times n$ matrix $A$ — kernel and image of the same linear map, living in different spaces ($\mathbb{R}^n$ vs. $\mathbb{R}^m$).
+For the matrix in the scene above, $C=\begin{pmatrix}1&-1\\-1&1\end{pmatrix}$: $\text{Null}(C)=\text{span}(1,1)$ and $\text{Col}(C)=\text{span}(1,-1)$ — rank 1 plus nullity 1 accounts for both columns directly. More generally: $\text{Null}(A)=\{x \in \mathbb{R}^n : Ax=0\}$ and $\text{Col}(A)=\{Ax : x \in \mathbb{R}^n\} \subseteq \mathbb{R}^m$ for an $m\times n$ matrix $A$ — kernel and image of the same linear map, living in different spaces ($\mathbb{R}^n$ vs. $\mathbb{R}^m$).
 
 Rank-nullity ties their dimensions: $\dim\text{Col}(A)=\text{rank}(A)$, $\dim\text{Null}(A)=\text{nullity}(A)=n-\text{rank}(A)$.
 

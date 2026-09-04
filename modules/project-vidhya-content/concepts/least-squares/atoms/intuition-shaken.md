@@ -13,8 +13,12 @@ variant_of: least-squares.intuition
 for_stance: shaken
 ---
 
-A point floats above a flat plane. You can't land exactly on the plane, so drop a perpendicular line down to it — that's the closest point.
+Same matrix as the hook: $P=\begin{pmatrix}0.8&0.4\\0.4&0.2\end{pmatrix}$.
 
-Least squares does the same thing with $b$ and $\text{Col}(A)$: it finds the point in $\text{Col}(A)$ closest to $b$, by dropping a perpendicular.
+Feed in $(2,1)$: out comes $(2,1)$ — no change.
 
-The check: whatever is "left over" — the residual $r = b - A\hat x$ — must be perpendicular to every column of $A$. If it isn't, $\hat x$ isn't the closest point.
+Feed in $(1,-2)$: out comes $(0,0)$ — gone completely.
+
+Feed in anything else, and it lands somewhere on the line through $(2,1)$, at the closest point to where it started. That closest-point move is least squares: replace an unsolvable $b$ with the nearest point $Pb$ actually reachable.
+
+Check: the piece removed, $b-Pb$ (called the **residual**), must be perpendicular ("orthogonal," a right angle) to every column of the original matrix. Here the removed direction is $(1,-2)$, and $(1,-2)\cdot(2,1)=1\times2+(-2)\times1=0$ — exactly perpendicular, confirmed.

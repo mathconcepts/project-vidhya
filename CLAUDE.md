@@ -3274,6 +3274,81 @@ exhaustive 26-concept accounting test's expected-mapped-count updated
 --noEmit` clean. `npm run ci` (18 gates, including `ci:la-walkthrough`
 26/26) clean.
 
+### Hook/intuition silo audit closed for all 26 Linear Algebra concepts (2026-09-04)
+
+Direct follow-up to "finish off all pending for linear algebra": the
+`cayley-hamilton`/`trace` silo fix (TODOS.md, "Audit other concepts'
+`intuition`/`mnemonic` atoms for the same wall-of-text pattern") had two
+confirmed instances and an open worklist of the other 24 concepts. Closed
+the whole worklist in one pass — 5 parallel Claude Sonnet subagents (per
+the user's explicit "use sonnet subagents for any LLM related work"
+instruction), each auditing 4-5 concepts, none sharing a file with another
+batch.
+
+**Method, identical across all 5 batches:** read `hook.md`/`-shaken`/
+`-assured` first to establish the concept's REAL worked example (its
+matrix, its verified numbers, any `interactive-spec` scene); read
+`intuition.md`/`-shaken`/`-assured`; judge honestly whether a genuine silo
+exists (a different or absent example, or a dense disconnected paragraph
+beside an interactive hook) versus a legitimate reason to leave it alone
+(the atom already has its own connected `manipulable`/`guided_walkthrough`
+widget, or the hook itself has no concrete example to be siloed from).
+Every numeric claim in a rewrite was verified via `python3 -c "import
+sympy..."` before being written (Wolfram MCP was disconnected all
+session); any new or edited fenced block was kept byte-identical across
+the base/shaken/assured trio, copied via Python `re.DOTALL` regex, never
+`grep -o` (which silently fails on multi-line JSON and has previously
+deleted a fence outright in this repo — see the 2026-09-04 "positive-
+definite-matrices" section above).
+
+**Result: 19 of 24 audited concepts had a genuine defect, fixed; 5 were
+already fine and correctly left untouched** (`determinants`,
+`linear-transformations` — both already had their own connected
+`manipulable` widgets; `lu-factorization`, `svd`, `orthogonality` —
+already interactive and/or already threading the hook's numbers;
+`gram-schmidt`, `eigenvalues`, `vector-spaces`, `matrix-norms` — same
+reasons, confirmed by reading each individually rather than assumed).
+Combined with the prior `cayley-hamilton`/`trace` fixes, **all 26 GATE-EM
+Linear Algebra concepts are now audited**, closing the TODOS.md item's
+open worklist entirely (a corpus-wide sweep beyond LA remains separately
+tracked, per that item's own scope note).
+
+**5 concepts (in the `diagonalization`/`quadratic-forms`/`positive-
+definite-matrices`/`spectral-theorem`/`systems-of-equations` batch)
+gained a brand-new resonance-beat scene**, not just a prose fix — each
+threading the hook's own already-verified matrix into a fresh
+predict-observe-explain sequence with its own trap beat:
+`diagonalization` ($A=PDP^{-1}$ from the hook's $\begin{pmatrix}4&1\\2&3\end{pmatrix}$,
+trap: mismatching $P$'s column order against $D$'s diagonal order),
+`quadratic-forms` ($Q(v)=\lambda$ at unit eigenvectors of the hook's
+$Q(x,y)=5x^2+4xy+2y^2$), `positive-definite-matrices` (Sylvester's
+leading-principal-minors test agreeing with the eigenvalue test on the
+hook's $\begin{pmatrix}3&1\\1&2\end{pmatrix}$, trap: a real counterexample
+$B=\begin{pmatrix}-1&0\\0&-5\end{pmatrix}$ with $\det B>0$ but negative
+definite), `spectral-theorem` (verifying the hook's eigenvectors are
+orthogonal before building $Q,\Lambda$), `systems-of-equations` (the
+Rouché–Capelli rank story on the hook's own $t=0$ instance). The other 14
+fixed concepts (`matrix-inverse`, `rank-nullity`, `null-space-column-
+space`, `linear-independence`, `least-squares`, `jordan-normal-form`,
+`matrix-operations`, `symmetric-matrices`, `inner-product-spaces`,
+`change-of-basis`) got prose-only rewrites — no new scene, just threading
+the hook's own numbers into what had been an independently-invented or
+number-free example, ELI5 phrasing, and glossing jargon on first use.
+
+**Validated as one whole, not per-batch.** Each batch validated its own
+concepts before reporting back; after all 5 landed, `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610
+pairs) ran clean against the combined result, plus both full test suites
+(backend 4701/4701, 1 todo, 365 files; frontend 2691/2691, 96 files — both
+counts unchanged from baseline, since this was a content-only pass with no
+new tests) and `tsc --noEmit` clean both sides.
+
+**44 files changed** across 19 concepts (14 concepts × 3 stance files + 2
+concepts with only 2 files touched, since one stance variant per concept
+was already independently correct — `change-of-basis-shaken` had already
+adopted the hook's own example, so it was left alone rather than
+re-touched for the sake of uniformity).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

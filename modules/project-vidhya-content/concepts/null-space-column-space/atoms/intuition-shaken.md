@@ -19,8 +19,8 @@ variant_of: null-space-column-space.intuition
 for_stance: shaken
 ---
 
-Take $A=\begin{pmatrix}1&2\\2&4\end{pmatrix}$. Try $x=\begin{pmatrix}2\\-1\end{pmatrix}$: $Ax=\begin{pmatrix}0\\0\end{pmatrix}$. That $x$ vanished — it's in the **null space**.
+Take $C=\begin{pmatrix}1&-1\\-1&1\end{pmatrix}$ — the same matrix from the animation above. Try $x=\begin{pmatrix}1\\1\end{pmatrix}$: $Cx=\begin{pmatrix}0\\0\end{pmatrix}$. That $x$ vanished — it's in the **null space**.
 
-Now try $x=\begin{pmatrix}1\\0\end{pmatrix}$: $Ax=\begin{pmatrix}1\\2\end{pmatrix}$. That output, and every scalar multiple of it, is in the **column space** — everything $A$ can actually produce.
+Now try $x=\begin{pmatrix}1\\-1\end{pmatrix}$: $Cx=\begin{pmatrix}2\\-2\end{pmatrix}$. That output, and every scalar multiple of it, is in the **column space** — everything $C$ can actually produce, the same line every arrow landed on in the animation.
 
-The two spaces answer opposite questions: null space asks "what gets erased?"; column space asks "what comes out the other side?" Rank-nullity ties them together — the size of one plus the size of the other always equals the number of columns going in.
+The two spaces answer opposite questions: null space asks "what gets erased?"; column space asks "what comes out the other side?" Rank-nullity ties them together — the size of one plus the size of the other always equals the number of columns going in. Here that's $1+1=2$.

@@ -19,8 +19,8 @@ variant_of: symmetric-matrices.intuition
 for_stance: shaken
 ---
 
-$A = \begin{pmatrix} 2 & 1 \\ 1 & 3 \end{pmatrix}$. Read down the diagonal, then read across: same entries, mirrored. $A^T = A$.
+$A=\begin{pmatrix}3&1\\1&3\end{pmatrix}$ — same matrix as the hook. Read down the diagonal ($3$, $3$), then read across: the off-diagonal entries are both $1$. Flip rows and columns and nothing changes. That's it: $A=A^T$, a *symmetric* matrix.
 
-Picture the ellipse $2x^2 + 2xy + 3y^2 = 4$. Its two axes sit exactly perpendicular to each other — that's what symmetry guarantees. Those axis directions are the eigenvectors; how far the ellipse stretches along each is the eigenvalue.
+From the hook, you already know the two directions that don't turn: $(1,1)$, stretched by $4$, and $(1,-1)$, stretched by $2$. Symmetric matrices guarantee those two things always happen together: the stretch factors ($4$ and $2$) are real numbers, never complex, and the two directions always meet at a right angle, exactly like you watched.
 
-No complex numbers ever show up here. Symmetric always means real eigenvalues, perpendicular eigenvectors.
+No new arithmetic here — just a name for what the hook already showed you: real eigenvalues, perpendicular eigenvectors.

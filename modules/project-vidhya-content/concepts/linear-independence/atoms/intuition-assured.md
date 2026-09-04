@@ -20,6 +20,8 @@ for_stance: assured
 
 Independence is a property of the SET, checked via $c_1v_1+\cdots+c_kv_k=0 \implies c_1=\cdots=c_k=0$ — only the trivial combination reaches zero. Equivalently: no vector is a linear combination of the others.
 
+On the hook's own matrix $A=\begin{pmatrix}1&1\\0&2\end{pmatrix}$: $\det(A)=2\neq0$ certifies its two columns independent in one line, no need to solve $c_1v_1+c_2v_2=0$ by hand — the same shortcut the fast tests below generalize.
+
 Fast tests: stack the vectors as columns of a matrix $M$; the set is independent iff $\text{rank}(M)$ equals the number of vectors, iff $\det(M)\neq0$ when $M$ is square. More than $n$ vectors in $\mathbb{R}^n$ are automatically dependent — pigeonhole on dimension.
 
 Where this connects: a basis is a maximal independent set (equivalently, a minimal spanning set); a spanning set that isn't independent contains a smaller spanning subset, found by discarding vectors that are combinations of earlier ones.

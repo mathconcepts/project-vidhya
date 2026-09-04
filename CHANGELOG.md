@@ -4,6 +4,56 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.60.0] — 2026-09-04 — Hook/intuition silo audit closed for all 26 Linear Algebra concepts
+
+No new env vars, no migrations. Content-only release (no backend or
+frontend code changes).
+
+Direct follow-up to "finish off all pending for linear algebra": closes
+the open worklist from the `cayley-hamilton`/`trace` silo-fix TODOS.md
+item — the other 24 GATE-EM Linear Algebra concepts, audited via 5
+parallel Claude Sonnet subagents (per explicit instruction to use
+subagents for LLM-related work), each covering 4-5 non-overlapping
+concepts.
+
+- **19 of 24 audited concepts had a genuine silo defect and were fixed**
+  (an `intuition.md` using a different or absent example than its own
+  `hook.md`, or reading as a disconnected wall of prose beside an
+  interactive hook): `matrix-inverse`, `rank-nullity`, `null-space-
+  column-space`, `diagonalization`, `quadratic-forms`, `positive-
+  definite-matrices`, `spectral-theorem`, `systems-of-equations`,
+  `linear-independence`, `least-squares`, `jordan-normal-form`, `matrix-
+  operations`, `symmetric-matrices`, `inner-product-spaces`, `change-of-
+  basis`.
+- **5 were confirmed already fine and left untouched**: `determinants`,
+  `linear-transformations`, `lu-factorization`, `svd`, `orthogonality`,
+  `gram-schmidt`, `eigenvalues`, `vector-spaces`, `matrix-norms` (already
+  had their own connected interactive widget, or the hook itself has no
+  concrete example to be siloed from).
+- **5 fixed concepts gained a brand-new resonance-beat scene** reusing
+  their hook's own already-verified matrix/numbers in a fresh predict-
+  observe-explain sequence with its own trap beat: `diagonalization`,
+  `quadratic-forms`, `positive-definite-matrices`, `spectral-theorem`,
+  `systems-of-equations`. The other 14 fixed concepts got prose-only
+  rewrites threading the hook's numbers in.
+
+Every numeric claim verified via local SymPy before writing (Wolfram MCP
+disconnected this session); every new/edited fenced block kept byte-
+identical across base/shaken/assured stance files. Combined with the
+prior `cayley-hamilton`/`trace` fixes, all 26 GATE-EM Linear Algebra
+concepts are now audited for this defect — see CLAUDE.md's 2026-09-04
+section for the full per-concept breakdown.
+
+**Tests:** content-only, no test changes. Backend 4701/4701 (1 todo, 365
+files), frontend 2691/2691 (96 files) — both unchanged from baseline.
+`tsc --noEmit` clean both sides. `npm run ci` (18 gates, including
+`ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs) clean.
+
+**Still open:** the same audit for the other 9 GATE-EM topic families,
+and for `mnemonic` atoms corpus-wide (including LA), was not attempted —
+scoped to Linear Algebra `intuition` atoms only, per explicit user
+request. See TODOS.md.
+
 ## [4.59.0] — 2026-09-04 — Restructuring Jordan Normal Form and eigenvalues into the wizard
 
 No new env vars, no migrations.

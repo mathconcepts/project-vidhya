@@ -18,7 +18,7 @@ variant_of: inner-product-spaces.intuition
 for_stance: assured
 ---
 
-Three axioms — bilinearity, symmetry (conjugate symmetry over $\mathbb{C}$), positive-definiteness — are the whole contract. Anything satisfying them earns a norm $\|v\|=\sqrt{\langle v,v\rangle}$, an angle $\cos\theta = \frac{\langle u,v\rangle}{\|u\|\|v\|}$, and orthogonality "for free," regardless of what the vectors actually are.
+Three axioms — bilinearity (linear in each slot separately), symmetry (conjugate symmetry over $\mathbb{C}$), positive-definiteness — are the whole contract. Anything satisfying them earns a norm $\|v\|=\sqrt{\langle v,v\rangle}$, an angle $\cos\theta = \frac{\langle u,v\rangle}{\|u\|\|v\|}$, and orthogonality "for free," regardless of what the vectors actually are. Check it against the hook's own numbers: $u=(1,2)$, $v=(3,1)$, $\langle u,v\rangle=5$, giving $\cos\theta=1/\sqrt2$ — a $45°$ angle, not a coincidence of the formula.
 
 **Where this pays off on GATE.** The standard dot product is one instance, not the definition — expect $\langle A,B\rangle = \operatorname{tr}(A^TB)$ on matrix spaces or $\langle f,g\rangle=\int_a^b fg\,dx$ on function spaces. The mechanics don't change; only the multiply-and-sum becomes an integral or a trace.
 

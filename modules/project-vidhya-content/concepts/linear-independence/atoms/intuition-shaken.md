@@ -19,10 +19,10 @@ variant_of: linear-independence.intuition
 for_stance: shaken
 ---
 
-Three vectors in the plane: $v_1=(1,0)$, $v_2=(0,1)$, $v_3=2v_1=(2,0)$.
+Same matrix as the hook: $A=\begin{pmatrix}1&1\\0&2\end{pmatrix}$. Its columns are $v_1=(1,0)$ and $v_2=(1,2)$.
 
-$v_1$ and $v_2$ point in different directions — neither is a copy of the other — so together they're **independent**.
+Try to write $v_2$ as a number times $v_1$: you'd need $(1,2)=c\times(1,0)=(c,0)$. That would need $c=1$ (to match the first entry) and $0=2$ (to match the second) at the same time — impossible. So $v_2$ is not a scaled copy of $v_1$. Together they're **independent**.
 
-$v_3$ is just $2v_1$: no new direction, only a longer copy of one already there. That makes $v_3$ **dependent** on $v_1$.
+Now the "ghost" matrix from the hook, $\begin{pmatrix}1&1\\2&2\end{pmatrix}$: both columns are $(1,2)$ — the exact same vector. One is just $1\times$ the other, so it adds no new direction. That makes them **dependent**.
 
-A set is independent when no vector in it can be written as a combination of the others — each one adds something genuinely new. That is exactly what a basis needs: enough vectors to reach everywhere, none of them wasted.
+Check with the determinant: $\det(A)=1\times2-1\times0=2$, not zero — independent. $\det(\text{ghost})=1\times2-1\times2=0$ — dependent.

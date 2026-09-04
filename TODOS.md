@@ -108,7 +108,33 @@ specific fork (up from 17). The other 7 — `matrix-operations`,
 `change-of-basis`, `matrix-norms` — were reconsidered once more and still
 correctly have no genuine competing-method decision at GATE-EM's level.
 
-## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
+## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern — Linear Algebra closed (2026-09-04)
+
+**2026-09-04 update:** the full Linear Algebra worklist named below is
+closed. Direct follow-up to "finish off all pending for linear algebra" —
+5 parallel Sonnet subagents audited the other 24 GATE-EM LA concepts (all
+26 minus the two already fixed, `cayley-hamilton`/`trace`) against the
+same hook/intuition silo pattern. 19 had a genuine defect and were fixed
+(5 of those gained a brand-new resonance-beat scene reusing the hook's
+already-verified numbers; the other 14 got prose-only rewrites); 5 were
+individually confirmed to already be fine (already-connected interactive
+widgets, or a hook with no concrete example to be siloed from) and left
+untouched. See CLAUDE.md's 2026-09-04 "Hook/intuition silo audit closed
+for all 26 Linear Algebra concepts" section for the full per-concept
+breakdown and verification discipline. **All 26 LA concepts are now
+audited — this worklist is closed for Linear Algebra.**
+
+**What's still open:** the sweep was scoped to Linear Algebra only, per
+the explicit user request. The same audit for the other 9 GATE-EM topic
+families (calculus, vector-calculus, probability-statistics, transform-
+theory, numerical-methods, differential-equations, complex-variables,
+discrete-mathematics, graph-theory) has NOT been attempted — those
+concepts' `intuition`/`mnemonic` atoms may carry the identical defect,
+unaudited. `mnemonic` atoms specifically were also not audited in this
+pass (only `intuition`) — the original trigger below still applies to
+`mnemonic` corpus-wide, LA included.
+
+**Original entry, for the corpus-wide sweep still open beyond LA:**
 
 **Trigger:** the next live-QA report naming a different concept's
 intuition or mnemonic card, or a decision to sweep this systematically

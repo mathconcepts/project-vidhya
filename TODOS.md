@@ -40,65 +40,101 @@ mock-exam fix closed. Nothing here should route a leaf answer into
 grading; it's about surfacing the wizard's EXISTENCE earlier, not scoring
 what a student does inside it.
 
-## Micro-solver authoring pass wave 2: close wizard coverage for the last 3 topic families
+## Micro-solver authoring pass wave 2 — closed (2026-09-04)
 
-**Trigger:** ready to start the next content wave, or a live-QA report
-naming a method-selection miss on calculus, complex-variables, or
-discrete-mathematics.
+All 10 GATE-EM topic families now have a wizard trainer. `/design-review`
+(2026-09-04) closed the last three — calculus, complex-variables,
+discrete-mathematics — using the same single-fork pattern as wave 1: one
+`BranchNode` + 3 `BranchLeaf`s per topic, every numeric claim hand-verified
+via local SymPy (Wolfram MCP was disconnected this session too). See
+CLAUDE.md's 2026-09-04 section for the three questions chosen (integration
+technique for ∫x·ln(x)dx; contour-integral technique with the
+outside-pole-inclusion trap; inclusion-exclusion for a divisibility-union
+count) and the exact SymPy verification each ran.
 
-`/office-hours` (2026-09-03) brainstormed the tailored-mistake-wizard
-redesign; the `startAt` deep-link mechanism (CLAUDE.md's 2026-09-03
-"Method-selection wizard: `startAt` deep link" section) is shipped and
-covers linear-algebra/vector-calculus/distributions. Wave 1 (CLAUDE.md's
-2026-09-03 "Micro-solver wave 1" section, same-day `/loop` continuation)
-used 4 parallel Claude Sonnet subagents to author one single-fork
-`MethodSelectionTrainer` each for numerical-methods, transform-theory,
-differential-equations, and graph-theory — 6 of 10 topic families now have
-a wizard. Three remain bare: **calculus, complex-variables,
-discrete-mathematics.**
+**What's genuinely still open, not closed by this pass:** wave 2 covers
+exactly one concept per new topic (`integration-by-parts`/
+`-substitution`/`partial-fractions` share one fork; `complex-integration`/
+`residue-calculus` share one fork; `functions-combinatorics` alone) — most
+concepts in these three topics still have no wizard fork at all (e.g.
+`series`, `maxima-minima`, `taylor-laurent`, `conformal-mapping`,
+`propositional-logic`, `recurrence-relations`). A wave 3 that adds MORE
+forks to existing trainers (multi-node trees, like linear-algebra's
+original 4-fork tree) is real future work, not a coverage bug — every
+topic family has at least one entry point now, which was the wave-2 bar.
 
-**What:** same pattern as wave 1, one subagent per topic (isolated
-worktree, no repo edits — draft to a scratch JSON path, merge by hand
-after review). Pick the concept most likely to produce a real
-method-selection miss, author ONE `BranchNode` + 2-3 `BranchLeaf`s (same
-schema `DecisionTreeWalkthrough` already renders — a 1-node tree needs no
-new component or renderer change), register it under a new trainer keyed
-by the topic's module id in `THEOREM_WIZARD_TRAINERS`, and add the
-concept's entry to `CONCEPT_TO_WIZARD_NODE`. Every leaf's `reason` must
-say why the plausible wrong method fails, same discipline as all 6 shipped
-trainers — verify every mathematical claim (Wolfram or by hand) before
-authoring; wave 1's subagents all hand-verified via SymPy/direct
-arithmetic since Wolfram MCP was disconnected that session too.
+**2026-09-04 update (`/loop`):** the "wave 3, more forks per topic"
+follow-up named above happened for linear-algebra specifically, audited
+concept-by-concept for all 26 GATE-EM LA concepts (not the other 9 topic
+families — this pass was scoped to LA by explicit user request). 5 new
+forks (`la_system_solve`, `la_independence_test`, `la_decomposition`,
+`la_least_squares`, `la_orthogonalize`) took LA from 10/26 to 17/26
+concepts mapped to a specific fork; the other 9 are individually
+justified as having no genuine competing-method decision at GATE-EM's
+level. See CLAUDE.md's 2026-09-04 `/loop` section for the full audit and
+every SymPy-verified claim. The same concept-by-concept audit for the
+other 9 topic families (calculus, complex-variables, discrete-mathematics,
+numerical-methods, transform-theory, graph-theory,
+differential-equations, vector-calculus, probability-statistics) is
+real, scoped future work — not attempted here.
 
-**Candidate decisions, not yet picked/verified — a starting point, not a
-commitment:**
-- calculus: series-convergence test selection (ratio/root/comparison/
-  integral test), or a critical-point classification decision
-  (second-derivative test vs. first-derivative sign chart) — concept ids
-  confirmed real: `series`, `maxima-minima`.
-- complex-variables: contour-integration method choice (Cauchy's theorem
-  vs. Cauchy's integral formula vs. residue theorem, by singularity
-  location relative to the contour) — concept id `complex-integration` or
-  `residue-calculus`.
-- discrete-mathematics: proof-technique selection (direct vs. induction
-  vs. contradiction) is the classic fit but may not map cleanly to one
-  practice-item concept; `recurrence-relations` (which solving technique —
-  characteristic equation vs. substitution vs. master theorem — applies)
-  is a more concrete alternative worth checking against the real
-  practice-item bank first.
+## Jordan Normal Form / eigenvalues-shortcut restructure — closed (2026-09-04)
 
-**Where to start:** `frontend/src/data/method-selection-trainers.ts` for
-the data shape and all 6 existing trainers as templates (the wave-1 four
-are the closest style match, being single-fork themselves);
-`frontend/src/pages/app/TheoremWizardPage.tsx`'s routing and
-`wizardRouteForTopic()`'s allowlist in `PracticeAttemptPage.tsx` both need
-the new topic slugs added, same as wave 1's diff.
+Same-day follow-up ("restructure jordan normal and others"): `la_power`
+gained a genuine 4th option — "A is NOT diagonalisable — what now?" —
+leading to a new node `la_power_not_diag`, a real two-way decision between
+Cayley-Hamilton reduction (best — less machinery) and full Jordan Normal
+Form (also correct, more structural). Verified on A=[[4,1],[-1,2]]
+(eigenvalue 3, repeated, confirmed not diagonalizable via SymPy
+`.diagonalize()` throwing): both A²=6A−9I (Cayley-Hamilton) and the Jordan
+form J=[[3,1],[0,3]] with P=[[1,1],[-1,0]] give the identical A³, checked
+against direct matrix exponentiation. `jordan-normal-form` now deep-links
+straight to `la_power_not_diag`, skipping `la_power`'s own diagonalizable
+gate since its content already assumes non-diagonalizability.
 
-**Effort:** S per concept (one fork + its leaves, roughly a `common_traps`
-atom's worth of authoring + verification) — wave 1's 4 subagents each took
-roughly 1-2 minutes of wall time and under 170k tokens.
+`eigenvalues` — the other item this same section had NOT yet flagged as a
+near-miss, found on reconsideration — closed the same way: a new
+top-level fork `la_eigenvalue_method` covers the genuine "read the
+diagonal of a triangular matrix directly, no cofactor expansion needed"
+shortcut vs. full characteristic-polynomial expansion (correct but
+wasteful here) vs. the trace/determinant-alone trap (2 equations can't
+pin down 3+ unknowns). Verified on A=[[5,3,7],[0,2,4],[0,0,-1]]
+(eigenvalues 5, 2, −1 — the diagonal entries exactly, trace 6, det −10,
+both consistent).
 
-## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
+LA wizard coverage after this pass: **19 of 26 concepts** mapped to a
+specific fork (up from 17). The other 7 — `matrix-operations`,
+`vector-spaces`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+`change-of-basis`, `matrix-norms` — were reconsidered once more and still
+correctly have no genuine competing-method decision at GATE-EM's level.
+
+## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern — Linear Algebra closed (2026-09-04)
+
+**2026-09-04 update:** the full Linear Algebra worklist named below is
+closed. Direct follow-up to "finish off all pending for linear algebra" —
+5 parallel Sonnet subagents audited the other 24 GATE-EM LA concepts (all
+26 minus the two already fixed, `cayley-hamilton`/`trace`) against the
+same hook/intuition silo pattern. 19 had a genuine defect and were fixed
+(5 of those gained a brand-new resonance-beat scene reusing the hook's
+already-verified numbers; the other 14 got prose-only rewrites); 5 were
+individually confirmed to already be fine (already-connected interactive
+widgets, or a hook with no concrete example to be siloed from) and left
+untouched. See CLAUDE.md's 2026-09-04 "Hook/intuition silo audit closed
+for all 26 Linear Algebra concepts" section for the full per-concept
+breakdown and verification discipline. **All 26 LA concepts are now
+audited — this worklist is closed for Linear Algebra.**
+
+**What's still open:** the sweep was scoped to Linear Algebra only, per
+the explicit user request. The same audit for the other 9 GATE-EM topic
+families (calculus, vector-calculus, probability-statistics, transform-
+theory, numerical-methods, differential-equations, complex-variables,
+discrete-mathematics, graph-theory) has NOT been attempted — those
+concepts' `intuition`/`mnemonic` atoms may carry the identical defect,
+unaudited. `mnemonic` atoms specifically were also not audited in this
+pass (only `intuition`) — the original trigger below still applies to
+`mnemonic` corpus-wide, LA included.
+
+**Original entry, for the corpus-wide sweep still open beyond LA:**
 
 **Trigger:** the next live-QA report naming a different concept's
 intuition or mnemonic card, or a decision to sweep this systematically

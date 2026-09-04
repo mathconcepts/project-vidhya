@@ -8,4 +8,8 @@ modality: visual
 exam_ids: ["*"]
 ---
 
-Imagine three vectors in 2D space: two that point in completely different directions (say, right and up), and a third that is just twice the first. The first two are **linearly independent** because neither can be created by scaling the other. The third vector is **linearly dependent** on the first because it's just $2 \times \text{(first vector)}$. In $\mathbb{R}^n$, linear independence means no vector in the set can be written as a weighted sum of the others—they are "truly different" in a linear sense. This concept is central because only linearly independent vectors can form a basis, which is the minimal spanning set for a space.
+Look back at the matrix from the hook: $A=\begin{pmatrix}1&1\\0&2\end{pmatrix}$. Its two columns are $v_1=(1,0)$ and $v_2=(1,2)$. No number $c$ can turn $v_1$ into $v_2$ by scaling alone — $c\times(1,0)=(c,0)$ can never equal $(1,2)$, since the second entry would need to become $2$ from $0$ no matter what $c$ is. That is what **linearly independent** means: neither column is a stretched (or shrunk) copy of the other.
+
+Now look at the "ghost" matrix from the same hook, $\begin{pmatrix}1&1\\2&2\end{pmatrix}$. Both of its columns are the exact same vector, $(1,2)$ — one is just $1\times$ the other. That is **linearly dependent**: the second column adds nothing new, because it can be built from the first by scaling alone.
+
+The determinant gives the same answer without drawing anything: $\det(A)=1\times2-1\times0=2\neq0$ confirms $A$'s columns are independent, while $\det(\text{ghost})=1\times2-1\times2=0$ confirms the ghost's are dependent. In $\mathbb{R}^n$, a set of vectors is independent exactly when no vector in it can be built as a **linear combination** (a sum of scaled copies) of the others. This matters because only an independent set can form a **basis** — the smallest collection of directions needed to reach every point in the space.

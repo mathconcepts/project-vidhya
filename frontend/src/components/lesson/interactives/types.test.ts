@@ -953,6 +953,74 @@ describe('validateSimulation — linear_map mode', () => {
     expect(result.ok).toBe(false);
     expect((result as { reason: string }).reason).toContain('area_label requires unit_square: true');
   });
+
+  // ==========================================================================
+  // focus_eigen (live QA, 2026-09-04: "coordinates ... must be in focus")
+  // ==========================================================================
+
+  it('accepts focus_eigen naming a valid eigen index on a narration beat', () => {
+    const ok = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'watch the first arrow', focus_eigen: [0] }],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('accepts focus_eigen naming both eigen indices', () => {
+    const ok = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'watch both', focus_eigen: [0, 1] }],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('rejects an out-of-range focus_eigen index', () => {
+    const bad = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'watch a third arrow?', focus_eigen: [2] }],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('focus_eigen');
+  });
+
+  it('rejects a negative focus_eigen index', () => {
+    const bad = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'x', focus_eigen: [-1] }],
+    };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('rejects an empty focus_eigen array', () => {
+    const bad = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'x', focus_eigen: [] }],
+    };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('rejects focus_eigen on a scene with no linear_map (nothing to index)', () => {
+    const bad = {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'simulation',
+      title: 'plain trace',
+      x_expr: 't',
+      y_expr: 't',
+      t_min: 0,
+      t_max: 1,
+      narration_steps: [{ at_progress: 0, text: 'x', focus_eigen: [0] }],
+    };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('a beat with no focus_eigen still validates unchanged', () => {
+    const ok = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'no focus here' }],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
 });
 
 // ============================================================================

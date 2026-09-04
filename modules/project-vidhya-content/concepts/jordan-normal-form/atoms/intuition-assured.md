@@ -17,6 +17,8 @@ variant_of: jordan-normal-form.intuition
 for_stance: assured
 ---
 
+Hook's $A=\begin{pmatrix}5&1&0\\0&5&1\\0&0&5\end{pmatrix}$ is already written in Jordan form — its own chain, $v=(1,0,0)\to w_1=(0,1,0)\to w_2=(0,0,1)$, is exactly the $1$'s sitting above its diagonal.
+
 $Av=\lambda v$ and $(A-\lambda I)w=v$ are the same statement about **invariant subspaces**, one dimension apart: an eigenvector spans a $1$-dimensional invariant line; a Jordan chain spans a higher-dimensional invariant subspace on which $A$ acts as $\lambda I$ plus a nilpotent shift.
 
 ## What actually costs marks

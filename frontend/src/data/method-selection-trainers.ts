@@ -79,6 +79,47 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
         answer:
           'All eigenvalues > 0 → positive definite. All ≥ 0 → positive semi-definite. All < 0 → negative definite. Mixed signs → indefinite. The Spectral Theorem guarantees real eigenvalues and orthonormal eigenvectors for symmetric A, so the sign of eigenvalues is well-defined.',
       },
+      // /loop (2026-09-04): 4 more forks closing coverage for the last 4
+      // sub-topics with a genuine method-selection decision — systems of
+      // equations + LU factorization, testing independence, choosing a
+      // decomposition, and recovering from an inconsistent system.
+      {
+        prompt: 'You need to solve Ax = b for a large n×n system. Which method is the standard, efficient tool?',
+        hint: 'One classic method computes n+1 determinants — fine for a 2×2 by hand, but how does that scale?',
+        answer:
+          "Gaussian elimination (equivalently, LU factorization). It costs O(n³) and works directly on the system. Cramer's rule needs n+1 determinants — O(n⁴) or worse by cofactor expansion — and explicitly forming A⁻¹ costs about the same O(n³) as elimination while doing strictly more work than solving the one system you actually need.",
+      },
+      {
+        prompt: 'You need to test whether a set of n vectors in ℝⁿ is linearly independent. What single check settles it?',
+        hint: 'Put the vectors as columns of a matrix — one number from that matrix answers the question.',
+        answer:
+          'Form the n×n matrix with the vectors as columns and check its determinant. Nonzero determinant ⟺ linearly independent. A zero determinant means the columns are dependent — e.g. (1,2) and (2,4) give det = 1·4 − 2·2 = 0, and indeed (2,4) = 2·(1,2).',
+      },
+      {
+        prompt: 'You need to decompose a matrix that is either non-square, or square but not diagonalizable. Which decomposition applies?',
+        hint: 'One decomposition requires a square, diagonalizable matrix. The other requires nothing at all.',
+        answer:
+          'Singular Value Decomposition (SVD): A = UΣVᵀ exists for EVERY m×n matrix, full stop — no squareness or diagonalizability required, because Σ\'s entries are √(eigenvalues of AᵀA), and AᵀA is always symmetric positive-semidefinite. Eigendecomposition (A = PDP⁻¹) requires A to be square and diagonalizable — e.g. [[1,1],[0,1]] has only one independent eigenvector for its repeated eigenvalue 1, so it has no eigendecomposition at all, yet its SVD exists.',
+      },
+      {
+        prompt: 'A system Ax = b has more equations than unknowns and no exact solution. What do you solve instead?',
+        hint: 'You cannot make the residual Ax − b exactly zero — but you can make it as small as possible.',
+        answer:
+          'The normal equations: AᵀA x = Aᵀb, giving the least-squares best-fit x. For three noisy measurements of one unknown, x=1, x=2, x=4 (so A = [1;1;1], b = [1,2,4]ᵀ): AᵀA = 3, Aᵀb = 7, so x = 7/3 ≈ 2.33 — exactly the mean of the three measurements, the closest single value to all three at once.',
+      },
+      {
+        prompt: 'You have two independent vectors u=(1,1,0) and v=(1,0,1) and need an orthogonal pair spanning the same plane. Which method?',
+        hint: "Subtract off the part of v that points along u — the part you don't want.",
+        answer:
+          'The Gram-Schmidt process: keep e₁ = u = (1,1,0), then w₂ = v − (v·e₁/e₁·e₁)e₁ = (1,0,1) − ½(1,1,0) = (½,−½,1). Check: e₁·w₂ = ½−½+0 = 0 — exactly orthogonal, and still spans the same plane as u, v.',
+      },
+      {
+        prompt:
+          'You need the eigenvalues of A = [[5,3,7],[0,2,4],[0,0,-1]] (upper triangular). Which is the fastest correct method?',
+        hint: 'For a triangular matrix, det(A − λI) is a product of (diagonal entry − λ) terms — nothing else contributes.',
+        answer:
+          'Read them straight off the diagonal: 5, 2, and −1. For a triangular matrix, det(A − λI) collapses to the product (5−λ)(2−λ)(−1−λ), so the roots ARE the diagonal entries — no cofactor expansion needed. Check: trace = 6 = 5+2−1 and det = −10 = 5×2×(−1), both consistent.',
+      },
     ],
     branches: {
       v: 1,
@@ -91,6 +132,12 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'Whether a linear map is injective', next: 'la_injective' },
             { label: 'A high power such as A¹⁰⁰', next: 'la_power' },
             { label: 'The sign of a quadratic form xᵀAx', next: 'la_definite' },
+            { label: 'How to solve Ax = b for a large system', next: 'la_system_solve' },
+            { label: 'Whether a set of vectors is linearly independent', next: 'la_independence_test' },
+            { label: 'Which decomposition to use on A', next: 'la_decomposition' },
+            { label: 'Ax = b has no exact solution — what now', next: 'la_least_squares' },
+            { label: 'Making a set of vectors orthogonal', next: 'la_orthogonalize' },
+            { label: 'Finding the eigenvalues of a matrix', next: 'la_eigenvalue_method' },
           ],
         },
         {
@@ -121,6 +168,26 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'A is diagonalisable — A = PDP⁻¹', next: 'la_leaf_diag' },
             { label: 'A is symmetric', next: 'la_leaf_symmetric' },
             { label: 'A is invertible', next: 'la_leaf_invertible_power' },
+            { label: 'A is NOT diagonalisable — what now?', next: 'la_power_not_diag' },
+          ],
+        },
+        // /loop restructure (2026-09-04): the old la_leaf_diag answer just
+        // SAID "use Cayley-Hamilton" for the not-diagonalizable case in
+        // prose — a real second decision (Cayley-Hamilton reduction vs.
+        // full Jordan Normal Form) with no fork of its own. This node is
+        // that fork, closing the jordan-normal-form gap named in TODOS.md
+        // as a genuine near-miss rather than force-fitting it as a 4th
+        // option at la_power's own level (a different question: "why is
+        // the power cheap" vs. "given it's NOT cheap the easy way, what
+        // now").
+        {
+          id: 'la_power_not_diag',
+          question:
+            'A is not diagonalizable (a repeated eigenvalue with too few independent eigenvectors) — you still need Aⁿ for large n. Which technique?',
+          options: [
+            { label: 'Cayley-Hamilton: reduce Aⁿ using the characteristic polynomial', next: 'la_leaf_cayley_hamilton' },
+            { label: 'Jordan Normal Form: A = PJP⁻¹, use the Jordan-block power formula', next: 'la_leaf_jordan_form' },
+            { label: 'Conclude Aⁿ cannot be computed', next: 'la_leaf_power_impossible' },
           ],
         },
         {
@@ -131,6 +198,63 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'The signs of the eigenvalues', next: 'la_leaf_eigen' },
             { label: 'The signs of the diagonal entries', next: 'la_leaf_diag_entries' },
             { label: 'The determinant on its own', next: 'la_leaf_det_alone' },
+          ],
+        },
+        {
+          id: 'la_system_solve',
+          question: 'You need to solve Ax = b for a large n×n system. Which method is the standard, efficient tool?',
+          options: [
+            { label: 'Gaussian elimination / LU factorization', next: 'la_leaf_elimination' },
+            { label: "Cramer's rule", next: 'la_leaf_cramer' },
+            { label: 'Compute A⁻¹ explicitly, then x = A⁻¹b', next: 'la_leaf_explicit_inverse' },
+          ],
+        },
+        {
+          id: 'la_independence_test',
+          question: 'You need to test whether n vectors in ℝⁿ are linearly independent. What single check settles it?',
+          options: [
+            { label: 'The determinant of the matrix with those vectors as columns', next: 'la_leaf_det_independence' },
+            { label: 'Whether any two vectors look different by eye', next: 'la_leaf_eyeball' },
+            { label: 'The sum of the vectors', next: 'la_leaf_sum_vectors' },
+          ],
+        },
+        {
+          id: 'la_decomposition',
+          question:
+            'You need to decompose a matrix that is either non-square, or square but not diagonalizable. Which decomposition applies?',
+          options: [
+            { label: 'Singular Value Decomposition (SVD)', next: 'la_leaf_svd' },
+            { label: 'Eigendecomposition, A = PDP⁻¹', next: 'la_leaf_eigendecomp' },
+            { label: 'LU decomposition', next: 'la_leaf_lu_for_decomp' },
+          ],
+        },
+        {
+          id: 'la_least_squares',
+          question: 'A system Ax = b has more equations than unknowns and no exact solution. What do you solve instead?',
+          options: [
+            { label: 'The normal equations, AᵀA x = Aᵀb', next: 'la_leaf_normal_eq' },
+            { label: "Cramer's rule on the non-square system", next: 'la_leaf_cramer_nonsquare' },
+            { label: 'Conclude there is no answer', next: 'la_leaf_no_answer' },
+          ],
+        },
+        {
+          id: 'la_orthogonalize',
+          question:
+            'You have two independent vectors u=(1,1,0) and v=(1,0,1) and need an orthogonal pair spanning the same plane. Which method?',
+          options: [
+            { label: 'The Gram-Schmidt process', next: 'la_leaf_gram_schmidt' },
+            { label: 'Normalize each vector separately', next: 'la_leaf_normalize_only' },
+            { label: 'Take their cross product', next: 'la_leaf_cross_product' },
+          ],
+        },
+        {
+          id: 'la_eigenvalue_method',
+          question:
+            'You need the eigenvalues of A = [[5,3,7],[0,2,4],[0,0,-1]] (upper triangular). Which is the fastest correct method?',
+          options: [
+            { label: 'Read them off the diagonal', next: 'la_leaf_diagonal_read' },
+            { label: 'Solve det(A − λI) = 0 by full cofactor expansion', next: 'la_leaf_full_charpoly' },
+            { label: 'Use trace and determinant alone', next: 'la_leaf_trace_det_only' },
           ],
         },
       ],
@@ -210,6 +334,139 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
           method: 'The determinant on its own',
           reason:
             'One determinant cannot separate "all eigenvalues positive" from "an even number of them negative" — in even dimensions both give a positive determinant. The full leading-minor sequence (Sylvester’s criterion) works; a single determinant does not.',
+        },
+        {
+          id: 'la_leaf_elimination',
+          method: 'Gaussian elimination / LU factorization',
+          reason:
+            'For a large n×n system this is the standard tool: O(n³), and it solves the system directly with no wasted work. LU factorization is the same method organized for reuse — once A = LU is computed, solving for a NEW right-hand side b costs only two cheap triangular solves, not a full elimination pass again.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_cramer',
+          method: "Cramer's rule",
+          reason:
+            "Cramer's rule is correct in principle — it needs n+1 determinants, one for A and one for each variable — but computing that many determinants for a large n costs far more than one elimination pass (O(n⁴) or worse by cofactor expansion, versus elimination's O(n³)). It stays useful only for small systems solved by hand, or when you need a symbolic FORMULA for the answer rather than a numeric solve.",
+        },
+        {
+          id: 'la_leaf_explicit_inverse',
+          method: 'Compute A⁻¹ explicitly, then x = A⁻¹b',
+          reason:
+            'This gives the right answer and costs about the same O(n³) as elimination to FORM A⁻¹ — but then you still have to multiply A⁻¹ by b, which is extra work elimination never needed in the first place. Explicitly inverting is worth it only when you need A⁻¹ itself for many different right-hand sides; for one solve, it does strictly more work than necessary.',
+        },
+        {
+          id: 'la_leaf_det_independence',
+          method: 'The determinant of the matrix with those vectors as columns',
+          reason:
+            'Nonzero determinant ⟺ linearly independent. Zero determinant ⟺ dependent — e.g. columns (1,2) and (2,4) give det = 1·4 − 2·2 = 0, and indeed (2,4) = 2·(1,2), a genuine dependency. This works because the determinant vanishes exactly when the columns fail to span the full space, which is exactly what "dependent" means.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_eyeball',
+          method: 'Whether any two vectors look different by eye',
+          reason:
+            '"Looking different" is not the same as being independent: (1,2,0) and (2,4,1) look nothing alike componentwise, and (1,2,0), (2,4,0), (0,0,1) contains a real dependency (the first two are parallel) that is easy to miss by eye once the vectors have more than 2 or 3 entries, or there are more than 2 vectors to compare pairwise. Independence is a statement about the WHOLE set together, not any one pair.',
+        },
+        {
+          id: 'la_leaf_sum_vectors',
+          method: 'The sum of the vectors',
+          reason:
+            'The sum carries no information about independence at all: (1,0) + (−1,0) = (0,0), the zero vector, even though a single nonzero vector like (1,0) is trivially independent by itself — the sum of a dependent set can be nonzero, and the sum of an independent set can be zero. There is no valid test built on summing the vectors.',
+        },
+        {
+          id: 'la_leaf_svd',
+          method: 'Singular Value Decomposition (SVD)',
+          reason:
+            'SVD, A = UΣVᵀ, exists for EVERY m×n matrix — square or not, diagonalizable or not — because Σ\'s entries are √(eigenvalues of AᵀA), and AᵀA is always symmetric positive-semidefinite, which the Spectral Theorem guarantees has real, non-negative eigenvalues no matter what A looks like. That is exactly the guarantee this question needs: a non-square matrix, or one like [[1,1],[0,1]] with a repeated eigenvalue and too few independent eigenvectors, still has a full SVD.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_eigendecomp',
+          method: 'Eigendecomposition, A = PDP⁻¹',
+          reason:
+            "Eigendecomposition needs A square (P and D don't even make sense otherwise) AND diagonalizable (enough independent eigenvectors to fill P). [[1,1],[0,1]] is square but its only eigenvalue, 1, has just ONE independent eigenvector — not two — so P can't be built and this decomposition simply does not exist for it, even though the matrix itself is perfectly well-behaved.",
+        },
+        {
+          id: 'la_leaf_lu_for_decomp',
+          method: 'LU decomposition',
+          reason:
+            'LU decomposition (A = LU, lower- and upper-triangular factors) is built for efficiently solving Ax = b for multiple right-hand sides — it says nothing about a matrix\'s eigenvalues, singular values, or fundamental scaling directions, which is what this question is actually asking for. Reach for LU when the task is "solve a system," not "describe what A does to space."',
+        },
+        {
+          id: 'la_leaf_normal_eq',
+          method: 'The normal equations, AᵀA x = Aᵀb',
+          reason:
+            'This is the least-squares fix: since Ax = b has no exact solution, minimize the residual ‖Ax − b‖² instead, which calculus shows happens exactly when AᵀA x = Aᵀb. For three noisy measurements of one unknown, x=1, x=2, x=4 (A = [1;1;1], b = [1,2,4]ᵀ): AᵀA = 3, Aᵀb = 7, so x = 7/3 ≈ 2.33 — precisely the mean of the three readings, the single value closest to all three at once.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_cramer_nonsquare',
+          method: "Cramer's rule on the non-square system",
+          reason:
+            "Cramer's rule requires a SQUARE matrix — it is built from ratios of determinants, and a non-square matrix has no determinant at all. With more equations than unknowns, A is not square, so there is no determinant to divide by and the rule cannot even be set up, regardless of how large or small the system is.",
+        },
+        {
+          id: 'la_leaf_no_answer',
+          method: 'Conclude there is no answer',
+          reason:
+            'There is no EXACT answer, but that is not the same as no answer at all — least squares gives the single x that minimizes how wrong the system is, which is exactly the useful answer for noisy or overdetermined data (curve fitting, regression, and similar problems are built on this). Stopping at "no solution" throws away a genuinely useful result.',
+        },
+        {
+          id: 'la_leaf_gram_schmidt',
+          method: 'The Gram-Schmidt process',
+          reason:
+            'Gram-Schmidt keeps e₁ = u and subtracts off, from v, exactly the part that points along e₁: w₂ = v − (v·e₁/e₁·e₁)e₁. For u=(1,1,0), v=(1,0,1): w₂ = (1,0,1) − ½(1,1,0) = (½,−½,1), and e₁·w₂ = ½−½+0 = 0 — exactly perpendicular, while {e₁, w₂} still spans the same plane {u, v} did.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_normalize_only',
+          method: 'Normalize each vector separately',
+          reason:
+            'Normalizing only changes each vector\'s LENGTH to 1 — it does nothing to the ANGLE between them. For u=(1,1,0), v=(1,0,1): the normalized vectors still have dot product 1/2, not 0, so they are just as non-perpendicular as before, only shorter. Orthogonality is a statement about the angle between vectors; normalizing never touches that.',
+        },
+        {
+          id: 'la_leaf_cross_product',
+          method: 'Take their cross product',
+          reason:
+            'u × v does produce a vector orthogonal to BOTH u and v — but it is a genuinely NEW third direction, perpendicular to the plane u and v span, not a replacement for either one. It cannot give you an orthogonal PAIR still spanning that same original plane, which is what the question asks for; it is the right tool for building a third basis vector in 3-D, not for fixing up two vectors already in a plane.',
+        },
+        {
+          id: 'la_leaf_cayley_hamilton',
+          method: 'Cayley-Hamilton: reduce Aⁿ using the characteristic polynomial',
+          reason:
+            'Every matrix satisfies its own characteristic polynomial, which turns into a recurrence for computing powers without ever building P or finding generalized eigenvectors. For A=[[4,1],[-1,2]] (eigenvalue 3, repeated, not diagonalizable): char. poly is λ²−6λ+9=0, so A²=6A−9I. Writing Aⁿ=aₙA+bₙI, the recurrence aₙ₊₁=6aₙ+bₙ, bₙ₊₁=−9aₙ gives A³=27A−54I — matching A³ computed directly. Less machinery than Jordan form for the same answer.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_jordan_form',
+          method: 'Jordan Normal Form: A = PJP⁻¹, use the Jordan-block power formula',
+          reason:
+            'This also works and is the more STRUCTURAL answer: A=[[4,1],[-1,2]] has Jordan form J=[[3,1],[0,3]] with P=[[1,1],[-1,0]], and a 2×2 Jordan block\'s power formula Jⁿ=[[λⁿ,nλⁿ⁻¹],[0,λⁿ]] gives J³=[[27,27],[0,27]] — reconstructing A³=PJ³P⁻¹ matches the direct computation exactly, same answer Cayley-Hamilton gives. It is correct, just more machinery (finding P and the generalized eigenvector) than the question needs for a single power.',
+        },
+        {
+          id: 'la_leaf_power_impossible',
+          method: 'Conclude Aⁿ cannot be computed',
+          reason:
+            'Not diagonalizable does not mean stuck — it only rules out the SHORTCUT (A=PDP⁻¹). Every square matrix satisfies its own characteristic polynomial (Cayley-Hamilton) and has a Jordan form, either of which computes Aⁿ exactly, repeated eigenvalue and all. "Not diagonalizable" is a fork in the road, not a dead end.',
+        },
+        {
+          id: 'la_leaf_diagonal_read',
+          method: 'Read them off the diagonal',
+          reason:
+            'For a triangular matrix, det(A − λI) is built entirely from the diagonal — the entries above (or below) it contribute nothing to the determinant of a triangular matrix. det(A−λI) collapses to the product (5−λ)(2−λ)(−1−λ), so the roots are exactly 5, 2, −1, the diagonal entries themselves. Check: trace 6=5+2−1, det −10=5·2·(−1), both consistent — no cofactor expansion needed at all.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_full_charpoly',
+          method: 'Solve det(A − λI) = 0 by full cofactor expansion',
+          reason:
+            'This gives the right answer for any matrix — triangular or not — but for a triangular one it is strictly more arithmetic than necessary: expanding a full 3×3 determinant symbolically just to rediscover that the off-diagonal terms all vanish. The correct general-purpose fallback, not the fastest tool when the matrix is already triangular.',
+        },
+        {
+          id: 'la_leaf_trace_det_only',
+          method: 'Use trace and determinant alone',
+          reason:
+            'Trace (sum) and determinant (product) are only 2 numbers, but a 3×3 matrix can have 3 different eigenvalues — 2 equations cannot pin down 3 unknowns in general. They are a fast SANITY CHECK on eigenvalues you already found some other way, never a method for finding them from scratch once there are 3 or more.',
         },
       ],
     },
@@ -907,6 +1164,186 @@ const DIFFERENTIAL_EQUATIONS: MethodSelectionTrainer = {
   },
 };
 
+// Micro-solver wave 2 (2026-09-04, /design-review): the three topic
+// families that still had no wizard after wave 1 — calculus,
+// complex-variables, discrete-mathematics — same single-fork pattern, every
+// numeric claim checked with local SymPy (Wolfram MCP was disconnected this
+// session, same fallback wave 1 and several content passes in this repo's
+// history already used).
+
+const CALCULUS: MethodSelectionTrainer = {
+  id: 'calculus',
+  title: 'Which Integration Technique Applies?',
+  description:
+    'Substitution, integration by parts, or partial fractions — read the integrand structure, then commit.',
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Substitution, by parts, or partial fractions?',
+    steps: [
+      {
+        prompt: 'Evaluate ∫ x·ln(x) dx. Which technique is the right tool?',
+        hint: 'One factor gets simpler when you differentiate it; the other stays easy to integrate.',
+        answer:
+          'Integration by parts, with u = ln x and dv = x dx: du = dx/x, v = x²/2. So ∫x ln x dx = (x²/2)ln x − ∫(x²/2)(1/x) dx = (x²/2)ln x − x²/4 + C. Differentiating this back confirms it: d/dx[(x²/2)ln x − x²/4] = x ln x + x²/2·(1/x) − x/2 = x ln x.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'ca_technique_pick',
+          question: 'Evaluate ∫ x·ln(x) dx. Which technique is the right tool?',
+          options: [
+            { label: 'Integration by parts', next: 'ca_leaf_parts' },
+            { label: 'u-substitution with u = ln x', next: 'ca_leaf_sub' },
+            { label: 'Partial fraction decomposition', next: 'ca_leaf_partial' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'ca_leaf_parts',
+          method: 'Integration by parts',
+          reason:
+            'x·ln(x) is exactly the LIATE shape by parts is built for: one factor (ln x) that gets SIMPLER when differentiated (down to 1/x), paired with one factor (x) that stays easy to integrate. Setting u = ln x, dv = x dx gives du = dx/x, v = x²/2, and ∫x ln x dx = (x²/2)ln x − ∫(x²/2)(1/x) dx = (x²/2)ln x − x²/4 + C — the second integral is now just ∫x/2 dx, no further trick needed.',
+          best: true,
+        },
+        {
+          id: 'ca_leaf_sub',
+          method: 'u-substitution with u = ln x',
+          reason:
+            'Try it and it does not close: with u = ln x, x = eᵘ and dx = eᵘ du, so x·ln x dx becomes eᵘ·u·eᵘ du = u·e^(2u) du — a NEW integral, still a product of u with an exponential, that itself needs integration by parts to finish. Substitution here just relabels the problem instead of solving it; the technique that actually does the work is still by parts, one step later than you hoped.',
+        },
+        {
+          id: 'ca_leaf_partial',
+          method: 'Partial fraction decomposition',
+          reason:
+            'Partial fractions only decomposes a RATIONAL function — a ratio of two polynomials, P(x)/Q(x) — into simpler rational pieces. ln(x) is transcendental, not a polynomial, and x·ln(x) is not a ratio of polynomials at all, so there is nothing here for partial fractions to act on. Reach for it only once the integrand is genuinely P(x)/Q(x).',
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const COMPLEX_VARIABLES: MethodSelectionTrainer = {
+  id: 'complex-variables',
+  title: 'Which Contour-Integral Technique Applies?',
+  description:
+    "Count the poles inside the contour first — that decides between Cauchy's Integral Formula, the residue theorem, and Cauchy's theorem giving zero.",
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: "Cauchy's Integral Formula, residue theorem, or Cauchy's theorem?",
+    steps: [
+      {
+        prompt:
+          'Evaluate ∮_C 1/[(z−1)(z−3)] dz where C is the circle |z| = 2, traversed once counterclockwise. Which technique applies?',
+        hint: 'z = 1 and z = 3 are the two poles — check which one is actually inside |z| = 2.',
+        answer:
+          "Direct Cauchy Integral Formula. Only z = 1 lies inside |z| = 2 (z = 3 does not, since |3| = 3 > 2). Write f(z) = φ(z)/(z − 1) with φ(z) = 1/(z − 3), analytic inside C. Then ∮ f(z) dz = 2πi·φ(1) = 2πi·(1/(1−3)) = −πi.",
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'cv_contour_pick',
+          question:
+            'Evaluate ∮_C 1/[(z−1)(z−3)] dz where C is the circle |z| = 2, traversed once counterclockwise. Which technique applies?',
+          options: [
+            { label: "Direct Cauchy Integral Formula, using only the pole inside C", next: 'cv_leaf_cif' },
+            { label: 'Residue theorem, summing the residues at BOTH poles of the integrand', next: 'cv_leaf_residue_both' },
+            { label: "Cauchy's theorem — the integral is 0", next: 'cv_leaf_cauchy_zero' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'cv_leaf_cif',
+          method: 'Direct Cauchy Integral Formula',
+          reason:
+            'Check the two poles against the contour first: |1| = 1 < 2, so z = 1 is inside |z| = 2; |3| = 3 > 2, so z = 3 is outside it. With exactly one pole inside, rewrite the integrand as φ(z)/(z − 1) where φ(z) = 1/(z − 3) — analytic everywhere inside C, since its only singularity (z = 3) sits outside. The Cauchy Integral Formula then gives ∮ f(z) dz = 2πi·φ(1) = 2πi·(1/(1−3)) = 2πi·(−1/2) = −πi directly, with no need to touch the pole outside C at all.',
+          best: true,
+        },
+        {
+          id: 'cv_leaf_residue_both',
+          method: 'Residue theorem, summing residues at BOTH poles',
+          reason:
+            'The residue theorem is real, but it only ever sums residues at poles INSIDE the contour — including z = 3 here is the classic trap. Residue at z = 1 (inside) is lim (z−1)f(z) = 1/(1−3) = −1/2; residue at z = 3 (outside, and wrongly included) is 1/(3−1) = +1/2. Summing both gives −1/2 + 1/2 = 0, and 2πi·0 = 0 — silently cancelling the correct nonzero answer (−πi) down to zero. Always check each pole against the contour before it goes in the sum.',
+        },
+        {
+          id: 'cv_leaf_cauchy_zero',
+          method: "Cauchy's theorem (integral = 0)",
+          reason:
+            "Cauchy's theorem says the integral is 0 only when f is analytic EVERYWHERE inside and on C — i.e., no poles inside at all. Here z = 1 is a genuine pole of f strictly inside |z| = 2, so f is not analytic throughout the region the theorem needs; the hypothesis fails before the conclusion can even be considered. Cauchy's theorem is for a pole-free interior, not this one.",
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const DISCRETE_MATHEMATICS: MethodSelectionTrainer = {
+  id: 'discrete-mathematics',
+  title: 'Which Counting Technique Applies?',
+  description:
+    'Inclusion-exclusion, direct combinations, or the pigeonhole principle — match the technique to what the question is actually asking for.',
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Inclusion-exclusion, combinations, or pigeonhole?',
+    steps: [
+      {
+        prompt: 'How many integers from 1 to 100 are divisible by 2 or by 5? Which technique applies?',
+        hint: 'You need the SIZE OF A UNION of two sets — divisible-by-2 and divisible-by-5 overlap.',
+        answer:
+          'Inclusion-exclusion: |A∪B| = |A| + |B| − |A∩B|. Divisible by 2: ⌊100/2⌋ = 50. Divisible by 5: ⌊100/5⌋ = 20. Divisible by both (i.e. by 10): ⌊100/10⌋ = 10. Total = 50 + 20 − 10 = 60.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'dm_counting_pick',
+          question: 'How many integers from 1 to 100 are divisible by 2 or by 5? Which technique applies?',
+          options: [
+            { label: 'Inclusion-exclusion', next: 'dm_leaf_incl_excl' },
+            { label: 'A direct combination formula, C(n, r)', next: 'dm_leaf_combination' },
+            { label: 'The pigeonhole principle', next: 'dm_leaf_pigeonhole' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'dm_leaf_incl_excl',
+          method: 'Inclusion-exclusion',
+          reason:
+            'The question asks for the size of a UNION — "divisible by 2 OR by 5" — and the two sets overlap (every multiple of 10 is counted by both). Inclusion-exclusion is built for exactly this: |A∪B| = |A| + |B| − |A∩B|. Here |A| = ⌊100/2⌋ = 50, |B| = ⌊100/5⌋ = 20, |A∩B| = ⌊100/10⌋ = 10 (multiples of lcm(2,5) = 10), so |A∪B| = 50 + 20 − 10 = 60. Adding |A| + |B| alone (70) would double-count the 10 numbers divisible by both — subtracting the overlap once is the whole technique.',
+          best: true,
+        },
+        {
+          id: 'dm_leaf_combination',
+          method: 'A direct combination formula, C(n, r)',
+          reason:
+            'C(n, r) counts the number of ways to CHOOSE r items from a set of n with no regard to order — a selection problem. This question is not "choose r objects from a group"; it is "how many numbers in a fixed range satisfy a divisibility condition," where two conditions overlap. There is no single (n, r) pair whose combination count matches 60 here — combinations answer a different kind of question entirely.',
+        },
+        {
+          id: 'dm_leaf_pigeonhole',
+          method: 'The pigeonhole principle',
+          reason:
+            'Pigeonhole answers EXISTENCE questions — "must at least one box contain more than one item," given counts of items and boxes — not counting questions. It never produces a number like "60 integers satisfy this condition"; it only ever concludes that some repetition or collision is forced to exist. Reach for pigeonhole when the question is "must two of these coincide," not "how many satisfy this."',
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
 /** Trainers behind /theorem-wizard/:module. */
 export const THEOREM_WIZARD_TRAINERS: Record<string, MethodSelectionTrainer> = {
   'linear-algebra': LINEAR_ALGEBRA,
@@ -915,6 +1352,9 @@ export const THEOREM_WIZARD_TRAINERS: Record<string, MethodSelectionTrainer> = {
   'transform-theory': TRANSFORM_THEORY,
   'graph-theory': GRAPH_THEORY,
   'differential-equations': DIFFERENTIAL_EQUATIONS,
+  calculus: CALCULUS,
+  'complex-variables': COMPLEX_VARIABLES,
+  'discrete-mathematics': DISCRETE_MATHEMATICS,
 };
 
 /** The trainer behind /distribution-selector. */
@@ -929,6 +1369,9 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
   TRANSFORM_THEORY,
   GRAPH_THEORY,
   DIFFERENTIAL_EQUATIONS,
+  CALCULUS,
+  COMPLEX_VARIABLES,
+  DISCRETE_MATHEMATICS,
 ];
 
 /**
@@ -951,6 +1394,33 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
  *    decision, so routing them to `vc_start`'s classification question
  *    (unchanged, the pre-existing behavior) is the correct entry point,
  *    not a gap to close.
+ *
+ *    Linear algebra carries the SAME kind of exception, audited concept by
+ *    concept for all 26 GATE-EM LA concepts (`/loop`, 2026-09-04, extended
+ *    2026-09-04 with the `la_power` restructure): 19 map to one of
+ *    `la_invertible`/`la_injective`/`la_power`/`la_power_not_diag`/
+ *    `la_definite`/`la_system_solve`/`la_independence_test`/
+ *    `la_decomposition`/`la_least_squares`/`la_orthogonalize`/
+ *    `la_eigenvalue_method`. The other 7 — `matrix-operations`,
+ *    `vector-spaces`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+ *    `change-of-basis`, `matrix-norms` — are property-checks or
+ *    single-procedure computations with no genuine competing-method
+ *    decision behind them at GATE-EM's level (e.g. `trace` is "add the
+ *    diagonal," not a choice between approaches); forcing a fork for each
+ *    would produce a mismatched or fabricated question, not a real one.
+ *    They correctly fall through to `la_start`'s classification root, same
+ *    as vector-calculus's foundational concepts — a deliberate, audited
+ *    exclusion, not an oversight. `jordan-normal-form` and `eigenvalues`
+ *    were the two near-misses from the first pass and are now closed:
+ *    `la_power` gained a genuine 4th option ("A is NOT diagonalizable —
+ *    what now?") leading to `la_power_not_diag`, a real two-way decision
+ *    between Cayley-Hamilton reduction and full Jordan Normal Form (both
+ *    correct, Cayley-Hamilton is less machinery — SymPy-verified on
+ *    A=[[4,1],[-1,2]], eigenvalue 3 repeated, not diagonalizable); and
+ *    `la_eigenvalue_method` (a new top-level fork) covers the genuine
+ *    "read off the diagonal of a triangular matrix" shortcut vs. full
+ *    characteristic-polynomial expansion vs. the trace/det insufficiency
+ *    trap.
  *
  *  - Distributions: the curriculum's concept granularity for this topic is
  *    `discrete-distributions` / `continuous-distributions` — there is no
@@ -977,6 +1447,21 @@ export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
     'quadratic-forms': 'la_definite',
     'positive-definite-matrices': 'la_definite',
     'spectral-theorem': 'la_definite',
+    // /loop (2026-09-04) — the 4 new forks above, closing coverage for
+    // every remaining GATE-EM Linear Algebra concept that has a genuine
+    // method-selection decision behind it.
+    'systems-of-equations': 'la_system_solve',
+    'lu-factorization': 'la_system_solve',
+    'linear-independence': 'la_independence_test',
+    svd: 'la_decomposition',
+    'least-squares': 'la_least_squares',
+    orthogonality: 'la_orthogonalize',
+    'gram-schmidt': 'la_orthogonalize',
+    // /loop restructure (2026-09-04): jordan-normal-form deep-links past
+    // la_power's "is A diagonalizable?" gate straight to the not-
+    // diagonalizable follow-up — its own content already assumes that.
+    'jordan-normal-form': 'la_power_not_diag',
+    eigenvalues: 'la_eigenvalue_method',
   },
   'vector-calculus': {
     'greens-theorem': 'vc_plane_pick',
@@ -1006,6 +1491,23 @@ export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
   'differential-equations': {
     'ode-first-order': 'de_method_pick',
     'ode-exact': 'de_method_pick',
+  },
+  // Micro-solver wave 2 (2026-09-04) — same single-fork shape as wave 1.
+  // `integration-by-parts`/`integration-substitution`/`partial-fractions`
+  // share the ONE fork that decides among exactly those three techniques;
+  // `complex-integration`/`residue-calculus` share the ONE fork that
+  // decides how many poles are inside the contour.
+  calculus: {
+    'integration-by-parts': 'ca_technique_pick',
+    'integration-substitution': 'ca_technique_pick',
+    'partial-fractions': 'ca_technique_pick',
+  },
+  'complex-variables': {
+    'complex-integration': 'cv_contour_pick',
+    'residue-calculus': 'cv_contour_pick',
+  },
+  'discrete-mathematics': {
+    'functions-combinatorics': 'dm_counting_pick',
   },
 };
 

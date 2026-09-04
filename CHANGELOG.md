@@ -4,6 +4,166 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.60.0] — 2026-09-04 — Hook/intuition silo audit closed for all 26 Linear Algebra concepts
+
+No new env vars, no migrations. Content-only release (no backend or
+frontend code changes).
+
+Direct follow-up to "finish off all pending for linear algebra": closes
+the open worklist from the `cayley-hamilton`/`trace` silo-fix TODOS.md
+item — the other 24 GATE-EM Linear Algebra concepts, audited via 5
+parallel Claude Sonnet subagents (per explicit instruction to use
+subagents for LLM-related work), each covering 4-5 non-overlapping
+concepts.
+
+- **19 of 24 audited concepts had a genuine silo defect and were fixed**
+  (an `intuition.md` using a different or absent example than its own
+  `hook.md`, or reading as a disconnected wall of prose beside an
+  interactive hook): `matrix-inverse`, `rank-nullity`, `null-space-
+  column-space`, `diagonalization`, `quadratic-forms`, `positive-
+  definite-matrices`, `spectral-theorem`, `systems-of-equations`,
+  `linear-independence`, `least-squares`, `jordan-normal-form`, `matrix-
+  operations`, `symmetric-matrices`, `inner-product-spaces`, `change-of-
+  basis`.
+- **5 were confirmed already fine and left untouched**: `determinants`,
+  `linear-transformations`, `lu-factorization`, `svd`, `orthogonality`,
+  `gram-schmidt`, `eigenvalues`, `vector-spaces`, `matrix-norms` (already
+  had their own connected interactive widget, or the hook itself has no
+  concrete example to be siloed from).
+- **5 fixed concepts gained a brand-new resonance-beat scene** reusing
+  their hook's own already-verified matrix/numbers in a fresh predict-
+  observe-explain sequence with its own trap beat: `diagonalization`,
+  `quadratic-forms`, `positive-definite-matrices`, `spectral-theorem`,
+  `systems-of-equations`. The other 14 fixed concepts got prose-only
+  rewrites threading the hook's numbers in.
+
+Every numeric claim verified via local SymPy before writing (Wolfram MCP
+disconnected this session); every new/edited fenced block kept byte-
+identical across base/shaken/assured stance files. Combined with the
+prior `cayley-hamilton`/`trace` fixes, all 26 GATE-EM Linear Algebra
+concepts are now audited for this defect — see CLAUDE.md's 2026-09-04
+section for the full per-concept breakdown.
+
+**Tests:** content-only, no test changes. Backend 4701/4701 (1 todo, 365
+files), frontend 2691/2691 (96 files) — both unchanged from baseline.
+`tsc --noEmit` clean both sides. `npm run ci` (18 gates, including
+`ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs) clean.
+
+**Still open:** the same audit for the other 9 GATE-EM topic families,
+and for `mnemonic` atoms corpus-wide (including LA), was not attempted —
+scoped to Linear Algebra `intuition` atoms only, per explicit user
+request. See TODOS.md.
+
+## [4.59.0] — 2026-09-04 — Restructuring Jordan Normal Form and eigenvalues into the wizard
+
+No new env vars, no migrations.
+
+Direct same-day follow-up to v4.58.0's LA audit ("restructure jordan
+normal and others"): closes the two genuine near-misses that audit
+flagged instead of leaving them as documented gaps.
+
+1. **`la_power` restructured into a two-level decision.** A new 4th
+   option, "A is NOT diagonalisable — what now?", leads to a new node
+   `la_power_not_diag`: Cayley-Hamilton reduction (best — less machinery)
+   vs. full Jordan Normal Form (also correct, more structural) vs.
+   concluding the power can't be computed (wrong). Both correct answers
+   verified with SymPy on A=[[4,1],[-1,2]] (repeated eigenvalue 3,
+   confirmed not diagonalizable): Cayley-Hamilton's A³=27A−54I and
+   Jordan's PJ³P⁻¹ give the identical result. `jordan-normal-form` now
+   deep-links straight past `la_power`'s own gate to this node.
+2. **New fork `la_eigenvalue_method`** closes the `eigenvalues` gap: read
+   the diagonal directly for a triangular matrix (fastest, correct) vs.
+   full characteristic-polynomial expansion (correct but wasteful here)
+   vs. trace/determinant alone (a real trap — 2 numbers can't pin down 3+
+   eigenvalues). Verified on A=[[5,3,7],[0,2,4],[0,0,-1]]: eigenvalues are
+   exactly the diagonal, 5/2/−1.
+
+LA wizard coverage: 17/26 → 19/26 concepts mapped to a specific fork. The
+remaining 7 were reconsidered once more, not just carried forward, and
+still correctly have no genuine competing-method decision.
+
+One real knock-on fix: `FrontierSpine.test.tsx`'s "no wizard fork" example
+used `eigenvalues`, now mapped — swapped for a genuinely still-unmapped
+fixture concept.
+
+4 new/updated tests. Frontend suite 2688 → 2691/2691. Backend untouched.
+`tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+
+## [4.58.0] — 2026-09-04 — `/loop`: full Linear Algebra audit against all four asks
+
+No new env vars, no migrations.
+
+Direct follow-up to v4.57.0's `/design-review` pass — the user asked for a
+concept-by-concept audit confirming all four asks are genuinely complete
+across all 26 GATE-EM Linear Algebra concepts, not just the one reported
+concept.
+
+1. **Coordinate focus.** Every LA `hook.md` audited for a `linear_map`
+   scene with a pre-reveal beat naming specific eigen-coordinates.
+   6 more concepts had a real gap — `diagonalization`,
+   `linear-independence`, `symmetric-matrices`, `least-squares`,
+   `spectral-theorem`, `svd` — fixed with `focus_eigen`, propagated and
+   verified byte-identical across all three stance files. 16 concepts
+   correctly untouched: no `linear_map` scene, or the beat is a genuine
+   open predict question that highlighting would spoil.
+2. **Motion for static text.** Already fully complete for LA — the
+   solution-steps and progressive-stagger fixes are code-level, not
+   per-concept, so they already cover all 26 concepts. Verified, not
+   assumed.
+3. **Wizard coverage.** 5 new forks added to the linear-algebra trainer —
+   `la_system_solve`, `la_independence_test`, `la_decomposition`,
+   `la_least_squares`, `la_orthogonalize` — every claim SymPy-verified.
+   LA wizard coverage: 10/26 → 17/26 concepts mapped to a specific fork.
+   The other 9 are individually audited and named as having no genuine
+   competing-method decision at GATE-EM's level (not a silent gap).
+   `jordan-normal-form` flagged as a real near-miss, tracked in TODOS.md.
+
+10 new tests (5-new-fork contract checks, concept-map resolution, and an
+exhaustive 26-concept accounting test asserting every LA concept is either
+mapped or deliberately excluded). Frontend suite 2678 → 2688/2688. Backend
+untouched. `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+
+## [4.57.0] — 2026-09-04 — `/design-review`: hook coordinate focus, static-text motion, wizard coverage complete
+
+No new env vars, no migrations.
+
+Four asks from one live-QA report, root-caused against three screenshots
+that turned out to all be the same concept (`positive-definite-matrices`):
+
+1. **`focus_eigen`** — new additive field on a `linear_map` scene's
+   `narration_steps[]`. A beat that names specific eigen-coordinates before
+   the scene's reveal moment now highlights that arrow (heavier ink
+   stroke + a coordinate label reading the authored direction) instead of
+   rendering identically to the other 15 anonymous arrows. Wired into
+   `positive-definite-matrices`'s hook (all three stance files,
+   byte-identical fence).
+2. A propagation bug caught by `ci:variant-agreement` before it shipped:
+   `grep -o` doesn't span the multi-line fence block, so a "byte-identical"
+   check built on it silently compared two empty strings and a follow-up
+   script deleted the fence from both stance variants. Fixed with a proper
+   `re.DOTALL` extraction; documented in CLAUDE.md as a trap for future
+   content edits touching these blocks.
+3. **Solution-steps motion.** `PracticeAttemptPage.tsx`'s post-answer
+   explanation panel was a plain `<ol><li>` of raw strings — no KaTeX, no
+   motion. Now routed through `MarkdownAtomRenderer` with `structured`,
+   picking up real typesetting and the same staggered hairline-row
+   entrance every other structured list in the app already has.
+4. **Micro-solver wave 2 — all 10 GATE-EM topic families now have a
+   wizard.** `positive-definite-matrices` was already correctly wired
+   (confirmed, not assumed). Closed the three remaining bare topics —
+   calculus, complex-variables, discrete-mathematics — with the wave-1
+   single-fork pattern, every claim SymPy-verified: integration-technique
+   choice for ∫x·ln(x)dx, a contour-integral trap that concretely zeroes
+   out the correct answer when an outside pole is wrongly included, and
+   inclusion-exclusion for a divisibility-union count.
+
+19 new tests (`types.test.ts` +7, `Simulation.test.tsx` +1,
+`PracticeAttemptPage.test.tsx` +3, `method-selection-trainers.test.ts`
++10, minus 2 double-counted `it.each` entries) plus 1 existing test's
+fixture corrected for the wave-2 coverage change. Frontend suite 2649 →
+2678/2678. Backend untouched, 4701/4701 (365 files). `tsc --noEmit`
+clean. `npm run ci` (18 gates) clean.
+
 ## [4.56.0] — 2026-09-04 — Wizard wired into the knowledge graph, both directions
 
 No new env vars, no migrations.

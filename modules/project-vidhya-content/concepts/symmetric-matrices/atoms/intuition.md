@@ -8,4 +8,6 @@ modality: visual
 exam_ids: ["*"]
 ---
 
-Transpose a matrix—flip it across the main diagonal. If nothing changes, the matrix is symmetric: $A = A^T$. Geometrically, this symmetry means the matrix "sees" the plane equally in all orthogonal directions—one reason they're so stable. Symmetric matrices always have real eigenvalues (no complex pairs), and their eigenvectors point in mutually perpendicular directions. Think of the ellipse $x^2 + 4y^2 = 4$: its eigenvectors align with the axes; its "eigenvalues" scale along each axis. This alignment is the spectral theorem's promise.
+Take the same matrix as the hook: $A=\begin{pmatrix}3&1\\1&3\end{pmatrix}$. Flip it across its diagonal — swap the entry in row 1, column 2 with the one in row 2, column 1 — and you get $A$ right back. That flip-and-match property, $A=A^T$ ("$A$ transpose equals $A$"), is what "symmetric" means.
+
+Symmetric matrices come with two guarantees no other matrix gets automatically. First: their eigenvalues — the stretch factors from the hook, here $4$ and $2$ — are always real numbers, never a complex pair. Second: their eigenvectors — the directions that refuse to turn, here $(1,1)$ and $(1,-1)$ — are always perpendicular, exactly like the hook's right angle. Together, "real eigenvalues + perpendicular eigenvectors" is called the **spectral theorem**, and it is the reason symmetric matrices show up everywhere from covariance matrices to stress tensors.

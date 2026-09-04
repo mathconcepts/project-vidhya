@@ -89,7 +89,10 @@ describe('method-selection trainers — the migration lost nothing', () => {
         id === 'distribution-selector' ? DISTRIBUTION_TRAINER : THEOREM_WIZARD_TRAINERS[id];
       const kept = trainer.spec.steps.map((s) => s.answer);
       for (const answer of answers) expect(kept).toContain(answer);
-      expect(kept).toHaveLength(answers.length);
+      // >= not ===: linear-algebra grew 4 new forks (/loop, 2026-09-04)
+      // beyond the original migration's 4 — this test locks that nothing
+      // from the ORIGINAL page was lost, not that nothing was ever added.
+      expect(kept.length).toBeGreaterThanOrEqual(answers.length);
     },
   );
 
@@ -101,9 +104,12 @@ describe('method-selection trainers — the migration lost nothing', () => {
     }
   });
 
-  it('routes every theorem-wizard module the page ships, D2 pair plus wave-1 single-fork trainers', () => {
+  it('routes every theorem-wizard module the page ships, D2 pair plus wave-1/wave-2 single-fork trainers', () => {
     expect(Object.keys(THEOREM_WIZARD_TRAINERS).sort()).toEqual([
+      'calculus',
+      'complex-variables',
       'differential-equations',
+      'discrete-mathematics',
       'graph-theory',
       'linear-algebra',
       'numerical-methods',
@@ -146,6 +152,47 @@ describe('micro-solver wave 1 — single-fork trainers (2026-09-03)', () => {
     expect(wizardStartNodeForConcept('transform-theory', 'laplace-transform')).toBe('tt_transform_pick');
     expect(wizardStartNodeForConcept('transform-theory', 'fourier-transform')).toBe('tt_transform_pick');
     expect(wizardStartNodeForConcept('transform-theory', 'z-transform')).toBe('tt_transform_pick');
+  });
+});
+
+describe('micro-solver wave 2 — single-fork trainers (2026-09-04)', () => {
+  const WAVE_2_IDS = ['calculus', 'complex-variables', 'discrete-mathematics'];
+
+  it.each(WAVE_2_IDS)('%s is exactly a single-node tree — a micro-solver, not a multi-fork tree', (id) => {
+    const trainer = THEOREM_WIZARD_TRAINERS[id];
+    expect(trainer).toBeDefined();
+    expect(trainer.spec.branches!.nodes).toHaveLength(1);
+  });
+
+  it.each(WAVE_2_IDS)('%s\'s single step is derived from its node/best-leaf, not a second copy of the content', (id) => {
+    const trainer = THEOREM_WIZARD_TRAINERS[id];
+    const node = trainer.spec.branches!.nodes[0];
+    const bestLeaf = trainer.spec.branches!.leaves.find((l) => l.best === true)!;
+    expect(trainer.spec.steps).toHaveLength(1);
+    expect(trainer.spec.steps[0].prompt).toBe(node.question);
+    expect(bestLeaf).toBeDefined();
+  });
+
+  it('every wave-2 concept in CONCEPT_TO_WIZARD_NODE resolves to that trainer\'s one node', () => {
+    for (const trainerId of WAVE_2_IDS) {
+      const nodeId = THEOREM_WIZARD_TRAINERS[trainerId].spec.branches!.nodes[0].id;
+      const concepts = CONCEPT_TO_WIZARD_NODE[trainerId];
+      expect(Object.keys(concepts).length).toBeGreaterThan(0);
+      for (const mapped of Object.values(concepts)) {
+        expect(mapped).toBe(nodeId);
+      }
+    }
+  });
+
+  it('calculus tags all three integration-technique concepts to its one shared fork', () => {
+    expect(wizardStartNodeForConcept('calculus', 'integration-by-parts')).toBe('ca_technique_pick');
+    expect(wizardStartNodeForConcept('calculus', 'integration-substitution')).toBe('ca_technique_pick');
+    expect(wizardStartNodeForConcept('calculus', 'partial-fractions')).toBe('ca_technique_pick');
+  });
+
+  it('complex-variables tags both contour-integration concepts to its one shared fork', () => {
+    expect(wizardStartNodeForConcept('complex-variables', 'complex-integration')).toBe('cv_contour_pick');
+    expect(wizardStartNodeForConcept('complex-variables', 'residue-calculus')).toBe('cv_contour_pick');
   });
 });
 
@@ -214,5 +261,111 @@ describe('wizardRouteForConcept — resolving a full route from a concept id alo
     expect(originalMap).toBeDefined();
     const route = wizardRouteForConcept('determinants');
     expect(route).toContain(encodeURIComponent('determinants'));
+  });
+});
+
+// /loop (2026-09-04): 5 new forks closing linear-algebra wizard coverage —
+// systems-of-equations/lu-factorization, linear-independence, svd,
+// least-squares, and orthogonality/gram-schmidt — extending la_start from
+// 4 options to 9. Same-day follow-up ("restructure jordan normal and
+// others"): la_power gained a genuine 4th option leading to a new
+// two-level node (la_power_not_diag, Cayley-Hamilton vs. Jordan Normal
+// Form), and a 6th top-level fork (la_eigenvalue_method) closed the
+// eigenvalues near-miss — la_start now has 10 options total.
+describe('linear-algebra new forks (/loop, 2026-09-04)', () => {
+  const NEW_FORK_NODE_IDS = [
+    'la_system_solve', 'la_independence_test', 'la_decomposition', 'la_least_squares', 'la_orthogonalize',
+    'la_eigenvalue_method',
+  ];
+  // Nodes reachable ONLY as a deep-link (startAt) or a follow-up from
+  // another node — never listed as one of la_start's own options — get
+  // the same leaf-shape contract check as the top-level forks, just via a
+  // separate list.
+  const NESTED_FOLLOWUP_NODE_IDS = ['la_power_not_diag'];
+
+  it('la_start now offers all 10 forks, the original 4 plus the 6 new ones', () => {
+    const startNode = THEOREM_WIZARD_TRAINERS['linear-algebra'].spec.branches!.nodes.find((n) => n.id === 'la_start')!;
+    expect(startNode.options).toHaveLength(10);
+    const targets = startNode.options.map((o) => o.next);
+    expect(targets).toEqual(
+      expect.arrayContaining(['la_invertible', 'la_injective', 'la_power', 'la_definite', ...NEW_FORK_NODE_IDS]),
+    );
+    // la_power_not_diag is reached FROM la_power, never listed at la_start.
+    expect(targets).not.toContain('la_power_not_diag');
+  });
+
+  it.each([...NEW_FORK_NODE_IDS, ...NESTED_FOLLOWUP_NODE_IDS])(
+    '%s has exactly one sanctioned route and at least one walkable dead end',
+    (nodeId) => {
+      const branches = THEOREM_WIZARD_TRAINERS['linear-algebra'].spec.branches!;
+      const node = branches.nodes.find((n) => n.id === nodeId);
+      expect(node, `node "${nodeId}" not found`).toBeDefined();
+      const leafIds = node!.options.map((o) => o.next);
+      const leaves = branches.leaves.filter((l) => leafIds.includes(l.id));
+      expect(leaves).toHaveLength(node!.options.length);
+      expect(leaves.filter((l) => l.best === true)).toHaveLength(1);
+      expect(leaves.some((l) => l.best !== true)).toBe(true);
+    },
+  );
+
+  it('la_power itself now has a genuine 4th path into la_power_not_diag', () => {
+    const branches = THEOREM_WIZARD_TRAINERS['linear-algebra'].spec.branches!;
+    const laPower = branches.nodes.find((n) => n.id === 'la_power')!;
+    expect(laPower.options.map((o) => o.next)).toContain('la_power_not_diag');
+  });
+
+  it('every new leaf writes a real sentence, never a bare code', () => {
+    const branches = THEOREM_WIZARD_TRAINERS['linear-algebra'].spec.branches!;
+    const newLeafIds = branches.nodes
+      .filter((n) => [...NEW_FORK_NODE_IDS, ...NESTED_FOLLOWUP_NODE_IDS].includes(n.id))
+      .flatMap((n) => n.options.map((o) => o.next));
+    for (const leaf of branches.leaves.filter((l) => newLeafIds.includes(l.id))) {
+      expect(leaf.reason.trim().split(/\s+/).length).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it('the 9 new/restructured mapped concepts resolve to their fork\'s node id', () => {
+    expect(wizardStartNodeForConcept('linear-algebra', 'systems-of-equations')).toBe('la_system_solve');
+    expect(wizardStartNodeForConcept('linear-algebra', 'lu-factorization')).toBe('la_system_solve');
+    expect(wizardStartNodeForConcept('linear-algebra', 'linear-independence')).toBe('la_independence_test');
+    expect(wizardStartNodeForConcept('linear-algebra', 'svd')).toBe('la_decomposition');
+    expect(wizardStartNodeForConcept('linear-algebra', 'least-squares')).toBe('la_least_squares');
+    expect(wizardStartNodeForConcept('linear-algebra', 'orthogonality')).toBe('la_orthogonalize');
+    expect(wizardStartNodeForConcept('linear-algebra', 'gram-schmidt')).toBe('la_orthogonalize');
+    expect(wizardStartNodeForConcept('linear-algebra', 'eigenvalues')).toBe('la_eigenvalue_method');
+    // jordan-normal-form deep-links PAST la_power's own gate straight to
+    // the not-diagonalizable follow-up — its content already assumes that.
+    expect(wizardStartNodeForConcept('linear-algebra', 'jordan-normal-form')).toBe('la_power_not_diag');
+  });
+
+  it('deliberately-unmapped LA concepts (no genuine method decision) still resolve to no fork, routing to the true root', () => {
+    for (const concept of [
+      'matrix-operations', 'vector-spaces', 'trace', 'symmetric-matrices',
+      'inner-product-spaces', 'change-of-basis', 'matrix-norms',
+    ]) {
+      expect(wizardStartNodeForConcept('linear-algebra', concept)).toBeUndefined();
+    }
+  });
+
+  it('all 26 GATE-EM linear-algebra concepts are accounted for: mapped to a fork, or deliberately routed to the root', () => {
+    const mapped = Object.keys(CONCEPT_TO_WIZARD_NODE['linear-algebra']);
+    const deliberatelyUnmapped = [
+      'matrix-operations', 'vector-spaces', 'trace', 'symmetric-matrices',
+      'inner-product-spaces', 'change-of-basis', 'matrix-norms',
+    ];
+    const allLA = [
+      'matrix-operations', 'determinants', 'matrix-inverse', 'systems-of-equations', 'rank-nullity',
+      'vector-spaces', 'linear-transformations', 'eigenvalues', 'diagonalization', 'cayley-hamilton',
+      'orthogonality', 'trace', 'linear-independence', 'null-space-column-space', 'symmetric-matrices',
+      'inner-product-spaces', 'gram-schmidt', 'change-of-basis', 'lu-factorization', 'least-squares',
+      'quadratic-forms', 'positive-definite-matrices', 'spectral-theorem', 'svd', 'jordan-normal-form',
+      'matrix-norms',
+    ];
+    expect(allLA).toHaveLength(26);
+    expect(mapped).toHaveLength(19);
+    const accounted = new Set([...mapped, ...deliberatelyUnmapped]);
+    for (const concept of allLA) {
+      expect(accounted.has(concept), `${concept} is neither mapped nor deliberately excluded`).toBe(true);
+    }
   });
 });

@@ -19,9 +19,9 @@ variant_of: rank-nullity.intuition
 for_stance: shaken
 ---
 
-Take $A=\begin{pmatrix}1&2\\2&4\end{pmatrix}$. Row 2 is $2\times$ row 1 — no new information. Only **one** row is genuinely independent, so $\text{rank}(A)=1$.
+Take $A=\begin{pmatrix}1&2\\0.5&1\end{pmatrix}$ — the same matrix from the animation above. Row 2 is $0.5\times$ row 1 — no new information. Only **one** row is genuinely independent, so $\text{rank}(A)=1$.
 
-$A$ has $2$ columns. One dimension is "used" by the rank; the other is "lost" — the **nullity**: $\text{nullity}(A)=2-1=1$. Check directly: $A\begin{pmatrix}2\\-1\end{pmatrix}=\begin{pmatrix}0\\0\end{pmatrix}$, so that direction carries no signal through the matrix.
+$A$ has $2$ columns. One dimension is "used" by the rank; the other is "lost" — the **nullity**: $\text{nullity}(A)=2-1=1$. Check directly: $A\begin{pmatrix}2\\-1\end{pmatrix}=\begin{pmatrix}0\\0\end{pmatrix}$, so that direction carries no signal through the matrix — it's the one arrow that shrank to the centre in the animation.
 
 The theorem in one line:
 

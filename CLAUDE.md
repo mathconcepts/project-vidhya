@@ -2976,6 +2976,379 @@ line unchanged either way, no alert → no card), `StudentAuditPage.test.tsx`
 (365 files). Frontend suite 2639 → 2649/2649. `tsc --noEmit` clean both
 sides. `npm run ci` (18 gates, including `ci:boot`) clean.
 
+### `/design-review` on a live-QA report: hook coordinate focus, static-text motion, and wizard coverage for all 10 topics (2026-09-04)
+
+Four asks in one report: ELI5/"convey more in less" outside plain static
+text; a hook's coordinates/vectors should stay in focus as the narration
+discusses them; motion/animation/progression used generously across
+sections; every practice question mapped to a concept-level solver, "any
+topic of any exam." Root-caused against three screenshots (all three, it
+turned out, the same concept — `positive-definite-matrices` — a Smart
+Practice MCQ, its "Correct" result panel, and its hook mid-scroll) before
+touching anything, per the skill's own discipline.
+
+**Hook coordinate focus — new `focus_eigen` schema field.**
+`Simulation.tsx`'s `LinearMapScene` already highlights the payoff
+eigen-arrows green with a `×λ` label, but only once the scene's `emphasize`
+beat (the reveal) is reached. `positive-definite-matrices/atoms/hook.md`'s
+beat at `at_progress: 0.45` names specific coordinates and stretch factors
+("The one along $(1,0.618)$ stretched to about 3.618 times its length...")
+a full beat BEFORE the reveal — during that beat the arrow it is talking
+about rendered identically to the other 15 anonymous ones, exactly the
+reported defect. `focus_eigen?: number[]` (new, additive field on
+`narration_steps[]`, `frontend/src/components/lesson/interactives/types.ts`)
+names which `linear_map.eigen[]` indices a beat is discussing RIGHT NOW,
+independent of the reveal: the named arrow(s) draw at a heavier ink stroke
+(never green — nothing is confirmed as the payoff yet) plus a coordinate
+label reading the AUTHORED direction (not the internal normalized unit
+vector, which would silently disagree with the narration's own numbers).
+Validated against `linear_map.eigen.length` (out-of-range/negative/empty
+refused) and refused entirely on a scene with no `linear_map` (nothing to
+index). Wired into `positive-definite-matrices/atoms/hook.md` +
+`hook-shaken.md` + `hook-assured.md` (byte-identical fence, `focus_eigen:
+[0,1]` on the beat naming both eigen-arrows) — a corpus-wide sweep for
+other scenes with the same defect is future work, not attempted here (this
+pass fixed the reported instance and shipped the reusable mechanism).
+
+**A propagation bug caught before it shipped, not after.** The first
+attempt to copy the updated fence from `hook.md` into its two stance
+variants used `grep -o` (single-line matching) to extract/compare the
+fence — silently wrong on a 3-line ` ```interactive-spec\n{...}\n``` `
+block, since `grep -o` never spans lines without `-z`/`-P`. The "same
+fence" diff check that seemed to pass was comparing two empty outputs, and
+the follow-up propagation script substituted the real fence with that same
+empty string, deleting it from both variant files entirely.
+`ci:variant-agreement` caught it immediately (`[interactive-dropped] base
+has 1 fenced blocks, variant has 0`) — re-fixed with a proper
+`re.DOTALL`-based Python extraction and re-verified byte-identical before
+moving on. Recorded here because the almost-shipped failure mode (a
+shell one-liner that looks right against a single-line pattern, silently
+wrong against a multi-line one) is a real trap for future content edits
+touching these fenced blocks.
+
+**Static-text motion — the practice-item solution-steps panel.**
+`PracticeAttemptPage.tsx`'s post-answer "D1 = 4 > 0. D2 = det(A)..." panel
+(`result.solution_steps`) rendered as a plain `<ol><li>` of raw strings —
+the exact "static text, no motion" complaint, and also the same
+"independently-drifted content surface" bug class named elsewhere in this
+doc (`ConceptMathViz`'s pre-2026-09-02 disconnection, the
+`guided_walkthrough` bracket-array bug, the trap-row raw-LaTeX bug): any
+step authored with LaTeX would have leaked its raw source instead of
+typesetting, since this panel never went through `MarkdownAtomRenderer`.
+Now routed through it with `structured` — one shared component instead of
+a second copy of list rendering, which gets both fixes for free: real
+KaTeX typesetting AND the same hairline-separated, once-on-mount staggered
+row entrance (`.vidhya-atom-body--structured`) every other structured list
+in the app already has.
+
+**Wizard coverage — micro-solver wave 2, all 10 topic families closed.**
+`positive-definite-matrices` was ALREADY correctly wired
+(`CONCEPT_TO_WIZARD_NODE['linear-algebra'].positive-definite-matrices ->
+'la_definite'`, whose `la_leaf_diag_entries` leaf directly names the exact
+trap in the screenshot's wrong MCQ option — "diagonal entries are
+positive" — so no fix was needed there, just confirmation the existing
+system already covers this exact question). The genuinely open half of
+the "any topic" ask was the 3 remaining bare topic families named in
+TODOS.md's wave-2 entry: **calculus, complex-variables,
+discrete-mathematics.** Closed with the same single-fork pattern as wave 1
+(`CALCULUS`/`COMPLEX_VARIABLES`/`DISCRETE_MATHEMATICS` in
+`method-selection-trainers.ts`), every numeric claim hand-verified via
+local SymPy (Wolfram MCP was disconnected this session, same fallback wave
+1 used):
+- **calculus** — ∫x·ln(x)dx: integration by parts is correct
+  ((x²/2)ln x − x²/4 + C, SymPy-confirmed); the substitution trap shows
+  u = ln x just relabels the problem into a NEW integral (u·e^(2u)du) that
+  itself needs by parts; partial fractions is refused outright since
+  ln(x) is transcendental, not a polynomial ratio.
+- **complex-variables** — ∮ 1/[(z−1)(z−3)]dz on |z|=2: only z=1 is inside,
+  so direct Cauchy Integral Formula gives −πi (SymPy residue-verified).
+  The trap leaf shows what happens if a student wrongly includes the
+  OUTSIDE pole (z=3) in a residue sum: −1/2 + 1/2 = 0, silently zeroing
+  out the correct nonzero answer — a concrete, computed trap, not a vague
+  "wrong" gesture. The third leaf correctly refuses Cauchy's theorem
+  (needs zero poles inside, and there is one).
+- **discrete-mathematics** — "divisible by 2 or 5 from 1-100" is
+  inclusion-exclusion (50+20−10=60), not a direct `C(n,r)` combination
+  (wrong question shape — no selection is happening) or pigeonhole (an
+  existence principle, never a counting one).
+
+`THEOREM_WIZARD_TRAINERS`, `ALL_METHOD_SELECTION_TRAINERS`,
+`CONCEPT_TO_WIZARD_NODE`, and `PracticeAttemptPage.tsx`'s
+`wizardRouteForTopic()` allowlist all gained the three new keys — same
+diff shape as wave 1. One existing test broke as a DIRECT, expected
+consequence: `PracticeAttemptPage.test.tsx`'s "unmapped topic" example
+used `complex-variables`, which is now mapped — swapped for a genuinely
+fictional topic string (`some-topic-with-no-trainer`) rather than a real
+subject that happens not to be covered, so the test still means what it
+claims to mean.
+
+**Coverage after wave 2: all 10 of 10 GATE-EM topic families have a
+wizard entry point** (linear-algebra, vector-calculus,
+probability-statistics, numerical-methods, transform-theory, graph-theory,
+differential-equations, calculus, complex-variables,
+discrete-mathematics) — up from 6/10 after wave 1. TODOS.md's wave-2 entry
+is closed and replaced with an honest scope note: wave 2 covers exactly
+one concept (or a small cluster) per new topic, not every concept in
+those topics — most concepts in calculus/complex-variables/discrete-math
+still have no fork of their own, tracked as a possible wave 3.
+
+**Tests:** 4 new (`types.test.ts` focus_eigen validation) + 1 new
+(`Simulation.test.tsx` render/clear behavior) + 3 new
+(`PracticeAttemptPage.test.tsx` solution_steps rendering, incl. a LaTeX
+step actually typesetting through KaTeX) + 10 new
+(`method-selection-trainers.test.ts` wave-2 single-fork + concept-map
+tests) + 1 existing test's fixture corrected. Frontend suite 2649 →
+2678/2678. Backend untouched (frontend-only change), 4701/4701 (365
+files), `1 todo` unchanged. `tsc --noEmit` clean. `npm run ci` (18 gates,
+including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs)
+clean.
+
+### `/loop`: every Linear Algebra concept audited against all four asks (2026-09-04)
+
+Direct follow-up to the `/design-review` pass above: "ensure that every
+single ask above is totally complete for Linear Algebra... until all sub
+topics of Linear Algebra are covered." A real audit of all 26 GATE-EM LA
+concepts against each of the four asks, not a blanket re-run — extending a
+mechanism to a concept that doesn't genuinely need it is exactly the kind
+of padding this repo's own discipline (measure, don't assert) refuses.
+
+**Ask 1 — coordinate focus (`focus_eigen`).** Every one of the 26
+concepts' `hook.md` files was parsed and checked: does it carry a
+`linear_map` scene, and if so, does any PRE-REVEAL beat state (not ask
+about) specific eigen-coordinates the visual doesn't yet highlight? 16
+concepts have no `linear_map` scene at all (10) or one with no genuine
+pre-reveal coordinate-naming beat (9) — correctly untouched, since adding
+`focus_eigen` to a beat that's still an open predict question (e.g.
+`linear-transformations`' "is it the x-axis arrow, or the one at 45°?")
+would SPOIL the discovery the scene is built around, not fix a bug. 6 more
+concepts had a genuine gap and were fixed: `diagonalization`,
+`linear-independence` (2 beats), `symmetric-matrices` (2 beats),
+`least-squares`, `spectral-theorem`, and `svd` (3 beats, including one at
+`at_progress: 0` — svd's hook states both eigenvalues as GIVEN information
+up front, unlike every other scene's discovery structure, so highlighting
+there doesn't spoil anything). All edits applied and propagated to stance
+variants via the same `re.DOTALL`-based Python script from the prior pass
+(no repeat of the `grep -o` bug), verified byte-identical across all three
+files per concept before moving on. `positive-definite-matrices` was
+already fixed in the prior pass — 7 of 26 LA concepts now carry
+`focus_eigen`, and that number is a measurement of where it genuinely
+applies, not a target hit by force.
+
+**Ask 2/3 — motion for static text.** Already fully complete for every LA
+concept without any per-concept work: the `PracticeAttemptPage.tsx`
+solution-steps fix and the `AtomCardRenderer.tsx` progressive-stagger
+mechanism are both applied by CODE (atom_type / component, not per-concept
+content), so they already reach all 26 LA concepts' practice items and
+lesson atoms. Verified, not assumed — re-read both call sites to confirm
+neither is topic-scoped before declaring this ask closed for LA.
+
+**Ask 4 — wizard coverage, all 26 concepts audited.** Before this pass,
+10 of 26 LA concepts were mapped to one of the tree's 4 forks
+(`la_invertible`/`la_injective`/`la_power`/`la_definite`). Audited the
+other 16 concept-by-concept for a genuine competing-method decision (the
+same bar wave 1/2's other 9 topics were held to) rather than forcing
+coverage:
+
+- **5 new forks added**, `la_start` growing from 4 options to 9, every
+  claim SymPy-verified:
+  - `la_system_solve` (`systems-of-equations`, `lu-factorization`) —
+    Gaussian elimination/LU vs Cramer's rule (O(n⁴)+ for large n) vs
+    explicitly forming A⁻¹ (wasted work for one solve).
+  - `la_independence_test` (`linear-independence`) — the determinant test
+    vs "eyeballing" vs summing the vectors (neither of the wrong options
+    is a valid test at all).
+  - `la_decomposition` (`svd`) — SVD (exists for every matrix, since
+    AᵀA is always symmetric PSD) vs eigendecomposition (needs square AND
+    diagonalizable — `[[1,1],[0,1]]` has only one independent eigenvector
+    for its repeated eigenvalue and so has NO eigendecomposition, verified
+    via SymPy's `.diagonalize()` throwing) vs LU (wrong tool entirely).
+  - `la_least_squares` (`least-squares`) — normal equations (verified: for
+    x=1,2,4, AᵀA=3, Aᵀb=7, x=7/3, the mean) vs Cramer's rule on a
+    non-square system (no determinant exists) vs giving up.
+  - `la_orthogonalize` (`orthogonality`, `gram-schmidt`) — Gram-Schmidt
+    (verified: u=(1,1,0), v=(1,0,1) → w₂=(½,−½,1), dot product with e₁
+    is exactly 0) vs normalizing each vector separately (verified: still
+    dot product ½, not orthogonal at all) vs cross product (wrong tool —
+    builds a third direction, doesn't fix the given pair).
+- **9 concepts remain deliberately unmapped**, each individually assessed
+  and named, not defaulted: `matrix-operations`, `vector-spaces`,
+  `eigenvalues`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+  `change-of-basis`, `jordan-normal-form`, `matrix-norms`. These are
+  property-checks or single-procedure computations with no real
+  competing-method choice at GATE-EM's level (`trace` is "add the
+  diagonal"; GATE-EM teaches ONE eigenvalue method, not a competitive
+  choice among several) — they correctly fall through to `la_start`'s
+  classification root, same treatment as vector-calculus's own documented
+  foundational-concept exceptions. `jordan-normal-form` is flagged as the
+  one genuine near-miss: it belongs as a 4th path under `la_power`'s "not
+  diagonalizable" branch, but doing that well means restructuring
+  `la_power` into a two-level decision rather than bolting on a mismatched
+  leaf — named as real, scoped future work in TODOS.md, not silently
+  dropped.
+
+Net: **17 of 26 LA concepts now resolve to a specific wizard fork**, and
+the other 9 are individually justified, not silently absent. A new test
+(`method-selection-trainers.test.ts`) asserts all 26 are accounted for —
+mapped, or on the deliberately-unmapped list — so a future concept added
+to the curriculum without either can't silently fall through unnoticed.
+
+**Verified against the real gates, not asserted.** `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610
+pairs) clean. `tsc --noEmit` clean. Frontend suite 2678 → 2688/2688 (10
+new tests: the 5-new-fork contract checks, concept-map resolution, and
+the exhaustive 26-concept accounting test). Backend untouched.
+
+### Same-day follow-up: restructuring Jordan Normal Form and eigenvalues into the wizard (2026-09-04)
+
+Direct follow-up to the `/loop` audit above: "restructure jordan normal
+and others." The audit had already named `jordan-normal-form` as a real
+near-miss rather than a clean exclusion — this pass closed it, plus one
+more near-miss found on reconsideration (`eigenvalues`).
+
+**`la_power` restructured into a genuine two-level decision.** The old
+`la_leaf_diag` leaf just SAID "if A is not diagonalisable, use
+Cayley-Hamilton" in prose — a real second decision with no fork of its
+own. `la_power` gained a 4th option, "A is NOT diagonalisable — what
+now?", leading to a new node `la_power_not_diag` that asks the genuine
+follow-up: Cayley-Hamilton reduction vs. full Jordan Normal Form. Both
+are CORRECT here — a different shape than every other fork in this file,
+where exactly one option is right and the rest are wrong — so "best"
+marks the less-machinery answer (Cayley-Hamilton needs only the
+characteristic polynomial; Jordan form needs the full change-of-basis
+matrix P and a generalized eigenvector), not the only-correct one.
+Verified on A=[[4,1],[-1,2]] (eigenvalue 3, repeated, confirmed NOT
+diagonalizable via SymPy's `.diagonalize()` throwing): char. poly
+λ²−6λ+9=0 gives A²=6A−9I, and the Cayley-Hamilton recurrence gives
+A³=27A−54I; independently, the Jordan form J=[[3,1],[0,3]] with
+P=[[1,1],[-1,0]] and the 2×2 Jordan-block power formula
+Jⁿ=[[λⁿ,nλⁿ⁻¹],[0,λⁿ]] gives J³=[[27,27],[0,27]], and PJ³P⁻¹ matches the
+same A³ exactly. `jordan-normal-form` deep-links straight to
+`la_power_not_diag`, skipping `la_power`'s own "is it diagonalizable?"
+gate — its own content already assumes non-diagonalizability, so asking
+again would be a wasted step.
+
+**`eigenvalues` closed as a second near-miss, found on
+reconsideration.** The prior pass's doc comment said "GATE-EM teaches ONE
+method for eigenvalues — the characteristic polynomial — not a
+competitive choice among several," which undersold a real, commonly
+GATE-tested shortcut: for a TRIANGULAR matrix, the eigenvalues ARE the
+diagonal entries, directly — no cofactor expansion needed at all. New
+top-level fork `la_eigenvalue_method`: "read the diagonal" (correct and
+fastest for a triangular matrix) vs. "solve det(A−λI)=0 by full cofactor
+expansion" (correct for ANY matrix, but strictly more work than necessary
+here) vs. "use trace and determinant alone" (a real trap — 2 numbers
+cannot pin down 3+ unknowns in general, useful only as a sanity check on
+eigenvalues already found some other way). Verified on
+A=[[5,3,7],[0,2,4],[0,0,-1]] (upper triangular): eigenvalues are exactly
+5, 2, −1, matching trace=6=5+2−1 and det=−10=5·2·(−1).
+
+**Coverage after this pass: 19 of 26 LA concepts mapped to a specific
+fork** (up from 17). The remaining 7 — `matrix-operations`,
+`vector-spaces`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+`change-of-basis`, `matrix-norms` — were reconsidered once more (not just
+carried forward from the prior pass) and still correctly have no genuine
+competing-method decision at GATE-EM's level; `matrix-norms` in
+particular was weighed seriously (different norms — spectral, Frobenius,
+1-norm — DO exist) but GATE-EM tests "compute this specific norm," never
+"which norm applies here," so a fork there would misrepresent the real
+exam shape rather than fix a gap.
+
+**Real, expected knock-on effects, not incidental breakage.**
+`FrontierSpine.test.tsx`'s "no mapped wizard fork" example used
+`eigenvalues` — now mapped, so the test would have silently asserted the
+wrong thing (a link genuinely present, but the test expecting absence)
+had it not been caught. Swapped for a new fixture node (`trace`,
+genuinely still unmapped) rather than reusing `matrix-operations` (also
+still unmapped, but that node sits in a fully-collapsed "1 of 1 mastered"
+cluster in the test fixture and never renders as a clickable row at all —
+confirmed by reading the component, not guessed after a confusing
+failure).
+
+**Tests:** 3 new/updated in `method-selection-trainers.test.ts` (the
+`la_start` option count 9→10, a `la_power_not_diag` reachability check, a
+"9 new/restructured concepts resolve correctly" check covering both
+`jordan-normal-form`'s deep-link and `eigenvalues`' new fork) plus the
+exhaustive 26-concept accounting test's expected-mapped-count updated
+17→19; 1 test fixture fix in `FrontierSpine.test.tsx`. Frontend suite
+2688 → 2691/2691. Backend untouched (frontend-only change). `tsc
+--noEmit` clean. `npm run ci` (18 gates, including `ci:la-walkthrough`
+26/26) clean.
+
+### Hook/intuition silo audit closed for all 26 Linear Algebra concepts (2026-09-04)
+
+Direct follow-up to "finish off all pending for linear algebra": the
+`cayley-hamilton`/`trace` silo fix (TODOS.md, "Audit other concepts'
+`intuition`/`mnemonic` atoms for the same wall-of-text pattern") had two
+confirmed instances and an open worklist of the other 24 concepts. Closed
+the whole worklist in one pass — 5 parallel Claude Sonnet subagents (per
+the user's explicit "use sonnet subagents for any LLM related work"
+instruction), each auditing 4-5 concepts, none sharing a file with another
+batch.
+
+**Method, identical across all 5 batches:** read `hook.md`/`-shaken`/
+`-assured` first to establish the concept's REAL worked example (its
+matrix, its verified numbers, any `interactive-spec` scene); read
+`intuition.md`/`-shaken`/`-assured`; judge honestly whether a genuine silo
+exists (a different or absent example, or a dense disconnected paragraph
+beside an interactive hook) versus a legitimate reason to leave it alone
+(the atom already has its own connected `manipulable`/`guided_walkthrough`
+widget, or the hook itself has no concrete example to be siloed from).
+Every numeric claim in a rewrite was verified via `python3 -c "import
+sympy..."` before being written (Wolfram MCP was disconnected all
+session); any new or edited fenced block was kept byte-identical across
+the base/shaken/assured trio, copied via Python `re.DOTALL` regex, never
+`grep -o` (which silently fails on multi-line JSON and has previously
+deleted a fence outright in this repo — see the 2026-09-04 "positive-
+definite-matrices" section above).
+
+**Result: 19 of 24 audited concepts had a genuine defect, fixed; 5 were
+already fine and correctly left untouched** (`determinants`,
+`linear-transformations` — both already had their own connected
+`manipulable` widgets; `lu-factorization`, `svd`, `orthogonality` —
+already interactive and/or already threading the hook's numbers;
+`gram-schmidt`, `eigenvalues`, `vector-spaces`, `matrix-norms` — same
+reasons, confirmed by reading each individually rather than assumed).
+Combined with the prior `cayley-hamilton`/`trace` fixes, **all 26 GATE-EM
+Linear Algebra concepts are now audited**, closing the TODOS.md item's
+open worklist entirely (a corpus-wide sweep beyond LA remains separately
+tracked, per that item's own scope note).
+
+**5 concepts (in the `diagonalization`/`quadratic-forms`/`positive-
+definite-matrices`/`spectral-theorem`/`systems-of-equations` batch)
+gained a brand-new resonance-beat scene**, not just a prose fix — each
+threading the hook's own already-verified matrix into a fresh
+predict-observe-explain sequence with its own trap beat:
+`diagonalization` ($A=PDP^{-1}$ from the hook's $\begin{pmatrix}4&1\\2&3\end{pmatrix}$,
+trap: mismatching $P$'s column order against $D$'s diagonal order),
+`quadratic-forms` ($Q(v)=\lambda$ at unit eigenvectors of the hook's
+$Q(x,y)=5x^2+4xy+2y^2$), `positive-definite-matrices` (Sylvester's
+leading-principal-minors test agreeing with the eigenvalue test on the
+hook's $\begin{pmatrix}3&1\\1&2\end{pmatrix}$, trap: a real counterexample
+$B=\begin{pmatrix}-1&0\\0&-5\end{pmatrix}$ with $\det B>0$ but negative
+definite), `spectral-theorem` (verifying the hook's eigenvectors are
+orthogonal before building $Q,\Lambda$), `systems-of-equations` (the
+Rouché–Capelli rank story on the hook's own $t=0$ instance). The other 14
+fixed concepts (`matrix-inverse`, `rank-nullity`, `null-space-column-
+space`, `linear-independence`, `least-squares`, `jordan-normal-form`,
+`matrix-operations`, `symmetric-matrices`, `inner-product-spaces`,
+`change-of-basis`) got prose-only rewrites — no new scene, just threading
+the hook's own numbers into what had been an independently-invented or
+number-free example, ELI5 phrasing, and glossing jargon on first use.
+
+**Validated as one whole, not per-batch.** Each batch validated its own
+concepts before reporting back; after all 5 landed, `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610
+pairs) ran clean against the combined result, plus both full test suites
+(backend 4701/4701, 1 todo, 365 files; frontend 2691/2691, 96 files — both
+counts unchanged from baseline, since this was a content-only pass with no
+new tests) and `tsc --noEmit` clean both sides.
+
+**44 files changed** across 19 concepts (14 concepts × 3 stance files + 2
+concepts with only 2 files touched, since one stance variant per concept
+was already independently correct — `change-of-basis-shaken` had already
+adopted the hook's own example, so it was left alone rather than
+re-touched for the sake of uniformity).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

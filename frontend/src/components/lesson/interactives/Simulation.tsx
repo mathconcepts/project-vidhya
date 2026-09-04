@@ -466,6 +466,11 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   }, [sortedSteps]);
   const eigenRevealed = emphasizeBeatAt === null || effectiveProgress >= emphasizeBeatAt;
   const emphasizeActive = activeIdx !== null && sortedSteps[activeIdx]?.emphasize === true;
+  // Which eigen-arrow(s) the ACTIVE beat is naming right now — the "look
+  // here" highlight for a beat that fires before the reveal (see
+  // focus_eigen's doc comment in types.ts). Cleared the instant the beat
+  // passes, same as emphasize.
+  const focusedEigenIndices = activeIdx !== null ? sortedSteps[activeIdx]?.focus_eigen ?? [] : [];
 
   return (
     <div
@@ -508,6 +513,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
             progress={effectiveProgress}
             eigenRevealed={eigenRevealed}
             emphasizeActive={emphasizeActive}
+            focusedEigenIndices={focusedEigenIndices}
             trapRevealed={trapRevealed}
           />
         )}
@@ -733,6 +739,7 @@ function LinearMapScene({
   progress,
   eigenRevealed,
   emphasizeActive,
+  focusedEigenIndices,
   trapRevealed,
 }: {
   lm: LinearMapSceneSpec;
@@ -741,6 +748,7 @@ function LinearMapScene({
   progress: number;
   eigenRevealed: boolean;
   emphasizeActive: boolean;
+  focusedEigenIndices: number[];
   trapRevealed: boolean;
 }) {
   const s = morphFraction(progress);
@@ -881,15 +889,18 @@ function LinearMapScene({
         ))}
       {arrows
         .filter((a) => a.eigenIdx !== -1)
-        .map((a, i) => (
-          <ArrowGlyph
-            key={`e-${i}`}
-            from={origin}
-            to={projector(a.tip[0], a.tip[1])}
-            stroke={eigenRevealed ? 'var(--green)' : 'var(--ink)'}
-            strokeWidth={emphasizeActive ? 3.5 : 2.5}
-          />
-        ))}
+        .map((a, i) => {
+          const focused = !eigenRevealed && focusedEigenIndices.includes(a.eigenIdx);
+          return (
+            <ArrowGlyph
+              key={`e-${i}`}
+              from={origin}
+              to={projector(a.tip[0], a.tip[1])}
+              stroke={eigenRevealed ? 'var(--green)' : 'var(--ink)'}
+              strokeWidth={emphasizeActive || focused ? 3.5 : 2.5}
+            />
+          );
+        })}
       {eigenRevealed &&
         eigen.map((e, i) => {
           const tip = applyLerpedMat2(lm.matrix, e.u, s);
@@ -905,6 +916,36 @@ function LinearMapScene({
               fontSize={12} fontWeight={600} fill="var(--text-secondary)"
             >
               {`×${e.value}`}
+            </text>
+          );
+        })}
+      {/* "Look here" coordinate label for the beat currently naming this
+          direction, before the reveal has anything to show — see
+          focus_eigen's doc comment in types.ts. Distinct from the reveal's
+          ×λ label above: this one shows the DIRECTION being discussed, in
+          ink (not green — nothing is confirmed as the payoff yet). */}
+      {!eigenRevealed &&
+        focusedEigenIndices.map((idx) => {
+          const e = eigen[idx];
+          const authoredDir = lm.eigen?.[idx]?.dir;
+          if (!e || !authoredDir) return null;
+          const tip = applyLerpedMat2(lm.matrix, e.u, s);
+          const [px, py] = projector(tip[0], tip[1]);
+          const len = Math.hypot(px - origin[0], py - origin[1]) || 1;
+          const ox = ((px - origin[0]) / len) * 18;
+          const oy = ((py - origin[1]) / len) * 18;
+          return (
+            <text
+              key={`focus-lbl-${idx}`}
+              x={px + ox} y={py + oy}
+              textAnchor="middle" dominantBaseline="middle"
+              fontSize={12} fontWeight={600} fill="var(--text-primary)"
+            >
+              {/* The AUTHORED direction (as narrated: "(1, 0.618)"), not the
+                  internal normalized unit vector — a normalized (0.851,
+                  0.526) would silently disagree with the beat text naming
+                  this exact arrow. */}
+              {`(${formatSignificant(authoredDir[0])}, ${formatSignificant(authoredDir[1])})`}
             </text>
           );
         })}

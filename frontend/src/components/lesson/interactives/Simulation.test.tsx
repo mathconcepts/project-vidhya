@@ -807,6 +807,45 @@ describe('linear-map scene rendering', () => {
     expect(greenShafts.length).toBe(4);
     expect(container.textContent).toContain('×3');
   });
+
+  it('focus_eigen (live QA, 2026-09-04): a pre-reveal beat naming an eigen direction highlights it with a coordinate label, clears on the next beat', () => {
+    const FOCUS_SPEC: SimulationSpec = {
+      ...LM_SPEC,
+      narration_steps: [
+        { at_progress: 0, text: 'Sixteen arrows, all length 1.' },
+        {
+          at_progress: 0.2,
+          text: 'The first arrow refuses to turn.',
+          focus_eigen: [0],
+        },
+        { at_progress: 0.55, text: 'Two arrows refuse to turn.', emphasize: true },
+        {
+          at_progress: 0.8,
+          text: 'Stretch factor = eigenvalue.',
+          trap: { text: 'Students read the diagonal as the eigenvalues.', avoid: 'Solve det(A - lambda I) = 0.' },
+        },
+      ],
+    };
+    const { container } = render(<Simulation spec={FOCUS_SPEC} />);
+    const beatButtons = screen.getAllByRole('button', { name: /Beat \d of 4/ });
+    const coordLabel = () =>
+      Array.from(container.querySelectorAll('svg text')).find((t) => t.textContent === '(0.7071, 0.7071)');
+
+    // Beat 1 (progress 0): no focus_eigen, no coordinate label, no heavy stroke.
+    expect(coordLabel()).toBeUndefined();
+
+    // Beat 2 names eigen index 0 — coordinate label appears, stroke thickens,
+    // and it is still ink (not green — the reveal hasn't happened yet).
+    fireEvent.click(beatButtons[1]);
+    expect(coordLabel()).toBeDefined();
+    expect(container.querySelector('svg line[stroke="var(--ink)"][stroke-width="3.5"]')).not.toBeNull();
+    expect(container.querySelectorAll('svg line[stroke="var(--green)"]').length).toBe(0);
+
+    // Beat 3 (the reveal) — focus label is gone, replaced by the real ×3/×1 reveal.
+    fireEvent.click(beatButtons[2]);
+    expect(coordLabel()).toBeUndefined();
+    expect(container.textContent).toContain('×3');
+  });
 });
 
 describe('ghost rendering without declared eigen directions (matrix-operations class)', () => {

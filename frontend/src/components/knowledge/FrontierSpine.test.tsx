@@ -48,13 +48,19 @@ function node(overrides: Partial<FrontierNode> & { id: string; name: string }): 
 
 const CLUSTERS: FrontierClusterSummary[] = [
   { id: 'matrix-operations', label: 'Matrix operations', count: 1, done_count: 1 },
-  { id: 'eigen-theory', label: 'Eigen-theory', count: 2, done_count: 0 },
+  { id: 'eigen-theory', label: 'Eigen-theory', count: 3, done_count: 0 },
 ];
 
 const NODES: FrontierNode[] = [
   node({ id: 'matrix-operations', name: 'Matrix operations', dot: 'mastered', cluster_id: 'matrix-operations', cluster_label: 'Matrix operations' }),
   node({ id: 'eigenvalues', name: 'Eigenvalues', dot: 'frontier', why: 'in progress', cluster_id: 'eigen-theory', cluster_label: 'Eigen-theory', builds_on: [{ id: 'determinants', label: 'Determinants', met: true }] }),
   node({ id: 'diagonalization', name: 'Diagonalization', dot: 'later', why: 'after eigenvalues', cluster_id: 'eigen-theory', cluster_label: 'Eigen-theory' }),
+  // Genuinely unmapped in CONCEPT_TO_WIZARD_NODE — "trace" has no
+  // competing-method decision (see method-selection-trainers.ts). Added
+  // after "eigenvalues" gained its own fork (la_eigenvalue_method) in the
+  // same-day la_power restructure, which retired eigenvalues as this
+  // suite's "no wizard fork" example.
+  node({ id: 'trace', name: 'Trace', dot: 'later', why: 'after eigenvalues', cluster_id: 'eigen-theory', cluster_label: 'Eigen-theory' }),
 ];
 
 describe('FrontierSpine — success state', () => {
@@ -124,10 +130,13 @@ describe('FrontierSpine — wizard link (knowledge-graph <-> wizard, 2026-09-03)
 
   it('renders nothing when the concept has no mapped wizard fork', () => {
     renderSpine({ nodes: NODES, clusters: CLUSTERS, onLearn: () => {} });
-    // "eigenvalues" itself is not in CONCEPT_TO_WIZARD_NODE (only concepts
-    // that resolve to a real fork should ever show this link).
-    fireEvent.click(screen.getByRole('button', { name: 'Eigenvalues' }));
-    expect(screen.getByText(/Builds on:/)).toBeInTheDocument();
+    // "trace" is not in CONCEPT_TO_WIZARD_NODE — it's a deliberate
+    // exclusion ("add the diagonal" has no competing-method decision), not
+    // an oversight (only concepts that resolve to a real fork should ever
+    // show this link). "eigenvalues" used to be this test's example but
+    // gained its own fork (la_eigenvalue_method) in the same-day la_power
+    // restructure — see method-selection-trainers.ts.
+    fireEvent.click(screen.getByRole('button', { name: /Trace, after eigenvalues/ }));
     expect(screen.queryByRole('link', { name: /Which method applies\?/ })).not.toBeInTheDocument();
   });
 

@@ -851,7 +851,8 @@ function LinearMapScene({
           <text
             x={px} y={py}
             textAnchor="middle" dominantBaseline="middle"
-            fontSize={12} fill="var(--text-secondary)"
+            fontSize={12} fontWeight={600} fill="var(--text-primary)"
+            stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
           >
             {`area ×${formatSignificant(Math.abs(det))}`}
           </text>
@@ -905,15 +906,32 @@ function LinearMapScene({
         eigen.map((e, i) => {
           const tip = applyLerpedMat2(lm.matrix, e.u, s);
           const [px, py] = projector(tip[0], tip[1]);
-          const len = Math.hypot(px - origin[0], py - origin[1]) || 1;
-          const ox = ((px - origin[0]) / len) * 16;
-          const oy = ((py - origin[1]) / len) * 16;
+          // A crushed eigenvalue (e.value === 0, e.g. a rank-deficient
+          // scene's dead direction) lands the tip AT the origin, so the
+          // tip-minus-origin offset degenerates to (0,0) and the "×0" label
+          // stacks directly on the origin crosshair — invisible in practice
+          // (root-caused /design-review 2026-09-04, rank-nullity's hook:
+          // "numbers are not distinctly visible"). Fall back to the
+          // eigenvector's own screen direction so the label still lands
+          // where the arrow points, even when its length collapsed to zero.
+          const rawLen = Math.hypot(px - origin[0], py - origin[1]);
+          let dx = px - origin[0];
+          let dy = py - origin[1];
+          if (rawLen < 4) {
+            const [ux, uy] = projector(e.u[0], e.u[1]);
+            dx = ux - origin[0];
+            dy = uy - origin[1];
+          }
+          const len = Math.hypot(dx, dy) || 1;
+          const ox = (dx / len) * 16;
+          const oy = (dy / len) * 16;
           return (
             <text
               key={`lbl-${i}`}
               x={px + ox} y={py + oy}
               textAnchor="middle" dominantBaseline="middle"
-              fontSize={12} fontWeight={600} fill="var(--text-secondary)"
+              fontSize={12} fontWeight={600} fill="var(--text-primary)"
+              stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
             >
               {`×${e.value}`}
             </text>
@@ -940,6 +958,7 @@ function LinearMapScene({
               x={px + ox} y={py + oy}
               textAnchor="middle" dominantBaseline="middle"
               fontSize={12} fontWeight={600} fill="var(--text-primary)"
+              stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
             >
               {/* The AUTHORED direction (as narrated: "(1, 0.618)"), not the
                   internal normalized unit vector — a normalized (0.851,

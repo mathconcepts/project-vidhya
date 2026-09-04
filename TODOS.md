@@ -134,6 +134,53 @@ unaudited. `mnemonic` atoms specifically were also not audited in this
 pass (only `intuition`) — the original trigger below still applies to
 `mnemonic` corpus-wide, LA included.
 
+## `visual_analogy` redundant-paragraph trim needed corpus-wide
+
+**Trigger:** the next live-QA report naming a different concept's visual
+card as text-heavy, or a decision to sweep this systematically.
+
+`/design-review` (2026-09-04, rank-nullity live-QA: "visual — too much
+text") found `visual-analogy.md`'s closing paragraph restated its own
+curve-explanation paragraph's point in different words — real redundancy,
+not just density. Fixed for rank-nullity only (merged the restated idea
+into the curve paragraph's closing clause, dropped the third paragraph,
+~150 words → ~110, no math changed). Not audited corpus-wide.
+`npm run content:reading-load-report` already flags atoms by real reading
+load and is the designated worklist source for a systematic pass, same as
+the intuition/mnemonic sweep above.
+
+**Effort:** S per concept once flagged, same read-hook-first-then-trim
+discipline as every other content-density fix in this doc.
+**Priority:** P3 — one confirmed instance, not yet known how common corpus-wide.
+**Deferred from:** `/design-review`, 2026-09-04, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## `formal_definition`/hook eigenvalue-label fixes — verify they don't mask a deeper `focus_eigen` coverage gap
+
+**Trigger:** the next live-QA report on a different concept's hook numbers,
+or a decision to audit all `linear_map` scenes for the same zero-eigenvalue
+label bug.
+
+`/design-review` (2026-09-04) found and fixed two real Simulation.tsx bugs
+reaching every `linear_map` scene in the corpus (not just rank-nullity):
+the post-reveal `×λ`/area labels used low-contrast `--text-secondary`
+(fixed → `--text-primary` + an opaque halo), and a zero eigenvalue's label
+collapsed onto the origin crosshair (fixed → falls back to the
+eigenvector's own screen direction). Both fixes are corpus-wide by
+construction (code-level, not per-concept), so no further sweep is needed
+for THESE two bugs specifically. What's still unaudited: whether other
+concepts besides the ~7 with `focus_eigen` already have a genuine
+pre-reveal coordinate-naming beat like rank-nullity's — the 2026-09-04
+`/loop` LA audit covered this once already (16/26 concepts correctly
+left untouched), but that audit predates today's rank-nullity fix and
+wasn't re-run after it; a stale conclusion is possible if any beat's
+narration changed since.
+
+**Effort:** S — re-run the same audit method the `/loop` pass used.
+**Priority:** P3 — no evidence of a stale conclusion, just unconfirmed.
+**Deferred from:** `/design-review`, 2026-09-04, branch
+`claude/content-strategy-framework-o9afoc`.
+
 **Original entry, for the corpus-wide sweep still open beyond LA:**
 
 **Trigger:** the next live-QA report naming a different concept's

@@ -18,12 +18,17 @@
  *
  * /investigate (2026-09-03): same `?concept=&mistake=` context + practice
  * loop as TheoremWizardPage — see WizardMistakeLoop.tsx's doc comment.
+ *
+ * Wizard-mistake-loop follow-up (2026-09-03): `concept` also resolves a
+ * `startAt` node the same way TheoremWizardPage does — see that file's doc
+ * comment and `wizardStartNodeForConcept`'s own doc comment for the
+ * `distribution-selector` trainer's partial-coverage caveat.
  */
 
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Sigma } from 'lucide-react';
 import { GuidedWalkthrough } from '@/components/lesson/interactives/GuidedWalkthrough';
-import { DISTRIBUTION_TRAINER } from '@/data/method-selection-trainers';
+import { DISTRIBUTION_TRAINER, wizardStartNodeForConcept } from '@/data/method-selection-trainers';
 import { WizardContextBanner, WizardPracticeCTA } from '@/components/app/WizardMistakeLoop';
 
 export default function DistributionSelectorPage() {
@@ -31,6 +36,7 @@ export default function DistributionSelectorPage() {
   const [searchParams] = useSearchParams();
   const concept = searchParams.get('concept');
   const mistakeLabel = searchParams.get('mistake');
+  const startAt = wizardStartNodeForConcept('distribution-selector', concept);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 640, margin: '0 auto' }}>
@@ -67,7 +73,7 @@ export default function DistributionSelectorPage() {
 
       <WizardContextBanner concept={concept} mistakeLabel={mistakeLabel} />
 
-      <GuidedWalkthrough spec={trainer.spec} />
+      <GuidedWalkthrough spec={trainer.spec} startAt={startAt} />
 
       <WizardPracticeCTA concept={concept} />
     </div>

@@ -13,6 +13,7 @@ import { generateAttemptSequence, generateScoreMaximizationPlan, EXAM_CONFIGS } 
 import { CONCEPT_MAP, traceWeakestPrerequisite } from '../../constants/concept-graph';
 import { TOPIC_NAMES, MARKS_WEIGHTS } from '../../engine/priority-engine';
 import { diagnoseWrongAnswer, type DiagnosticProbeResult } from '../diagnostic-probe';
+import { loadWizardRouteResolver } from '../../content/wizard-route-loader';
 
 export interface StudentAuditReport {
   session_id: string;
@@ -31,7 +32,23 @@ export interface StudentAuditReport {
     top_misconceptions: Array<{ id: string; count: number; description: string }>;
     recommendations: string[];
   };
-  prerequisite_alerts: Array<{ concept: string; shaky_prereqs: string[]; severity: string; fix_order: string[] }>;
+  prerequisite_alerts: Array<{
+    concept: string;
+    shaky_prereqs: string[];
+    severity: string;
+    fix_order: string[];
+    /**
+     * Weak-prerequisite -> wizard follow-up (2026-09-04): the
+     * method-selection-wizard route for `concept`, when one exists — resolved
+     * via the guarded `wizard-route-loader.ts` bridge into the frontend's own
+     * `wizardRouteForConcept`, so this can never drift from what the student
+     * actually sees. `null` when the concept has no wizard fork, or when the
+     * resolver itself is unavailable in this process (the demo image ships
+     * without `frontend/src` — see that loader's doc comment); teacher-facing
+     * detail only, never gates anything a student's own session does.
+     */
+    wizard_route: string | null;
+  }>;
   /**
    * P6 (2026-09-02 content-strategy plan) — ADDITIVE alongside
    * prerequisite_alerts, never a replacement: the same live path
@@ -104,6 +121,7 @@ export async function auditStudent(sessionId: string): Promise<StudentAuditRepor
     }).sort((a, b) => b.expected_marks_contribution - a.expected_marks_contribution);
 
     // ── Prerequisite Alerts with Fix Order ─────────────────────
+    const resolveWizardRoute = await loadWizardRouteResolver();
     const prerequisite_alerts = model.prerequisite_alerts.map(a => {
       const weakPrereqs = traceWeakestPrerequisite(a.concept, model.mastery_vector, 0.3);
       return {
@@ -111,6 +129,7 @@ export async function auditStudent(sessionId: string): Promise<StudentAuditRepor
         shaky_prereqs: a.shaky_prereqs,
         severity: a.severity,
         fix_order: weakPrereqs.map(w => w.id),
+        wizard_route: resolveWizardRoute ? resolveWizardRoute(a.concept) : null,
       };
     });
 

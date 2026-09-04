@@ -103,6 +103,14 @@ const COMMON_MISTAKE_LABEL: Record<string, string> = {
  * a student actually needs it. `topic` values come straight from the
  * practice-item bank and must match a trainer key/route exactly — an
  * unmapped topic (or none) renders no button rather than a guessed link.
+ *
+ * Micro-solver wave 1 (2026-09-03): numerical-methods, transform-theory,
+ * graph-theory and differential-equations joined `THEOREM_WIZARD_TRAINERS`
+ * as single-fork trainers (see `method-selection-trainers.ts`) — routed
+ * here the same way linear-algebra/vector-calculus already were. The
+ * `startAt` deep link (`TheoremWizardPage`, resolved from `?concept=`) is
+ * what makes a single-fork trainer still land the student directly on its
+ * one decision instead of a wasted zero-choice "root".
  */
 function wizardRouteForTopic(topic: string | null | undefined): string | null {
   if (typeof topic !== 'string') return null;
@@ -111,7 +119,15 @@ function wizardRouteForTopic(topic: string | null | undefined): string | null {
   // kebab-case slug) — normalize rather than require exact-match, since a
   // display-only casing difference is not a reason to withhold a real link.
   const slug = topic.trim().toLowerCase().replace(/\s+/g, '-');
-  if (slug === 'linear-algebra' || slug === 'vector-calculus') return `/theorem-wizard/${slug}`;
+  const THEOREM_WIZARD_TOPICS = new Set([
+    'linear-algebra',
+    'vector-calculus',
+    'numerical-methods',
+    'transform-theory',
+    'graph-theory',
+    'differential-equations',
+  ]);
+  if (THEOREM_WIZARD_TOPICS.has(slug)) return `/theorem-wizard/${slug}`;
   if (slug === 'probability-statistics') return '/distribution-selector';
   return null;
 }

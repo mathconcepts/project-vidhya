@@ -2685,6 +2685,297 @@ audited corpus-wide in this pass. Both tracked in TODOS.md with the exact
 pattern that worked here (reuse the hook's own example, verify every
 number, keep fences byte-identical across stance triples) as the template.
 
+### `/investigate` follow-up: the "revert" claim was false, and the trace-concept silo is the same pattern again (2026-09-03)
+
+Second `/investigate` pass the same day, on a new report: "static
+unintuitive text" on `trace`'s intuition card, an ELI5/Indian-English
+register ask, and a claim that a prior motion/progression fix "got
+reverted." The revert claim was investigated before anything else was
+touched, per the skill's Iron Law and the "claimed limitations need
+evidence" rule — checked against two independent primary sources, not
+agreed with or dismissed on the user's word alone.
+
+**The Cayley-Hamilton fix was NOT reverted.** `git log origin/main` shows
+no revert commit; `git show origin/main:.../cayley-hamilton/atoms/
+intuition.md` confirms the fixed content is on `main` right now. More
+directly: Render's own deploy history shows commit `13efd76` — the commit
+that shipped the Cayley-Hamilton fix — as the service's current `live`
+deploy, finished `2026-09-03T13:40:50Z`. Nothing regressed; the resonance-
+beat mechanism is exactly as live as it was when it shipped. The likely
+explanation for the report: the attached Cayley-Hamilton screenshot is
+byte-for-byte the same one from the PREVIOUS `/investigate` turn earlier
+the same day (a stale/reused screenshot, not a fresh repro), and/or it
+predates that turn's deploy.
+
+**The `trace` concept has the exact same silo defect Cayley-Hamilton had,
+independently confirmed by reading `hook.md` first.** `trace/atoms/
+hook.md` is genuine, working resonance-beat content — matrix
+$A=\begin{pmatrix}5&1\\2&4\end{pmatrix}$, a 5-beat scene establishing
+eigenvalues $6$ and $3$ on directions $(1,1)$/$(1,-2)$, a trap about
+summing all four entries instead of the diagonal. `intuition.md` was a
+single dense abstract paragraph with zero shared numbers and zero
+interactivity — the same "interactive and text are in silos" pattern,
+found for the second time, confirming the TODOS.md item's prediction that
+it "likely recurs." `intuition-shaken.md` was a second, independent
+instance: it used an entirely different (already-triangular) matrix than
+the concept's own hook.
+
+**Fixed with the now-twice-proven template.** All three files
+(`intuition.md`/`-shaken.md`/`-assured.md`) get a byte-identical new
+`interactive-spec` fence reusing hook's exact matrix and parametric
+formula, this time telling the WHY hook doesn't cover: trace is
+basis-independent — change the axes you describe $A$ in and the diagonal
+entries change, but their sum never does, because the eigenvalues (the
+real stretch factors) don't move under a change of basis. A predict cue
+("would that $9$ still show up under different axes?") precedes the
+reveal, an explain-why beat states the similar-matrices/shared-
+characteristic-polynomial reason, and a trap beat calls out the false
+inference (seeing the diagonal entries change and assuming the trace
+changed). Every numeric claim (eigenvalues $6$/$3$, trace $9$, the exact
+plotted points at $t=45°$ and progress $0.824$) is reused verbatim from
+hook's own already-shipped, already-verified values — hand-verified again
+independently via a local Python script (Wolfram MCP was disconnected
+this session) before authoring, not re-derived from scratch. Base prose:
+ELI5, Indian-English register, short sentences, ~90 words total (intro +
+closing) — down from one 175-word paragraph with no interactivity.
+`intuition-shaken.md` is rewritten onto the SAME matrix as hook (closing
+its own independent silo instance) rather than the old unrelated
+triangular example. `intuition-assured.md` keeps its existing
+Vieta's-formula/similarity-invariance content — genuinely good, terse,
+exam-relevant — and only gains a one-line bridge plus the shared fence.
+
+**Verified against the real gates.** `ci:interactive-specs` (389 blocks,
++3), `ci:variant-agreement` (610 pairs, unchanged — fence byte-identical
+across the trio), `ci:katex-fences` (1723), `ci:content-integrity` (1729),
+`ci:la-walkthrough` (26/26, trace's own interactive-leg count 6→9,
+matching the Cayley-Hamilton precedent's identical delta) all clean. Full
+suites: backend 4692/4692, frontend 2604/2604, `tsc --noEmit` clean both
+sides, `npm run ci` (18 gates) clean.
+
+**Scope, named honestly — one more concrete example, still not the
+corpus.** This is the SECOND of an open-ended set of concepts likely to
+have the same silo defect. `npm run content:reading-load-report` (shipped
+earlier the same day) remains the designated worklist source for a
+systematic audit; not run as a triggered sweep in this pass, since the
+report named one specific concept (`trace`), not a corpus-wide ask.
+TODOS.md's existing "audit other concepts" entry stands, now with a
+second confirmed instance as evidence rather than a prediction.
+
+### Method-selection wizard: `startAt` deep link (2026-09-03)
+
+`/office-hours` brainstorm on the wizard-mistake-loop feature (W2.5's
+`DecisionTreeWalkthrough`, PRs #157-158's `?concept=&mistake=` context):
+the wizard always opened at its tree's root, so a student diagnosed with
+ONE specific mistake still had to re-walk the whole topic classification
+chain (4-6 forks) to reach the fork that actually mattered — "tailored to
+the mistake" was aspirational, not real. `item.node_id` (the concept) was
+already threaded through the URL and unused for routing; `failure_tag` is
+too coarse to pick a fork (it says "method mix-up", not which one), but
+concept id is exactly the right granularity.
+
+**Shipped:**
+
+- `DecisionTreeWalkthrough` gains an optional `startAt?: string` prop —
+  the node id to open at instead of `branches.nodes[0]`. Render-time only,
+  never part of the persisted spec (so an authored `branches` tree still
+  means the same thing everywhere it's rendered). Unknown/absent id fails
+  closed to the true root — never a broken render, never a guess.
+  `restart()` returns to the deep-linked fork ("try this decision again",
+  not "abandon the shortcut"); a separate "See the full picture from the
+  top" control (rendered only while the deep link is in effect) walks from
+  the true root. `GuidedWalkthrough` forwards `startAt` straight through;
+  `InteractiveSidecar`'s lesson-embedded call site passes nothing, so a
+  lesson-authored branching walkthrough is unaffected.
+- `CONCEPT_TO_WIZARD_NODE` (`method-selection-trainers.ts`) — a small
+  per-trainer `concept → node id` map, verified against the real
+  `node_id` values in `data/practice-items/gate-ma-la-*.json`,
+  `gate-ma-vector-calculus.json`, `gate-ma-probability-statistics.json`
+  (not assumed from the concept graph). `wizardStartNodeForConcept()`
+  resolves it; a test asserts every mapped node id is real in that
+  trainer's own tree, so the map can't silently drift from the content.
+  Coverage is partial and the two reasons are different: linear-algebra
+  and vector-calculus map every fork that IS a method decision (a few
+  purely foundational vector-calculus concepts correctly fall through to
+  the classification root, since they aren't "which theorem" questions);
+  distributions can only skip the count-vs-measurement root question,
+  because the curriculum has no per-distribution concept id (only
+  `discrete-distributions`/`continuous-distributions`) — a real content-
+  model limit, named rather than silently narrowed.
+- `TheoremWizardPage`/`DistributionSelectorPage` resolve `startAt` from
+  the existing `?concept=` param and pass it through — zero new routing,
+  zero new authoring for the 3 existing trainers.
+
+**Deliberately not done, tracked as the next wave:** the micro-solver
+authoring pass (a single fork + leaves as its own authorable unit,
+concept-by-concept, for the other 8 topic families that have no tree at
+all) — the second half of the brainstormed workflow. Follows the same
+5-6-concept subagent batch pattern used elsewhere in this doc, with
+Wolfram/hand-verification on every claim before any content ships.
+
+**Tests:** 10 new (`DecisionTreeWalkthrough.test.tsx` +7 deep-link/escape-
+hatch cases, `method-selection-trainers.test.ts` +3 map-resolution/self-
+consistency cases). Frontend suite 2604 → 2614/2614. `tsc --noEmit` clean.
+
+### Micro-solver wave 1: 4 more topics get a tailored wizard (2026-09-03)
+
+`/loop` continuation of the wizard brainstorm above — the "close coverage
+for the other topic families" half. 4 parallel Claude Sonnet subagents
+(isolated worktrees, no shared file access, real content only — no repo
+edits, drafts written to a scratch path) each authored ONE single-fork
+`MethodSelectionTrainer` for a topic with no wizard before this: root-
+finding method choice (`numerical-methods`), which-transform choice
+(`transform-theory`), first-order-ODE method choice
+(`differential-equations`), shortest-path algorithm choice
+(`graph-theory`). Every claim was hand-verified by the authoring agent
+(Wolfram MCP was disconnected all session) before this file incorporated
+it — Newton-Raphson's two iteration steps checked against direct
+arithmetic, the ODE's separability/non-linearity/non-exactness checked via
+∂M/∂y vs ∂N/∂x and a degree check (confirmed with SymPy locally), the
+Laplace/Fourier derivative identities and the four shortest-path
+algorithms' complexity/correctness conditions checked against standard
+results. All four merged in, wired, and validated by this session, not
+committed sight-unseen.
+
+**Same mechanism, no new component.** A "tree" with one node is the
+identical `BranchesSpec` shape a 6-fork tree uses — `DecisionTreeWalkthrough`
+needs no changes to render it, and the `steps[0]` `GuidedWalkthroughSpec`
+still requires (fallback path) is derived directly from the node/best-leaf
+pair, never a second independently-authored copy. `THEOREM_WIZARD_TRAINERS`
+grew from 2 keys to 6; `wizardRouteForTopic()`
+(`PracticeAttemptPage.tsx`) grew its allowlist to match;
+`CONCEPT_TO_WIZARD_NODE` gained one entry per new trainer's concept(s) —
+`transform-theory` tags all three transform concepts
+(`laplace-transform`/`fourier-transform`/`z-transform`) to its one shared
+fork, mirroring how `la_invertible` was already shared by two LA concepts.
+
+**Coverage after wave 1:** 6 of 10 topic families have a wizard
+(linear-algebra, vector-calculus, distributions, numerical-methods,
+transform-theory, differential-equations, graph-theory — 7, not counting
+distributions' different route). Still bare: calculus, complex-variables,
+discrete-mathematics — tracked in TODOS.md as the next batch, same pattern.
+
+**Tests:** 15 new (`method-selection-trainers.test.ts` +15: per-wave-1-
+trainer single-node-tree assertions, steps-derived-not-duplicated checks,
+concept-map self-consistency, the shared transform-theory fork). Full
+route-key list test updated (2 keys → 6). Frontend suite 2614 → 2636/2636.
+`tsc --noEmit` clean.
+
+### Wizard surfaced in the knowledge graph, not just after a wrong answer (2026-09-03)
+
+Follow-up ask: "see if this is connected to any knowledge graph, or if not,
+something can be done here." Researched before building anything —
+`src/constants/concept-graph.ts`/`data/curriculum/gate-ma.yml` is the real
+prerequisite DAG (every wizard-covered concept has declared
+`prerequisites:`, e.g. `diagonalization` needs `[eigenvalues,
+vector-spaces]`); `FrontierSpine.tsx` is its one visual surface (a
+topological spine, never a literal graph — see the T13 section above). A
+repo-wide grep for `"theorem-wizard"`/`"distribution-selector"` found
+exactly one linker outside the wizard's own files: `PracticeAttemptPage`'s
+reactive post-wrong-answer CTA. The wizard was invisible to the knowledge
+graph in both directions — not reachable from browsing it, and not
+consulting its prerequisite edges at all (`CONCEPT_TO_WIZARD_NODE` is a
+flat id→node lookup, confirmed unchanged).
+
+**Shipped:** `FrontierSpine.tsx`'s per-concept bottom sheet (the existing
+"Builds on: …" detail view, opened by tapping any row) now also renders a
+"Which method applies?" link when the tapped concept resolves through
+`wizardStartNodeForConcept('linear-algebra', concept)` — nothing when it
+doesn't, since a guessed/generic link would be worse than none. Lives in
+the sheet, not the row itself, to keep ONE focal element per screen (the
+row's own tap target stays "open detail", not "open detail OR launch a
+wizard"). Reuses the exact indigo-tint/`GitBranch` visual identity
+`PracticeAttemptPage`'s reactive wizard CTA already established, for one
+consistent "this leads to the wizard" affordance app-wide rather than two
+independently-styled ones. `FrontierSpine` is LA-only today (its own H1 is
+hardcoded "Linear Algebra" — see the T13 doc comment), so the trainer id is
+always `'linear-algebra'`; a future multi-topic frontier would need to
+thread the topic through instead of hardcoding it.
+
+**Deliberately not done, and why:** routing FROM the live prerequisite-
+alert path (`traceWeakestPrerequisite`/`refreshPrerequisiteAlerts` in
+`concept-graph.ts`/`student-model.ts`) into the wizard when a WEAK
+PREREQUISITE of a wizard-covered concept is flagged — a real forward-
+looking nudge, not just a reactive one — was considered and deferred as
+separate, larger wiring into an active production path (TODOS.md). Feeding
+a wizard leaf INTO `StudentModel`/FIRe credit was considered and rejected
+outright, not deferred: `DecisionTreeWalkthrough.test.tsx` has a structural
+guard against exactly this (`"A future onLeaf/onGraded prop would be the
+hole E5 closes"`) — the leaf's `best` flag is client-visible, so treating
+it as a trusted grading signal would reopen the client-trusted-grading
+class of bug the mock-exam fix closed.
+
+**Tests:** 3 new (`FrontierSpine.test.tsx` — link present for a mapped
+concept with the right href, absent for an unmapped one, 44px touch
+target). Existing 7 tests now render through `MemoryRouter` (the sheet's
+link requires a Router context). Frontend suite 2636 → 2639/2639.
+`tsc --noEmit` clean.
+
+### Wizard routed from weak prerequisites — student takeaway, teacher detail (2026-09-04)
+
+Direct follow-up: "look at how this connection to knowledge graph can help
+students focus on overcoming their weak areas... under the hood
+computation need not be visible... at least key takeaways. the teacher
+might get more information." Closes the TODOS.md item from the previous
+section — the BACKWARD direction (weak prerequisite → wizard), not just
+forward (browse graph → wizard).
+
+**The live path already existed and was already student-visible** —
+research before building anything found `refreshPrerequisiteAlerts`
+(`src/gbrain/student-model.ts`) fires on every real attempt
+(`POST /api/gbrain/attempt`), writes `prerequisite_alerts` to the student
+model, and `ErrorDiagnosis.tsx`'s "Foundation gap detected" card already
+renders `shaky_prereqs` in plain language on `PracticePage` after a wrong
+answer. What was missing was the wizard connection on top of it.
+
+**`wizardRouteForConcept(conceptId)`** (`method-selection-trainers.ts`) —
+resolves a full route from a bare concept id alone, searching every
+trainer's `CONCEPT_TO_WIZARD_NODE` map (unlike `wizardRouteForTopic`,
+which starts from a known topic). Handles the `distribution-selector`
+special case (a dedicated page, not a `/theorem-wizard/:module` route).
+Returns `null` for an unmapped concept — no guessed link.
+
+**Student takeaway, not the computation.** `ErrorDiagnosis.tsx`'s
+existing "Foundation gap detected" card gains one line — "Which method
+applies?" — when `wizardRouteForConcept(prerequisiteAlerts[0].concept)`
+resolves. No mastery numbers, no distance metrics, nothing the student
+didn't already see in that card's plain-language "Strengthen first: …"
+line; the link is the one new actionable thing.
+
+**Teacher detail.** `student-audit.ts`'s `auditStudent()` (backend,
+`@ts-nocheck`) — the source of `GET /api/gbrain/audit/:sessionId` and the
+`StudentAuditPage` at `/audit` — gains a `wizard_route: string | null`
+field on each `prerequisite_alerts` entry. `StudentAuditPage.tsx`'s
+existing "Foundation Alerts" card renders it as "Method-selection wizard
+available for `<concept>`" when present — visible only in the teacher-
+facing detail view, never the student-facing one.
+
+**Backend can't statically import frontend code** (`rootDir: "./src"`
+forbids it — same constraint `interactive-spec-loader.ts` documents).
+`src/content/wizard-route-loader.ts` is the SAME guarded dynamic-import
+pattern, one new file, so the backend never carries its own copy of
+`CONCEPT_TO_WIZARD_NODE` to drift from the frontend's (exactly the
+"parallel truths" bug class named in this doc's v4.25.0 section). Falls
+back to `null` when `frontend/src` isn't on disk (the demo image) — the
+teacher detail line simply doesn't render; nothing crashes.
+
+**Still deliberately out of scope**, per the prior section's TODO entry:
+this wires the ALERT surfaces the alert already reaches (student's
+post-wrong-answer card, teacher's audit report) — it does not add a NEW
+proactive nudge somewhere a student would see a weak-prerequisite alert
+before ever attempting the downstream concept (e.g. on `KnowledgeHomePage`
+before a wrong answer happens at all). That's a bigger, separate feature
+decision, not a wiring gap.
+
+**Tests:** 15 new — `method-selection-trainers.test.ts` +4
+(`wizardRouteForConcept`: theorem-wizard route, distribution-selector
+route, null for unmapped/absent, URL-encoding), `wizard-route-loader.test.ts`
++5 (backend loader: resolves, real mapping, null-not-throw, caches, reset),
+`ErrorDiagnosis.test.tsx` +4 (new file: link present/absent, plain-language
+line unchanged either way, no alert → no card), `StudentAuditPage.test.tsx`
++2 (new file: teacher link present/absent). Backend suite 4692 → 4701/4701
+(365 files). Frontend suite 2639 → 2649/2649. `tsc --noEmit` clean both
+sides. `npm run ci` (18 gates, including `ci:boot`) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

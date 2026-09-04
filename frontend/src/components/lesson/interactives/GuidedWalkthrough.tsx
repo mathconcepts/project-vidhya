@@ -41,13 +41,15 @@ export function revealTransitionDuration(reducedMotion: boolean): number {
 
 interface Props {
   spec: GuidedWalkthroughSpec;
+  /** Forwarded to DecisionTreeWalkthrough when `spec.branches` is present; a no-op otherwise. See that file's doc comment. */
+  startAt?: string;
 }
 
 type Phase = 'prompt' | 'hint' | 'answer';
 
-export function GuidedWalkthrough({ spec }: Props) {
+export function GuidedWalkthrough({ spec, startAt }: Props) {
   if (spec.branches) {
-    return <DecisionTreeWalkthrough spec={{ ...spec, branches: spec.branches }} />;
+    return <DecisionTreeWalkthrough spec={{ ...spec, branches: spec.branches }} startAt={startAt} />;
   }
   return <LinearWalkthrough spec={spec} />;
 }

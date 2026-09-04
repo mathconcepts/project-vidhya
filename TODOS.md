@@ -4,6 +4,100 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Proactive weak-prerequisite nudge, before the downstream concept is ever attempted
+
+**Trigger:** `KnowledgeHomePage`/`FrontierSpine` gets its next real feature
+pass, or a cohort report shows students sitting on a weak prerequisite of a
+wizard-covered concept for multiple sessions with no nudge until they
+finally attempt (and likely miss) the downstream concept.
+
+2026-09-04 closed the two REACTIVE surfaces the live prerequisite-alert
+path already reaches: `refreshPrerequisiteAlerts`
+(`src/gbrain/student-model.ts`) writes `prerequisite_alerts` on every real
+attempt, and both `ErrorDiagnosis.tsx` (student, post-wrong-answer) and
+`StudentAuditPage.tsx` (teacher, `/audit`) now resolve a
+`wizardRouteForConcept`/`wizard_route` for the alerted concept — see
+CLAUDE.md's 2026-09-04 "Wizard routed from weak prerequisites" section for
+the full wiring (`wizardRouteForConcept`, the `wizard-route-loader.ts`
+backend bridge, `wizard_route` on `StudentAuditReport`).
+
+**What's still open:** a PROACTIVE surface — nudging a student toward the
+wizard for a weak prerequisite BEFORE they ever attempt the downstream
+concept and get it wrong, e.g. on `KnowledgeHomePage`/`FrontierSpine`
+itself, using the same `prerequisite_alerts` a student already has from
+past attempts. This is real, new UI/UX design work (where does it live so
+it doesn't compete with `FrontierSpine`'s existing "You are here" focal
+card — Vidhya Clarity is explicit that a screen gets ONE focal element),
+not just wiring an existing resolver into an existing card the way the
+reactive surfaces were. Decide the placement deliberately before building.
+
+**Explicitly out of scope, not just deferred:** feeding a wizard LEAF
+result into `StudentModel`/FIRe credit. `DecisionTreeWalkthrough.test.tsx`
+has a structural guard against exactly this (search for "onLeaf" in that
+file) — the leaf's `best` flag is client-visible, so treating it as a
+trusted grading signal reopens the client-trusted-grading bug class the
+mock-exam fix closed. Nothing here should route a leaf answer into
+grading; it's about surfacing the wizard's EXISTENCE earlier, not scoring
+what a student does inside it.
+
+## Micro-solver authoring pass wave 2: close wizard coverage for the last 3 topic families
+
+**Trigger:** ready to start the next content wave, or a live-QA report
+naming a method-selection miss on calculus, complex-variables, or
+discrete-mathematics.
+
+`/office-hours` (2026-09-03) brainstormed the tailored-mistake-wizard
+redesign; the `startAt` deep-link mechanism (CLAUDE.md's 2026-09-03
+"Method-selection wizard: `startAt` deep link" section) is shipped and
+covers linear-algebra/vector-calculus/distributions. Wave 1 (CLAUDE.md's
+2026-09-03 "Micro-solver wave 1" section, same-day `/loop` continuation)
+used 4 parallel Claude Sonnet subagents to author one single-fork
+`MethodSelectionTrainer` each for numerical-methods, transform-theory,
+differential-equations, and graph-theory — 6 of 10 topic families now have
+a wizard. Three remain bare: **calculus, complex-variables,
+discrete-mathematics.**
+
+**What:** same pattern as wave 1, one subagent per topic (isolated
+worktree, no repo edits — draft to a scratch JSON path, merge by hand
+after review). Pick the concept most likely to produce a real
+method-selection miss, author ONE `BranchNode` + 2-3 `BranchLeaf`s (same
+schema `DecisionTreeWalkthrough` already renders — a 1-node tree needs no
+new component or renderer change), register it under a new trainer keyed
+by the topic's module id in `THEOREM_WIZARD_TRAINERS`, and add the
+concept's entry to `CONCEPT_TO_WIZARD_NODE`. Every leaf's `reason` must
+say why the plausible wrong method fails, same discipline as all 6 shipped
+trainers — verify every mathematical claim (Wolfram or by hand) before
+authoring; wave 1's subagents all hand-verified via SymPy/direct
+arithmetic since Wolfram MCP was disconnected that session too.
+
+**Candidate decisions, not yet picked/verified — a starting point, not a
+commitment:**
+- calculus: series-convergence test selection (ratio/root/comparison/
+  integral test), or a critical-point classification decision
+  (second-derivative test vs. first-derivative sign chart) — concept ids
+  confirmed real: `series`, `maxima-minima`.
+- complex-variables: contour-integration method choice (Cauchy's theorem
+  vs. Cauchy's integral formula vs. residue theorem, by singularity
+  location relative to the contour) — concept id `complex-integration` or
+  `residue-calculus`.
+- discrete-mathematics: proof-technique selection (direct vs. induction
+  vs. contradiction) is the classic fit but may not map cleanly to one
+  practice-item concept; `recurrence-relations` (which solving technique —
+  characteristic equation vs. substitution vs. master theorem — applies)
+  is a more concrete alternative worth checking against the real
+  practice-item bank first.
+
+**Where to start:** `frontend/src/data/method-selection-trainers.ts` for
+the data shape and all 6 existing trainers as templates (the wave-1 four
+are the closest style match, being single-fork themselves);
+`frontend/src/pages/app/TheoremWizardPage.tsx`'s routing and
+`wizardRouteForTopic()`'s allowlist in `PracticeAttemptPage.tsx` both need
+the new topic slugs added, same as wave 1's diff.
+
+**Effort:** S per concept (one fork + its leaves, roughly a `common_traps`
+atom's worth of authoring + verification) — wave 1's 4 subagents each took
+roughly 1-2 minutes of wall time and under 170k tokens.
+
 ## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
 
 **Trigger:** the next live-QA report naming a different concept's
@@ -17,12 +111,16 @@ connection to its own concept's `hook.md` resonance-beat scene, and fixed
 it by threading ONE shared worked example through both atoms via a new
 predict-before-reveal scene (see CLAUDE.md's 2026-09-03 "cramped CTAs +
 Cayley-Hamilton silo" section for the exact pattern and Wolfram-verification
-discipline used). This was NOT audited corpus-wide — Cayley-Hamilton was
-the one concrete example the report named. The same pattern (an
-`intuition`/`mnemonic` atom authored independently of its concept's hook,
-with no shared example or interactive element) likely recurs elsewhere;
-`scripts/check-reading-load.ts` (`npm run content:reading-load-report`)
-already flags atoms with zero beat coverage and can seed the worklist.
+discipline used). A second, same-day `/investigate` follow-up found the
+IDENTICAL defect on `trace/atoms/intuition.md` (a dense abstract paragraph
+sharing zero numbers with `hook.md`'s own matrix) plus a second silo
+instance in `trace/atoms/intuition-shaken.md` (a different matrix than the
+hook's), both fixed with the same template — see CLAUDE.md's 2026-09-03
+"revert claim was false, trace silo" section. Two confirmed instances now,
+not a prediction: this pattern recurs and is worth a systematic sweep, not
+just reactive per-report fixes. `scripts/check-reading-load.ts`
+(`npm run content:reading-load-report`) already flags atoms with zero beat
+coverage and can seed the worklist.
 
 **What:** for each flagged concept, read its `hook.md` (does it already
 carry a resonance scene? what matrix/example does it use?) before writing

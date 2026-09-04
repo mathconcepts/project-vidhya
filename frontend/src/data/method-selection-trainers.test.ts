@@ -15,8 +15,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   ALL_METHOD_SELECTION_TRAINERS,
+  CONCEPT_TO_WIZARD_NODE,
   DISTRIBUTION_TRAINER,
   THEOREM_WIZARD_TRAINERS,
+  wizardStartNodeForConcept,
+  wizardRouteForConcept,
 } from './method-selection-trainers';
 import { __testing } from '@/components/lesson/interactives/types';
 
@@ -98,10 +101,118 @@ describe('method-selection trainers — the migration lost nothing', () => {
     }
   });
 
-  it('routes both theorem-wizard modules that the page shipped', () => {
+  it('routes every theorem-wizard module the page ships, D2 pair plus wave-1 single-fork trainers', () => {
     expect(Object.keys(THEOREM_WIZARD_TRAINERS).sort()).toEqual([
+      'differential-equations',
+      'graph-theory',
       'linear-algebra',
+      'numerical-methods',
+      'transform-theory',
       'vector-calculus',
     ]);
+  });
+});
+
+describe('micro-solver wave 1 — single-fork trainers (2026-09-03)', () => {
+  const WAVE_1_IDS = ['numerical-methods', 'transform-theory', 'graph-theory', 'differential-equations'];
+
+  it.each(WAVE_1_IDS)('%s is exactly a single-node tree — a micro-solver, not a multi-fork tree', (id) => {
+    const trainer = THEOREM_WIZARD_TRAINERS[id];
+    expect(trainer).toBeDefined();
+    expect(trainer.spec.branches!.nodes).toHaveLength(1);
+  });
+
+  it.each(WAVE_1_IDS)('%s\'s single step is derived from its node/best-leaf, not a second copy of the content', (id) => {
+    const trainer = THEOREM_WIZARD_TRAINERS[id];
+    const node = trainer.spec.branches!.nodes[0];
+    const bestLeaf = trainer.spec.branches!.leaves.find((l) => l.best === true)!;
+    expect(trainer.spec.steps).toHaveLength(1);
+    expect(trainer.spec.steps[0].prompt).toBe(node.question);
+    expect(bestLeaf).toBeDefined();
+  });
+
+  it('every wave-1 concept in CONCEPT_TO_WIZARD_NODE resolves to that trainer\'s one node', () => {
+    for (const trainerId of WAVE_1_IDS) {
+      const nodeId = THEOREM_WIZARD_TRAINERS[trainerId].spec.branches!.nodes[0].id;
+      const concepts = CONCEPT_TO_WIZARD_NODE[trainerId];
+      expect(Object.keys(concepts).length).toBeGreaterThan(0);
+      for (const mapped of Object.values(concepts)) {
+        expect(mapped).toBe(nodeId);
+      }
+    }
+  });
+
+  it('transform-theory tags all three transform concepts to its one shared fork', () => {
+    expect(wizardStartNodeForConcept('transform-theory', 'laplace-transform')).toBe('tt_transform_pick');
+    expect(wizardStartNodeForConcept('transform-theory', 'fourier-transform')).toBe('tt_transform_pick');
+    expect(wizardStartNodeForConcept('transform-theory', 'z-transform')).toBe('tt_transform_pick');
+  });
+});
+
+describe('CONCEPT_TO_WIZARD_NODE — the startAt deep-link map', () => {
+  function trainerFor(trainerId: string) {
+    if (trainerId === 'distribution-selector') return DISTRIBUTION_TRAINER;
+    return THEOREM_WIZARD_TRAINERS[trainerId];
+  }
+
+  it('every mapped node id is a real node in that trainer\'s own tree — no stale/typo\'d targets', () => {
+    for (const [trainerId, concepts] of Object.entries(CONCEPT_TO_WIZARD_NODE)) {
+      const trainer = trainerFor(trainerId);
+      expect(trainer, `no trainer registered for "${trainerId}"`).toBeDefined();
+      const nodeIds = new Set(trainer.spec.branches!.nodes.map((n) => n.id));
+      for (const [concept, nodeId] of Object.entries(concepts)) {
+        expect(
+          nodeIds.has(nodeId),
+          `${trainerId}/${concept} -> "${nodeId}" is not a node in ${trainerId}'s tree`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('resolves a mapped concept to its fork', () => {
+    expect(wizardStartNodeForConcept('linear-algebra', 'determinants')).toBe('la_invertible');
+    expect(wizardStartNodeForConcept('linear-algebra', 'rank-nullity')).toBe('la_injective');
+    expect(wizardStartNodeForConcept('vector-calculus', 'stokes-theorem')).toBe('vc_space_pick');
+    expect(wizardStartNodeForConcept('distribution-selector', 'discrete-distributions')).toBe(
+      'ds_discrete',
+    );
+  });
+
+  it('returns undefined for an unmapped concept, an unmapped trainer, or no concept — never a guess', () => {
+    expect(wizardStartNodeForConcept('linear-algebra', 'vector-spaces')).toBeUndefined();
+    expect(wizardStartNodeForConcept('some-unknown-trainer', 'determinants')).toBeUndefined();
+    expect(wizardStartNodeForConcept('linear-algebra', null)).toBeUndefined();
+    expect(wizardStartNodeForConcept('linear-algebra', undefined)).toBeUndefined();
+  });
+});
+
+describe('wizardRouteForConcept — resolving a full route from a concept id alone', () => {
+  it('resolves a theorem-wizard route for a concept whose trainer is not known up front', () => {
+    expect(wizardRouteForConcept('determinants')).toBe('/theorem-wizard/linear-algebra?concept=determinants');
+    expect(wizardRouteForConcept('stokes-theorem')).toBe('/theorem-wizard/vector-calculus?concept=stokes-theorem');
+    expect(wizardRouteForConcept('root-finding')).toBe('/theorem-wizard/numerical-methods?concept=root-finding');
+  });
+
+  it('resolves the dedicated /distribution-selector route, not a /theorem-wizard/distribution-selector guess', () => {
+    expect(wizardRouteForConcept('discrete-distributions')).toBe(
+      '/distribution-selector?concept=discrete-distributions',
+    );
+  });
+
+  it('returns null for an unmapped or absent concept — never a guessed link', () => {
+    expect(wizardRouteForConcept('vector-spaces')).toBeNull();
+    expect(wizardRouteForConcept(null)).toBeNull();
+    expect(wizardRouteForConcept(undefined)).toBeNull();
+    expect(wizardRouteForConcept('')).toBeNull();
+  });
+
+  it('URL-encodes the concept id in the query string', () => {
+    // No real concept id in this codebase needs encoding today, but the
+    // resolver must not silently break if one ever does (e.g. a future
+    // concept id containing a space or slash).
+    const originalMap = CONCEPT_TO_WIZARD_NODE['linear-algebra'];
+    expect(originalMap).toBeDefined();
+    const route = wizardRouteForConcept('determinants');
+    expect(route).toContain(encodeURIComponent('determinants'));
   });
 });

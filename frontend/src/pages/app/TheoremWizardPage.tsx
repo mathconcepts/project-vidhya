@@ -22,12 +22,19 @@
  * wrong answer, it carries `?concept=<node_id>&mistake=<label>` — read via
  * `useSearchParams` and handed to `WizardContextBanner`/`WizardPracticeCTA`
  * (both no-ops when absent, so a directly-visited wizard is unchanged).
+ *
+ * Wizard-mistake-loop follow-up (2026-09-03): `concept` also resolves a
+ * `startAt` node via `wizardStartNodeForConcept` (undefined when unmapped,
+ * which `GuidedWalkthrough`/`DecisionTreeWalkthrough` already treat as "open
+ * at the true root") so the tree drops the student at the fork their
+ * mistake was actually in, instead of always the topic's classification
+ * root.
  */
 
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import { GuidedWalkthrough } from '@/components/lesson/interactives/GuidedWalkthrough';
-import { THEOREM_WIZARD_TRAINERS } from '@/data/method-selection-trainers';
+import { THEOREM_WIZARD_TRAINERS, wizardStartNodeForConcept } from '@/data/method-selection-trainers';
 import { WizardContextBanner, WizardPracticeCTA } from '@/components/app/WizardMistakeLoop';
 
 export default function TheoremWizardPage() {
@@ -36,6 +43,7 @@ export default function TheoremWizardPage() {
   const concept = searchParams.get('concept');
   const mistakeLabel = searchParams.get('mistake');
   const trainer = THEOREM_WIZARD_TRAINERS[moduleId ?? ''];
+  const startAt = wizardStartNodeForConcept(moduleId ?? '', concept);
 
   if (!trainer) {
     return (
@@ -88,7 +96,7 @@ export default function TheoremWizardPage() {
 
       <WizardContextBanner concept={concept} mistakeLabel={mistakeLabel} />
 
-      <GuidedWalkthrough spec={trainer.spec} />
+      <GuidedWalkthrough spec={trainer.spec} startAt={startAt} />
 
       <WizardPracticeCTA concept={concept} />
     </div>

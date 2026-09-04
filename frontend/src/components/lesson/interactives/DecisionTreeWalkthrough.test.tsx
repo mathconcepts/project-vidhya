@@ -22,6 +22,8 @@ import {
   BEST_HEADING,
   NOT_BEST_HEADING,
   SELF_CHECK_LABEL,
+  DEEP_LINK_NOTE,
+  FULL_PICTURE_LABEL,
 } from './DecisionTreeWalkthrough';
 import type { GuidedWalkthroughSpec } from './types';
 import { __testing } from './types';
@@ -262,5 +264,64 @@ describe('DecisionTreeWalkthrough — E5: self-check only', () => {
 describe('DecisionTreeWalkthrough — the fixture is a legal spec', () => {
   it('passes the shared validator, so this test cannot drift from the renderer', () => {
     expect(__testing.validateSpec(SPEC).ok).toBe(true);
+  });
+});
+
+describe('DecisionTreeWalkthrough — startAt deep link (wizard-mistake-loop follow-up)', () => {
+  it('with no startAt, opens at the true root exactly as before — the note and escape hatch are absent', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} />);
+    expect(screen.getByText('What is the integral taken over?')).toBeInTheDocument();
+    expect(screen.queryByText(DEEP_LINK_NOTE)).toBeNull();
+    expect(screen.queryByRole('button', { name: new RegExp(FULL_PICTURE_LABEL, 'i') })).toBeNull();
+  });
+
+  it('a valid startAt opens directly at that fork, skipping the classification question above it', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} startAt="n_flat" />);
+    expect(screen.queryByText('What is the integral taken over?')).toBeNull();
+    expect(screen.getByText('Does the curve lie flat in a plane?')).toBeInTheDocument();
+    expect(screen.getByText(DEEP_LINK_NOTE)).toBeInTheDocument();
+  });
+
+  it('an unknown startAt fails closed to the true root — never a broken render', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} startAt="not_a_real_node_id" />);
+    expect(screen.getByText('What is the integral taken over?')).toBeInTheDocument();
+    expect(screen.queryByText(DEEP_LINK_NOTE)).toBeNull();
+  });
+
+  it('a startAt naming a leaf id (not a node) also fails closed to the true root', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} startAt="leaf_green" />);
+    expect(screen.getByText('What is the integral taken over?')).toBeInTheDocument();
+    expect(screen.queryByText(DEEP_LINK_NOTE)).toBeNull();
+  });
+
+  it('restart() returns to the deep-linked fork, not the true root', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} startAt="n_flat" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Yes, it is a plane curve' }));
+    expect(screen.getByTestId('decision-leaf')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /start over/i }));
+    expect(screen.getByText('Does the curve lie flat in a plane?')).toBeInTheDocument();
+    expect(screen.queryByText('What is the integral taken over?')).toBeNull();
+  });
+
+  it('"see the full picture" walks from the true root and then the escape hatch is gone', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} startAt="n_flat" />);
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(FULL_PICTURE_LABEL, 'i') }));
+    expect(screen.getByText('What is the integral taken over?')).toBeInTheDocument();
+    expect(screen.queryByText(DEEP_LINK_NOTE)).toBeNull();
+    expect(screen.queryByRole('button', { name: new RegExp(FULL_PICTURE_LABEL, 'i') })).toBeNull();
+
+    // Walking from the true root and reaching a leaf, then restarting, stays
+    // at the true root — the deep link does not silently come back.
+    fireEvent.click(screen.getByRole('button', { name: 'A surface S' }));
+    expect(screen.getByTestId('decision-leaf')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /start over/i }));
+    expect(screen.getByText('What is the integral taken over?')).toBeInTheDocument();
+  });
+
+  it('GuidedWalkthrough forwards startAt through to the wizard', () => {
+    render(<GuidedWalkthrough spec={SPEC} startAt="n_flat" />);
+    expect(screen.getByText('Does the curve lie flat in a plane?')).toBeInTheDocument();
+    expect(screen.getByText(DEEP_LINK_NOTE)).toBeInTheDocument();
   });
 });

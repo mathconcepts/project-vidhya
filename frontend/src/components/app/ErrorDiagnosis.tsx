@@ -5,8 +5,10 @@
  */
 
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, Brain, ChevronDown, ChevronUp, Lightbulb, Target, GitBranch } from 'lucide-react';
+import { wizardRouteForConcept } from '@/data/method-selection-trainers';
 
 interface CorrectionProblem {
   question: string;
@@ -174,18 +176,42 @@ export function ErrorDiagnosis({ diagnosis, prerequisiteAlerts, motivationState,
               </div>
 
               {/* Prerequisite alerts */}
-              {prerequisiteAlerts && prerequisiteAlerts.length > 0 && (
-                <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)' }}>
-                  <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    <GitBranch size={10} style={{ display: 'inline', marginRight: 4 }} />
-                    Foundation gap detected
-                  </p>
-                  <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
-                    Strengthen first:{' '}
-                    {prerequisiteAlerts[0].shaky_prereqs.map(p => p.replace(/-/g, ' ')).join(' → ')}
-                  </p>
-                </div>
-              )}
+              {prerequisiteAlerts && prerequisiteAlerts.length > 0 && (() => {
+                // Weak-prerequisite -> wizard follow-up (2026-09-04): the
+                // alert already names the concept under test
+                // (`prerequisiteAlerts[0].concept`) -- exactly the id
+                // CONCEPT_TO_WIZARD_NODE keys on. A "key takeaway" link,
+                // not the underlying computation: no mastery numbers, no
+                // distance metrics, just "here's a quick check for this."
+                // Absent when the concept has no wizard fork -- most
+                // concepts don't, and a guessed link would be worse than
+                // none.
+                const wizardHref = wizardRouteForConcept(prerequisiteAlerts[0].concept);
+                return (
+                  <div style={{ padding: 12, borderRadius: 'var(--radius-sm)', background: 'rgba(88,86,214,.05)', border: '1px solid rgba(88,86,214,.18)' }}>
+                    <p style={{ margin: '0 0 4px', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', color: 'var(--indigo-ink)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      <GitBranch size={10} style={{ display: 'inline', marginRight: 4 }} />
+                      Foundation gap detected
+                    </p>
+                    <p style={{ margin: 0, fontSize: 'var(--text-footnote)', color: 'var(--text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+                      Strengthen first:{' '}
+                      {prerequisiteAlerts[0].shaky_prereqs.map(p => p.replace(/-/g, ' ')).join(' → ')}
+                    </p>
+                    {wizardHref && (
+                      <Link
+                        to={wizardHref}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8,
+                          fontSize: 'var(--text-caption)', fontWeight: 'var(--weight-semibold)',
+                          color: 'var(--indigo-ink)', textDecoration: 'none',
+                        }}
+                      >
+                        <GitBranch size={11} aria-hidden /> Which method applies?
+                      </Link>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Corrective problem */}
               {diagnosis.corrective_problem && (

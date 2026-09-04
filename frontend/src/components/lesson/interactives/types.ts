@@ -196,6 +196,20 @@ export interface SimulationSpec {
      */
     emphasize?: boolean;
     /**
+     * `linear_map` scenes only: indices into `linear_map.eigen[]` this beat
+     * is talking ABOUT, right now — distinct from `emphasize`, which marks
+     * the single payoff/reveal beat. A beat that names a specific
+     * coordinate or vector ("the one along (1, 0.618)...") but fires
+     * BEFORE the reveal previously drew that arrow identically to the
+     * other 15 anonymous ones — the narration pointed at something the
+     * figure gave no visual anchor for (live QA, 2026-09-04). While this
+     * beat is active, the named arrow(s) draw at a heavier ink stroke plus
+     * a coordinate label, independent of and never overriding the reveal's
+     * own green + `×λ` treatment. Reverts the instant the beat passes,
+     * same discipline as `emphasize`.
+     */
+    focus_eigen?: number[];
+    /**
      * Presence makes this THE trap beat. Schema-enforced: at most one beat
      * per scene may carry `trap` (design contract item 8) — the single
      * top-level `ghost` path is its counterpart, and two trap beats with
@@ -452,6 +466,21 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
       if (lengthFailure) return lengthFailure;
       if (step.emphasize !== undefined && typeof step.emphasize !== 'boolean') {
         return { ok: false, reason: `simulation.narration_steps[${i}].emphasize must be a boolean` };
+      }
+      if (step.focus_eigen !== undefined) {
+        const eigenCount = raw.linear_map?.eigen?.length ?? 0;
+        const bad =
+          !Array.isArray(step.focus_eigen) ||
+          step.focus_eigen.length === 0 ||
+          step.focus_eigen.some(
+            (idx: any) => !Number.isInteger(idx) || idx < 0 || idx >= eigenCount,
+          );
+        if (bad) {
+          return {
+            ok: false,
+            reason: `simulation.narration_steps[${i}].focus_eigen must be a non-empty array of indices into linear_map.eigen[] (0..${eigenCount - 1})`,
+          };
+        }
       }
       if (step.trap !== undefined) {
         trapCount++;

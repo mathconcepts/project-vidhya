@@ -329,7 +329,11 @@ describe('PracticeAttemptPage — method-selection wizard link (one learn-more s
   const LA_ITEM = { ...MCQ_ITEM, id: 'obj-la', topic: 'linear-algebra' };
   const LA_ITEM_TITLE_CASE = { ...MCQ_ITEM, id: 'obj-la2', topic: 'Linear Algebra' };
   const PS_ITEM = { ...MCQ_ITEM, id: 'obj-ps', topic: 'probability-statistics' };
-  const UNMAPPED_ITEM = { ...MCQ_ITEM, id: 'obj-cx', topic: 'complex-variables' };
+  // Micro-solver wave 2 (2026-09-04) gave every one of the 10 GATE-EM topic
+  // families a trainer — complex-variables (this test's old example) is now
+  // mapped, so "unmapped" needs a topic string with genuinely no trainer,
+  // never a real subject that happens not to be covered yet.
+  const UNMAPPED_ITEM = { ...MCQ_ITEM, id: 'obj-unmapped', topic: 'some-topic-with-no-trainer' };
 
   async function submitWrong(item: typeof MCQ_ITEM, failureTag: string | null) {
     const { authFetch } = await import('@/lib/auth/client');
@@ -421,5 +425,56 @@ describe('PracticeAttemptPage — method-selection wizard link (one learn-more s
     await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
     expect(screen.queryByText(/Which method applies/)).toBeNull();
     expect(screen.queryByText('Explore this concept')).toBeNull();
+  });
+});
+
+// Regression (/design-review, 2026-09-04, live QA: "static text, no motion" on
+// the solution-steps panel): solution_steps used to render as a plain
+// `<ol><li>` of raw strings — no KaTeX, no motion. Now routed through
+// MarkdownAtomRenderer with `structured`, matching every other structured
+// list in the app.
+describe('PracticeAttemptPage — solution_steps rendering', () => {
+  async function submitWithSteps(steps: string[], correct = true) {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: correct ? 1 : 0, max: 1, correct, feedback: correct ? 'Nice work.' : 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: steps,
+        recorded: true,
+        xp_minutes_awarded: correct ? 1 : null,
+        failure_tag: null,
+      }));
+    await renderPage();
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[correct ? 1 : 0]);
+    fireEvent.click(screen.getByText('Submit'));
+    await waitFor(() => expect(screen.getByText(correct ? /^Correct/ : /Not this time/)).toBeInTheDocument());
+  }
+
+  it('renders each step as a hairline-separated structured row, not a bare <ol><li>', async () => {
+    await submitWithSteps(['D1 = 4 > 0.', 'D2 = det(A) = 4·3 - 2·2 = 8 > 0.']);
+    expect(screen.getByText(/D1 = 4 > 0\./)).toBeInTheDocument();
+    expect(screen.getByText(/D2 = det\(A\)/)).toBeInTheDocument();
+    // MarkdownAtomRenderer's structured mode renders an actual <ol>/<li> list
+    // (list-style handled in CSS, not by dropping the semantic list markup).
+    const items = screen.getAllByRole('listitem');
+    expect(items.length).toBe(2);
+    // No bare, unstyled <ol> left over from the old plain-string rendering.
+    expect(document.querySelector('ol[style]')).toBeNull();
+  });
+
+  it('typesets a LaTeX-authored step through KaTeX instead of leaking raw source', async () => {
+    await submitWithSteps(['By Sylvester\'s criterion, $D_1 > 0$ and $D_2 > 0$.'], false);
+    // A raw, unrendered "$D_1 > 0$" string would still contain the literal
+    // dollar signs — KaTeX output does not.
+    expect(screen.queryByText(/\$D_1/)).toBeNull();
+    expect(document.querySelector('.katex')).not.toBeNull();
+  });
+
+  it('shows nothing extra when solution_steps is empty', async () => {
+    await submitWithSteps([]);
+    expect(screen.queryAllByRole('listitem').length).toBe(0);
   });
 });

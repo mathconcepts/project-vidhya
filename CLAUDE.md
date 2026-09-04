@@ -2976,6 +2976,133 @@ line unchanged either way, no alert → no card), `StudentAuditPage.test.tsx`
 (365 files). Frontend suite 2639 → 2649/2649. `tsc --noEmit` clean both
 sides. `npm run ci` (18 gates, including `ci:boot`) clean.
 
+### `/design-review` on a live-QA report: hook coordinate focus, static-text motion, and wizard coverage for all 10 topics (2026-09-04)
+
+Four asks in one report: ELI5/"convey more in less" outside plain static
+text; a hook's coordinates/vectors should stay in focus as the narration
+discusses them; motion/animation/progression used generously across
+sections; every practice question mapped to a concept-level solver, "any
+topic of any exam." Root-caused against three screenshots (all three, it
+turned out, the same concept — `positive-definite-matrices` — a Smart
+Practice MCQ, its "Correct" result panel, and its hook mid-scroll) before
+touching anything, per the skill's own discipline.
+
+**Hook coordinate focus — new `focus_eigen` schema field.**
+`Simulation.tsx`'s `LinearMapScene` already highlights the payoff
+eigen-arrows green with a `×λ` label, but only once the scene's `emphasize`
+beat (the reveal) is reached. `positive-definite-matrices/atoms/hook.md`'s
+beat at `at_progress: 0.45` names specific coordinates and stretch factors
+("The one along $(1,0.618)$ stretched to about 3.618 times its length...")
+a full beat BEFORE the reveal — during that beat the arrow it is talking
+about rendered identically to the other 15 anonymous ones, exactly the
+reported defect. `focus_eigen?: number[]` (new, additive field on
+`narration_steps[]`, `frontend/src/components/lesson/interactives/types.ts`)
+names which `linear_map.eigen[]` indices a beat is discussing RIGHT NOW,
+independent of the reveal: the named arrow(s) draw at a heavier ink stroke
+(never green — nothing is confirmed as the payoff yet) plus a coordinate
+label reading the AUTHORED direction (not the internal normalized unit
+vector, which would silently disagree with the narration's own numbers).
+Validated against `linear_map.eigen.length` (out-of-range/negative/empty
+refused) and refused entirely on a scene with no `linear_map` (nothing to
+index). Wired into `positive-definite-matrices/atoms/hook.md` +
+`hook-shaken.md` + `hook-assured.md` (byte-identical fence, `focus_eigen:
+[0,1]` on the beat naming both eigen-arrows) — a corpus-wide sweep for
+other scenes with the same defect is future work, not attempted here (this
+pass fixed the reported instance and shipped the reusable mechanism).
+
+**A propagation bug caught before it shipped, not after.** The first
+attempt to copy the updated fence from `hook.md` into its two stance
+variants used `grep -o` (single-line matching) to extract/compare the
+fence — silently wrong on a 3-line ` ```interactive-spec\n{...}\n``` `
+block, since `grep -o` never spans lines without `-z`/`-P`. The "same
+fence" diff check that seemed to pass was comparing two empty outputs, and
+the follow-up propagation script substituted the real fence with that same
+empty string, deleting it from both variant files entirely.
+`ci:variant-agreement` caught it immediately (`[interactive-dropped] base
+has 1 fenced blocks, variant has 0`) — re-fixed with a proper
+`re.DOTALL`-based Python extraction and re-verified byte-identical before
+moving on. Recorded here because the almost-shipped failure mode (a
+shell one-liner that looks right against a single-line pattern, silently
+wrong against a multi-line one) is a real trap for future content edits
+touching these fenced blocks.
+
+**Static-text motion — the practice-item solution-steps panel.**
+`PracticeAttemptPage.tsx`'s post-answer "D1 = 4 > 0. D2 = det(A)..." panel
+(`result.solution_steps`) rendered as a plain `<ol><li>` of raw strings —
+the exact "static text, no motion" complaint, and also the same
+"independently-drifted content surface" bug class named elsewhere in this
+doc (`ConceptMathViz`'s pre-2026-09-02 disconnection, the
+`guided_walkthrough` bracket-array bug, the trap-row raw-LaTeX bug): any
+step authored with LaTeX would have leaked its raw source instead of
+typesetting, since this panel never went through `MarkdownAtomRenderer`.
+Now routed through it with `structured` — one shared component instead of
+a second copy of list rendering, which gets both fixes for free: real
+KaTeX typesetting AND the same hairline-separated, once-on-mount staggered
+row entrance (`.vidhya-atom-body--structured`) every other structured list
+in the app already has.
+
+**Wizard coverage — micro-solver wave 2, all 10 topic families closed.**
+`positive-definite-matrices` was ALREADY correctly wired
+(`CONCEPT_TO_WIZARD_NODE['linear-algebra'].positive-definite-matrices ->
+'la_definite'`, whose `la_leaf_diag_entries` leaf directly names the exact
+trap in the screenshot's wrong MCQ option — "diagonal entries are
+positive" — so no fix was needed there, just confirmation the existing
+system already covers this exact question). The genuinely open half of
+the "any topic" ask was the 3 remaining bare topic families named in
+TODOS.md's wave-2 entry: **calculus, complex-variables,
+discrete-mathematics.** Closed with the same single-fork pattern as wave 1
+(`CALCULUS`/`COMPLEX_VARIABLES`/`DISCRETE_MATHEMATICS` in
+`method-selection-trainers.ts`), every numeric claim hand-verified via
+local SymPy (Wolfram MCP was disconnected this session, same fallback wave
+1 used):
+- **calculus** — ∫x·ln(x)dx: integration by parts is correct
+  ((x²/2)ln x − x²/4 + C, SymPy-confirmed); the substitution trap shows
+  u = ln x just relabels the problem into a NEW integral (u·e^(2u)du) that
+  itself needs by parts; partial fractions is refused outright since
+  ln(x) is transcendental, not a polynomial ratio.
+- **complex-variables** — ∮ 1/[(z−1)(z−3)]dz on |z|=2: only z=1 is inside,
+  so direct Cauchy Integral Formula gives −πi (SymPy residue-verified).
+  The trap leaf shows what happens if a student wrongly includes the
+  OUTSIDE pole (z=3) in a residue sum: −1/2 + 1/2 = 0, silently zeroing
+  out the correct nonzero answer — a concrete, computed trap, not a vague
+  "wrong" gesture. The third leaf correctly refuses Cauchy's theorem
+  (needs zero poles inside, and there is one).
+- **discrete-mathematics** — "divisible by 2 or 5 from 1-100" is
+  inclusion-exclusion (50+20−10=60), not a direct `C(n,r)` combination
+  (wrong question shape — no selection is happening) or pigeonhole (an
+  existence principle, never a counting one).
+
+`THEOREM_WIZARD_TRAINERS`, `ALL_METHOD_SELECTION_TRAINERS`,
+`CONCEPT_TO_WIZARD_NODE`, and `PracticeAttemptPage.tsx`'s
+`wizardRouteForTopic()` allowlist all gained the three new keys — same
+diff shape as wave 1. One existing test broke as a DIRECT, expected
+consequence: `PracticeAttemptPage.test.tsx`'s "unmapped topic" example
+used `complex-variables`, which is now mapped — swapped for a genuinely
+fictional topic string (`some-topic-with-no-trainer`) rather than a real
+subject that happens not to be covered, so the test still means what it
+claims to mean.
+
+**Coverage after wave 2: all 10 of 10 GATE-EM topic families have a
+wizard entry point** (linear-algebra, vector-calculus,
+probability-statistics, numerical-methods, transform-theory, graph-theory,
+differential-equations, calculus, complex-variables,
+discrete-mathematics) — up from 6/10 after wave 1. TODOS.md's wave-2 entry
+is closed and replaced with an honest scope note: wave 2 covers exactly
+one concept (or a small cluster) per new topic, not every concept in
+those topics — most concepts in calculus/complex-variables/discrete-math
+still have no fork of their own, tracked as a possible wave 3.
+
+**Tests:** 4 new (`types.test.ts` focus_eigen validation) + 1 new
+(`Simulation.test.tsx` render/clear behavior) + 3 new
+(`PracticeAttemptPage.test.tsx` solution_steps rendering, incl. a LaTeX
+step actually typesetting through KaTeX) + 10 new
+(`method-selection-trainers.test.ts` wave-2 single-fork + concept-map
+tests) + 1 existing test's fixture corrected. Frontend suite 2649 →
+2678/2678. Backend untouched (frontend-only change), 4701/4701 (365
+files), `1 todo` unchanged. `tsc --noEmit` clean. `npm run ci` (18 gates,
+including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs)
+clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

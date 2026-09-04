@@ -4,6 +4,47 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.57.0] — 2026-09-04 — `/design-review`: hook coordinate focus, static-text motion, wizard coverage complete
+
+No new env vars, no migrations.
+
+Four asks from one live-QA report, root-caused against three screenshots
+that turned out to all be the same concept (`positive-definite-matrices`):
+
+1. **`focus_eigen`** — new additive field on a `linear_map` scene's
+   `narration_steps[]`. A beat that names specific eigen-coordinates before
+   the scene's reveal moment now highlights that arrow (heavier ink
+   stroke + a coordinate label reading the authored direction) instead of
+   rendering identically to the other 15 anonymous arrows. Wired into
+   `positive-definite-matrices`'s hook (all three stance files,
+   byte-identical fence).
+2. A propagation bug caught by `ci:variant-agreement` before it shipped:
+   `grep -o` doesn't span the multi-line fence block, so a "byte-identical"
+   check built on it silently compared two empty strings and a follow-up
+   script deleted the fence from both stance variants. Fixed with a proper
+   `re.DOTALL` extraction; documented in CLAUDE.md as a trap for future
+   content edits touching these blocks.
+3. **Solution-steps motion.** `PracticeAttemptPage.tsx`'s post-answer
+   explanation panel was a plain `<ol><li>` of raw strings — no KaTeX, no
+   motion. Now routed through `MarkdownAtomRenderer` with `structured`,
+   picking up real typesetting and the same staggered hairline-row
+   entrance every other structured list in the app already has.
+4. **Micro-solver wave 2 — all 10 GATE-EM topic families now have a
+   wizard.** `positive-definite-matrices` was already correctly wired
+   (confirmed, not assumed). Closed the three remaining bare topics —
+   calculus, complex-variables, discrete-mathematics — with the wave-1
+   single-fork pattern, every claim SymPy-verified: integration-technique
+   choice for ∫x·ln(x)dx, a contour-integral trap that concretely zeroes
+   out the correct answer when an outside pole is wrongly included, and
+   inclusion-exclusion for a divisibility-union count.
+
+19 new tests (`types.test.ts` +7, `Simulation.test.tsx` +1,
+`PracticeAttemptPage.test.tsx` +3, `method-selection-trainers.test.ts`
++10, minus 2 double-counted `it.each` entries) plus 1 existing test's
+fixture corrected for the wave-2 coverage change. Frontend suite 2649 →
+2678/2678. Backend untouched, 4701/4701 (365 files). `tsc --noEmit`
+clean. `npm run ci` (18 gates) clean.
+
 ## [4.56.0] — 2026-09-04 — Wizard wired into the knowledge graph, both directions
 
 No new env vars, no migrations.

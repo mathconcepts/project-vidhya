@@ -101,9 +101,12 @@ describe('method-selection trainers — the migration lost nothing', () => {
     }
   });
 
-  it('routes every theorem-wizard module the page ships, D2 pair plus wave-1 single-fork trainers', () => {
+  it('routes every theorem-wizard module the page ships, D2 pair plus wave-1/wave-2 single-fork trainers', () => {
     expect(Object.keys(THEOREM_WIZARD_TRAINERS).sort()).toEqual([
+      'calculus',
+      'complex-variables',
       'differential-equations',
+      'discrete-mathematics',
       'graph-theory',
       'linear-algebra',
       'numerical-methods',
@@ -146,6 +149,47 @@ describe('micro-solver wave 1 — single-fork trainers (2026-09-03)', () => {
     expect(wizardStartNodeForConcept('transform-theory', 'laplace-transform')).toBe('tt_transform_pick');
     expect(wizardStartNodeForConcept('transform-theory', 'fourier-transform')).toBe('tt_transform_pick');
     expect(wizardStartNodeForConcept('transform-theory', 'z-transform')).toBe('tt_transform_pick');
+  });
+});
+
+describe('micro-solver wave 2 — single-fork trainers (2026-09-04)', () => {
+  const WAVE_2_IDS = ['calculus', 'complex-variables', 'discrete-mathematics'];
+
+  it.each(WAVE_2_IDS)('%s is exactly a single-node tree — a micro-solver, not a multi-fork tree', (id) => {
+    const trainer = THEOREM_WIZARD_TRAINERS[id];
+    expect(trainer).toBeDefined();
+    expect(trainer.spec.branches!.nodes).toHaveLength(1);
+  });
+
+  it.each(WAVE_2_IDS)('%s\'s single step is derived from its node/best-leaf, not a second copy of the content', (id) => {
+    const trainer = THEOREM_WIZARD_TRAINERS[id];
+    const node = trainer.spec.branches!.nodes[0];
+    const bestLeaf = trainer.spec.branches!.leaves.find((l) => l.best === true)!;
+    expect(trainer.spec.steps).toHaveLength(1);
+    expect(trainer.spec.steps[0].prompt).toBe(node.question);
+    expect(bestLeaf).toBeDefined();
+  });
+
+  it('every wave-2 concept in CONCEPT_TO_WIZARD_NODE resolves to that trainer\'s one node', () => {
+    for (const trainerId of WAVE_2_IDS) {
+      const nodeId = THEOREM_WIZARD_TRAINERS[trainerId].spec.branches!.nodes[0].id;
+      const concepts = CONCEPT_TO_WIZARD_NODE[trainerId];
+      expect(Object.keys(concepts).length).toBeGreaterThan(0);
+      for (const mapped of Object.values(concepts)) {
+        expect(mapped).toBe(nodeId);
+      }
+    }
+  });
+
+  it('calculus tags all three integration-technique concepts to its one shared fork', () => {
+    expect(wizardStartNodeForConcept('calculus', 'integration-by-parts')).toBe('ca_technique_pick');
+    expect(wizardStartNodeForConcept('calculus', 'integration-substitution')).toBe('ca_technique_pick');
+    expect(wizardStartNodeForConcept('calculus', 'partial-fractions')).toBe('ca_technique_pick');
+  });
+
+  it('complex-variables tags both contour-integration concepts to its one shared fork', () => {
+    expect(wizardStartNodeForConcept('complex-variables', 'complex-integration')).toBe('cv_contour_pick');
+    expect(wizardStartNodeForConcept('complex-variables', 'residue-calculus')).toBe('cv_contour_pick');
   });
 });
 

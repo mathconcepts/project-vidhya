@@ -907,6 +907,186 @@ const DIFFERENTIAL_EQUATIONS: MethodSelectionTrainer = {
   },
 };
 
+// Micro-solver wave 2 (2026-09-04, /design-review): the three topic
+// families that still had no wizard after wave 1 — calculus,
+// complex-variables, discrete-mathematics — same single-fork pattern, every
+// numeric claim checked with local SymPy (Wolfram MCP was disconnected this
+// session, same fallback wave 1 and several content passes in this repo's
+// history already used).
+
+const CALCULUS: MethodSelectionTrainer = {
+  id: 'calculus',
+  title: 'Which Integration Technique Applies?',
+  description:
+    'Substitution, integration by parts, or partial fractions — read the integrand structure, then commit.',
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Substitution, by parts, or partial fractions?',
+    steps: [
+      {
+        prompt: 'Evaluate ∫ x·ln(x) dx. Which technique is the right tool?',
+        hint: 'One factor gets simpler when you differentiate it; the other stays easy to integrate.',
+        answer:
+          'Integration by parts, with u = ln x and dv = x dx: du = dx/x, v = x²/2. So ∫x ln x dx = (x²/2)ln x − ∫(x²/2)(1/x) dx = (x²/2)ln x − x²/4 + C. Differentiating this back confirms it: d/dx[(x²/2)ln x − x²/4] = x ln x + x²/2·(1/x) − x/2 = x ln x.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'ca_technique_pick',
+          question: 'Evaluate ∫ x·ln(x) dx. Which technique is the right tool?',
+          options: [
+            { label: 'Integration by parts', next: 'ca_leaf_parts' },
+            { label: 'u-substitution with u = ln x', next: 'ca_leaf_sub' },
+            { label: 'Partial fraction decomposition', next: 'ca_leaf_partial' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'ca_leaf_parts',
+          method: 'Integration by parts',
+          reason:
+            'x·ln(x) is exactly the LIATE shape by parts is built for: one factor (ln x) that gets SIMPLER when differentiated (down to 1/x), paired with one factor (x) that stays easy to integrate. Setting u = ln x, dv = x dx gives du = dx/x, v = x²/2, and ∫x ln x dx = (x²/2)ln x − ∫(x²/2)(1/x) dx = (x²/2)ln x − x²/4 + C — the second integral is now just ∫x/2 dx, no further trick needed.',
+          best: true,
+        },
+        {
+          id: 'ca_leaf_sub',
+          method: 'u-substitution with u = ln x',
+          reason:
+            'Try it and it does not close: with u = ln x, x = eᵘ and dx = eᵘ du, so x·ln x dx becomes eᵘ·u·eᵘ du = u·e^(2u) du — a NEW integral, still a product of u with an exponential, that itself needs integration by parts to finish. Substitution here just relabels the problem instead of solving it; the technique that actually does the work is still by parts, one step later than you hoped.',
+        },
+        {
+          id: 'ca_leaf_partial',
+          method: 'Partial fraction decomposition',
+          reason:
+            'Partial fractions only decomposes a RATIONAL function — a ratio of two polynomials, P(x)/Q(x) — into simpler rational pieces. ln(x) is transcendental, not a polynomial, and x·ln(x) is not a ratio of polynomials at all, so there is nothing here for partial fractions to act on. Reach for it only once the integrand is genuinely P(x)/Q(x).',
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const COMPLEX_VARIABLES: MethodSelectionTrainer = {
+  id: 'complex-variables',
+  title: 'Which Contour-Integral Technique Applies?',
+  description:
+    "Count the poles inside the contour first — that decides between Cauchy's Integral Formula, the residue theorem, and Cauchy's theorem giving zero.",
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: "Cauchy's Integral Formula, residue theorem, or Cauchy's theorem?",
+    steps: [
+      {
+        prompt:
+          'Evaluate ∮_C 1/[(z−1)(z−3)] dz where C is the circle |z| = 2, traversed once counterclockwise. Which technique applies?',
+        hint: 'z = 1 and z = 3 are the two poles — check which one is actually inside |z| = 2.',
+        answer:
+          "Direct Cauchy Integral Formula. Only z = 1 lies inside |z| = 2 (z = 3 does not, since |3| = 3 > 2). Write f(z) = φ(z)/(z − 1) with φ(z) = 1/(z − 3), analytic inside C. Then ∮ f(z) dz = 2πi·φ(1) = 2πi·(1/(1−3)) = −πi.",
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'cv_contour_pick',
+          question:
+            'Evaluate ∮_C 1/[(z−1)(z−3)] dz where C is the circle |z| = 2, traversed once counterclockwise. Which technique applies?',
+          options: [
+            { label: "Direct Cauchy Integral Formula, using only the pole inside C", next: 'cv_leaf_cif' },
+            { label: 'Residue theorem, summing the residues at BOTH poles of the integrand', next: 'cv_leaf_residue_both' },
+            { label: "Cauchy's theorem — the integral is 0", next: 'cv_leaf_cauchy_zero' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'cv_leaf_cif',
+          method: 'Direct Cauchy Integral Formula',
+          reason:
+            'Check the two poles against the contour first: |1| = 1 < 2, so z = 1 is inside |z| = 2; |3| = 3 > 2, so z = 3 is outside it. With exactly one pole inside, rewrite the integrand as φ(z)/(z − 1) where φ(z) = 1/(z − 3) — analytic everywhere inside C, since its only singularity (z = 3) sits outside. The Cauchy Integral Formula then gives ∮ f(z) dz = 2πi·φ(1) = 2πi·(1/(1−3)) = 2πi·(−1/2) = −πi directly, with no need to touch the pole outside C at all.',
+          best: true,
+        },
+        {
+          id: 'cv_leaf_residue_both',
+          method: 'Residue theorem, summing residues at BOTH poles',
+          reason:
+            'The residue theorem is real, but it only ever sums residues at poles INSIDE the contour — including z = 3 here is the classic trap. Residue at z = 1 (inside) is lim (z−1)f(z) = 1/(1−3) = −1/2; residue at z = 3 (outside, and wrongly included) is 1/(3−1) = +1/2. Summing both gives −1/2 + 1/2 = 0, and 2πi·0 = 0 — silently cancelling the correct nonzero answer (−πi) down to zero. Always check each pole against the contour before it goes in the sum.',
+        },
+        {
+          id: 'cv_leaf_cauchy_zero',
+          method: "Cauchy's theorem (integral = 0)",
+          reason:
+            "Cauchy's theorem says the integral is 0 only when f is analytic EVERYWHERE inside and on C — i.e., no poles inside at all. Here z = 1 is a genuine pole of f strictly inside |z| = 2, so f is not analytic throughout the region the theorem needs; the hypothesis fails before the conclusion can even be considered. Cauchy's theorem is for a pole-free interior, not this one.",
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
+const DISCRETE_MATHEMATICS: MethodSelectionTrainer = {
+  id: 'discrete-mathematics',
+  title: 'Which Counting Technique Applies?',
+  description:
+    'Inclusion-exclusion, direct combinations, or the pigeonhole principle — match the technique to what the question is actually asking for.',
+  spec: {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Inclusion-exclusion, combinations, or pigeonhole?',
+    steps: [
+      {
+        prompt: 'How many integers from 1 to 100 are divisible by 2 or by 5? Which technique applies?',
+        hint: 'You need the SIZE OF A UNION of two sets — divisible-by-2 and divisible-by-5 overlap.',
+        answer:
+          'Inclusion-exclusion: |A∪B| = |A| + |B| − |A∩B|. Divisible by 2: ⌊100/2⌋ = 50. Divisible by 5: ⌊100/5⌋ = 20. Divisible by both (i.e. by 10): ⌊100/10⌋ = 10. Total = 50 + 20 − 10 = 60.',
+      },
+    ],
+    branches: {
+      v: 1,
+      nodes: [
+        {
+          id: 'dm_counting_pick',
+          question: 'How many integers from 1 to 100 are divisible by 2 or by 5? Which technique applies?',
+          options: [
+            { label: 'Inclusion-exclusion', next: 'dm_leaf_incl_excl' },
+            { label: 'A direct combination formula, C(n, r)', next: 'dm_leaf_combination' },
+            { label: 'The pigeonhole principle', next: 'dm_leaf_pigeonhole' },
+          ],
+        },
+      ],
+      leaves: [
+        {
+          id: 'dm_leaf_incl_excl',
+          method: 'Inclusion-exclusion',
+          reason:
+            'The question asks for the size of a UNION — "divisible by 2 OR by 5" — and the two sets overlap (every multiple of 10 is counted by both). Inclusion-exclusion is built for exactly this: |A∪B| = |A| + |B| − |A∩B|. Here |A| = ⌊100/2⌋ = 50, |B| = ⌊100/5⌋ = 20, |A∩B| = ⌊100/10⌋ = 10 (multiples of lcm(2,5) = 10), so |A∪B| = 50 + 20 − 10 = 60. Adding |A| + |B| alone (70) would double-count the 10 numbers divisible by both — subtracting the overlap once is the whole technique.',
+          best: true,
+        },
+        {
+          id: 'dm_leaf_combination',
+          method: 'A direct combination formula, C(n, r)',
+          reason:
+            'C(n, r) counts the number of ways to CHOOSE r items from a set of n with no regard to order — a selection problem. This question is not "choose r objects from a group"; it is "how many numbers in a fixed range satisfy a divisibility condition," where two conditions overlap. There is no single (n, r) pair whose combination count matches 60 here — combinations answer a different kind of question entirely.',
+        },
+        {
+          id: 'dm_leaf_pigeonhole',
+          method: 'The pigeonhole principle',
+          reason:
+            'Pigeonhole answers EXISTENCE questions — "must at least one box contain more than one item," given counts of items and boxes — not counting questions. It never produces a number like "60 integers satisfy this condition"; it only ever concludes that some repetition or collision is forced to exist. Reach for pigeonhole when the question is "must two of these coincide," not "how many satisfy this."',
+        },
+      ],
+    },
+    caption:
+      'Every route is walkable. Pick the one you would actually take and read why it lands where it does.',
+  },
+};
+
 /** Trainers behind /theorem-wizard/:module. */
 export const THEOREM_WIZARD_TRAINERS: Record<string, MethodSelectionTrainer> = {
   'linear-algebra': LINEAR_ALGEBRA,
@@ -915,6 +1095,9 @@ export const THEOREM_WIZARD_TRAINERS: Record<string, MethodSelectionTrainer> = {
   'transform-theory': TRANSFORM_THEORY,
   'graph-theory': GRAPH_THEORY,
   'differential-equations': DIFFERENTIAL_EQUATIONS,
+  calculus: CALCULUS,
+  'complex-variables': COMPLEX_VARIABLES,
+  'discrete-mathematics': DISCRETE_MATHEMATICS,
 };
 
 /** The trainer behind /distribution-selector. */
@@ -929,6 +1112,9 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
   TRANSFORM_THEORY,
   GRAPH_THEORY,
   DIFFERENTIAL_EQUATIONS,
+  CALCULUS,
+  COMPLEX_VARIABLES,
+  DISCRETE_MATHEMATICS,
 ];
 
 /**
@@ -1006,6 +1192,23 @@ export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
   'differential-equations': {
     'ode-first-order': 'de_method_pick',
     'ode-exact': 'de_method_pick',
+  },
+  // Micro-solver wave 2 (2026-09-04) — same single-fork shape as wave 1.
+  // `integration-by-parts`/`integration-substitution`/`partial-fractions`
+  // share the ONE fork that decides among exactly those three techniques;
+  // `complex-integration`/`residue-calculus` share the ONE fork that
+  // decides how many poles are inside the contour.
+  calculus: {
+    'integration-by-parts': 'ca_technique_pick',
+    'integration-substitution': 'ca_technique_pick',
+    'partial-fractions': 'ca_technique_pick',
+  },
+  'complex-variables': {
+    'complex-integration': 'cv_contour_pick',
+    'residue-calculus': 'cv_contour_pick',
+  },
+  'discrete-mathematics': {
+    'functions-combinatorics': 'dm_counting_pick',
   },
 };
 

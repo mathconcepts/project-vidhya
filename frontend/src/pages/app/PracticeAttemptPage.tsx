@@ -30,6 +30,7 @@ import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import { Card } from '@/components/ui/Card';
 import { receiptFromServerGrade } from '@/lib/receipt';
 import { setDemoOutcome } from '@/lib/demoPersona';
+import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 
 interface PracticeItem {
   id: string;
@@ -126,6 +127,10 @@ function wizardRouteForTopic(topic: string | null | undefined): string | null {
     'transform-theory',
     'graph-theory',
     'differential-equations',
+    // Micro-solver wave 2 (2026-09-04).
+    'calculus',
+    'complex-variables',
+    'discrete-mathematics',
   ]);
   if (THEOREM_WIZARD_TOPICS.has(slug)) return `/theorem-wizard/${slug}`;
   if (slug === 'probability-statistics') return '/distribution-selector';
@@ -546,13 +551,28 @@ export default function PracticeAttemptPage() {
                       the item view never carries it — and shown either way: a
                       student who missed needs the steps most, and one who got
                       it right should be able to check their route rather than
-                      trust the mark. */}
+                      trust the mark.
+
+                      Routed through MarkdownAtomRenderer (/design-review,
+                      2026-09-04) — this used to be a plain `<ol><li>` of raw
+                      strings, the same "independently-drifted content
+                      surface" bug class as ConceptMathViz's pre-2026-09-02
+                      disconnection and the guided_walkthrough bracket-array
+                      bug: any step authored with LaTeX would leak the raw
+                      source instead of typesetting, exactly like the trap-row
+                      bug fixed the same day. `structured` gets the same
+                      hairline-separated, once-on-mount staggered-row entrance
+                      every other structured list in the app already has
+                      (.vidhya-atom-body--structured) — a live-QA report named
+                      this exact panel as "static text, no motion". */}
                   {!!result.solution_steps?.length && (
-                    <ol style={{ margin: '10px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {result.solution_steps.map((s, i) => (
-                        <li key={i} style={{ fontSize: 'var(--text-body)', lineHeight: 1.45, color: 'var(--text-secondary)' }}>{s}</li>
-                      ))}
-                    </ol>
+                    <div style={{ marginTop: 10 }}>
+                      <MarkdownAtomRenderer
+                        atomId={`${item?.id ?? 'practice'}-solution-steps`}
+                        content={result.solution_steps.map((s, i) => `${i + 1}. ${s}`).join('\n\n')}
+                        structured
+                      />
+                    </div>
                   )}
                   {/* Two concrete next moves, not just the generic "What's
                       next for me?" system link below. A wrong answer is

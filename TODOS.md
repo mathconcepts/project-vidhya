@@ -40,63 +40,28 @@ mock-exam fix closed. Nothing here should route a leaf answer into
 grading; it's about surfacing the wizard's EXISTENCE earlier, not scoring
 what a student does inside it.
 
-## Micro-solver authoring pass wave 2: close wizard coverage for the last 3 topic families
+## Micro-solver authoring pass wave 2 — closed (2026-09-04)
 
-**Trigger:** ready to start the next content wave, or a live-QA report
-naming a method-selection miss on calculus, complex-variables, or
-discrete-mathematics.
+All 10 GATE-EM topic families now have a wizard trainer. `/design-review`
+(2026-09-04) closed the last three — calculus, complex-variables,
+discrete-mathematics — using the same single-fork pattern as wave 1: one
+`BranchNode` + 3 `BranchLeaf`s per topic, every numeric claim hand-verified
+via local SymPy (Wolfram MCP was disconnected this session too). See
+CLAUDE.md's 2026-09-04 section for the three questions chosen (integration
+technique for ∫x·ln(x)dx; contour-integral technique with the
+outside-pole-inclusion trap; inclusion-exclusion for a divisibility-union
+count) and the exact SymPy verification each ran.
 
-`/office-hours` (2026-09-03) brainstormed the tailored-mistake-wizard
-redesign; the `startAt` deep-link mechanism (CLAUDE.md's 2026-09-03
-"Method-selection wizard: `startAt` deep link" section) is shipped and
-covers linear-algebra/vector-calculus/distributions. Wave 1 (CLAUDE.md's
-2026-09-03 "Micro-solver wave 1" section, same-day `/loop` continuation)
-used 4 parallel Claude Sonnet subagents to author one single-fork
-`MethodSelectionTrainer` each for numerical-methods, transform-theory,
-differential-equations, and graph-theory — 6 of 10 topic families now have
-a wizard. Three remain bare: **calculus, complex-variables,
-discrete-mathematics.**
-
-**What:** same pattern as wave 1, one subagent per topic (isolated
-worktree, no repo edits — draft to a scratch JSON path, merge by hand
-after review). Pick the concept most likely to produce a real
-method-selection miss, author ONE `BranchNode` + 2-3 `BranchLeaf`s (same
-schema `DecisionTreeWalkthrough` already renders — a 1-node tree needs no
-new component or renderer change), register it under a new trainer keyed
-by the topic's module id in `THEOREM_WIZARD_TRAINERS`, and add the
-concept's entry to `CONCEPT_TO_WIZARD_NODE`. Every leaf's `reason` must
-say why the plausible wrong method fails, same discipline as all 6 shipped
-trainers — verify every mathematical claim (Wolfram or by hand) before
-authoring; wave 1's subagents all hand-verified via SymPy/direct
-arithmetic since Wolfram MCP was disconnected that session too.
-
-**Candidate decisions, not yet picked/verified — a starting point, not a
-commitment:**
-- calculus: series-convergence test selection (ratio/root/comparison/
-  integral test), or a critical-point classification decision
-  (second-derivative test vs. first-derivative sign chart) — concept ids
-  confirmed real: `series`, `maxima-minima`.
-- complex-variables: contour-integration method choice (Cauchy's theorem
-  vs. Cauchy's integral formula vs. residue theorem, by singularity
-  location relative to the contour) — concept id `complex-integration` or
-  `residue-calculus`.
-- discrete-mathematics: proof-technique selection (direct vs. induction
-  vs. contradiction) is the classic fit but may not map cleanly to one
-  practice-item concept; `recurrence-relations` (which solving technique —
-  characteristic equation vs. substitution vs. master theorem — applies)
-  is a more concrete alternative worth checking against the real
-  practice-item bank first.
-
-**Where to start:** `frontend/src/data/method-selection-trainers.ts` for
-the data shape and all 6 existing trainers as templates (the wave-1 four
-are the closest style match, being single-fork themselves);
-`frontend/src/pages/app/TheoremWizardPage.tsx`'s routing and
-`wizardRouteForTopic()`'s allowlist in `PracticeAttemptPage.tsx` both need
-the new topic slugs added, same as wave 1's diff.
-
-**Effort:** S per concept (one fork + its leaves, roughly a `common_traps`
-atom's worth of authoring + verification) — wave 1's 4 subagents each took
-roughly 1-2 minutes of wall time and under 170k tokens.
+**What's genuinely still open, not closed by this pass:** wave 2 covers
+exactly one concept per new topic (`integration-by-parts`/
+`-substitution`/`partial-fractions` share one fork; `complex-integration`/
+`residue-calculus` share one fork; `functions-combinatorics` alone) — most
+concepts in these three topics still have no wizard fork at all (e.g.
+`series`, `maxima-minima`, `taylor-laurent`, `conformal-mapping`,
+`propositional-logic`, `recurrence-relations`). A wave 3 that adds MORE
+forks to existing trainers (multi-node trees, like linear-algebra's
+original 4-fork tree) is real future work, not a coverage bug — every
+topic family has at least one entry point now, which was the wave-2 bar.
 
 ## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
 

@@ -229,6 +229,27 @@
     border-top: var(--hairline) solid var(--separator);
   }
   /*
+   * .vidhya-atom-body--definition — formal_definition atoms are authored as
+   * blank-line-separated "**Term**: detail" paragraphs (the corpus
+   * convention), but the default renderer's paragraph margin alone reads as
+   * one continuous wall on a small screen — the literal "too much static
+   * text" live-QA complaint (/design-review, 2026-09-04, rank-nullity's
+   * definition card). Deliberately carries NO animation, unlike
+   * --structured/--progressive above: a definition's job is to be instantly
+   * whole and referenceable (Sweller's split-attention effect —
+   * AtomCardRenderer.tsx's own comment on why formal_definition is excluded
+   * from --progressive), so the fix is pure separation, not pacing. Same
+   * hairline-row grammar as --structured's li+li rule, applied at the
+   * paragraph level instead of the bullet level.
+   */
+  .vidhya-atom-body--definition > p {
+    padding: var(--space-3) 0;
+    margin: 0;
+  }
+  .vidhya-atom-body--definition > p + p {
+    border-top: var(--hairline) solid var(--separator);
+  }
+  /*
    * Staggered row entrance (attention-span pass, /investigate 2026-09-01):
    * exam_pattern rows in particular ("How GATE actually asks this") run 4-5
    * facts deep with a nested example, and this modifier already turned that

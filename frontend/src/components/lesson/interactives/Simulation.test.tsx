@@ -846,6 +846,55 @@ describe('linear-map scene rendering', () => {
     expect(coordLabel()).toBeUndefined();
     expect(container.textContent).toContain('×3');
   });
+
+  it('a crushed (zero) eigenvalue labels ×0 away from the origin, not stacked on it (live-QA 2026-09-04, rank-nullity: "numbers not distinctly visible")', () => {
+    // rank-nullity's own hook matrix: eigenvalue 2 survives on (1,0.5),
+    // eigenvalue 0 is crushed on (2,-1) — its tip lands AT the origin, so the
+    // old tip-minus-origin offset degenerated to (0,0) and the "×0" label
+    // rendered exactly on top of the origin crosshair (invisible in
+    // practice). Neither eigen direction here lands on one of the 16
+    // evenly-spaced sampled arrows, so no arrow shaft is a reliable "origin
+    // pixel" reference; the full-span eigen "rail" lines (drawn through the
+    // origin, symmetric endpoints) give one instead — their midpoint IS the
+    // origin, always present once revealed regardless of sampling.
+    const ZERO_EIGEN_SPEC: SimulationSpec = {
+      v: 1,
+      kind: 'simulation',
+      title: 'One rail survives, one dies at the origin',
+      duration_sec: 9,
+      linear_map: {
+        matrix: [[1, 2], [0.5, 1]],
+        num_vectors: 16,
+        eigen: [
+          { dir: [1, 0.5], value: 2 },
+          { dir: [2, -1], value: 0 },
+        ],
+      },
+      narration_steps: [
+        { at_progress: 0, text: 'Sixteen arrows.' },
+        { at_progress: 0.55, text: 'One survives, one dies.', emphasize: true },
+      ],
+    };
+    mockMatchMedia(true);
+    const { container } = render(<Simulation spec={ZERO_EIGEN_SPEC} />);
+
+    const zeroLabel = Array.from(container.querySelectorAll('svg text')).find((t) => t.textContent === '×0');
+    expect(zeroLabel).toBeDefined();
+
+    const rail = container.querySelector('svg line[stroke="var(--separator)"][stroke-dasharray="2 3"]');
+    expect(rail).not.toBeNull();
+    const originX = (Number(rail!.getAttribute('x1')) + Number(rail!.getAttribute('x2'))) / 2;
+    const originY = (Number(rail!.getAttribute('y1')) + Number(rail!.getAttribute('y2'))) / 2;
+    const labelX = Number(zeroLabel!.getAttribute('x'));
+    const labelY = Number(zeroLabel!.getAttribute('y'));
+    const distFromOrigin = Math.hypot(labelX - originX, labelY - originY);
+    expect(distFromOrigin).toBeGreaterThan(10); // old bug: ~0 (stacked on the origin crosshair)
+
+    // Contrast fix: full-ink fill on an opaque halo, replacing the
+    // low-contrast --text-secondary these ×λ/area labels used before.
+    expect(zeroLabel!.getAttribute('fill')).toBe('var(--text-primary)');
+    expect(zeroLabel!.getAttribute('stroke')).toBe('var(--surface-fill)');
+  });
 });
 
 describe('ghost rendering without declared eigen directions (matrix-operations class)', () => {

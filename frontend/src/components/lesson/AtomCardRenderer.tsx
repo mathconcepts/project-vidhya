@@ -591,20 +591,26 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
       // existing concept AND every concept the generator produces from here
       // on, with no content rewrite required.
       //
-      // `formal_definition` is the one deliberate holdout, unchanged: a
-      // definition's job is to be instantly whole and referenceable, and
-      // pacing THAT in would fight the one atom type where "convey more
-      // with less" means less decoration, not more motion (Sweller's
-      // split-attention effect — see the definition/mnemonic
-      // engagement-framework proposal doc). `exam_pattern` is excluded here
-      // too, not as a holdout but because it already animates via
-      // `structured` above (list-row stagger) — `progressive` targets `> p`
-      // direct children, which its bullet-list markup has none of, so
-      // adding it would be a no-op, not a second animation.
+      // `formal_definition` stays motion-free on purpose: a definition's job
+      // is to be instantly whole and referenceable, and pacing THAT in would
+      // fight the one atom type where "convey more with less" means less
+      // decoration, not more motion (Sweller's split-attention effect — see
+      // the definition/mnemonic engagement-framework proposal doc). What it
+      // DOES get (/design-review, 2026-09-04, live-QA "too much static
+      // text"): `.vidhya-atom-body--definition` — pure hairline separation
+      // between each authored "**Term**: detail" paragraph, zero animation,
+      // turning a flowing wall into scannable rows without touching the
+      // Sweller holdout. `exam_pattern` is excluded here too, not as a
+      // holdout but because it already animates via `structured` above
+      // (list-row stagger) — `progressive` targets `> p` direct children,
+      // which its bullet-list markup has none of, so adding it would be a
+      // no-op, not a second animation.
       className={
-        atom.atom_type === 'formal_definition' || atom.atom_type === 'exam_pattern'
-          ? undefined
-          : 'vidhya-atom-body--progressive'
+        atom.atom_type === 'formal_definition'
+          ? 'vidhya-atom-body--definition'
+          : atom.atom_type === 'exam_pattern'
+            ? undefined
+            : 'vidhya-atom-body--progressive'
       }
     />
   );

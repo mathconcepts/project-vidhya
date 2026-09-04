@@ -63,6 +63,56 @@ forks to existing trainers (multi-node trees, like linear-algebra's
 original 4-fork tree) is real future work, not a coverage bug — every
 topic family has at least one entry point now, which was the wave-2 bar.
 
+**2026-09-04 update (`/loop`):** the "wave 3, more forks per topic"
+follow-up named above happened for linear-algebra specifically, audited
+concept-by-concept for all 26 GATE-EM LA concepts (not the other 9 topic
+families — this pass was scoped to LA by explicit user request). 5 new
+forks (`la_system_solve`, `la_independence_test`, `la_decomposition`,
+`la_least_squares`, `la_orthogonalize`) took LA from 10/26 to 17/26
+concepts mapped to a specific fork; the other 9 are individually
+justified as having no genuine competing-method decision at GATE-EM's
+level. See CLAUDE.md's 2026-09-04 `/loop` section for the full audit and
+every SymPy-verified claim. The same concept-by-concept audit for the
+other 9 topic families (calculus, complex-variables, discrete-mathematics,
+numerical-methods, transform-theory, graph-theory,
+differential-equations, vector-calculus, probability-statistics) is
+real, scoped future work — not attempted here.
+
+## Jordan Normal Form as a 4th path under `la_power`
+
+**Trigger:** the next linear-algebra wizard pass, or a live-QA report on
+`jordan-normal-form` specifically.
+
+Found during the 2026-09-04 `/loop` LA-coverage audit: `jordan-normal-form`
+is the one concept among LA's 9 deliberately-unmapped concepts that is
+genuinely a near-miss, not a clean exclusion. `la_power`'s existing
+"best" leaf (`la_leaf_diag`, in `frontend/src/data/method-selection-
+trainers.ts`) already says "If A is not diagonalisable, use Cayley-
+Hamilton to reduce high powers modulo the characteristic polynomial" —
+but Jordan Normal Form is the OTHER standard technique for exactly that
+situation (computing high powers of a non-diagonalizable matrix via
+generalized eigenvectors and the closed form for a Jordan block's power),
+and today's leaf doesn't mention it at all.
+
+**Why this wasn't just bolted on:** `la_power`'s node asks "which
+structural property of A makes A¹⁰⁰ cheap?" with 3 options (diagonalizable
+/ symmetric / invertible) — a ONE-LEVEL decision. Jordan form only
+becomes the relevant question ONE STEP DEEPER, after a student has
+already concluded "A is NOT diagonalizable" — that's a second decision
+("Cayley-Hamilton or Jordan form?"), not a 4th option at the same level
+as the other three. Doing this properly means either restructuring
+`la_power` into a two-level branch (the `la_leaf_diag` "not
+diagonalizable" case growing its own sub-fork) or authoring
+`jordan-normal-form` a dedicated small fork of its own with a concrete
+non-diagonalizable example (verify: a Jordan block's power formula,
+e.g. for $J=\begin{pmatrix}\lambda&1\\0&\lambda\end{pmatrix}$,
+$J^n=\begin{pmatrix}\lambda^n&n\lambda^{n-1}\\0&\lambda^n\end{pmatrix}$ —
+verify this identity with SymPy before authoring, same discipline as
+every other fork in this file).
+
+**Effort:** S — one fork, one hand-verified worked example, matching the
+size of the 5 forks the 2026-09-04 pass already added.
+
 ## Audit other concepts' `intuition`/`mnemonic` atoms for the same wall-of-text pattern
 
 **Trigger:** the next live-QA report naming a different concept's

@@ -4,6 +4,40 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.58.0] — 2026-09-04 — `/loop`: full Linear Algebra audit against all four asks
+
+No new env vars, no migrations.
+
+Direct follow-up to v4.57.0's `/design-review` pass — the user asked for a
+concept-by-concept audit confirming all four asks are genuinely complete
+across all 26 GATE-EM Linear Algebra concepts, not just the one reported
+concept.
+
+1. **Coordinate focus.** Every LA `hook.md` audited for a `linear_map`
+   scene with a pre-reveal beat naming specific eigen-coordinates.
+   6 more concepts had a real gap — `diagonalization`,
+   `linear-independence`, `symmetric-matrices`, `least-squares`,
+   `spectral-theorem`, `svd` — fixed with `focus_eigen`, propagated and
+   verified byte-identical across all three stance files. 16 concepts
+   correctly untouched: no `linear_map` scene, or the beat is a genuine
+   open predict question that highlighting would spoil.
+2. **Motion for static text.** Already fully complete for LA — the
+   solution-steps and progressive-stagger fixes are code-level, not
+   per-concept, so they already cover all 26 concepts. Verified, not
+   assumed.
+3. **Wizard coverage.** 5 new forks added to the linear-algebra trainer —
+   `la_system_solve`, `la_independence_test`, `la_decomposition`,
+   `la_least_squares`, `la_orthogonalize` — every claim SymPy-verified.
+   LA wizard coverage: 10/26 → 17/26 concepts mapped to a specific fork.
+   The other 9 are individually audited and named as having no genuine
+   competing-method decision at GATE-EM's level (not a silent gap).
+   `jordan-normal-form` flagged as a real near-miss, tracked in TODOS.md.
+
+10 new tests (5-new-fork contract checks, concept-map resolution, and an
+exhaustive 26-concept accounting test asserting every LA concept is either
+mapped or deliberately excluded). Frontend suite 2678 → 2688/2688. Backend
+untouched. `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+
 ## [4.57.0] — 2026-09-04 — `/design-review`: hook coordinate focus, static-text motion, wizard coverage complete
 
 No new env vars, no migrations.

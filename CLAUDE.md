@@ -3103,6 +3103,101 @@ files), `1 todo` unchanged. `tsc --noEmit` clean. `npm run ci` (18 gates,
 including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs)
 clean.
 
+### `/loop`: every Linear Algebra concept audited against all four asks (2026-09-04)
+
+Direct follow-up to the `/design-review` pass above: "ensure that every
+single ask above is totally complete for Linear Algebra... until all sub
+topics of Linear Algebra are covered." A real audit of all 26 GATE-EM LA
+concepts against each of the four asks, not a blanket re-run — extending a
+mechanism to a concept that doesn't genuinely need it is exactly the kind
+of padding this repo's own discipline (measure, don't assert) refuses.
+
+**Ask 1 — coordinate focus (`focus_eigen`).** Every one of the 26
+concepts' `hook.md` files was parsed and checked: does it carry a
+`linear_map` scene, and if so, does any PRE-REVEAL beat state (not ask
+about) specific eigen-coordinates the visual doesn't yet highlight? 16
+concepts have no `linear_map` scene at all (10) or one with no genuine
+pre-reveal coordinate-naming beat (9) — correctly untouched, since adding
+`focus_eigen` to a beat that's still an open predict question (e.g.
+`linear-transformations`' "is it the x-axis arrow, or the one at 45°?")
+would SPOIL the discovery the scene is built around, not fix a bug. 6 more
+concepts had a genuine gap and were fixed: `diagonalization`,
+`linear-independence` (2 beats), `symmetric-matrices` (2 beats),
+`least-squares`, `spectral-theorem`, and `svd` (3 beats, including one at
+`at_progress: 0` — svd's hook states both eigenvalues as GIVEN information
+up front, unlike every other scene's discovery structure, so highlighting
+there doesn't spoil anything). All edits applied and propagated to stance
+variants via the same `re.DOTALL`-based Python script from the prior pass
+(no repeat of the `grep -o` bug), verified byte-identical across all three
+files per concept before moving on. `positive-definite-matrices` was
+already fixed in the prior pass — 7 of 26 LA concepts now carry
+`focus_eigen`, and that number is a measurement of where it genuinely
+applies, not a target hit by force.
+
+**Ask 2/3 — motion for static text.** Already fully complete for every LA
+concept without any per-concept work: the `PracticeAttemptPage.tsx`
+solution-steps fix and the `AtomCardRenderer.tsx` progressive-stagger
+mechanism are both applied by CODE (atom_type / component, not per-concept
+content), so they already reach all 26 LA concepts' practice items and
+lesson atoms. Verified, not assumed — re-read both call sites to confirm
+neither is topic-scoped before declaring this ask closed for LA.
+
+**Ask 4 — wizard coverage, all 26 concepts audited.** Before this pass,
+10 of 26 LA concepts were mapped to one of the tree's 4 forks
+(`la_invertible`/`la_injective`/`la_power`/`la_definite`). Audited the
+other 16 concept-by-concept for a genuine competing-method decision (the
+same bar wave 1/2's other 9 topics were held to) rather than forcing
+coverage:
+
+- **5 new forks added**, `la_start` growing from 4 options to 9, every
+  claim SymPy-verified:
+  - `la_system_solve` (`systems-of-equations`, `lu-factorization`) —
+    Gaussian elimination/LU vs Cramer's rule (O(n⁴)+ for large n) vs
+    explicitly forming A⁻¹ (wasted work for one solve).
+  - `la_independence_test` (`linear-independence`) — the determinant test
+    vs "eyeballing" vs summing the vectors (neither of the wrong options
+    is a valid test at all).
+  - `la_decomposition` (`svd`) — SVD (exists for every matrix, since
+    AᵀA is always symmetric PSD) vs eigendecomposition (needs square AND
+    diagonalizable — `[[1,1],[0,1]]` has only one independent eigenvector
+    for its repeated eigenvalue and so has NO eigendecomposition, verified
+    via SymPy's `.diagonalize()` throwing) vs LU (wrong tool entirely).
+  - `la_least_squares` (`least-squares`) — normal equations (verified: for
+    x=1,2,4, AᵀA=3, Aᵀb=7, x=7/3, the mean) vs Cramer's rule on a
+    non-square system (no determinant exists) vs giving up.
+  - `la_orthogonalize` (`orthogonality`, `gram-schmidt`) — Gram-Schmidt
+    (verified: u=(1,1,0), v=(1,0,1) → w₂=(½,−½,1), dot product with e₁
+    is exactly 0) vs normalizing each vector separately (verified: still
+    dot product ½, not orthogonal at all) vs cross product (wrong tool —
+    builds a third direction, doesn't fix the given pair).
+- **9 concepts remain deliberately unmapped**, each individually assessed
+  and named, not defaulted: `matrix-operations`, `vector-spaces`,
+  `eigenvalues`, `trace`, `symmetric-matrices`, `inner-product-spaces`,
+  `change-of-basis`, `jordan-normal-form`, `matrix-norms`. These are
+  property-checks or single-procedure computations with no real
+  competing-method choice at GATE-EM's level (`trace` is "add the
+  diagonal"; GATE-EM teaches ONE eigenvalue method, not a competitive
+  choice among several) — they correctly fall through to `la_start`'s
+  classification root, same treatment as vector-calculus's own documented
+  foundational-concept exceptions. `jordan-normal-form` is flagged as the
+  one genuine near-miss: it belongs as a 4th path under `la_power`'s "not
+  diagonalizable" branch, but doing that well means restructuring
+  `la_power` into a two-level decision rather than bolting on a mismatched
+  leaf — named as real, scoped future work in TODOS.md, not silently
+  dropped.
+
+Net: **17 of 26 LA concepts now resolve to a specific wizard fork**, and
+the other 9 are individually justified, not silently absent. A new test
+(`method-selection-trainers.test.ts`) asserts all 26 are accounted for —
+mapped, or on the deliberately-unmapped list — so a future concept added
+to the curriculum without either can't silently fall through unnoticed.
+
+**Verified against the real gates, not asserted.** `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610
+pairs) clean. `tsc --noEmit` clean. Frontend suite 2678 → 2688/2688 (10
+new tests: the 5-new-fork contract checks, concept-map resolution, and
+the exhaustive 26-concept accounting test). Backend untouched.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

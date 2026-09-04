@@ -79,6 +79,40 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
         answer:
           'All eigenvalues > 0 → positive definite. All ≥ 0 → positive semi-definite. All < 0 → negative definite. Mixed signs → indefinite. The Spectral Theorem guarantees real eigenvalues and orthonormal eigenvectors for symmetric A, so the sign of eigenvalues is well-defined.',
       },
+      // /loop (2026-09-04): 4 more forks closing coverage for the last 4
+      // sub-topics with a genuine method-selection decision — systems of
+      // equations + LU factorization, testing independence, choosing a
+      // decomposition, and recovering from an inconsistent system.
+      {
+        prompt: 'You need to solve Ax = b for a large n×n system. Which method is the standard, efficient tool?',
+        hint: 'One classic method computes n+1 determinants — fine for a 2×2 by hand, but how does that scale?',
+        answer:
+          "Gaussian elimination (equivalently, LU factorization). It costs O(n³) and works directly on the system. Cramer's rule needs n+1 determinants — O(n⁴) or worse by cofactor expansion — and explicitly forming A⁻¹ costs about the same O(n³) as elimination while doing strictly more work than solving the one system you actually need.",
+      },
+      {
+        prompt: 'You need to test whether a set of n vectors in ℝⁿ is linearly independent. What single check settles it?',
+        hint: 'Put the vectors as columns of a matrix — one number from that matrix answers the question.',
+        answer:
+          'Form the n×n matrix with the vectors as columns and check its determinant. Nonzero determinant ⟺ linearly independent. A zero determinant means the columns are dependent — e.g. (1,2) and (2,4) give det = 1·4 − 2·2 = 0, and indeed (2,4) = 2·(1,2).',
+      },
+      {
+        prompt: 'You need to decompose a matrix that is either non-square, or square but not diagonalizable. Which decomposition applies?',
+        hint: 'One decomposition requires a square, diagonalizable matrix. The other requires nothing at all.',
+        answer:
+          'Singular Value Decomposition (SVD): A = UΣVᵀ exists for EVERY m×n matrix, full stop — no squareness or diagonalizability required, because Σ\'s entries are √(eigenvalues of AᵀA), and AᵀA is always symmetric positive-semidefinite. Eigendecomposition (A = PDP⁻¹) requires A to be square and diagonalizable — e.g. [[1,1],[0,1]] has only one independent eigenvector for its repeated eigenvalue 1, so it has no eigendecomposition at all, yet its SVD exists.',
+      },
+      {
+        prompt: 'A system Ax = b has more equations than unknowns and no exact solution. What do you solve instead?',
+        hint: 'You cannot make the residual Ax − b exactly zero — but you can make it as small as possible.',
+        answer:
+          'The normal equations: AᵀA x = Aᵀb, giving the least-squares best-fit x. For three noisy measurements of one unknown, x=1, x=2, x=4 (so A = [1;1;1], b = [1,2,4]ᵀ): AᵀA = 3, Aᵀb = 7, so x = 7/3 ≈ 2.33 — exactly the mean of the three measurements, the closest single value to all three at once.',
+      },
+      {
+        prompt: 'You have two independent vectors u=(1,1,0) and v=(1,0,1) and need an orthogonal pair spanning the same plane. Which method?',
+        hint: "Subtract off the part of v that points along u — the part you don't want.",
+        answer:
+          'The Gram-Schmidt process: keep e₁ = u = (1,1,0), then w₂ = v − (v·e₁/e₁·e₁)e₁ = (1,0,1) − ½(1,1,0) = (½,−½,1). Check: e₁·w₂ = ½−½+0 = 0 — exactly orthogonal, and still spans the same plane as u, v.',
+      },
     ],
     branches: {
       v: 1,
@@ -91,6 +125,11 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'Whether a linear map is injective', next: 'la_injective' },
             { label: 'A high power such as A¹⁰⁰', next: 'la_power' },
             { label: 'The sign of a quadratic form xᵀAx', next: 'la_definite' },
+            { label: 'How to solve Ax = b for a large system', next: 'la_system_solve' },
+            { label: 'Whether a set of vectors is linearly independent', next: 'la_independence_test' },
+            { label: 'Which decomposition to use on A', next: 'la_decomposition' },
+            { label: 'Ax = b has no exact solution — what now', next: 'la_least_squares' },
+            { label: 'Making a set of vectors orthogonal', next: 'la_orthogonalize' },
           ],
         },
         {
@@ -131,6 +170,53 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
             { label: 'The signs of the eigenvalues', next: 'la_leaf_eigen' },
             { label: 'The signs of the diagonal entries', next: 'la_leaf_diag_entries' },
             { label: 'The determinant on its own', next: 'la_leaf_det_alone' },
+          ],
+        },
+        {
+          id: 'la_system_solve',
+          question: 'You need to solve Ax = b for a large n×n system. Which method is the standard, efficient tool?',
+          options: [
+            { label: 'Gaussian elimination / LU factorization', next: 'la_leaf_elimination' },
+            { label: "Cramer's rule", next: 'la_leaf_cramer' },
+            { label: 'Compute A⁻¹ explicitly, then x = A⁻¹b', next: 'la_leaf_explicit_inverse' },
+          ],
+        },
+        {
+          id: 'la_independence_test',
+          question: 'You need to test whether n vectors in ℝⁿ are linearly independent. What single check settles it?',
+          options: [
+            { label: 'The determinant of the matrix with those vectors as columns', next: 'la_leaf_det_independence' },
+            { label: 'Whether any two vectors look different by eye', next: 'la_leaf_eyeball' },
+            { label: 'The sum of the vectors', next: 'la_leaf_sum_vectors' },
+          ],
+        },
+        {
+          id: 'la_decomposition',
+          question:
+            'You need to decompose a matrix that is either non-square, or square but not diagonalizable. Which decomposition applies?',
+          options: [
+            { label: 'Singular Value Decomposition (SVD)', next: 'la_leaf_svd' },
+            { label: 'Eigendecomposition, A = PDP⁻¹', next: 'la_leaf_eigendecomp' },
+            { label: 'LU decomposition', next: 'la_leaf_lu_for_decomp' },
+          ],
+        },
+        {
+          id: 'la_least_squares',
+          question: 'A system Ax = b has more equations than unknowns and no exact solution. What do you solve instead?',
+          options: [
+            { label: 'The normal equations, AᵀA x = Aᵀb', next: 'la_leaf_normal_eq' },
+            { label: "Cramer's rule on the non-square system", next: 'la_leaf_cramer_nonsquare' },
+            { label: 'Conclude there is no answer', next: 'la_leaf_no_answer' },
+          ],
+        },
+        {
+          id: 'la_orthogonalize',
+          question:
+            'You have two independent vectors u=(1,1,0) and v=(1,0,1) and need an orthogonal pair spanning the same plane. Which method?',
+          options: [
+            { label: 'The Gram-Schmidt process', next: 'la_leaf_gram_schmidt' },
+            { label: 'Normalize each vector separately', next: 'la_leaf_normalize_only' },
+            { label: 'Take their cross product', next: 'la_leaf_cross_product' },
           ],
         },
       ],
@@ -210,6 +296,101 @@ const LINEAR_ALGEBRA: MethodSelectionTrainer = {
           method: 'The determinant on its own',
           reason:
             'One determinant cannot separate "all eigenvalues positive" from "an even number of them negative" — in even dimensions both give a positive determinant. The full leading-minor sequence (Sylvester’s criterion) works; a single determinant does not.',
+        },
+        {
+          id: 'la_leaf_elimination',
+          method: 'Gaussian elimination / LU factorization',
+          reason:
+            'For a large n×n system this is the standard tool: O(n³), and it solves the system directly with no wasted work. LU factorization is the same method organized for reuse — once A = LU is computed, solving for a NEW right-hand side b costs only two cheap triangular solves, not a full elimination pass again.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_cramer',
+          method: "Cramer's rule",
+          reason:
+            "Cramer's rule is correct in principle — it needs n+1 determinants, one for A and one for each variable — but computing that many determinants for a large n costs far more than one elimination pass (O(n⁴) or worse by cofactor expansion, versus elimination's O(n³)). It stays useful only for small systems solved by hand, or when you need a symbolic FORMULA for the answer rather than a numeric solve.",
+        },
+        {
+          id: 'la_leaf_explicit_inverse',
+          method: 'Compute A⁻¹ explicitly, then x = A⁻¹b',
+          reason:
+            'This gives the right answer and costs about the same O(n³) as elimination to FORM A⁻¹ — but then you still have to multiply A⁻¹ by b, which is extra work elimination never needed in the first place. Explicitly inverting is worth it only when you need A⁻¹ itself for many different right-hand sides; for one solve, it does strictly more work than necessary.',
+        },
+        {
+          id: 'la_leaf_det_independence',
+          method: 'The determinant of the matrix with those vectors as columns',
+          reason:
+            'Nonzero determinant ⟺ linearly independent. Zero determinant ⟺ dependent — e.g. columns (1,2) and (2,4) give det = 1·4 − 2·2 = 0, and indeed (2,4) = 2·(1,2), a genuine dependency. This works because the determinant vanishes exactly when the columns fail to span the full space, which is exactly what "dependent" means.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_eyeball',
+          method: 'Whether any two vectors look different by eye',
+          reason:
+            '"Looking different" is not the same as being independent: (1,2,0) and (2,4,1) look nothing alike componentwise, and (1,2,0), (2,4,0), (0,0,1) contains a real dependency (the first two are parallel) that is easy to miss by eye once the vectors have more than 2 or 3 entries, or there are more than 2 vectors to compare pairwise. Independence is a statement about the WHOLE set together, not any one pair.',
+        },
+        {
+          id: 'la_leaf_sum_vectors',
+          method: 'The sum of the vectors',
+          reason:
+            'The sum carries no information about independence at all: (1,0) + (−1,0) = (0,0), the zero vector, even though a single nonzero vector like (1,0) is trivially independent by itself — the sum of a dependent set can be nonzero, and the sum of an independent set can be zero. There is no valid test built on summing the vectors.',
+        },
+        {
+          id: 'la_leaf_svd',
+          method: 'Singular Value Decomposition (SVD)',
+          reason:
+            'SVD, A = UΣVᵀ, exists for EVERY m×n matrix — square or not, diagonalizable or not — because Σ\'s entries are √(eigenvalues of AᵀA), and AᵀA is always symmetric positive-semidefinite, which the Spectral Theorem guarantees has real, non-negative eigenvalues no matter what A looks like. That is exactly the guarantee this question needs: a non-square matrix, or one like [[1,1],[0,1]] with a repeated eigenvalue and too few independent eigenvectors, still has a full SVD.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_eigendecomp',
+          method: 'Eigendecomposition, A = PDP⁻¹',
+          reason:
+            "Eigendecomposition needs A square (P and D don't even make sense otherwise) AND diagonalizable (enough independent eigenvectors to fill P). [[1,1],[0,1]] is square but its only eigenvalue, 1, has just ONE independent eigenvector — not two — so P can't be built and this decomposition simply does not exist for it, even though the matrix itself is perfectly well-behaved.",
+        },
+        {
+          id: 'la_leaf_lu_for_decomp',
+          method: 'LU decomposition',
+          reason:
+            'LU decomposition (A = LU, lower- and upper-triangular factors) is built for efficiently solving Ax = b for multiple right-hand sides — it says nothing about a matrix\'s eigenvalues, singular values, or fundamental scaling directions, which is what this question is actually asking for. Reach for LU when the task is "solve a system," not "describe what A does to space."',
+        },
+        {
+          id: 'la_leaf_normal_eq',
+          method: 'The normal equations, AᵀA x = Aᵀb',
+          reason:
+            'This is the least-squares fix: since Ax = b has no exact solution, minimize the residual ‖Ax − b‖² instead, which calculus shows happens exactly when AᵀA x = Aᵀb. For three noisy measurements of one unknown, x=1, x=2, x=4 (A = [1;1;1], b = [1,2,4]ᵀ): AᵀA = 3, Aᵀb = 7, so x = 7/3 ≈ 2.33 — precisely the mean of the three readings, the single value closest to all three at once.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_cramer_nonsquare',
+          method: "Cramer's rule on the non-square system",
+          reason:
+            "Cramer's rule requires a SQUARE matrix — it is built from ratios of determinants, and a non-square matrix has no determinant at all. With more equations than unknowns, A is not square, so there is no determinant to divide by and the rule cannot even be set up, regardless of how large or small the system is.",
+        },
+        {
+          id: 'la_leaf_no_answer',
+          method: 'Conclude there is no answer',
+          reason:
+            'There is no EXACT answer, but that is not the same as no answer at all — least squares gives the single x that minimizes how wrong the system is, which is exactly the useful answer for noisy or overdetermined data (curve fitting, regression, and similar problems are built on this). Stopping at "no solution" throws away a genuinely useful result.',
+        },
+        {
+          id: 'la_leaf_gram_schmidt',
+          method: 'The Gram-Schmidt process',
+          reason:
+            'Gram-Schmidt keeps e₁ = u and subtracts off, from v, exactly the part that points along e₁: w₂ = v − (v·e₁/e₁·e₁)e₁. For u=(1,1,0), v=(1,0,1): w₂ = (1,0,1) − ½(1,1,0) = (½,−½,1), and e₁·w₂ = ½−½+0 = 0 — exactly perpendicular, while {e₁, w₂} still spans the same plane {u, v} did.',
+          best: true,
+        },
+        {
+          id: 'la_leaf_normalize_only',
+          method: 'Normalize each vector separately',
+          reason:
+            'Normalizing only changes each vector\'s LENGTH to 1 — it does nothing to the ANGLE between them. For u=(1,1,0), v=(1,0,1): the normalized vectors still have dot product 1/2, not 0, so they are just as non-perpendicular as before, only shorter. Orthogonality is a statement about the angle between vectors; normalizing never touches that.',
+        },
+        {
+          id: 'la_leaf_cross_product',
+          method: 'Take their cross product',
+          reason:
+            'u × v does produce a vector orthogonal to BOTH u and v — but it is a genuinely NEW third direction, perpendicular to the plane u and v span, not a replacement for either one. It cannot give you an orthogonal PAIR still spanning that same original plane, which is what the question asks for; it is the right tool for building a third basis vector in 3-D, not for fixing up two vectors already in a plane.',
         },
       ],
     },
@@ -1138,6 +1319,30 @@ export const ALL_METHOD_SELECTION_TRAINERS: MethodSelectionTrainer[] = [
  *    (unchanged, the pre-existing behavior) is the correct entry point,
  *    not a gap to close.
  *
+ *    Linear algebra carries the SAME kind of exception, audited concept by
+ *    concept for all 26 GATE-EM LA concepts (`/loop`, 2026-09-04): 17 map
+ *    to one of `la_invertible`/`la_injective`/`la_power`/`la_definite`/
+ *    `la_system_solve`/`la_independence_test`/`la_decomposition`/
+ *    `la_least_squares`/`la_orthogonalize`. The other 9 —
+ *    `matrix-operations`, `vector-spaces`, `eigenvalues`, `trace`,
+ *    `symmetric-matrices`, `inner-product-spaces`, `change-of-basis`,
+ *    `jordan-normal-form`, `matrix-norms` — are property-checks or
+ *    single-procedure computations with no genuine competing-method
+ *    decision behind them at GATE-EM's level (e.g. `trace` is "add the
+ *    diagonal," not a choice between approaches; GATE-EM teaches ONE
+ *    method for eigenvalues — the characteristic polynomial — not a
+ *    competitive choice among several); forcing a fork for each would
+ *    produce a mismatched or fabricated question, not a real one. They
+ *    correctly fall through to `la_start`'s classification root, same as
+ *    vector-calculus's foundational concepts — a deliberate, audited
+ *    exclusion, not an oversight. `jordan-normal-form` is the one
+ *    borderline case: it genuinely belongs as a 4th path under
+ *    `la_power`'s "A is not diagonalizable" branch (Jordan form is the
+ *    standard alternative to Cayley-Hamilton reduction there), but doing
+ *    that well means restructuring `la_power` into a two-level decision
+ *    rather than bolting on a mismatched leaf — named here as real,
+ *    scoped future work, not silently dropped.
+ *
  *  - Distributions: the curriculum's concept granularity for this topic is
  *    `discrete-distributions` / `continuous-distributions` — there is no
  *    per-distribution concept id (no "poisson-distribution", etc.), so the
@@ -1163,6 +1368,16 @@ export const CONCEPT_TO_WIZARD_NODE: Record<string, Record<string, string>> = {
     'quadratic-forms': 'la_definite',
     'positive-definite-matrices': 'la_definite',
     'spectral-theorem': 'la_definite',
+    // /loop (2026-09-04) — the 4 new forks above, closing coverage for
+    // every remaining GATE-EM Linear Algebra concept that has a genuine
+    // method-selection decision behind it.
+    'systems-of-equations': 'la_system_solve',
+    'lu-factorization': 'la_system_solve',
+    'linear-independence': 'la_independence_test',
+    svd: 'la_decomposition',
+    'least-squares': 'la_least_squares',
+    orthogonality: 'la_orthogonalize',
+    'gram-schmidt': 'la_orthogonalize',
   },
   'vector-calculus': {
     'greens-theorem': 'vc_plane_pick',

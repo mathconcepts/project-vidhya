@@ -6,13 +6,14 @@
  */
 
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { apiFetch } from '@/hooks/useApi';
 import { useSession } from '@/hooks/useSession';
 import { trackEvent } from '@/lib/analytics';
 import {
   Target, TrendingUp, Brain, AlertTriangle, Lightbulb, Flame,
-  BookOpen, Clock, Sparkles,
+  BookOpen, Clock, Sparkles, GitBranch,
 } from 'lucide-react';
 
 interface AuditReport {
@@ -36,7 +37,7 @@ interface AuditReport {
     recommendations: string[];
   };
   prerequisite_alerts: Array<{
-    concept: string; severity: string; fix_order: string[];
+    concept: string; severity: string; fix_order: string[]; wizard_route: string | null;
   }>;
   cognitive_profile: {
     representation_mode: string;
@@ -231,6 +232,18 @@ export default function StudentAuditPage() {
               <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
                 Fix order: {a.fix_order.slice(0, 3).map(c => c.replace(/-/g, ' ')).join(' → ')}
               </p>
+              {a.wizard_route && (
+                <Link
+                  to={a.wizard_route}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6,
+                    fontSize: 11, fontWeight: 'var(--weight-semibold)',
+                    color: 'var(--indigo-ink)', textDecoration: 'none',
+                  }}
+                >
+                  <GitBranch size={11} aria-hidden /> Method-selection wizard available for {a.concept.replace(/-/g, ' ')}
+                </Link>
+              )}
             </div>
           ))}
         </div>

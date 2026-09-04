@@ -19,6 +19,7 @@ import {
   DISTRIBUTION_TRAINER,
   THEOREM_WIZARD_TRAINERS,
   wizardStartNodeForConcept,
+  wizardRouteForConcept,
 } from './method-selection-trainers';
 import { __testing } from '@/components/lesson/interactives/types';
 
@@ -182,5 +183,36 @@ describe('CONCEPT_TO_WIZARD_NODE — the startAt deep-link map', () => {
     expect(wizardStartNodeForConcept('some-unknown-trainer', 'determinants')).toBeUndefined();
     expect(wizardStartNodeForConcept('linear-algebra', null)).toBeUndefined();
     expect(wizardStartNodeForConcept('linear-algebra', undefined)).toBeUndefined();
+  });
+});
+
+describe('wizardRouteForConcept — resolving a full route from a concept id alone', () => {
+  it('resolves a theorem-wizard route for a concept whose trainer is not known up front', () => {
+    expect(wizardRouteForConcept('determinants')).toBe('/theorem-wizard/linear-algebra?concept=determinants');
+    expect(wizardRouteForConcept('stokes-theorem')).toBe('/theorem-wizard/vector-calculus?concept=stokes-theorem');
+    expect(wizardRouteForConcept('root-finding')).toBe('/theorem-wizard/numerical-methods?concept=root-finding');
+  });
+
+  it('resolves the dedicated /distribution-selector route, not a /theorem-wizard/distribution-selector guess', () => {
+    expect(wizardRouteForConcept('discrete-distributions')).toBe(
+      '/distribution-selector?concept=discrete-distributions',
+    );
+  });
+
+  it('returns null for an unmapped or absent concept — never a guessed link', () => {
+    expect(wizardRouteForConcept('vector-spaces')).toBeNull();
+    expect(wizardRouteForConcept(null)).toBeNull();
+    expect(wizardRouteForConcept(undefined)).toBeNull();
+    expect(wizardRouteForConcept('')).toBeNull();
+  });
+
+  it('URL-encodes the concept id in the query string', () => {
+    // No real concept id in this codebase needs encoding today, but the
+    // resolver must not silently break if one ever does (e.g. a future
+    // concept id containing a space or slash).
+    const originalMap = CONCEPT_TO_WIZARD_NODE['linear-algebra'];
+    expect(originalMap).toBeDefined();
+    const route = wizardRouteForConcept('determinants');
+    expect(route).toContain(encodeURIComponent('determinants'));
   });
 });

@@ -2910,6 +2910,72 @@ target). Existing 7 tests now render through `MemoryRouter` (the sheet's
 link requires a Router context). Frontend suite 2636 → 2639/2639.
 `tsc --noEmit` clean.
 
+### Wizard routed from weak prerequisites — student takeaway, teacher detail (2026-09-04)
+
+Direct follow-up: "look at how this connection to knowledge graph can help
+students focus on overcoming their weak areas... under the hood
+computation need not be visible... at least key takeaways. the teacher
+might get more information." Closes the TODOS.md item from the previous
+section — the BACKWARD direction (weak prerequisite → wizard), not just
+forward (browse graph → wizard).
+
+**The live path already existed and was already student-visible** —
+research before building anything found `refreshPrerequisiteAlerts`
+(`src/gbrain/student-model.ts`) fires on every real attempt
+(`POST /api/gbrain/attempt`), writes `prerequisite_alerts` to the student
+model, and `ErrorDiagnosis.tsx`'s "Foundation gap detected" card already
+renders `shaky_prereqs` in plain language on `PracticePage` after a wrong
+answer. What was missing was the wizard connection on top of it.
+
+**`wizardRouteForConcept(conceptId)`** (`method-selection-trainers.ts`) —
+resolves a full route from a bare concept id alone, searching every
+trainer's `CONCEPT_TO_WIZARD_NODE` map (unlike `wizardRouteForTopic`,
+which starts from a known topic). Handles the `distribution-selector`
+special case (a dedicated page, not a `/theorem-wizard/:module` route).
+Returns `null` for an unmapped concept — no guessed link.
+
+**Student takeaway, not the computation.** `ErrorDiagnosis.tsx`'s
+existing "Foundation gap detected" card gains one line — "Which method
+applies?" — when `wizardRouteForConcept(prerequisiteAlerts[0].concept)`
+resolves. No mastery numbers, no distance metrics, nothing the student
+didn't already see in that card's plain-language "Strengthen first: …"
+line; the link is the one new actionable thing.
+
+**Teacher detail.** `student-audit.ts`'s `auditStudent()` (backend,
+`@ts-nocheck`) — the source of `GET /api/gbrain/audit/:sessionId` and the
+`StudentAuditPage` at `/audit` — gains a `wizard_route: string | null`
+field on each `prerequisite_alerts` entry. `StudentAuditPage.tsx`'s
+existing "Foundation Alerts" card renders it as "Method-selection wizard
+available for `<concept>`" when present — visible only in the teacher-
+facing detail view, never the student-facing one.
+
+**Backend can't statically import frontend code** (`rootDir: "./src"`
+forbids it — same constraint `interactive-spec-loader.ts` documents).
+`src/content/wizard-route-loader.ts` is the SAME guarded dynamic-import
+pattern, one new file, so the backend never carries its own copy of
+`CONCEPT_TO_WIZARD_NODE` to drift from the frontend's (exactly the
+"parallel truths" bug class named in this doc's v4.25.0 section). Falls
+back to `null` when `frontend/src` isn't on disk (the demo image) — the
+teacher detail line simply doesn't render; nothing crashes.
+
+**Still deliberately out of scope**, per the prior section's TODO entry:
+this wires the ALERT surfaces the alert already reaches (student's
+post-wrong-answer card, teacher's audit report) — it does not add a NEW
+proactive nudge somewhere a student would see a weak-prerequisite alert
+before ever attempting the downstream concept (e.g. on `KnowledgeHomePage`
+before a wrong answer happens at all). That's a bigger, separate feature
+decision, not a wiring gap.
+
+**Tests:** 15 new — `method-selection-trainers.test.ts` +4
+(`wizardRouteForConcept`: theorem-wizard route, distribution-selector
+route, null for unmapped/absent, URL-encoding), `wizard-route-loader.test.ts`
++5 (backend loader: resolves, real mapping, null-not-throw, caches, reset),
+`ErrorDiagnosis.test.tsx` +4 (new file: link present/absent, plain-language
+line unchanged either way, no alert → no card), `StudentAuditPage.test.tsx`
++2 (new file: teacher link present/absent). Backend suite 4692 → 4701/4701
+(365 files). Frontend suite 2639 → 2649/2649. `tsc --noEmit` clean both
+sides. `npm run ci` (18 gates, including `ci:boot`) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

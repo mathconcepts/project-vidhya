@@ -1024,3 +1024,31 @@ export function wizardStartNodeForConcept(
   if (!concept) return undefined;
   return CONCEPT_TO_WIZARD_NODE[trainerId]?.[concept];
 }
+
+/**
+ * `wizardRouteForConcept` (weak-prerequisite follow-up, 2026-09-04) —
+ * resolves a full, ready-to-navigate wizard route from a concept id ALONE,
+ * with no topic/trainer known up front. `wizardRouteForTopic` (in
+ * `PracticeAttemptPage.tsx`) already does this for the reactive
+ * post-wrong-answer path, where the practice item's `topic` field is in
+ * hand; this is for the opposite direction — a prerequisite alert
+ * (`shaky_prereqs` on a `StudentModel`) names only a concept id, so the
+ * lookup has to search every trainer's `CONCEPT_TO_WIZARD_NODE` map rather
+ * than starting from a known trainer.
+ *
+ * `distribution-selector` is a special case: unlike every entry in
+ * `THEOREM_WIZARD_TRAINERS`, it isn't a `/theorem-wizard/:module` route —
+ * it's the dedicated `/distribution-selector` page.
+ *
+ * Returns `null` for an unmapped concept, exactly as `wizardRouteForTopic`
+ * does for an unmapped topic — a guessed/generic route is worse than none.
+ */
+export function wizardRouteForConcept(conceptId: string | null | undefined): string | null {
+  if (!conceptId) return null;
+  for (const [trainerId, concepts] of Object.entries(CONCEPT_TO_WIZARD_NODE)) {
+    if (!(conceptId in concepts)) continue;
+    const base = trainerId === 'distribution-selector' ? '/distribution-selector' : `/theorem-wizard/${trainerId}`;
+    return `${base}?concept=${encodeURIComponent(conceptId)}`;
+  }
+  return null;
+}

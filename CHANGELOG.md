@@ -4,6 +4,52 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.56.0] — 2026-09-04 — Wizard wired into the knowledge graph, both directions
+
+No new env vars, no migrations.
+
+Five pieces of work closing PR #158, all continuing the method-selection
+wizard thread from the prior two releases:
+
+1. **`trace`'s intuition silo fixed**, same defect and same template as
+   Cayley-Hamilton's fix in 4.55.0: `intuition.md`/`-shaken.md` used a
+   dense abstract paragraph (or, in the shaken variant, an unrelated
+   matrix) with zero connection to `hook.md`'s own working resonance-beat
+   scene. Rewritten onto hook's exact matrix/eigenvalues, ELI5 register, a
+   predict-before-reveal beat explaining trace's basis-independence. The
+   revert claim that prompted this investigation was checked against two
+   primary sources (git log, Render's own deploy history) and found
+   false — the Cayley-Hamilton fix was live the whole time.
+2. **`startAt` deep link for `DecisionTreeWalkthrough`** — the wizard used
+   to always open at its tree's root, so a student diagnosed with one
+   specific mistake still re-walked the whole classification chain. An
+   optional `startAt` prop opens at the fork that actually matters, with a
+   "See the full picture from the top" escape hatch back to the true root.
+3. **Micro-solver wave 1** — 4 new single-fork wizard trainers authored by
+   parallel Sonnet subagents and hand-verified before merging in
+   (root-finding for numerical-methods, transform choice for
+   transform-theory, first-order-ODE method for differential-equations,
+   shortest-path algorithm for graph-theory). Wizard coverage: 3 of 10
+   topic families → 6 of 10.
+4. **Knowledge graph → wizard, forward direction.** `FrontierSpine`'s
+   per-concept bottom sheet now surfaces a "Which method applies?" link
+   when the tapped concept resolves to a wizard fork — nothing shown for
+   an unmapped concept, no guessed links.
+5. **Weak prerequisite → wizard, backward direction.** The existing
+   `refreshPrerequisiteAlerts` pipeline (already live on every real
+   attempt) now routes into the wizard on both surfaces it already
+   reaches: `ErrorDiagnosis.tsx`'s student-facing "Foundation gap
+   detected" card gains one plain-language link, no raw mastery numbers or
+   computation exposed; `student-audit.ts`'s teacher-facing report gains a
+   `wizard_route` field with more detail. Bridged cross-package via a new
+   guarded dynamic-import loader (`src/content/wizard-route-loader.ts`),
+   mirroring the existing `interactive-spec-loader.ts` pattern rather than
+   letting a second copy of the wizard's concept map drift into existence.
+
+63 new tests across the five pieces. Backend suite 4692 → 4701/4701 (365
+files). Frontend suite 2604 → 2649/2649. `tsc --noEmit` clean both sides.
+`npm run ci` (18 gates, including `ci:boot`) clean.
+
 ## [4.55.0] — 2026-09-03 — Two systemic rendering bugs: raw LaTeX and dead markdown tables
 
 No new env vars, no migrations.

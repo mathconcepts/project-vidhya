@@ -149,20 +149,38 @@ interface AtomPresentation {
   icon: any;
   animation: AnimationPreset;
   stage: 'above' | 'below' | 'in_disclosure';
+  /**
+   * Eyebrow-label + icon colour ONLY — never a card background, a button, or
+   * a filled surface. A four-hue "atom-kind" palette (2026-09-05
+   * /ui-ux-pro-max decision, colors.css's own comment carries the full
+   * rationale) clustering the 11 AtomTypes by pedagogical role, kept
+   * deliberately separate from the app's two reserved accents (green =
+   * mastery, indigo = AI/tutor — neither appears here). common_traps keeps
+   * its pre-existing `var(--orange)` verbatim (a system warning state, not
+   * part of this palette, and not switched to `--orange-ink` so its own
+   * locked test — AtomCardRenderer.trapVisualIdentity.test.tsx — keeps
+   * passing unchanged).
+   */
+  tagColor: string;
 }
 
 const ATOM_PRESENTATION_MAP: Record<AtomType, AtomPresentation> = {
-  hook:               { label: 'Hook',           icon: Sparkles,      animation: 'bounce-alert',      stage: 'above' },
-  intuition:          { label: 'Intuition',      icon: Lightbulb,     animation: 'fade-in',           stage: 'above' },
-  formal_definition:  { label: 'Definition',     icon: BookOpen,      animation: 'slide-up',          stage: 'below' },
-  visual_analogy:     { label: 'Visual',         icon: Eye,           animation: 'scale-in',          stage: 'above' },
-  worked_example:     { label: 'Worked Example', icon: Target,        animation: 'step-unfold',       stage: 'above' },
-  micro_exercise:     { label: 'Quick Check',    icon: Target,        animation: 'reveal-highlight',  stage: 'above' },
-  common_traps:       { label: 'Common Traps',   icon: AlertTriangle, animation: 'shake-then-settle', stage: 'below' },
-  retrieval_prompt:   { label: 'Recall',         icon: Eye,           animation: 'flip-reveal',       stage: 'in_disclosure' },
-  interleaved_drill:  { label: 'Drill',          icon: Target,        animation: 'slide-up',          stage: 'above' },
-  mnemonic:           { label: 'Mnemonic',       icon: Sparkles,      animation: 'scale-in',          stage: 'above' },
-  exam_pattern:       { label: 'Exam Pattern',   icon: BookOpen,      animation: 'reveal-highlight',  stage: 'below' },
+  // Discovery cluster — first contact with the idea. Teal.
+  hook:               { label: 'Hook',           icon: Sparkles,      animation: 'bounce-alert',      stage: 'above',         tagColor: 'var(--teal-ink)' },
+  intuition:          { label: 'Intuition',      icon: Lightbulb,     animation: 'fade-in',           stage: 'above',         tagColor: 'var(--teal-ink)' },
+  visual_analogy:     { label: 'Visual',         icon: Eye,           animation: 'scale-in',          stage: 'above',         tagColor: 'var(--teal-ink)' },
+  // Practice cluster — doing the mathematics. Purple.
+  worked_example:     { label: 'Worked Example', icon: Target,        animation: 'step-unfold',       stage: 'above',         tagColor: 'var(--purple-ink)' },
+  micro_exercise:     { label: 'Quick Check',    icon: Target,        animation: 'reveal-highlight',  stage: 'above',         tagColor: 'var(--purple-ink)' },
+  interleaved_drill:  { label: 'Drill',          icon: Target,        animation: 'slide-up',          stage: 'above',         tagColor: 'var(--purple-ink)' },
+  // Retention cluster — bringing it back later. Mint.
+  retrieval_prompt:   { label: 'Recall',         icon: Eye,           animation: 'flip-reveal',       stage: 'in_disclosure', tagColor: 'var(--mint-ink)' },
+  mnemonic:           { label: 'Mnemonic',       icon: Sparkles,      animation: 'scale-in',          stage: 'above',         tagColor: 'var(--mint-ink)' },
+  // Reference cluster — look-it-up material. Brown.
+  formal_definition:  { label: 'Definition',     icon: BookOpen,      animation: 'slide-up',          stage: 'below',         tagColor: 'var(--brown-ink)' },
+  exam_pattern:       { label: 'Exam Pattern',   icon: BookOpen,      animation: 'reveal-highlight',  stage: 'below',         tagColor: 'var(--brown-ink)' },
+  // Warning — pre-existing exception, unchanged.
+  common_traps:       { label: 'Common Traps',   icon: AlertTriangle, animation: 'shake-then-settle', stage: 'below',         tagColor: 'var(--orange)' },
 };
 
 /**
@@ -1118,16 +1136,12 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
         >
           <div
             className="flex items-center gap-2 mb-3 text-xs uppercase tracking-wider"
-            // Not indigo: this eyebrow label is generic card chrome shown for
-            // EVERY atom type (hook, intuition, common_traps, ...), not an
-            // AI/tutor/study-plan surface, so the reserved accent doesn't apply.
-            // common_traps is the one exception, and not a new color: orange
-            // is already Clarity's approved warning token (used today only in
-            // the cohort-stat callout below, which needs >=10 students of
-            // data and so is invisible on any new/low-traffic concept). This
-            // makes the AlertTriangle icon's own warning honest at zero data,
-            // permanently rather than only when cohort telemetry exists.
-            style={{ color: current.atom_type === 'common_traps' ? 'var(--orange)' : 'var(--text-secondary)' }}
+            // Not indigo, not green: this eyebrow label is generic card chrome
+            // shown for EVERY atom type, never an AI/tutor or mastery surface,
+            // so neither reserved accent applies. Each type's colour instead
+            // comes from ATOM_PRESENTATION_MAP's own tagColor field — the
+            // atom-kind palette documented there and in colors.css.
+            style={{ color: presentation.tagColor }}
           >
             <Icon size={14} />
             <span>{presentation.label}</span>

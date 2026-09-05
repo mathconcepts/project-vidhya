@@ -33,13 +33,26 @@ One family: the platform system sans (SF Pro on Apple hardware, Inter Tight else
   size. Tabular numerals wherever a number can change.
 
 ## Colour
-Two accents, both semantic; everything else is grey.
+Two accents, both semantic; everything else is grey — plus one narrow,
+named exception below (2026-09-05).
 - **Mastery green:** `#34c759` fill · `#248a3d` ink · `rgba(52,199,89,.12)` tint —
   correct, mastered, primary action.
 - **Tutor indigo:** `#5856d6` fill · `#4340b5` ink · `rgba(88,86,214,.12)` tint —
   AI, tutor, study plan. **Reserved.** No other surface may use it.
 - **States:** red `#ff3b30`/`#d70015`, orange `#ff9f0a`/`#b25000`. System only,
   never decoration.
+- **Atom-kind tags (scoped exception):** four more real Apple system colours —
+  teal `#30b0c7`, purple `#af52de`, mint `#00c7be`, brown `#a2845e` (each with
+  an `-ink` contrast variant and a `.13`-alpha tint, `colors.css`) — used
+  **only** for the small eyebrow label + icon on a lesson atom card, clustering
+  the 11 `AtomType`s by pedagogical role (discovery/practice/retention/
+  reference; see `AtomCardRenderer.tsx`'s `ATOM_PRESENTATION_MAP`). Never a
+  card background, a button, or a filled surface — green and indigo keep
+  their exact meanings above, untouched. `common_traps` keeps its
+  pre-existing orange, unchanged. Ships instead of a genuinely unconstrained
+  multi-colour ("Amazon-style") treatment, which real e-commerce/education
+  palettes don't use either — 2-3 accents, not a rainbow, was the actual
+  finding behind this line.
 - **Neutrals:** canvas `#f5f5f7` · card `#ffffff` · sunken `#efeff4` ·
   fill `rgba(120,120,128,.12)` · ink `#1d1d1f` · secondary `rgba(60,60,67,.6)` ·
   tertiary `rgba(60,60,67,.35)` · separator `rgba(60,60,67,.16)`.
@@ -108,3 +121,4 @@ marketing site, blog & messaging channels.
 | 2026-08-01 | One focal block per screen | Home carried five competing blocks; the "One Thing" card could not do its job |
 | 2026-08-01 | Confetti and streak surfaces deleted | Celebration now names the specific win, per the repo's own principle 3 |
 | 2026-08-01 | Receipt law preserved verbatim | The one signature worth keeping; only its material changed |
+| 2026-09-05 | Added a 4-hue atom-kind tag palette (teal/purple/mint/brown), eyebrow-label + icon only | `/ui-ux-pro-max` request for "more colours, Amazon psychology" on lesson content; real e-commerce/education palettes checked and found to use 2-3 accents, never a rainbow — this is the constrained middle ground the user picked, not a reversal of the two-accent law |

@@ -505,88 +505,117 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         </header>
       )}
 
-      <svg
-        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-        width="100%"
-        className="rounded-md border"
-        style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)' }}
-        preserveAspectRatio="xMidYMid meet"
-        aria-label={hasBeats ? spec.title : `Animated trace: ${spec.title}`}
+      {/* Sticky diagram+controls (LA sticky-diagram fix, /investigate
+          2026-09-05): on a long beat caption, the card used to scroll the
+          diagram off-screen before the text finished — spacing alone
+          (the p-3/space-y-2 trim above) narrowed the gap but couldn't
+          close it for a genuinely long caption or a trap beat. Pinning
+          this block via `position: sticky` while the caption/trap/Continue
+          button scroll beneath it is the fix TODOS.md named and deferred
+          pending explicit sign-off; the user has now authorized shipping
+          it despite the caveat below.
+          Known residual risk, stated honestly rather than hidden: this
+          card renders inside AtomCardRenderer's swipeable, framer-motion
+          `transform`-animated stack. A `transform` on an ancestor creates
+          a new containing block, which CAN make `position: sticky`
+          resolve against that ancestor instead of the viewport — in the
+          worst case the sticky effect silently degrades to ordinary
+          static flow (no crash, no broken layout, just no pinning). No
+          live browser was available in this sandbox to verify the pin
+          visually on a real device; only beat-carrying, motion-enabled
+          scenes (`showLiveBeatUI`) opt in — the non-beat and
+          reduced-motion/storyboard paths are untouched. */}
+      <div
+        className="space-y-2"
+        style={
+          showLiveBeatUI
+            ? { position: 'sticky', top: 0, zIndex: 1, background: 'var(--surface-fill)' }
+            : undefined
+        }
       >
-        <Axes viewBox={viewBox} projector={projector} />
-        {linearMap && (
-          <LinearMapScene
-            lm={linearMap}
-            projector={projector}
-            viewBox={viewBox}
-            progress={effectiveProgress}
-            eigenRevealed={eigenRevealed}
-            emphasizeActive={emphasizeActive}
-            focusedEigenIndices={focusedEigenIndices}
-            trapRevealed={trapRevealed}
-          />
-        )}
-        {trapRevealed && ghostPoints && (
-          <path
-            d={pathD(ghostPoints, projector)}
-            stroke="var(--grey-6)"
-            strokeWidth={2}
-            strokeDasharray="4 4"
-            fill="none"
-          />
-        )}
-        {segments.map((seg) => (
-          <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
-        ))}
-        {head && (
-          <circle
-            cx={projector(head.x, head.y)[0]}
-            cy={projector(head.x, head.y)[1]}
-            r={4}
-            fill="var(--green)"
-          />
-        )}
-      </svg>
-
-      {/* Controls sit directly under the SVG, before any text — a
-          /design-review finding (2026-09-02): "the control must be near
-          the image." The beat bar + play/pause/reset + scrub slider used
-          to be pushed down below the narration caption and the trap row,
-          so a student's hand had to travel past a paragraph of text to
-          reach the thing that changes what the image shows. Moving them
-          up makes control-then-image-then-text one visual unit instead of
-          a scrubber stranded at the bottom of the card. */}
-      {!hasBeats && !reducedMotion && (
-        <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the trace manually" />
-      )}
-
-      {showLiveBeatUI && (
-        <div className="flex items-center gap-2">
-          {sortedSteps.length > 1 && (
-            <BeatBar sortedSteps={sortedSteps} progress={effectiveProgress} servedStance={servedStance} onSeek={seekTo} />
+        <svg
+          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+          width="100%"
+          className="rounded-md border"
+          style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)' }}
+          preserveAspectRatio="xMidYMid meet"
+          aria-label={hasBeats ? spec.title : `Animated trace: ${spec.title}`}
+        >
+          <Axes viewBox={viewBox} projector={projector} />
+          {linearMap && (
+            <LinearMapScene
+              lm={linearMap}
+              projector={projector}
+              viewBox={viewBox}
+              progress={effectiveProgress}
+              eigenRevealed={eigenRevealed}
+              emphasizeActive={emphasizeActive}
+              focusedEigenIndices={focusedEigenIndices}
+              trapRevealed={trapRevealed}
+            />
           )}
-          <div className="flex items-center flex-shrink-0">
-            {/* IconButton is already 44px (design-system floor) and carries its
-                own press-scale feedback — no more hand-rolled 44px tap zone
-                wrapping a visually tiny, unresponsive icon. */}
-            <IconButton
-              label={playing ? 'Pause simulation' : 'Play simulation'}
-              tone="neutral"
-              filled
-              onClick={() => (playing ? setPlaying(false) : play())}
-            >
-              {playing ? <Pause size={16} /> : <Play size={16} />}
-            </IconButton>
-            <IconButton label="Reset simulation" tone="neutral" filled onClick={reset}>
-              <RotateCcw size={16} />
-            </IconButton>
-          </div>
-        </div>
-      )}
+          {trapRevealed && ghostPoints && (
+            <path
+              d={pathD(ghostPoints, projector)}
+              stroke="var(--grey-6)"
+              strokeWidth={2}
+              strokeDasharray="4 4"
+              fill="none"
+            />
+          )}
+          {segments.map((seg) => (
+            <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
+          ))}
+          {head && (
+            <circle
+              cx={projector(head.x, head.y)[0]}
+              cy={projector(head.x, head.y)[1]}
+              r={4}
+              fill="var(--green)"
+            />
+          )}
+        </svg>
 
-      {showLiveBeatUI && !reducedMotion && (
-        <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the scene at your own pace" />
-      )}
+        {/* Controls sit directly under the SVG, before any text — a
+            /design-review finding (2026-09-02): "the control must be near
+            the image." The beat bar + play/pause/reset + scrub slider used
+            to be pushed down below the narration caption and the trap row,
+            so a student's hand had to travel past a paragraph of text to
+            reach the thing that changes what the image shows. Moving them
+            up makes control-then-image-then-text one visual unit instead of
+            a scrubber stranded at the bottom of the card. */}
+        {!hasBeats && !reducedMotion && (
+          <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the trace manually" />
+        )}
+
+        {showLiveBeatUI && (
+          <div className="flex items-center gap-2">
+            {sortedSteps.length > 1 && (
+              <BeatBar sortedSteps={sortedSteps} progress={effectiveProgress} servedStance={servedStance} onSeek={seekTo} />
+            )}
+            <div className="flex items-center flex-shrink-0">
+              {/* IconButton is already 44px (design-system floor) and carries its
+                  own press-scale feedback — no more hand-rolled 44px tap zone
+                  wrapping a visually tiny, unresponsive icon. */}
+              <IconButton
+                label={playing ? 'Pause simulation' : 'Play simulation'}
+                tone="neutral"
+                filled
+                onClick={() => (playing ? setPlaying(false) : play())}
+              >
+                {playing ? <Pause size={16} /> : <Play size={16} />}
+              </IconButton>
+              <IconButton label="Reset simulation" tone="neutral" filled onClick={reset}>
+                <RotateCcw size={16} />
+              </IconButton>
+            </div>
+          </div>
+        )}
+
+        {showLiveBeatUI && !reducedMotion && (
+          <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the scene at your own pace" />
+        )}
+      </div>
 
       {!hasBeats && reducedMotion && (
         <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>

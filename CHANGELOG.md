@@ -4,6 +4,37 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.64.0] — 2026-09-05 — Atom-kind tag colours
+
+No new env vars, no migrations.
+
+`/ui-ux-pro-max` ask: "all lessons are in singular color... need multiple
+colours for attention (Amazon)... in line with the existing theme." Researched
+first — every product-type palette in the design database uses 2-3 accents,
+never a rainbow, and Vidhya's own "two accents, both semantic" law is a
+deliberate choice for a tired/anxious late-night study audience — so the
+tension was put to the user as a real decision rather than resolved silently.
+User picked the constrained option.
+
+- **Four more real Apple system colours** — teal `#30b0c7`, purple `#af52de`,
+  mint `#00c7be`, brown `#a2845e` (`+ -ink`/`-tint` variants, light + dark;
+  `frontend/src/styles/tokens/colors.css`) — wired into
+  `AtomCardRenderer.tsx`'s existing `ATOM_PRESENTATION_MAP` as a new
+  `tagColor` field (no second parallel table). One hue per pedagogical
+  cluster across the 11 `AtomType`s: teal (discovery), purple (practice),
+  mint (retention), brown (reference). `common_traps` keeps its
+  pre-existing `var(--orange)` verbatim.
+- **Eyebrow-label + icon only** — never a card background, button, or
+  filled surface. Green and indigo keep their exact reserved meanings.
+- **DESIGN-SYSTEM.md and CLAUDE.md updated** in the same pass so this reads
+  as documented law, not a violation of the "two accents" non-negotiable a
+  future QA pass would otherwise flag.
+
+12 new tests (`AtomCardRenderer.tagColor.test.tsx`); existing
+`AtomCardRenderer.trapVisualIdentity.test.tsx` passes unchanged. Frontend
+suite 2699 → 2711/2711. `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+Backend untouched (frontend-only change).
+
 ## [4.63.0] — 2026-09-05 — Sticky beat diagram + Linear Algebra mnemonic manipulable widgets
 
 No new env vars, no migrations.

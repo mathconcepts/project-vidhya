@@ -368,6 +368,46 @@ describe('Simulation — chrome hierarchy (design contract item 3)', () => {
   });
 });
 
+// Regression (/investigate, 2026-09-05, "LA sticky-diagram fix"): the
+// diagram + its live controls (beat bar, play/pause/reset, scrub slider)
+// are wrapped in a `position: sticky` container ONLY for beat-carrying,
+// motion-enabled scenes (`showLiveBeatUI`) — the exact case where a long
+// caption/trap row can scroll the diagram out of view before the text
+// finishes. Non-beat and reduced-motion (storyboard) scenes must render
+// the same svg wrapper with no sticky styling — no visual change there.
+describe('Simulation — sticky diagram wrapper (student-paced beat scenes)', () => {
+  it('pins the svg+controls wrapper via position: sticky when beats are live (autoplay running)', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const svg = container.querySelector('svg')!;
+    const wrapper = svg.parentElement as HTMLElement;
+    expect(wrapper.style.position).toBe('sticky');
+    expect(wrapper.style.top).toBe('0px');
+  });
+
+  it('does NOT apply sticky positioning to a scene with no beats', () => {
+    const { container } = render(<Simulation spec={BASE_SPEC} />);
+    const svg = container.querySelector('svg')!;
+    const wrapper = svg.parentElement as HTMLElement;
+    expect(wrapper.style.position).not.toBe('sticky');
+  });
+
+  it('does NOT apply sticky positioning under reduced motion (storyboard replaces live controls)', () => {
+    mockMatchMedia(true);
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const svg = container.querySelector('svg')!;
+    const wrapper = svg.parentElement as HTMLElement;
+    expect(wrapper.style.position).not.toBe('sticky');
+  });
+
+  it('keeps the beat bar and controls inside the same sticky wrapper as the svg', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const svg = container.querySelector('svg')!;
+    const wrapper = svg.parentElement as HTMLElement;
+    expect(within(wrapper).getByRole('group', { name: 'Scene beats' })).toBeInTheDocument();
+    expect(within(wrapper).getByLabelText('Pause simulation')).toBeInTheDocument();
+  });
+});
+
 // Regression (/investigate, 2026-09-03: "hook might need to be as per each
 // individual's level of grasping... better to progress manually?"). The
 // Continue button is the unmissable "keep going" action once a beat holds —
@@ -600,6 +640,28 @@ describe('Simulation — trap row + ghost (design contract items 6, 7, 8)', () =
     expect(screen.queryByText(/\$\\text\{rank\}/)).toBeNull();
     // KaTeX rendered it as real math instead.
     expect(document.querySelectorAll('.vidhya-resonance-trap .katex').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('trap label carries a warning icon, matching common_traps\' AlertTriangle treatment (live-QA 2026-09-05, "trap needs a stronger ux")', () => {
+    const TRAP_SPEC: SimulationSpec = {
+      v: 1,
+      kind: 'simulation',
+      title: 'Trap icon check',
+      duration_sec: 5,
+      x_expr: 't',
+      y_expr: '0',
+      t_min: 0,
+      t_max: 1,
+      narration_steps: [
+        { at_progress: 0, text: 'start' },
+        { at_progress: 0.5, text: 'trap here', trap: { text: 'Students slip.', avoid: 'Do not slip.' } },
+      ],
+    };
+    render(<Simulation spec={TRAP_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 2/));
+    const label = screen.getByText('Where marks are lost');
+    expect(label.querySelector('svg')).not.toBeNull();
   });
 });
 

@@ -4,6 +4,145 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Corpus-wide hook/intuition/mnemonic motion upgrade ("convey more in less")
+
+**Trigger:** an operator wants to spend a real multi-batch content pass on
+this, or a fresh live-QA report repeats the same ask on a different
+concept.
+
+`/investigate` (2026-09-05) closed the three genuine, corpus-wide CODE bugs
+this report surfaced (a `why` bridging line silently dropped by the
+promoted-figure render path, a `common_traps`-style warning icon missing
+from the in-scene trap row, and a modest layout trim for the "diagram and
+text can't share a screen" complaint — all in CLAUDE.md's 2026-09-05
+section). What's still open is the much bigger ask underneath findings 2
+and 6: "update the required for ALL the materials" — systems-of-equations
+named as the example, "mnemonic — same as hook, intuition" — a genuine
+motion/content upgrade across every hook, intuition, and mnemonic atom in
+all 101 concepts, inspired by Apple/Tesla/Microsoft/Netflix's "stress the
+most important point" ethos plus (the ask's own words) "research Manim
+further."
+
+**What ui-ux-pro-max actually returned, so the next pass doesn't re-query
+for the same answer:** its installed database has no `--domain` for
+animation libraries (Manim included) — only style/color/chart/landing/
+product/ux/typography/icons/react/web. Its generic `ux`-domain animation
+guidance (respect `prefers-reduced-motion`; 1-2 animated elements per view
+maximum, never more; ease-out entering/ease-in exiting, never linear;
+150-300ms micro-interactions) is already exactly what `Simulation.tsx`'s
+beat/emphasize/trap/`focus_eigen` machinery implements — there is no
+generic UX-library gap here, only a per-concept AUTHORING gap (does this
+specific concept's scene actually use the highlighting/color tools that
+already exist).
+
+**What "research Manim further" should actually mean, concretely, for a
+future pass:** Manim (3Blue1Brown's animation engine) is known for a
+specific technique this repo's `Simulation.tsx` does NOT yet have: smooth
+morphing BETWEEN representations (e.g. an equation transforming term-by-
+term into its geometric meaning, not just one object moving along a
+fixed path). `Simulation.tsx` today animates ONE quantity changing over a
+parameter (`(x(t),y(t))` traces, or `linear_map`'s field-of-arrows morph)
+— it has no "this expression becomes that expression" text-morph
+primitive. Before building one, a future pass should WebSearch actual
+Manim technique writeups (this environment's `ui-ux-pro-max` tool cannot
+answer this) and decide whether a text-morph primitive is worth a new
+`InteractiveKind`, given the same schema-blast-radius cost every prior new
+kind has carried (template YAML, `ci:template-coverage`, prose-budget,
+stance-variant rules, the walkthrough gate).
+
+**The concrete execution plan, matching this repo's own established
+pattern for asks this size** (see "Hook/intuition silo audit closed for
+all 26 Linear Algebra concepts," 2026-09-04, for the exact template):
+dispatch parallel Claude Sonnet subagents, 4-6 concepts per batch, each
+given: (1) the concept's OWN hook.md/intuition.md/mnemonic.md as ground
+truth — never invent a new example; (2) explicit instruction to judge
+honestly whether the existing scene already uses `focus_eigen`/`emphasize`/
+color well, versus genuinely under-using the toolkit (most scenes
+currently animate in monochrome ink + one green reveal — is a second
+semantic color, e.g. highlighting the WRONG path in a warm tone the moment
+before the trap reveals it, worth authoring per-concept, or is that the
+`ghost_matrix`/dashed-grey convention already doing that job?); (3) the
+same SymPy/Wolfram verification discipline every content pass in this doc
+uses; (4) the same byte-identical-fence-across-stance-variants discipline
+(`re.DOTALL`, never `grep -o`). Start with Linear Algebra (highest existing
+coverage, easiest to judge "already good" vs. "genuinely thin") before the
+other 9 topic families.
+
+**Linear Algebra `mnemonic` slice: shipped 2026-09-05** (branch
+`investigate-followup-hook-intuition-trap`, 5 parallel Sonnet batches,
+per explicit user instruction). All 26 LA concepts' `mnemonic.md` atoms
+audited: 14 got a genuine `manipulable` widget (a slider-driven formula
+with 2+ free numbers the mnemonic actually hinges on — cayley-hamilton,
+change-of-basis, gram-schmidt, inner-product-spaces, least-squares,
+linear-independence, matrix-inverse, matrix-norms, positive-definite-
+matrices, quadratic-forms, spectral-theorem, svd, systems-of-equations,
+trace); 12 correctly left untouched (determinants, diagonalization,
+eigenvalues, jordan-normal-form, linear-transformations, lu-factorization,
+matrix-operations, null-space-column-space, orthogonality, rank-nullity,
+symmetric-matrices, vector-spaces — either a verbal/categorical mnemonic
+with no slider-worthy formula, or an equivalent/more complete widget
+already exists on that concept's own `intuition.md`, so a second copy
+would duplicate rather than reinforce). Every numeric claim verified via
+`python3 -c "import sympy..."` (Wolfram MCP was disconnected all session).
+This also fully closes the separate, more narrowly-scoped "Mnemonic atoms
+could carry a `manipulable` widget" entry that named cayley-hamilton as
+the first candidate — that entry is removed from this file.
+
+The SAME 5 batches also re-checked `focus_eigen` coverage on all 26
+concepts' `hook.md` files as a lightweight safety net (not the primary
+task) — confirmed the 2026-09-04 audit's coverage holds with zero new
+gaps found. The `emphasize`/second-semantic-color question from point (2)
+above was NOT separately explored this pass (out of scope for the
+mnemonic-focused dispatch) — still open for a future LA hook/intuition
+pass, and untouched for all 9 non-LA topic families.
+
+**Effort:** XL overall — the LA `mnemonic` slice above is done; the
+remaining scope (LA hook/intuition emphasize/color audit, plus all 3 atom
+types × 9 other topic families) is still ~15-18 batches, realistically a
+multi-session initiative.
+**Priority:** P2 — real, repeatedly-reported UX feedback, but the
+corpus-wide code fixes plus the LA mnemonic slice already ship the
+highest-leverage, lowest-risk part of this ask.
+**Deferred from:** `/investigate`, 2026-09-05, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Sticky diagram: live-device verification still owed
+
+**Shipped 2026-09-05** (branch `investigate-followup-hook-intuition-trap`,
+per explicit user sign-off to proceed despite the caveat below): option 1
+from the prior entry. `Simulation.tsx`'s svg + beat bar/play-pause-reset/
+scrub-slider now sit in a `position: sticky` wrapper for beat-carrying,
+motion-enabled scenes (`showLiveBeatUI`) only; caption, trap row, and
+Continue button scroll normally beneath it. 4 new regression tests lock in
+the sticky style is applied/absent in the right cases.
+
+**Trigger for follow-up:** a live device or a working `browse` session
+becomes available. This sandbox had neither, so the fix was shipped
+structurally sound (typechecked, unit-tested) but visually UNVERIFIED. The
+documented residual risk stands: this card renders inside
+`AtomCardRenderer`'s swipeable, framer-motion `transform`-animated card
+stack, and a `transform` on an ancestor can make `position: sticky`
+resolve against that ancestor instead of the viewport — worst case the
+pin silently degrades to ordinary static flow (no crash, no visual
+regression, just no pinning benefit). If a live check shows the pin isn't
+actually taking effect, option 2 below (never attempted) is the fallback:
+
+**Consolidate `BeatBar` + `ScrubSlider` into one control** — both
+currently show the SAME underlying `progress` value (one as discrete beat
+segments, one as a continuous native range input), costing a full extra
+row of vertical space for information shown twice. A tick-marked single
+control (beat markers on the slider track) would preserve both
+interactions in one row — real engineering (a `<datalist>` has poor
+cross-browser tick styling; a fully custom range control is a bigger
+build), not attempted.
+
+**Effort:** S to verify the shipped fix on a real device; L if option 2
+turns out to be needed instead.
+**Priority:** P3.
+**Deferred from:** `/investigate`, 2026-09-05, branch
+`claude/content-strategy-framework-o9afoc` (both the original fix and this
+follow-up note).
+
 ## Proactive weak-prerequisite nudge, before the downstream concept is ever attempted
 
 **Trigger:** `KnowledgeHomePage`/`FrontierSpine` gets its next real feature
@@ -224,42 +363,6 @@ validation pass), same shape repeated across however many concepts the
 audit flags.
 **Priority:** P2 — the report's core complaint, fixed for one worked
 example; scope was explicitly one concept, not the corpus.
-**Deferred from:** `/investigate` live-QA pass, 2026-09-03, branch
-`claude/content-strategy-framework-o9afoc`.
-
-## Mnemonic atoms could carry a `manipulable` interactive widget, not just prose
-
-**Trigger:** the audit above lands and a pattern emerges for which
-mnemonic atoms would actually benefit (a formula with 2+ free numbers,
-like Cayley-Hamilton's trace/determinant shortcut, is the natural
-candidate — a mnemonic that's just one fact doesn't need a slider).
-
-`/investigate` (2026-09-03) gave `cayley-hamilton/atoms/mnemonic.md` a
-prose-only pass (glossed "trace"/"determinant" on first use, dropped an
-unexplained "adjugate method" comparison) rather than building a second
-interactive scene — `AtomCardRenderer.tsx`'s figure-promotion logic is NOT
-gated by atom_type (confirmed by reading `promotedSimSpec`'s condition:
-`parsedSpec.spec.kind === 'simulation' && presentation.stage !== 'in_disclosure'`,
-and `mnemonic`'s own `ATOM_PRESENTATION_MAP` entry is `stage: 'above'`, not
-`in_disclosure`), so a `mnemonic.md` authored with a `manipulable` or
-`simulation` fence would already render exactly like a hook's. The gap is
-content, not code. A natural first candidate: a `manipulable` slider over
-$\text{tr}(A)$ and $\det(A)$ that live-updates $A^{-1}=\frac{1}{\det(A)}(\text{tr}(A)I-A)$
-as the reader drags — reinforcing "read the trace, read the determinant,
-done" by feel instead of by re-reading the sentence.
-
-**What:** author + Wolfram-verify a `manipulable` spec for
-`cayley-hamilton/atoms/mnemonic.md` (no stance variants exist for this
-atom today, so no byte-identical-fence constraint to satisfy), then decide
-whether the pattern generalizes to other concepts' mnemonic atoms.
-
-**Where to start:** `frontend/src/components/lesson/interactives/types.ts`'s
-`validateManipulable()` for the exact schema; `Manipulable.tsx` for how it
-renders.
-
-**Effort:** S for the one Cayley-Hamilton case; M+ if generalized corpus-wide.
-**Priority:** P3 — a real enhancement, not a reported defect (the prose
-pass already closed the "unglossed jargon" complaint for this atom).
 **Deferred from:** `/investigate` live-QA pass, 2026-09-03, branch
 `claude/content-strategy-framework-o9afoc`.
 

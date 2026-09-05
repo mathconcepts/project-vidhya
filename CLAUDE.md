@@ -3445,6 +3445,206 @@ confirmed via a standalone Python parse+compare before touching CI),
 `ci:boot`) clean. Frontend suite 2691 → 2692/2692 (the new zero-eigenvalue
 regression test). Backend untouched (frontend + content only), 4701/4701.
 
+### `/investigate`: single-screen readability, connecting-the-dots, and a stronger trap warning (2026-09-05)
+
+Six numbered findings plus a general "/design-review, Apple/Tesla/Microsoft/
+Netflix-inspired, convey more in less" ask, across 5 screenshots (visual,
+quick-check, hook, intuition, common-traps). `/ui-ux-pro-max` was queried
+for real guidance (contrast, motion-count limits, sticky-scroll caution)
+before any fix, per the ask. Root-caused two genuine, corpus-wide code bugs
+and one deliberate-but-inconsistent design-system tension; fixed all three.
+The rest of the ask — a full motion/content redesign across every hook,
+intuition, and mnemonic atom in the corpus, "for ALL the materials" — is
+honestly scoped as future work below, not attempted in this pass, matching
+every prior ask of this size in this doc (see the 2026-09-03 "Content
+delivery: a first-principles review" section for the same discipline).
+
+**Bug found — `why` was authored, validated, and silently never shown.**
+`SimulationSpec.why` (the ELI5 "why this animation exists" bridging
+sentence, `WhyThisHelps.tsx`) is rendered in exactly one place:
+`InteractiveSidecar.tsx`. But a hook/intuition atom whose body parses as a
+`simulation` spec is promoted straight into `AtomCardRenderer.tsx`'s figure
+slot and explicitly bypasses `InteractiveSidecar` entirely
+(`{!promotedSimSpec && <InteractiveSidecar .../>}`) — so every resonance
+scene's `why` field was dropped on the floor for exactly the atom types
+this finding named. Not hypothetical: 12 files already author one
+(`matrix-operations`, `spectral-theorem`, and others), each validated by
+`ci:interactive-specs` and silently never rendered to a student. This is
+the direct root cause of finding 4, "connecting the dots in intuition is
+missing" — the mechanism built for exactly that (2026-09-03's why-first
+framing pass) was authored into real content and then the promoted-figure
+render path never called it. Fixed: `AtomCardRenderer.tsx`'s promoted-
+figure branch now renders `<WhyThisHelps why={promotedSimSpec.why}
+idHint={current.id} />` before `<Simulation .../>` — the SAME shared
+component `InteractiveSidecar` already uses, reaching every existing and
+future concept's resonance scene the instant it authors a `why`, no
+per-concept content edit required. Renders nothing when `why` is absent,
+same contract as before.
+
+**Design-system inconsistency found and resolved, not a new invention.**
+Finding 5 ("trap needs a stronger UX... currently just static text,
+students must be informed AND EDUCATED") pointed at the resonance-beat
+`TrapRow` ("Where marks are lost"), whose original design contract
+(v4.44.0) was explicitly "no icon, ink/grey only" — reasoned at the time
+as respecting Clarity's two-accent law. But `common_traps` atoms (a
+different card, same semantic — "here's a mistake, avoid it") already
+render an `AlertTriangle` icon in `var(--orange)`, an established, named
+exception to that same two-accent law (`AtomCardRenderer.tsx`'s own code
+comment: "not a new color: orange... makes the AlertTriangle icon's own
+warning honest"). Two cards carrying the identical semantic had drifted to
+two different visual treatments — an inconsistency, not a deliberate
+contrast. Fixed by reusing the existing exception rather than inventing a
+third: the in-scene trap label now carries the same `AlertTriangle` icon
+in `var(--orange)`. `trap.text`/`trap.avoid` below are UNCHANGED — still
+calm, ink/grey, third-person prose — the escalation is "notice this
+section," not "panic," so only the header row changed.
+
+**Modest, safe layout trim for finding 1/3, "diagram and complete text
+cannot be seen on single screen without scrolling."** A beat-carrying
+`Simulation` scene stacks 5-6 elements (diagram, beat bar + play/reset,
+scrub slider, caption, trap row, Continue button); measured against the
+actual reported screenshots, the full stack easily exceeds a phone's
+visible viewport after browser chrome and the bottom nav bar, so a student
+reading a longer beat's caption genuinely loses the diagram off-screen —
+confirmed directly in the "HOOK · REVISIT #13" screenshot (caption cut off
+mid-sentence with the diagram already scrolled past). Tightened the card's
+own `p-4 space-y-3` to `p-3 space-y-2` (still on the 4/8px spacing scale) —
+recovers ~36px of pure chrome at zero functional cost. **This does not
+fully close the gap** — a genuinely long caption or a trap beat still
+forces scrolling — and the more complete fixes (pin the diagram+controls
+while the caption scrolls beneath it; or consolidate the BeatBar/
+ScrubSlider's overlapping "where am I" signal into one control) were
+considered and NOT attempted: this sandbox has no live browser to verify a
+`position: sticky` interaction against the swipeable card stack's own
+framer-motion transforms, and ui-ux-pro-max's own guidance explicitly
+warns against scroll-effect changes shipped unverified ("Parallax/Scroll-
+jacking causes nausea... Don't: force scroll effects"). Named as a
+concrete, scoped follow-up in TODOS.md rather than shipped blind.
+
+**Everything else in the report, honestly scoped as NOT done here.**
+Finding 2's ask (systems-of-equations specifically, then "update the
+required for ALL the materials" — more color/highlight/shape/transition,
+researched against best teaching methods) and finding 6 ("mnemonic — same
+as hook, intuition") both describe a corpus-wide motion/content authoring
+initiative spanning every hook, intuition, and mnemonic atom across all
+101 concepts — two to three orders of magnitude larger than every previous
+"reported concept + honest scope note" pass in this doc, and not something
+a single `/investigate` pass should attempt unplanned. `/ui-ux-pro-max`'s
+installed database has no Manim-specific content (its `--domain` list is
+style/color/chart/landing/product/ux/typography/icons/react/web — no
+animation-library reference), so "research Manim further" could not be
+answered from this tool; its generic animation guidance (respect
+`prefers-reduced-motion`, 1-2 animated elements per view maximum, ease-out/
+ease-in not linear) is already what `Simulation.tsx`'s existing beat/
+emphasize/trap machinery implements. The three fixes above (contrast,
+trap escalation, layout trim, `why`-line wiring) are corpus-wide by
+construction and already reach systems-of-equations/hook/intuition/
+mnemonic identically to every other concept — but a genuine motion/
+content UPGRADE beyond what already exists needs the same kind of scoped,
+multi-batch subagent plan this repo has used for every comparable-sized
+content pass (see TODOS.md's new entry for the concrete starting point).
+
+**Tests:** frontend 2692 → 2695/2695 (3 new: the trap-icon regression, the
+`why`-line render + no-op-when-absent pair). Backend untouched. `tsc
+--noEmit` clean.
+
+### Sticky beat diagram + LA mnemonic manipulable widgets (2026-09-05)
+
+Closes both items named in the prior `/investigate` pass's "what still
+needs work" note — pinning the diagram while text scrolls, and starting
+the corpus-wide hook/intuition/mnemonic motion upgrade with Linear Algebra
+— per explicit user instruction to proceed and to use Sonnet subagents for
+the content-authoring half.
+
+**Sticky diagram.** `Simulation.tsx`'s beat-carrying (`showLiveBeatUI`)
+scenes now wrap the svg + beat bar/play-pause-reset/scrub-slider in a
+`position: sticky, top: 0` container; the caption, trap row, and Continue
+button scroll normally beneath it. Non-beat and reduced-motion/storyboard
+scenes are untouched — the earlier `p-3`/`space-y-2` spacing trim already
+fits those on one screen. Shipped with the residual risk stated in-code,
+not hidden: this card renders inside `AtomCardRenderer`'s swipeable,
+framer-motion `transform`-animated stack, and a `transform` on an ancestor
+can make `position: sticky` resolve against that ancestor instead of the
+viewport, silently degrading to static positioning (no crash, no visual
+regression — just no pin). No live browser or device was available in
+this sandbox to verify the pin visually; shipped per explicit user
+sign-off despite that gap, with graceful degradation as the accepted
+worst case. 4 new regression tests lock in the applied/absent cases and
+that the beat bar + controls stay inside the same wrapper as the svg.
+
+**LA mnemonic → manipulable widgets, 5 parallel Sonnet batches, all 26
+concepts audited.** Each batch (4-6 concepts, non-overlapping files) read
+its concepts' `mnemonic.md` (and stance variants, where they exist) and
+judged honestly whether the mnemonic hinges on a 2+-free-number formula a
+slider-driven `manipulable` widget would genuinely reinforce — not forced
+onto every concept. **14 concepts got a widget:** cayley-hamilton (the
+TODOS.md-named first candidate — `a,b,c,d` sliders → trace, det, all 4
+$A^{-1}$ entries via the Cayley-Hamilton-derived inverse formula),
+change-of-basis (coordinate sliders reproducing the mnemonic's own
+$(2,1)\to(3,1)$ worked example), gram-schmidt (drag $v_2$ + rail $u_1$,
+watch $u_1\cdot u_2$ stay exactly 0), inner-product-spaces (Sylvester
+leading-principal-minors live check), least-squares ($\hat x$/residual/the
+$a\cdot r=0$ identity), linear-independence (2×2 determinant test),
+matrix-inverse (the "Swap, Sign, Split" formula), matrix-norms (diagonal
+condition-number shortcut), positive-definite-matrices (Sylvester
+$D_1$/$D_2$, bowl-vs-saddle flip), quadratic-forms (the two-variable
+Sylvester restatement), spectral-theorem ($A=\sum\lambda_i q_i q_i^T$
+reconstruction), svd ($\sigma_1$/$\sigma_2$ → spectral/Frobenius norm,
+condition ratio), systems-of-equations (rank$(A)$ vs rank$([A|b])$ →
+consistency + free parameters), trace ($\text{tr}(A^k)=\sum\lambda_i^k$).
+**12 correctly left untouched:** determinants, diagonalization,
+eigenvalues, jordan-normal-form, linear-transformations, lu-factorization,
+matrix-operations, null-space-column-space, orthogonality, rank-nullity,
+symmetric-matrices, vector-spaces — each individually judged either a
+verbal/categorical mnemonic with no slider-worthy formula, or already
+covered by an equivalent (or more complete) widget on that concept's own
+`intuition.md`, where a second copy on `mnemonic.md` would duplicate
+rather than reinforce. This closes and removes the narrower "Mnemonic
+atoms could carry a `manipulable` widget" TODOS.md entry that had named
+cayley-hamilton as the sole first candidate.
+
+Every numeric claim (bounds, initial values, formula outputs, and each
+widget's own min/mid/max boundary probe re-run to confirm no division-
+by-zero is reachable) was verified via `python3 -c "import sympy..."` —
+Wolfram MCP was disconnected all session, confirmed via the connection
+failure notice, exactly the same fallback prior passes in this doc used.
+One cross-batch snag caught and fixed within the pass itself: `svd`'s
+first-drafted `why` field briefly exceeded the 220-char cap (flagged by
+two other batches' own validation runs before batch 5, which owns `svd`,
+rebuilt it correctly) — a real example of `ci:interactive-specs` doing its
+job across concurrently-edited content.
+
+The same 5 batches also re-checked `focus_eigen` coverage on all 26
+concepts' `hook.md` files as a lightweight safety net (not the primary
+task): zero new gaps found, confirming the 2026-09-04 audit's coverage
+holds. The `emphasize`/second-semantic-color question named in TODOS.md's
+execution plan was intentionally out of scope for this mnemonic-focused
+dispatch — still open, along with all 9 non-Linear-Algebra topic
+families, for a future pass.
+
+**Verified against the real gates.** `npm run ci` (18 gates, including
+`ci:la-walkthrough` 26/26 and `ci:interactive-specs` now 418 blocks, +14 —
+exactly one new manipulable fence per widget concept) clean.
+`ci:variant-agreement` (610 pairs,
+unchanged — none of the touched `mnemonic.md` files have stance variants,
+so no fence-propagation was needed), `ci:katex-fences` (1723),
+`ci:content-integrity` (1729) all clean. Full suites: backend 4701/4701
+(365 files, 1 todo, unchanged — content-only changes don't touch backend
+tests), frontend 2695 → 2699/2699 (the 4 new sticky-wrapper tests; the
+mnemonic content edits add no new frontend test cases of their own).
+`tsc --noEmit` clean both sides.
+
+**Scope, named honestly.** This closes the LA `mnemonic` slice of the
+much larger "corpus-wide hook/intuition/mnemonic motion upgrade" ask —
+not the whole ask. Still open, tracked in TODOS.md: the LA hook/intuition
+`emphasize`/second-color audit, and all 3 atom types across the other 9
+topic families (calculus, complex-variables, discrete-mathematics,
+differential-equations, graph-theory, numerical-methods,
+probability-statistics, transform-theory, vector-calculus). The sticky
+diagram fix is structurally complete but visually unverified — a live
+device or working browse session is the next real check, tracked in
+TODOS.md as "Sticky diagram: live-device verification still owed."
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

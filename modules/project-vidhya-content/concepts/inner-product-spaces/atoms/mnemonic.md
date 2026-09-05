@@ -21,3 +21,22 @@ modality: mnemonic
 **The shortcut worth memorizing.** Any real inner product on $\mathbb{R}^n$ has the form $\langle u, v \rangle = u^T M v$. It's valid **iff $M$ is symmetric positive definite** — check symmetry by eye, then Sylvester's criterion (every leading principal minor $> 0$). That turns "verify three axioms" into "compute two determinants."
 
 **Sanity-check reflex:** feed the candidate its own worst case. Positive definiteness is the axiom that breaks most often, and one nonzero $v$ with $\langle v, v \rangle \leq 0$ ends the question.
+
+```interactive-spec
+{
+  "v": 1,
+  "kind": "manipulable",
+  "title": "Drag a symmetric M = [[a,b],[b,d]] — watch Sylvester's test flip",
+  "why": "u^T M v is a valid inner product only when both leading principal minors of symmetric M are positive — drag a, b, d and watch Sylvester's test flip, instead of checking three axioms by hand.",
+  "inputs": [
+    {"id": "a", "label": "a", "min": -3, "max": 3, "step": 0.5, "initial": 2},
+    {"id": "b", "label": "b", "min": -3, "max": 3, "step": 0.5, "initial": 1},
+    {"id": "d", "label": "d", "min": -3, "max": 3, "step": 0.5, "initial": 2}
+  ],
+  "outputs": [
+    {"label": "Minor 1 = a", "formula": "a", "digits": 2},
+    {"label": "Minor 2 = a·d − b²", "formula": "a*d - b^2", "digits": 2}
+  ],
+  "caption": "Both minors positive ⇒ M defines a valid real inner product (positive definite). Either one ≤ 0 and the axioms fail — usually positive definiteness first."
+}
+```

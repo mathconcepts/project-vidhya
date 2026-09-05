@@ -601,6 +601,28 @@ describe('Simulation — trap row + ghost (design contract items 6, 7, 8)', () =
     // KaTeX rendered it as real math instead.
     expect(document.querySelectorAll('.vidhya-resonance-trap .katex').length).toBeGreaterThanOrEqual(2);
   });
+
+  it('trap label carries a warning icon, matching common_traps\' AlertTriangle treatment (live-QA 2026-09-05, "trap needs a stronger ux")', () => {
+    const TRAP_SPEC: SimulationSpec = {
+      v: 1,
+      kind: 'simulation',
+      title: 'Trap icon check',
+      duration_sec: 5,
+      x_expr: 't',
+      y_expr: '0',
+      t_min: 0,
+      t_max: 1,
+      narration_steps: [
+        { at_progress: 0, text: 'start' },
+        { at_progress: 0.5, text: 'trap here', trap: { text: 'Students slip.', avoid: 'Do not slip.' } },
+      ],
+    };
+    render(<Simulation spec={TRAP_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 2/));
+    const label = screen.getByText('Where marks are lost');
+    expect(label.querySelector('svg')).not.toBeNull();
+  });
 });
 
 describe('Simulation — beat bar visibility (design contract item 9)', () => {

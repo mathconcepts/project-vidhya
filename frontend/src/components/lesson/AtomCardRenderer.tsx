@@ -20,6 +20,7 @@ import { estimateReadingTime, formatReadingTime } from '@/lib/readingTime';
 import { ImprovedBadge } from './ImprovedBadge';
 import { InteractiveSidecar } from './interactives/InteractiveSidecar';
 import { Simulation } from './interactives/Simulation';
+import { WhyThisHelps } from './interactives/WhyThisHelps';
 import { parseInteractiveSpec, stripAllInteractiveSpecFences, type SimulationSpec } from './interactives/types';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
@@ -1194,7 +1195,20 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             // this branch (promotedSimSpec is null for them) and stay in
             // their existing below-the-prose InteractiveSidecar placement.
             const figure = promotedSimSpec ? (
-              <Simulation spec={promotedSimSpec} atomId={current.id} servedStance={current.served_stance} />
+              <>
+                {/* A promoted resonance scene bypasses InteractiveSidecar
+                    entirely (see below), which is the ONLY other place
+                    <WhyThisHelps> is wired in — so every hook/intuition
+                    atom authoring a `why` on its scene (12 concepts as of
+                    2026-09-05, e.g. matrix-operations, spectral-theorem)
+                    had that framing sentence silently dropped on the
+                    floor: authored, validated, never shown. Root-caused
+                    /investigate, "connecting the dots in intuition is
+                    missing" — same shared component InteractiveSidecar
+                    already uses, not a second copy of the framing rule. */}
+                <WhyThisHelps why={promotedSimSpec.why} idHint={current.id} />
+                <Simulation spec={promotedSimSpec} atomId={current.id} servedStance={current.served_stance} />
+              </>
             ) : deferFigure ? null : (
               <MediaSidecar atom={current} />
             );

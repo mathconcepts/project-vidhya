@@ -176,6 +176,26 @@ describe('AtomCardRenderer — W2 resonance figure promotion', () => {
     expect(screen.getByText('Eigenvalue explorer')).toBeInTheDocument();
   });
 
+  it('a promoted resonance scene renders its authored `why` line (live-QA 2026-09-05: "connecting the dots in intuition is missing")', () => {
+    // Root cause: InteractiveSidecar is the ONLY other place <WhyThisHelps>
+    // was wired in, and a promoted simulation bypasses InteractiveSidecar
+    // entirely — so an authored `why` on a hook/intuition scene's spec
+    // (12 concepts already carry one, e.g. matrix-operations,
+    // spectral-theorem) was silently never shown, despite being validated
+    // and present in the served content.
+    const content = ['Watch the vector sweep the circle.', '', simulationFence({ why: 'This is the bridge sentence.' })].join('\n');
+    const atom = makeAtom({ atom_type: 'intuition', content });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+    expect(screen.getByText('This is the bridge sentence.')).toBeInTheDocument();
+  });
+
+  it('a promoted resonance scene with no authored `why` renders nothing extra (contract unchanged for unauthored scenes)', () => {
+    const content = ['Watch the vector sweep the circle.', '', simulationFence()].join('\n');
+    const atom = makeAtom({ atom_type: 'intuition', content });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+    expect(screen.queryByLabelText('Hide these why-this-helps tips')).not.toBeInTheDocument();
+  });
+
   it('guided_walkthrough specs keep their current below-the-prose InteractiveSidecar placement, unaffected by figure promotion', () => {
     const spec = {
       v: 1,

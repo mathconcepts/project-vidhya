@@ -4,6 +4,46 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.62.0] — 2026-09-05 — `why`-line render gap fixed, trap row gets a warning icon, layout trimmed
+
+No new env vars, no migrations.
+
+`/investigate` on 6 numbered live-QA findings plus a general "convey more
+in less" design-review ask. `/ui-ux-pro-max` queried first for real
+guidance. Root-caused two genuine corpus-wide code bugs and one design-
+system inconsistency; fixed all three, honestly scoped the much larger
+remainder as future work.
+
+- **`SimulationSpec.why` was authored, validated, and never shown.** A
+  hook/intuition atom whose body parses as a `simulation` spec bypasses
+  `InteractiveSidecar` entirely (the only place `<WhyThisHelps>` was
+  wired in) when promoted into `AtomCardRenderer`'s figure slot — so every
+  resonance scene's `why` bridging sentence (12 concepts already author
+  one) was silently dropped. Fixed: the promoted-figure path now renders
+  `<WhyThisHelps>` too, reaching every concept's authored `why` instantly.
+- **Trap row gets the same warning icon `common_traps` already has.** The
+  in-scene "Where marks are lost" row's original "no icon, ink/grey only"
+  contract predates `common_traps`' own `AlertTriangle`-in-`var(--orange)`
+  treatment for the identical semantic — two cards, one meaning, two
+  treatments. Now consistent: the trap label carries the same icon and
+  color; the trap's own text/avoid lines stay unchanged, calm prose.
+- **Modest, safe layout trim** for "diagram and text can't share one
+  screen": `p-4 space-y-3` → `p-3 space-y-2` on the Simulation card,
+  recovering ~36px of chrome at zero functional cost. Does not fully close
+  the gap — a sticky-diagram or consolidated-controls fix is scoped in
+  TODOS.md, not attempted here (no live browser to verify against the
+  swipeable card stack).
+
+**Honestly out of scope:** the report's larger ask — a corpus-wide motion/
+content upgrade across every hook, intuition, and mnemonic atom in all 101
+concepts, "for ALL the materials," researched against Manim and Apple/
+Tesla/Microsoft/Netflix — is not attempted in this pass. TODOS.md carries
+a concrete execution plan (subagent-batch pattern, starting topic, what
+"research Manim further" should concretely mean for a future pass).
+
+**Tests:** frontend 2692 → 2695/2695 (3 new). Backend untouched. `tsc
+--noEmit` clean. `npm run ci` (18 gates) clean.
+
 ## [4.61.0] — 2026-09-04 — Two real Simulation.tsx label bugs fixed corpus-wide; motion-free definition layout
 
 No new env vars, no migrations.

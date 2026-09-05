@@ -352,23 +352,31 @@
 }
 
 /* ── Resonance beats: trap row + segmented beat bar (Simulation.tsx, plan
-   §W1) ───────────────────────────────────────────────────────────────────
-   Both are ink/grey-only by design — a trap is not a warning banner (no
-   icon, no red/orange) and the beat bar is neither a mastery surface
-   (green) nor an AI/tutor one (indigo); reaching for either accent here
-   breaks the two-accent law the rest of Clarity holds to. */
+   §W1; label re-colored /investigate 2026-09-05) ───────────────────────
+   The beat bar stays ink/grey-only — it is neither a mastery surface
+   (green) nor an AI/tutor one (indigo), so reaching for either accent
+   there would break the two-accent law the rest of Clarity holds to. The
+   trap row's LABEL is the one deliberate exception, matching (not
+   inventing) `common_traps`' own AlertTriangle-in-var(--orange) treatment
+   for the identical semantic ("here's a mistake, avoid it") — see
+   AtomCardRenderer.tsx's ATOM_PRESENTATION_MAP comment on why orange is
+   the named exception to the two-accent rule. trap.text/trap.avoid below
+   stay ink/grey, calm, third-person prose — only the header escalates. */
 
 .vidhya-resonance-trap {
   padding-top: var(--space-3);
   border-top: var(--hairline) solid var(--separator);
 }
 .vidhya-resonance-trap__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   margin: 0 0 var(--space-1);
   font-size: var(--text-footnote);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--orange);
 }
 .vidhya-resonance-trap__text,
 .vidhya-resonance-trap__avoid {

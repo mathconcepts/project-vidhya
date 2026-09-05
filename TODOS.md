@@ -4,6 +4,119 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Corpus-wide hook/intuition/mnemonic motion upgrade ("convey more in less")
+
+**Trigger:** an operator wants to spend a real multi-batch content pass on
+this, or a fresh live-QA report repeats the same ask on a different
+concept.
+
+`/investigate` (2026-09-05) closed the three genuine, corpus-wide CODE bugs
+this report surfaced (a `why` bridging line silently dropped by the
+promoted-figure render path, a `common_traps`-style warning icon missing
+from the in-scene trap row, and a modest layout trim for the "diagram and
+text can't share a screen" complaint — all in CLAUDE.md's 2026-09-05
+section). What's still open is the much bigger ask underneath findings 2
+and 6: "update the required for ALL the materials" — systems-of-equations
+named as the example, "mnemonic — same as hook, intuition" — a genuine
+motion/content upgrade across every hook, intuition, and mnemonic atom in
+all 101 concepts, inspired by Apple/Tesla/Microsoft/Netflix's "stress the
+most important point" ethos plus (the ask's own words) "research Manim
+further."
+
+**What ui-ux-pro-max actually returned, so the next pass doesn't re-query
+for the same answer:** its installed database has no `--domain` for
+animation libraries (Manim included) — only style/color/chart/landing/
+product/ux/typography/icons/react/web. Its generic `ux`-domain animation
+guidance (respect `prefers-reduced-motion`; 1-2 animated elements per view
+maximum, never more; ease-out entering/ease-in exiting, never linear;
+150-300ms micro-interactions) is already exactly what `Simulation.tsx`'s
+beat/emphasize/trap/`focus_eigen` machinery implements — there is no
+generic UX-library gap here, only a per-concept AUTHORING gap (does this
+specific concept's scene actually use the highlighting/color tools that
+already exist).
+
+**What "research Manim further" should actually mean, concretely, for a
+future pass:** Manim (3Blue1Brown's animation engine) is known for a
+specific technique this repo's `Simulation.tsx` does NOT yet have: smooth
+morphing BETWEEN representations (e.g. an equation transforming term-by-
+term into its geometric meaning, not just one object moving along a
+fixed path). `Simulation.tsx` today animates ONE quantity changing over a
+parameter (`(x(t),y(t))` traces, or `linear_map`'s field-of-arrows morph)
+— it has no "this expression becomes that expression" text-morph
+primitive. Before building one, a future pass should WebSearch actual
+Manim technique writeups (this environment's `ui-ux-pro-max` tool cannot
+answer this) and decide whether a text-morph primitive is worth a new
+`InteractiveKind`, given the same schema-blast-radius cost every prior new
+kind has carried (template YAML, `ci:template-coverage`, prose-budget,
+stance-variant rules, the walkthrough gate).
+
+**The concrete execution plan, matching this repo's own established
+pattern for asks this size** (see "Hook/intuition silo audit closed for
+all 26 Linear Algebra concepts," 2026-09-04, for the exact template):
+dispatch parallel Claude Sonnet subagents, 4-6 concepts per batch, each
+given: (1) the concept's OWN hook.md/intuition.md/mnemonic.md as ground
+truth — never invent a new example; (2) explicit instruction to judge
+honestly whether the existing scene already uses `focus_eigen`/`emphasize`/
+color well, versus genuinely under-using the toolkit (most scenes
+currently animate in monochrome ink + one green reveal — is a second
+semantic color, e.g. highlighting the WRONG path in a warm tone the moment
+before the trap reveals it, worth authoring per-concept, or is that the
+`ghost_matrix`/dashed-grey convention already doing that job?); (3) the
+same SymPy/Wolfram verification discipline every content pass in this doc
+uses; (4) the same byte-identical-fence-across-stance-variants discipline
+(`re.DOTALL`, never `grep -o`). Start with Linear Algebra (highest existing
+coverage, easiest to judge "already good" vs. "genuinely thin") before the
+other 9 topic families.
+
+**Effort:** XL — 101 concepts × 3 atom types, even at 5 concepts/batch
+this is ~20 batches for ONE atom type; realistically a multi-session,
+multi-week initiative, not a single pass.
+**Priority:** P2 — real, repeatedly-reported UX feedback, but the
+corpus-wide code fixes already ship the highest-leverage, zero-content-cost
+part of this ask.
+**Deferred from:** `/investigate`, 2026-09-05, branch
+`claude/content-strategy-framework-o9afoc`.
+
+## Sticky/pinned diagram for beat-carrying Simulation scenes
+
+**Trigger:** the modest spacing trim from the 2026-09-05 pass proves
+insufficient on a live device (a longer caption or a trap beat still
+forces the diagram off-screen), or a decision to build this properly with
+real device testing available.
+
+`Simulation.tsx`'s beat-carrying scenes stack diagram + controls + caption
++ trap row + Continue button — easily taller than one phone viewport
+after the page's own chrome. The `space-y-2`/`p-3` trim
+(CLAUDE.md 2026-09-05) recovers real space but doesn't structurally solve
+"see the diagram while reading the text." Two real candidate fixes,
+neither attempted because this sandbox has no live browser to verify
+either against the swipeable card stack's own framer-motion transforms:
+
+1. **`position: sticky` on the diagram+controls block** so it pins near
+   the top of the viewport while the caption/trap/Continue scroll beneath
+   it — the literal Apple-product-page pattern the user's own reference
+   points named. Real risk: interaction with the card stack's own
+   `AnimatePresence`/`PanInfo` horizontal-swipe transforms and safe-area
+   insets, unverifiable without a real device or a working `browse`
+   session (Chromium was unavailable this session per environment policy).
+2. **Consolidate `BeatBar` + `ScrubSlider` into one control** — both
+   currently show the SAME underlying `progress` value (one as discrete
+   beat segments, one as a continuous native range input), costing a full
+   extra row of vertical space for information shown twice. `BeatBar` only
+   seeks to discrete beat boundaries; `ScrubSlider` is the only continuous
+   scrub. A tick-marked single control (beat markers on the slider track)
+   would preserve both interactions in one row — real engineering
+   (a `<datalist>` has poor cross-browser tick styling; a fully custom
+   range control is a bigger build) not attempted as an unplanned side
+   effect of a `/investigate` pass.
+
+**Effort:** M for option 1 (mostly CSS + live verification), L for option 2
+(a real custom control).
+**Priority:** P3 — the spacing trim already shipped is real progress; this
+is the harder remaining slice.
+**Deferred from:** `/investigate`, 2026-09-05, branch
+`claude/content-strategy-framework-o9afoc`.
+
 ## Proactive weak-prerequisite nudge, before the downstream concept is ever attempted
 
 **Trigger:** `KnowledgeHomePage`/`FrontierSpine` gets its next real feature

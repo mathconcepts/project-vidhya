@@ -28,7 +28,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw, ChevronRight } from 'lucide-react';
+import { Play, Pause, RotateCcw, ChevronRight, AlertTriangle } from 'lucide-react';
 import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type Mat2 } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -474,7 +474,16 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
 
   return (
     <div
-      className="rounded-xl border p-4 space-y-3"
+      // Tightened from p-4/space-y-3 (/investigate, 2026-09-05, live-QA:
+      // "diagram and complete text cannot be seen on single screen without
+      // scrolling"). A beat-carrying scene stacks 5-6 elements — diagram,
+      // beat bar + play/reset, scrub slider, caption, trap row, Continue —
+      // and every px of chrome between them is px the diagram+caption
+      // can't share a viewport for. This alone doesn't fully close the gap
+      // (a longer caption still forces scrolling) — see CLAUDE.md/TODOS.md
+      // for the honestly-scoped remainder — but it recovers real space at
+      // zero functional cost, still on the 4/8px spacing scale.
+      className="rounded-xl border p-3 space-y-2"
       style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)' }}
     >
       {!hasBeats && (
@@ -1013,10 +1022,22 @@ function ArrowGlyph({
 }
 
 /**
- * Design contract item 6: "Where marks are lost" label, trap text +
- * Avoid line, hairline above, no icon, ink/grey only.
+ * Design contract item 6, revised (/investigate, 2026-09-05, live-QA:
+ * "trap needs a stronger UX... currently just static text, students must
+ * be informed AND EDUCATED not to fall for these"): the original contract
+ * ("no icon, ink/grey only") predates `common_traps`' own AlertTriangle-in-
+ * `var(--orange)` treatment (AtomCardRenderer.tsx's ATOM_PRESENTATION_MAP,
+ * the one named exception to the two-accent rule for exactly this
+ * semantic — "here's a mistake, avoid it" — see the code comment at
+ * AtomCardRenderer.tsx's `common_traps` icon-color branch). This row is
+ * the SAME semantic on a different card; giving it a second, independently
+ * muted treatment was an inconsistency, not a deliberate contrast. Now
+ * reuses the identical established color (never a new accent) plus the
+ * same icon, on the label only — trap.text/trap.avoid stay exactly as
+ * calm, ink/grey, third-person prose as before; the escalation is "notice
+ * this section," not "panic," so only the header row changed.
  *
- * `trap.text`/`trap.avoid` now route through `MarkdownAtomRenderer` rather
+ * `trap.text`/`trap.avoid` route through `MarkdownAtomRenderer` rather
  * than raw string interpolation — root-caused by /investigate (2026-09-03):
  * a trap authored with inline math (e.g. "Check $\text{rank}(A)$ once...")
  * rendered the literal `$\text{rank}(A)$` source to students, since plain
@@ -1028,7 +1049,10 @@ function ArrowGlyph({
 function TrapRow({ trap, atomId }: { trap: NonNullable<Beat['trap']>; atomId: string }) {
   return (
     <div className="vidhya-resonance-trap">
-      <p className="vidhya-resonance-trap__label">Where marks are lost</p>
+      <p className="vidhya-resonance-trap__label">
+        <AlertTriangle size={13} aria-hidden="true" />
+        Where marks are lost
+      </p>
       <MarkdownAtomRenderer atomId={`${atomId}::text`} content={trap.text} className="vidhya-atom-body--trap" />
       <MarkdownAtomRenderer atomId={`${atomId}::avoid`} content={`Avoid: ${trap.avoid}`} className="vidhya-atom-body--trap" />
     </div>

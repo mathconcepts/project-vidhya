@@ -68,54 +68,80 @@ uses; (4) the same byte-identical-fence-across-stance-variants discipline
 coverage, easiest to judge "already good" vs. "genuinely thin") before the
 other 9 topic families.
 
-**Effort:** XL — 101 concepts × 3 atom types, even at 5 concepts/batch
-this is ~20 batches for ONE atom type; realistically a multi-session,
-multi-week initiative, not a single pass.
+**Linear Algebra `mnemonic` slice: shipped 2026-09-05** (branch
+`investigate-followup-hook-intuition-trap`, 5 parallel Sonnet batches,
+per explicit user instruction). All 26 LA concepts' `mnemonic.md` atoms
+audited: 14 got a genuine `manipulable` widget (a slider-driven formula
+with 2+ free numbers the mnemonic actually hinges on — cayley-hamilton,
+change-of-basis, gram-schmidt, inner-product-spaces, least-squares,
+linear-independence, matrix-inverse, matrix-norms, positive-definite-
+matrices, quadratic-forms, spectral-theorem, svd, systems-of-equations,
+trace); 12 correctly left untouched (determinants, diagonalization,
+eigenvalues, jordan-normal-form, linear-transformations, lu-factorization,
+matrix-operations, null-space-column-space, orthogonality, rank-nullity,
+symmetric-matrices, vector-spaces — either a verbal/categorical mnemonic
+with no slider-worthy formula, or an equivalent/more complete widget
+already exists on that concept's own `intuition.md`, so a second copy
+would duplicate rather than reinforce). Every numeric claim verified via
+`python3 -c "import sympy..."` (Wolfram MCP was disconnected all session).
+This also fully closes the separate, more narrowly-scoped "Mnemonic atoms
+could carry a `manipulable` widget" entry that named cayley-hamilton as
+the first candidate — that entry is removed from this file.
+
+The SAME 5 batches also re-checked `focus_eigen` coverage on all 26
+concepts' `hook.md` files as a lightweight safety net (not the primary
+task) — confirmed the 2026-09-04 audit's coverage holds with zero new
+gaps found. The `emphasize`/second-semantic-color question from point (2)
+above was NOT separately explored this pass (out of scope for the
+mnemonic-focused dispatch) — still open for a future LA hook/intuition
+pass, and untouched for all 9 non-LA topic families.
+
+**Effort:** XL overall — the LA `mnemonic` slice above is done; the
+remaining scope (LA hook/intuition emphasize/color audit, plus all 3 atom
+types × 9 other topic families) is still ~15-18 batches, realistically a
+multi-session initiative.
 **Priority:** P2 — real, repeatedly-reported UX feedback, but the
-corpus-wide code fixes already ship the highest-leverage, zero-content-cost
-part of this ask.
+corpus-wide code fixes plus the LA mnemonic slice already ship the
+highest-leverage, lowest-risk part of this ask.
 **Deferred from:** `/investigate`, 2026-09-05, branch
 `claude/content-strategy-framework-o9afoc`.
 
-## Sticky/pinned diagram for beat-carrying Simulation scenes
+## Sticky diagram: live-device verification still owed
 
-**Trigger:** the modest spacing trim from the 2026-09-05 pass proves
-insufficient on a live device (a longer caption or a trap beat still
-forces the diagram off-screen), or a decision to build this properly with
-real device testing available.
+**Shipped 2026-09-05** (branch `investigate-followup-hook-intuition-trap`,
+per explicit user sign-off to proceed despite the caveat below): option 1
+from the prior entry. `Simulation.tsx`'s svg + beat bar/play-pause-reset/
+scrub-slider now sit in a `position: sticky` wrapper for beat-carrying,
+motion-enabled scenes (`showLiveBeatUI`) only; caption, trap row, and
+Continue button scroll normally beneath it. 4 new regression tests lock in
+the sticky style is applied/absent in the right cases.
 
-`Simulation.tsx`'s beat-carrying scenes stack diagram + controls + caption
-+ trap row + Continue button — easily taller than one phone viewport
-after the page's own chrome. The `space-y-2`/`p-3` trim
-(CLAUDE.md 2026-09-05) recovers real space but doesn't structurally solve
-"see the diagram while reading the text." Two real candidate fixes,
-neither attempted because this sandbox has no live browser to verify
-either against the swipeable card stack's own framer-motion transforms:
+**Trigger for follow-up:** a live device or a working `browse` session
+becomes available. This sandbox had neither, so the fix was shipped
+structurally sound (typechecked, unit-tested) but visually UNVERIFIED. The
+documented residual risk stands: this card renders inside
+`AtomCardRenderer`'s swipeable, framer-motion `transform`-animated card
+stack, and a `transform` on an ancestor can make `position: sticky`
+resolve against that ancestor instead of the viewport — worst case the
+pin silently degrades to ordinary static flow (no crash, no visual
+regression, just no pinning benefit). If a live check shows the pin isn't
+actually taking effect, option 2 below (never attempted) is the fallback:
 
-1. **`position: sticky` on the diagram+controls block** so it pins near
-   the top of the viewport while the caption/trap/Continue scroll beneath
-   it — the literal Apple-product-page pattern the user's own reference
-   points named. Real risk: interaction with the card stack's own
-   `AnimatePresence`/`PanInfo` horizontal-swipe transforms and safe-area
-   insets, unverifiable without a real device or a working `browse`
-   session (Chromium was unavailable this session per environment policy).
-2. **Consolidate `BeatBar` + `ScrubSlider` into one control** — both
-   currently show the SAME underlying `progress` value (one as discrete
-   beat segments, one as a continuous native range input), costing a full
-   extra row of vertical space for information shown twice. `BeatBar` only
-   seeks to discrete beat boundaries; `ScrubSlider` is the only continuous
-   scrub. A tick-marked single control (beat markers on the slider track)
-   would preserve both interactions in one row — real engineering
-   (a `<datalist>` has poor cross-browser tick styling; a fully custom
-   range control is a bigger build) not attempted as an unplanned side
-   effect of a `/investigate` pass.
+**Consolidate `BeatBar` + `ScrubSlider` into one control** — both
+currently show the SAME underlying `progress` value (one as discrete beat
+segments, one as a continuous native range input), costing a full extra
+row of vertical space for information shown twice. A tick-marked single
+control (beat markers on the slider track) would preserve both
+interactions in one row — real engineering (a `<datalist>` has poor
+cross-browser tick styling; a fully custom range control is a bigger
+build), not attempted.
 
-**Effort:** M for option 1 (mostly CSS + live verification), L for option 2
-(a real custom control).
-**Priority:** P3 — the spacing trim already shipped is real progress; this
-is the harder remaining slice.
+**Effort:** S to verify the shipped fix on a real device; L if option 2
+turns out to be needed instead.
+**Priority:** P3.
 **Deferred from:** `/investigate`, 2026-09-05, branch
-`claude/content-strategy-framework-o9afoc`.
+`claude/content-strategy-framework-o9afoc` (both the original fix and this
+follow-up note).
 
 ## Proactive weak-prerequisite nudge, before the downstream concept is ever attempted
 
@@ -337,42 +363,6 @@ validation pass), same shape repeated across however many concepts the
 audit flags.
 **Priority:** P2 — the report's core complaint, fixed for one worked
 example; scope was explicitly one concept, not the corpus.
-**Deferred from:** `/investigate` live-QA pass, 2026-09-03, branch
-`claude/content-strategy-framework-o9afoc`.
-
-## Mnemonic atoms could carry a `manipulable` interactive widget, not just prose
-
-**Trigger:** the audit above lands and a pattern emerges for which
-mnemonic atoms would actually benefit (a formula with 2+ free numbers,
-like Cayley-Hamilton's trace/determinant shortcut, is the natural
-candidate — a mnemonic that's just one fact doesn't need a slider).
-
-`/investigate` (2026-09-03) gave `cayley-hamilton/atoms/mnemonic.md` a
-prose-only pass (glossed "trace"/"determinant" on first use, dropped an
-unexplained "adjugate method" comparison) rather than building a second
-interactive scene — `AtomCardRenderer.tsx`'s figure-promotion logic is NOT
-gated by atom_type (confirmed by reading `promotedSimSpec`'s condition:
-`parsedSpec.spec.kind === 'simulation' && presentation.stage !== 'in_disclosure'`,
-and `mnemonic`'s own `ATOM_PRESENTATION_MAP` entry is `stage: 'above'`, not
-`in_disclosure`), so a `mnemonic.md` authored with a `manipulable` or
-`simulation` fence would already render exactly like a hook's. The gap is
-content, not code. A natural first candidate: a `manipulable` slider over
-$\text{tr}(A)$ and $\det(A)$ that live-updates $A^{-1}=\frac{1}{\det(A)}(\text{tr}(A)I-A)$
-as the reader drags — reinforcing "read the trace, read the determinant,
-done" by feel instead of by re-reading the sentence.
-
-**What:** author + Wolfram-verify a `manipulable` spec for
-`cayley-hamilton/atoms/mnemonic.md` (no stance variants exist for this
-atom today, so no byte-identical-fence constraint to satisfy), then decide
-whether the pattern generalizes to other concepts' mnemonic atoms.
-
-**Where to start:** `frontend/src/components/lesson/interactives/types.ts`'s
-`validateManipulable()` for the exact schema; `Manipulable.tsx` for how it
-renders.
-
-**Effort:** S for the one Cayley-Hamilton case; M+ if generalized corpus-wide.
-**Priority:** P3 — a real enhancement, not a reported defect (the prose
-pass already closed the "unglossed jargon" complaint for this atom).
 **Deferred from:** `/investigate` live-QA pass, 2026-09-03, branch
 `claude/content-strategy-framework-o9afoc`.
 

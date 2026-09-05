@@ -4,6 +4,44 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.63.0] — 2026-09-05 — Sticky beat diagram + Linear Algebra mnemonic manipulable widgets
+
+No new env vars, no migrations.
+
+Closes both items named as "still needs work" in the prior release's
+`/investigate` pass, per explicit user instruction to proceed (including
+using Sonnet subagents for the content-authoring half).
+
+- **Sticky diagram for beat-carrying `Simulation` scenes.** The svg + beat
+  bar/play-pause-reset/scrub-slider now pin via `position: sticky` while
+  the caption, trap row, and Continue button scroll beneath them — only
+  for beat-carrying, motion-enabled scenes. No live device or browser was
+  available to verify the pin visually; shipped with the residual risk
+  (a framer-motion `transform` on an ancestor can make sticky resolve
+  against that ancestor instead of the viewport, degrading silently to
+  static positioning) documented in-code and in TODOS.md. 4 new tests.
+- **14 of 26 Linear Algebra concepts' `mnemonic.md` atoms gained a
+  slider-driven `manipulable` interactive widget** (cayley-hamilton,
+  change-of-basis, gram-schmidt, inner-product-spaces, least-squares,
+  linear-independence, matrix-inverse, matrix-norms,
+  positive-definite-matrices, quadratic-forms, spectral-theorem, svd,
+  systems-of-equations, trace), each judged individually against a
+  genuine 2+-free-number-formula bar rather than applied uniformly; the
+  other 12 concepts were correctly left untouched (verbal/categorical
+  mnemonics, or an equivalent widget already exists on that concept's own
+  `intuition.md`). Dispatched via 5 parallel Sonnet subagent batches, every
+  numeric claim verified via `python3 -c "import sympy..."` (no Wolfram MCP
+  this session). Also closes the narrower "Mnemonic atoms could carry a
+  manipulable widget" TODOS.md entry.
+- `focus_eigen` coverage re-checked across all 26 concepts' `hook.md`
+  files as a safety net — zero new gaps, confirming the 2026-09-04 audit's
+  coverage holds.
+
+**Tests:** backend 4701/4701 (365 files, unchanged). Frontend 2695 →
+2699/2699 (+4, the sticky-wrapper regression tests). `tsc --noEmit` clean
+both sides. `npm run ci` (18 gates) clean; `ci:interactive-specs` 418
+blocks (+14).
+
 ## [4.62.0] — 2026-09-05 — `why`-line render gap fixed, trap row gets a warning icon, layout trimmed
 
 No new env vars, no migrations.

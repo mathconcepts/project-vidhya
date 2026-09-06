@@ -578,6 +578,29 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
               fill="none"
             />
           )}
+          {/* Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06):
+              the ghost path IS the wrong answer trap.avoid names, but until
+              now it was a bare dashed line with no coordinate on it — the
+              one attention point in this file that drew a value without
+              ever labeling it. Its endpoint (the ghost's stable, well-
+              defined point — the path itself is a static full reveal, not
+              progress-linked) gets the same halo-label treatment as the
+              real head, in the ghost's own grey so it never reads as a
+              confirmed answer. */}
+          {trapRevealed && ghostPoints && ghostPoints.length > 0 && (() => {
+            const gp = ghostPoints[ghostPoints.length - 1];
+            const [gx, gy] = projector(gp.x, gp.y);
+            return (
+              <text
+                x={gx} y={gy - 12}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize={12} fontWeight={600} fill="var(--grey-6)"
+                stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+              >
+                {`(${formatSignificant(gp.x)}, ${formatSignificant(gp.y)})`}
+              </text>
+            );
+          })()}
           {segments.map((seg) => (
             <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
           ))}
@@ -958,6 +981,40 @@ function LinearMapScene({
               strokeWidth={2}
               dash="4 4"
             />
+          );
+        })}
+      {/* Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06): the
+          ghost arrows named a specific wrong coordinate in prose
+          (trap.avoid, e.g. "students read the diagonal as the eigenvalues")
+          with no coordinate on the drawn arrow itself. Labeled only for the
+          eigen-anchored case (`eigen.length > 0`) — iterating `eigen`
+          directly rather than `ghostArrowDirs`' declared return type, which
+          omits `value` for the 4-cardinal fallback used when a scene has no
+          eigen at all (matrix-operations' AB-vs-BA class): that fallback's
+          trap is a general non-commutativity point, not a specific
+          coordinate, so labeling all 4 cardinal arrows there would be noise
+          with no narration to anchor it. */}
+      {trapRevealed && lm.ghost_matrix && eigen.length > 0 &&
+        eigen.map((e, i) => {
+          const g = lm.ghost_matrix!;
+          const tip: [number, number] = [
+            g[0][0] * e.u[0] + g[0][1] * e.u[1],
+            g[1][0] * e.u[0] + g[1][1] * e.u[1],
+          ];
+          const [px, py] = projector(tip[0], tip[1]);
+          const len = Math.hypot(px - origin[0], py - origin[1]) || 1;
+          const ox = ((px - origin[0]) / len) * 16;
+          const oy = ((py - origin[1]) / len) * 16;
+          return (
+            <text
+              key={`ghost-lbl-${i}`}
+              x={px + ox} y={py + oy}
+              textAnchor="middle" dominantBaseline="middle"
+              fontSize={12} fontWeight={600} fill="var(--grey-6)"
+              stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+            >
+              {`(${formatSignificant(tip[0])}, ${formatSignificant(tip[1])})`}
+            </text>
           );
         })}
       {arrows

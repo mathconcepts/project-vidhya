@@ -4243,6 +4243,67 @@ Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726 assertions) and
 content-only pass, no new test cases, no test-count change. Backend
 untouched.
 
+### Reference Highlighting Framework: the ghost/trap value label gap, closed (2026-09-06)
+
+`/ui-ux-pro-max`, direct follow-up to the `focus_point` corpus-wide pass
+above: "coordinates numbers/references shall be suitably highlighted or
+marked in addition to be just merely mentioned... accumulate all such
+attention points and derive a robust framework for all topics." Full
+detail: `docs/designs/2026-09-06-reference-highlighting-framework.md`.
+
+**Accumulated, not re-derived per mechanism.** Every existing "look here"
+mechanism (`focus_eigen`, `focus_point`, the eigen reveal's green `×λ`,
+`area_label`) independently arrived at the same three rules — worth
+locking down once: (1) any authored text naming a literal number/
+coordinate that corresponds to something drawn must mark that thing for
+exactly the period the text is active; (2) the visual language is a
+heavier stroke + halo-backed label, colored by what it means (ink = "look
+here, unconfirmed", green = "confirmed payoff", and now grey = "this is
+the wrong one"); (3) it reverts the instant the narration moves on, except
+the reveal and the trap row, which are sticky because they state a
+standing fact rather than a fleeting beat. Two `/ui-ux-pro-max` domain
+searches grounded this rather than asserting it from memory: the UX
+domain's "current state must be visually indicated" (Active State,
+severity Medium) and the chart domain's anomaly-marker-plus-annotation
+pattern (marker + text callout) — confirming the existing halo-label
+language was already the right shape to extend.
+
+**The one real gap the accumulation found: the trap's ghost path/arrows
+drew the WRONG answer with no coordinate on it.** `trap.avoid` names a
+specific wrong number ("students read the diagonal as the eigenvalues",
+"students read the 2 as scaling both axes") but the dashed grey ghost line
+`Simulation.tsx` draws once the trap fires never labeled it — the one
+place in the file that drew a value while leaving it merely implied.
+Fixed as two additions, both computed from data every existing scene
+already carries (no new schema field, no content re-authoring — reaches
+every `trap`/`ghost` scene, present and future, by construction):
+- Plain-curve `ghost`: its endpoint (the ghost is a static full reveal
+  across `[t_min, t_max]`, not progress-linked, so the endpoint is its one
+  stable point) gets the same halo-label treatment as the real trace's
+  head, in grey (`var(--grey-6)`, matching the ghost's own dashed stroke)
+  rather than the "look here" ink or the reveal's green.
+- `linear_map` `ghost_matrix` arrows: each tip labeled with its coordinate,
+  ONLY when the scene declares real `eigen` directions — the 4-cardinal
+  fallback (matrix-operations' AB-vs-BA class, no eigen at all) has no
+  specific coordinate its trap is about, so labeling those four would be
+  noise with nothing in the narration to anchor it.
+
+**Scope, named honestly.** Two more real gaps surfaced and were NOT
+closed: `gif-generator.ts`'s parametric-curve/level-set/function-trace
+scenes carry no per-point callout at all, unlike `discrete-bars`/
+`line-panels`'s already-baked captions — closing it needs a new authored
+field plus re-rendering every committed GIF, and this environment has no
+live LLM provider key to drive that (the same "known-unrun" constraint
+noted elsewhere in this doc). `ConceptMathViz.tsx` (the separate,
+hardcoded 53-entry legacy widget system) has a `why` framing sentence but
+no highlight-while-discussed mechanism at all. Both tracked in TODOS.md.
+
+**Tests:** `Simulation.test.tsx` gained 2 new cases (ghost endpoint label,
+no labels on the 4-cardinal fallback) plus 2 assertions added to the
+existing eigen-reveal test (the eigen-anchored ghost tip labels). Frontend
+suite 2765 → 2767. Backend untouched, 4708/4708 (365 files, 1 todo).
+`tsc --noEmit` clean both sides.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

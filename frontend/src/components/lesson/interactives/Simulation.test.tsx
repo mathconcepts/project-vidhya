@@ -666,6 +666,19 @@ describe('Simulation — trap row + ghost (design contract items 6, 7, 8)', () =
   // authored with inline math ("Check $\text{rank}(A)$ once...") rendered
   // the literal `$\text{rank}(A)$` source to students — TrapRow used raw
   // JSX string interpolation instead of MarkdownAtomRenderer.
+  // Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06): the
+  // ghost line drew the wrong path but never labeled the wrong VALUE
+  // trap.avoid names — the one attention point in this file that stated a
+  // number in prose without marking it on the figure.
+  it('labels the ghost path endpoint with its coordinate once the trap is revealed', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+    // ghost: x=2*cos(t), y=2*sin(t), t in [0,1] → endpoint at t=1 is
+    // (2*cos(1), 2*sin(1)) ≈ (1.081, 1.683).
+    expect(container.textContent).toContain('(1.081, 1.683)');
+  });
+
   it('renders inline math in the trap text/avoid lines through KaTeX, not as raw source', () => {
     const spec: SimulationSpec = {
       ...BEAT_SPEC,
@@ -881,6 +894,13 @@ describe('linear-map scene rendering', () => {
     expect(dashedLines.length).toBe(2);
     // Storyboard names the wrong-reading arrows.
     expect(screen.getByText(/dashed grey arrows show where the common wrong reading would land/)).toBeTruthy();
+    // Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06): each
+    // eigen-anchored ghost arrow is labeled with its actual wrong-reading
+    // coordinate. ghost_matrix [[2,0],[0,2]] applied to the two unit eigen
+    // directions (0.7071,0.7071) and (0.7071,-0.7071) gives (1.414,1.414)
+    // and (1.414,-1.414).
+    expect(container.textContent).toContain('(1.414, 1.414)');
+    expect(container.textContent).toContain('(1.414, -1.414)');
   });
 
   it('unit_square + area_label: reduced-motion mount shows the "area ×3" text and at least 2 more svg polygons than an equivalent spec without unit_square', () => {
@@ -1093,5 +1113,16 @@ describe('ghost rendering without declared eigen directions (matrix-operations c
     const eigen = [{ u: [1, 0] as [number, number], value: 2 }];
     expect(ghostArrowDirs(eigen)).toBe(eigen);
     expect(ghostArrowDirs([]).length).toBe(4);
+  });
+
+  // Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06): the
+  // 4-cardinal fallback's trap is a general non-commutativity point, not a
+  // specific coordinate — no narration names a value to anchor a label to,
+  // so no coordinate label should render even though the ghost arrows do.
+  it('draws no coordinate labels on the 4-cardinal fallback ghost arrows (no eigen to anchor a value to)', () => {
+    mockMatchMedia(true);
+    const { container } = render(<Simulation spec={GHOST_NO_EIGEN_SPEC} />);
+    const svgTexts = Array.from(container.querySelectorAll('svg text')).map((t) => t.textContent);
+    expect(svgTexts.some((t) => /^\(.*,.*\)$/.test(t ?? ''))).toBe(false);
   });
 });

@@ -4,6 +4,56 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## `gif-generator.ts` parametric-curve/level-set scenes carry no per-point callout (2026-09-06)
+
+**Trigger:** a future live-QA report or content pass names a specific
+plotted point on one of these gif-scene types that the caption never
+labels — the same "coordinates merely mentioned, never marked" complaint
+the Reference Highlighting Framework closed for `Simulation.tsx`'s
+`ghost`/`trap` mechanism, but on the static-GIF side of the corpus.
+
+**Context:** `discrete-bars` and `line-panels` already get baked, computed
+per-bar/per-panel captions (`computeSceneLabels` in `gif-generator.ts`) —
+verified while writing `docs/designs/2026-09-06-reference-highlighting-
+framework.md`. `parametric-curve`, `level-set`, and `function-trace` get
+only a title label; no scene-authored field exists to name a specific
+point on the curve the way a bar's `labels[]` or a panel's `label` does.
+
+**Why not done now:** closing it properly needs a new authored field
+(something like `callouts: [{t, label}]`) validated the same way `eigen`
+pairs are (residual-checked against the actual curve, never trusted
+blind), PLUS re-rendering every already-committed GIF to pick it up. This
+environment has no live LLM provider key to drive a content-authoring pass
+regenerating them — the same "known-unrun" constraint noted throughout
+this doc (v4.33.0 and later).
+
+**Fix shape when picked up:** add the `callouts` field to the relevant
+`SceneDescription` variants in `gif-generator.ts`, validate each callout's
+`t` maps to a point actually on the curve (same discipline as `eigen`'s
+residual check in `types.ts`), draw it via `computeSceneLabels`'
+established pattern, then re-run `demo/generate-demo-audio.ts`'s sibling
+GIF-regeneration path (or the operator's own render pipeline) once a
+provider key exists.
+
+## `ConceptMathViz.tsx` has no highlight-while-discussed mechanism (2026-09-06)
+
+**Trigger:** a live-QA report on a `ConceptMathViz` widget (the separate,
+hardcoded 53-entry legacy system bolted onto lesson pages, pre-dating and
+architecturally disconnected from the `interactive-spec` pipeline) naming
+a coordinate its `why`/description text states but the plot never marks.
+
+**Context:** `ConceptMathViz.tsx` already has a `why` framing sentence
+(`WhyThisHelps`) but nothing like `focus_eigen`/`focus_point` — no beat
+concept exists there at all, since it's a single static (or simple-
+animated) plot per entry, not a narrated multi-beat scene.
+
+**Why not done now:** found during the Reference Highlighting Framework
+accumulation (2026-09-06), out of scope for that pass — extending it means
+either duplicating the halo-label pattern into a second, architecturally
+separate component family, or migrating `ConceptMathViz`'s content onto
+`Simulation.tsx` outright. Both are real, standalone decisions bigger than
+"add a highlight," not attempted here.
+
 ## "Failed to build session" — literal 500 not conclusively reproduced (2026-09-06)
 
 **Trigger:** a production server log or a Render error report showing the

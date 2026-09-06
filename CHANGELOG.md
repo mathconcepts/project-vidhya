@@ -4,6 +4,54 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.70.0] — 2026-09-06 — Reference Highlighting Framework: the ghost/trap value label gap, closed
+
+No new env vars, no migrations. Frontend-only.
+
+`/ui-ux-pro-max`: "coordinates numbers/references shall be suitably
+highlighted or marked in addition to be just merely mentioned... accumulate
+all such attention points and derive a robust framework for all topics."
+Accumulated every existing highlight mechanism (`focus_eigen`, `focus_point`,
+the reveal's green `×λ`/`area_label`) into one documented design contract —
+`docs/designs/2026-09-06-reference-highlighting-framework.md` — and closed
+the one mechanism-level gap the audit found: the trap's ghost path/arrows
+drew the WRONG answer `trap.avoid` names in prose, with no coordinate label
+on the drawn line itself.
+
+**Fixed, computed from existing data — no new schema field, no content
+re-authoring:**
+- Plain-curve `ghost`: its endpoint (the ghost path is a static full reveal
+  across `[t_min, t_max]`, not progress-linked, so the endpoint is its one
+  stable point) gets the same halo-label treatment as the real trace's
+  head, in the ghost's own grey (`var(--grey-6)`) rather than the "look
+  here" ink or the reveal's green — a wrong value must never read as a
+  confirmed one.
+- `linear_map` `ghost_matrix` arrows: each tip gets a coordinate label, but
+  ONLY when the scene declares real `eigen` directions — the 4-cardinal
+  fallback (a scene with no eigen at all, e.g. matrix-operations' AB-vs-BA
+  class) has no specific coordinate its trap is about, so labeling those
+  four would be noise with nothing in the narration to anchor it.
+
+Reaches every existing and future `trap`/`ghost` scene the instant it's
+authored — a rendering fix over data every such scene already carries, not
+a per-concept edit.
+
+**Scope, named honestly.** Two more real gaps surfaced during the
+accumulation and were NOT closed: `gif-generator.ts`'s parametric-curve/
+level-set/function-trace scenes carry no per-point callout at all (unlike
+`discrete-bars`/`line-panels`'s already-baked captions) — closing it needs
+a new authored field plus re-rendering every committed GIF, and this
+environment has no live LLM provider key to drive that; and
+`ConceptMathViz.tsx` (the separate, hardcoded legacy widget system) has a
+`why` framing sentence but no highlight-while-discussed mechanism at all.
+Both tracked in TODOS.md.
+
+**Tests:** `Simulation.test.tsx` +2 new cases (ghost endpoint label, no
+labels on the 4-cardinal fallback) plus 2 new assertions added to the
+existing eigen-reveal test (the eigen-anchored ghost tip labels). Frontend
+suite 2765 → 2767. Backend untouched, 4708/4708 (365 files, 1 todo).
+`tsc --noEmit` clean both sides.
+
 ## [4.69.0] — 2026-09-06 — `focus_point` extended corpus-wide, verified against the actual traced curve
 
 No new env vars, no migrations.

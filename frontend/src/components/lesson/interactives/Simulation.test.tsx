@@ -406,6 +406,23 @@ describe('Simulation — sticky diagram wrapper (student-paced beat scenes)', ()
     expect(within(wrapper).getByRole('group', { name: 'Scene beats' })).toBeInTheDocument();
     expect(within(wrapper).getByLabelText('Pause simulation')).toBeInTheDocument();
   });
+
+  // Regression (/investigate, 2026-09-06, live-QA: caption text and the
+  // play/reset icons + scrub slider double-exposed, unreadable after
+  // scrolling). Root cause: the sticky wrapper's background was
+  // `var(--surface-fill)`, Apple's "secondarySystemFill" token at only 12%
+  // opacity — a subtle tint meant to sit on an already-opaque card, not to
+  // BE the opaque surface a sticky overlay needs to occlude scrolled-under
+  // content. Locks the fix to the genuinely opaque `--surface-card` token
+  // (the same one the card's own outer wrapper uses) so this can't silently
+  // regress back to a translucent fill.
+  it('pins the sticky wrapper with a genuinely opaque background, not a translucent fill token', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const svg = container.querySelector('svg')!;
+    const wrapper = svg.parentElement as HTMLElement;
+    expect(wrapper.style.background).toBe('var(--surface-card)');
+    expect(wrapper.style.background).not.toBe('var(--surface-fill)');
+  });
 });
 
 // Regression (/investigate, 2026-09-03: "hook might need to be as per each

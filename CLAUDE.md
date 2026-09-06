@@ -3910,6 +3910,125 @@ change — the two hand-authored `why` fields from the prior pass are
 untouched, so no fence edits, so `npm run ci`'s content gates are unchanged
 in count). `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
 
+### `/investigate`: sticky-diagram opacity bug + two silo intuition atoms fixed with real resonance scenes (2026-09-06)
+
+A live-QA report bundled 6 screenshots into 7 numbered asks plus a
+closing "make everything 1000x better" ask. Root-caused each reported item
+against a LIVE local render — seeded the demo, booted backend + frontend,
+logged in via `/demo-login` (setting `localStorage.vidhya.demo_welcomed`
+to skip the one-time welcome redirect), and drove a headless Playwright
+session through the actual concept pages — rather than guessing from the
+screenshots alone. Screenshots turned out to span two concepts:
+`null-space-column-space` (issues 1-4) and `eigenvalues` (issues 6-7,
+literally labeled "REVISIT #21"/"REVISIT #17" in the UI's own SR-revisit
+badge).
+
+**Issue 1 ("readability in the scroll") — root cause found and fixed.**
+`Simulation.tsx`'s beat-carrying sticky wrapper (shipped 2026-09-05, its
+own doc comment already flagged an UNVERIFIED risk that sticky positioning
+might silently degrade) used `background: var(--surface-fill)` — Apple's
+"secondarySystemFill" token, `rgba(120,120,128,0.12)`, only 12% opaque.
+That token is designed to sit as a subtle tint on an ALREADY-opaque card
+(a button, a chip) — never to BE the opaque surface a sticky overlay needs
+to occlude the content scrolling beneath it. As the page scrolled, the
+pinned diagram + beat-bar + play/pause/reset + scrub slider let the
+caption text scrolling underneath bleed through, producing exactly the
+double-exposed, unreadable overlap in the screenshot. Fixed with the
+genuinely opaque `var(--surface-card)` token — the SAME solid token the
+card's own outer wrapper already uses (`#ffffff` / `#1c1c1e`) — locked with
+a new regression test asserting the wrapper's background can never regress
+back to the translucent fill token. Verified live, pre- and post-fix, via
+the Playwright session: post-fix, the diagram, controls, and caption
+render with no overlap at every scroll position tested.
+
+**Issue 2 ("matrix crossing boundary") resolved as the SAME bug as issue
+1, not a second one.** After the fix, the live render showed no evidence
+of a second, independent defect in the diagram's own arrow/label
+rendering — `linearMapViewBox()`'s ×1.14 padding and the eigen-label
+offset math were checked against this concept's real matrix and stayed
+comfortably inside the SVG's drawable area. The "crossing boundary"
+phrasing is treated as describing the same overlap issue 1 named
+differently, not a distinct clipping bug — see TODOS.md for what would
+reopen this (a future report describing labels literally clipped at the
+SVG edge, not a translucency symptom).
+
+**Issue 4 ("in intuition — animation was not displayed") — confirmed live,
+root cause was a genuine content gap, not a rendering bug.**
+`null-space-column-space.intuition`'s prose says "exactly like the arrow
+that shrank to the centre dot in the animation," but the atom itself
+carries ZERO interactive-spec block — a leftover from the 2026-09-04
+silo-audit pass, which gave 19 concepts a prose-only fix (thread the
+hook's own numbers into the prose) and only 5 a brand-new resonance-beat
+scene. `rank-nullity.intuition` had the identical gap (also prose-only in
+that same pass). Both fixed the same way: a real predict-observe-explain
+`simulation` scene, reusing each concept's own hook matrix/eigen data
+verbatim (no new math) — `null-space-column-space`: $C=\begin{pmatrix}1&-1\\-1&1\end{pmatrix}$,
+testing $(1,1)$ (dies) vs $(1,-1)$ (survives, doubled); `rank-nullity`:
+$A=\begin{pmatrix}1&2\\0.5&1\end{pmatrix}$, testing $(2,-1)$ (crushed) vs
+$(1,0.5)$ (survives). Each scene's own `why` line states the point
+directly: naming which vector dies/survives IS the null-space/column-space
+(or rank/nullity) split, read as a definition instead of a re-demonstration.
+
+**Issue 6 ("revisit #21", eigenvalues intuition — needs storytelling) —
+confirmed live: the existing `manipulable` slider widget was real but
+purely numeric, no narrative.** Added a predict-observe-explain scene
+ahead of it, reusing the hook's own matrix $[[2,1],[1,2]]$ and testing
+THREE named vectors: $(1,0)$ (not an eigenvector — direction changes),
+$(1,1)$ ($\lambda=3$), $(1,-1)$ ($\lambda=1$) — the exact three vectors
+the `shaken` stance variant's prose already walked through statically;
+that prose is now the register-appropriate narration for the animated
+version of the same three vectors, not a duplicate. The manipulable widget
+stays, unchanged, as the follow-up open-ended exploration tool once the
+fixed-example story lands.
+
+**Issue 7 ("revisit #17", eigenvalues visual_analogy) — closed a silo,
+not just "make it better."** The atom's `gif-scene` traced an unrelated
+$y=2x$/$\lambda=2$ example that never connected to the hook's own matrix
+or eigenlines — read both files side by side before touching either,
+confirming the mismatch rather than assuming it. Rewritten to trace the
+hook's REAL eigenline $y=x$ ($\lambda=3$, matching the newly-added
+intuition scene) — same numbers now threaded through hook → intuition →
+visual_analogy for this concept.
+
+**Issue 3 (visual — long static text, no motion) — `null-space-column-
+space.visual_analogy` ("The Printing Press Analogy") had literally zero
+gif-scene or interactive-spec, confirmed by reading the file before
+assuming.** Rewrote reusing the concept's own matrix and a real
+`function-trace` of the column-space line ($y=-x$), trimming the prose
+the animation now carries.
+
+**Issue 5 (region-specific ELI5 too weak — "a tier-3 engineering college
+student will not understand this") — one concrete instance fixed, corpus
+sweep honestly deferred.** `eigenvalues.mnemonic` was verified against the
+live file (dense phrasing: "solve the pair by inspection," "factor
+cleanly," an unglossed "characteristic polynomial") and rewritten with
+simpler, glossed language while keeping the same "SAD" mnemonic device.
+`mnemonic` was the one atom type never separately register-audited in the
+2026-09-03 "Content delivery: first-principles review" (which flagged
+`common_traps` as unbudgeted, not `mnemonic`'s register) — TODOS.md now
+carries the standing entry for a corpus sweep.
+
+**Deliberately not attempted: the closing "1000x, every topic" ask.** Sized
+at the same order of magnitude as the standing "Corpus-wide hook/
+intuition/mnemonic motion upgrade" TODOS.md entry — given the same honest
+scope note (see TODOS.md) rather than a fabricated blanket claim of
+completion.
+
+**Method used throughout, not assumed:** a local demo stack (seeded,
+backend + frontend booted, Playwright driving a real headless Chromium)
+reproduced every reported screenshot's exact scene before any fix was
+written, and re-verified the fix live afterward — the first time this
+particular investigation used a live browser rather than static code
+reading alone, per the environment's pre-installed Chromium.
+
+**Verified against the real gates.** `npm run ci` (18 gates, including
+`ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs) clean.
+`ci:interactive-specs` 424 blocks (+6 — the two new intuition scenes, 3
+stance files each). `ci:katex-fences` (1723), `ci:content-integrity`
+(1729) unchanged. Full suites: backend 4701/4701 (365 files, 1 todo),
+frontend 2756 → 2757/2757 (+1, the sticky-background regression test).
+`tsc --noEmit` clean both sides.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -4,6 +4,70 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Corpus-wide `mnemonic` ELI5/register audit (2026-09-06 live-QA)
+
+**Trigger:** the next content pass with subagent-batch capacity, same
+5-6-concepts-per-batch pattern used for `common_traps`/hook/intuition
+elsewhere in this file.
+
+Live-QA report (screenshots) flagged `eigenvalues.mnemonic` as too dense for
+a tier-3 engineering-college student — phrases like "solve the pair by
+inspection," "factor cleanly," and an unglossed "characteristic polynomial"
+assume more fluency than the ELI5/Indian-English tone directive (CLAUDE.md,
+2026-09-02) targets. Fixed as a single concrete instance this pass
+(`eigenvalues/atoms/mnemonic.md` rewritten: glossed jargon, simpler
+sentence structure, same "SAD" mnemonic device kept). **Not** audited: the
+other 100 concepts' `mnemonic` atoms almost certainly have the same
+register gap in places — `mnemonic` was the ONE atom type still unbudgeted/
+unaudited as of the 2026-09-03 "Content delivery: first-principles review"
+section in CLAUDE.md (that review flagged `common_traps` as unbudgeted;
+`mnemonic`'s specific register-density question was never separately
+measured). A corpus sweep should read each concept's `mnemonic.md` (+
+stance variants) against the tone directive and rewrite where jargon is
+unglossed, following the exact pattern this pass demonstrated.
+
+## Same-day: "matrix crossing boundary" (issue #2) resolved as the same bug as issue #1
+
+**Closed 2026-09-06.** A live-QA report bundled two phrasings — "readability
+in the scroll after scrolling above" and "matrix crossing boundary,
+formatting poor and unintuitive" — that read as two defects. Investigated
+live via a local Playwright session against the actual demo (seeded,
+booted, logged in as a demo student, navigated to
+`null-space-column-space`'s hook card): the ONLY visual defect reproducible
+in the SVG/sticky-diagram region was the sticky wrapper's translucent
+background (root-caused: `var(--surface-fill)` is a 12%-opacity token, not
+opaque) letting scrolled-under caption text and the play/pause/reset icons
+bleed together — exactly "crossing" each other's visual boundary. Fixed in
+`Simulation.tsx` (swap to the genuinely opaque `var(--surface-card)`,
+locked with a new regression test). No second, independent boundary-
+clipping defect was found in the diagram's own arrow/label rendering after
+live verification — `linearMapViewBox()`'s ×1.14 padding and the label-
+offset math were checked against this concept's real matrix and stayed
+safely inside the SVG's drawable area. If a FUTURE report describes
+labels/arrows literally clipped at the SVG edge (not a translucency
+symptom), that would be a different, still-open bug — re-verify live
+before assuming this entry covers it.
+
+## Corpus-wide "1000x more resonant" content upgrade — scope note
+
+The 2026-09-06 live-QA report's closing ask ("/design-review for all
+topics… rethink how the content needs to be… resonant storytelling,
+attention grabbing… 1000x improved") describes the same class of
+corpus-wide initiative as the "Corpus-wide hook/intuition/mnemonic motion
+upgrade" entry below — sized at the same order of magnitude (every atom,
+every one of 101 concepts, every one of 10 topic families) and therefore
+carrying the same honest scope note: not attempted in one pass. This
+session closed the SPECIFIC reported instances (see CLAUDE.md's dated
+section for the concrete list: sticky-diagram opacity bug, two silo-content
+`intuition` atoms given real resonance-beat scenes, one `visual_analogy`
+wall-of-text rewritten with real motion, one `mnemonic` register pass, one
+`intuition` atom's storytelling upgraded) using the same "verify root
+cause, reuse the concept's own already-verified numbers, propagate
+byte-identically across stance variants" discipline as every prior pass in
+this file. The entry below is the standing worklist for the broader
+initiative — extend it with today's confirmed instances rather than
+opening a parallel tracking entry.
+
 ## ~~Corpus-wide `linear_map` eigenvector-derivation audit~~ — closed, made unnecessary
 
 **Closed 2026-09-06.** The prior entry here proposed a manual subagent-batch

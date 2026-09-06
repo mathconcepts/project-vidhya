@@ -4,6 +4,85 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.67.0] — 2026-09-06 — Sticky-diagram opacity bug + two silo intuition atoms fixed with real resonance scenes
+
+No new env vars, no migrations.
+
+`/investigate` on a live-QA report with 6 screenshots (7 numbered asks +
+a broader corpus-wide "1000x" request), root-caused via a local Playwright
+session against the actual demo (seeded, booted, logged in, navigated
+scene-by-scene) rather than guessed from screenshots alone.
+
+**Root cause found and fixed: the sticky diagram's background was 12%
+opaque.** `Simulation.tsx`'s beat-carrying sticky wrapper (shipped
+2026-09-05) used `background: var(--surface-fill)` — Apple's
+"secondarySystemFill" token, `rgba(120,120,128,0.12)`, meant to sit as a
+subtle tint on an already-opaque card, never to BE the opaque surface a
+sticky overlay needs to occlude scrolled-under content. As the page
+scrolled, the caption text and trap row bled through the "pinned" diagram
++ controls, producing exactly the double-exposed, unreadable overlap in
+the reported screenshot. Fixed with the genuinely opaque `var(--surface-
+card)` token (the same one the card's own outer wrapper already uses),
+locked with a new regression test asserting the wrapper's background is
+never the translucent fill token again. Verified live, pre- and post-fix,
+via a local Playwright session against the seeded demo — not asserted from
+the token file alone.
+
+**Two `intuition` atoms had the "silo" defect** (prose references "the
+animation above" with no animation of its own on that card) — confirmed
+live via screenshot, not assumed: `null-space-column-space.intuition` and
+`rank-nullity.intuition` were BOTH prose-only, a leftover from the
+2026-09-04 silo-audit pass that gave 19 concepts a prose-only fix and only
+5 a brand-new scene. Both now get a real predict-observe-explain resonance
+scene reusing their own hook's already-verified matrix/eigen data (`C =
+[[1,-1],[-1,1]]` for null-space-column-space, `A = [[1,2],[0.5,1]]` for
+rank-nullity) — no new math, same numbers the hook already established and
+tested.
+
+**`eigenvalues.intuition` (live-QA "revisit #21"), upgraded for
+storytelling.** The existing `manipulable` slider widget was functional but
+purely numeric — no narrative, no predict cue, no trap. Added a
+predict-observe-explain scene (reusing the hook's own matrix `[[2,1],[1,2]]`
+and eigenpairs) testing three named vectors — `(1,0)` (not an eigenvector,
+direction changes), `(1,1)` (λ=3), `(1,-1)` (λ=1) — ahead of the existing
+manipulable widget, which stays as a follow-up open-ended exploration tool.
+The `shaken` stance variant's old static "try three vectors" prose walk-
+through is now the animated version of the same three vectors, not a
+duplicate.
+
+**`eigenvalues.visual_analogy` (live-QA "revisit #17") closed a silo too.**
+Its `gif-scene` traced an unrelated `y=2x`/λ=2 example, disconnected from
+the hook's own matrix and eigenlines. Rewritten to trace the hook's actual
+eigenline `y=x` (λ=3, matching the newly-added intuition scene) — same
+numbers threaded through hook → intuition → visual_analogy.
+
+**`null-space-column-space.visual_analogy`** ("The Printing Press Analogy")
+had zero motion at all — pure prose, three paragraphs, no gif-scene. Rewrote
+with the concept's own matrix and a real `function-trace` of the column
+space's line (`y=-x`), trimming the prose that the animation now carries.
+
+**`eigenvalues.mnemonic` register pass.** A live-QA note that mnemonic
+language was too advanced for a tier-3 engineering-college student was
+verified against the actual file (dense phrasing: "solve the pair by
+inspection," "factor cleanly," an unglossed "characteristic polynomial")
+and rewritten in simpler, glossed language while keeping the same "SAD"
+mnemonic device. This is one concrete instance, not a corpus sweep — see
+TODOS.md for the honestly-scoped remainder.
+
+**Deliberately not attempted in this pass:** the report's closing ask for
+a "1000x," corpus-wide, every-topic content overhaul — sized at the same
+order of magnitude as the standing "Corpus-wide hook/intuition/mnemonic
+motion upgrade" TODOS.md entry, and given the same honest scope note rather
+than a fabricated blanket claim.
+
+**Verified against the real gates, not asserted.** `npm run ci` (18 gates,
+including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs)
+clean. `ci:interactive-specs` 424 blocks (+6 — the two new intuition
+scenes, 3 stance files each). `ci:katex-fences` (1723), `ci:content-
+integrity` (1729) unchanged. Full suites: backend 4701/4701 (365 files, 1
+todo), frontend 2757/2757 (+1 — the new sticky-background regression
+test). `tsc --noEmit` clean both sides.
+
 ## [4.66.0] — 2026-09-06 — A real 2x2 eigen-solver replaces hand-authored eigenvector derivations
 
 No new env vars, no migrations.

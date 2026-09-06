@@ -8,8 +8,10 @@ modality: visual
 exam_ids: ["*"]
 ---
 
-**The Printing Press Analogy:** Think of the matrix $A$ as a printing press. The **null space** consists of invisible original documents—if you feed them into the press, you get blank paper every time. The **column space** is the set of all possible printed pages—no matter what original you input, the press can only produce pages from this fixed set. 
+**The Printing Press Analogy:** Same matrix as the hook and intuition above, $C=\begin{pmatrix}1&-1\\-1&1\end{pmatrix}$. Think of it as a printing press: feed in a document along $y=x$ — the **null space** — and you get blank paper every time, since $C(1,1)^T=(0,0)^T$. Feed in anything else, and the printed page always lands somewhere on the line $y=-x$ — the **column space**, everything the press is actually capable of producing. That's the line traced below.
 
-For a non-square press (e.g., 3×4 matrix taking 4D inputs and producing 3D outputs), the null space is non-trivial: information is systematically lost. Some originals that differ in null-space directions produce identical output. The rank-nullity theorem says: *the number of "lost directions" (nullity) plus the number of "reachable output dimensions" (rank) equals the total input dimension (4 columns).*
+For a non-square press (say, a $3\times4$ matrix taking 4D inputs and producing 3D outputs), the same split still holds: nullity counts what gets absorbed, rank counts what survives, and the two always sum to the number of columns going in. Nothing appears from nowhere — every column either adds a new output direction or gets swallowed.
 
-This reflects a universal principle of linear transformations: information is either passed through to the output (rank) or squished away (nullity)—nothing appears from nowhere.
+```gif-scene
+{"type":"function-trace","expression":"-x","x_range":[-2,2],"y_range":[-3,3],"frames":30,"fps":12}
+```

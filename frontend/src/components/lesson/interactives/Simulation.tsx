@@ -523,22 +523,24 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           button scroll beneath it is the fix TODOS.md named and deferred
           pending explicit sign-off; the user has now authorized shipping
           it despite the caveat below.
-          Known residual risk, stated honestly rather than hidden: this
-          card renders inside AtomCardRenderer's swipeable, framer-motion
-          `transform`-animated stack. A `transform` on an ancestor creates
-          a new containing block, which CAN make `position: sticky`
-          resolve against that ancestor instead of the viewport — in the
-          worst case the sticky effect silently degrades to ordinary
-          static flow (no crash, no broken layout, just no pinning). No
-          live browser was available in this sandbox to verify the pin
-          visually on a real device; only beat-carrying, motion-enabled
-          scenes (`showLiveBeatUI`) opt in — the non-beat and
-          reduced-motion/storyboard paths are untouched. */}
+          Root-caused (/investigate, 2026-09-06, live-QA screenshot: caption
+          text and the play/reset icons + scrub slider double-exposed,
+          unreadable): the sticky wrapper WAS pinning correctly — the bug
+          was its background. `var(--surface-fill)` is Apple's
+          "secondarySystemFill" token, `rgba(120,120,128,0.12)` — only 12%
+          opaque, meant to sit as a subtle tint ON TOP of an already-opaque
+          card (a button, a chip), never to BE the opaque surface a sticky
+          overlay needs to actually occlude the content scrolling beneath
+          it. `var(--surface-card)` (the same solid token the card's own
+          outer wrapper uses, `AtomCardRenderer.tsx`'s `var(--grey-2)` —
+          `#ffffff` / `#1c1c1e`) is genuinely opaque, so the pinned diagram
+          now actually hides scrolled-under text instead of translucently
+          layering over it. */}
       <div
         className="space-y-2"
         style={
           showLiveBeatUI
-            ? { position: 'sticky', top: 0, zIndex: 1, background: 'var(--surface-fill)' }
+            ? { position: 'sticky', top: 0, zIndex: 1, background: 'var(--surface-card)' }
             : undefined
         }
       >

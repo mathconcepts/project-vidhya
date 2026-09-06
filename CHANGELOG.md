@@ -4,6 +4,50 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.72.0] — 2026-09-06 — Sequencing audit: does reveal order match learning-formation order?
+
+No new env vars, no migrations.
+
+Audited every distinct rendering mechanism that carries a visual/
+intuition/graph (resonance beats, `gif-scene` bars/curves/panels,
+`guided_walkthrough`, `manipulable` widgets) for whether its reveal/draw
+order matches the order a student should learn the content in, per
+`/ui-ux-pro-max` guidance ("animate 1-2 key elements per view maximum...
+too many animations cause distraction"). Full detail:
+`docs/designs/2026-09-06-sequencing-audit-formation-order.md`.
+
+**Verdict: five of six mechanisms already sequence correctly by
+construction** — resonance beats hold one at a time until the student
+advances; `discrete-bars`/curve gif-scenes reveal left-to-right or
+forward-in-t; `guided_walkthrough` reveals one prompt/hint/answer at a
+time; `line-panels`' simultaneity is a deliberate, correct exception
+(comparison is the point). The sixth, `manipulable` widgets, has no
+code-level ordering opinion at all — it renders `outputs[]` in whatever
+order the atom author wrote, so the audit checked content instead of code
+here: all 21 concepts carrying a `manipulable` spec, all `outputs[]`
+arrays read against how a student actually derives each value.
+
+**One real defect found and fixed:** `matrix-norms/atoms/mnemonic.md`
+listed its sanity-check row ("should match `|det(A)|`") a full row BEFORE
+`|det(A)|` itself was shown — the verification referenced a number not
+yet on screen. Reordered so the independent value appears before the
+check that compares against it (one file, no stance variants, no numbers
+changed). 19 of the other 20 checked specs were already correctly
+ordered (prerequisites before dependents, checks last) — cited with
+concrete examples in the design doc.
+
+**Deliberately not attempted:** a literal per-atom prose read of every
+`intuition`/`hook` atom for derivation-order in the WRITING (as opposed
+to the code-rendered mechanisms audited here) — open-ended content work,
+scoped the same way every other content-quality sweep in this repo's
+history has been, not a bounded code check.
+
+**Tests:** `ci:interactive-specs` 424 blocks (unchanged, one existing
+fence reordered), `ci:content-integrity` 1729, `ci:katex-fences` 1723 all
+clean. Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726
+assertions) clean against the edited content. No test-count change
+(content-only pass).
+
 ## [4.71.0] — 2026-09-06 — Ghost labels: an off-canvas clipping bug fixed, an accessibility gap closed
 
 No new env vars, no migrations. Frontend-only.

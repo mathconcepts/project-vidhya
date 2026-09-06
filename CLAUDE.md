@@ -4366,6 +4366,65 @@ appended to the existing eigen-reveal test (italic on both eigen-anchored
 ghost labels). Frontend suite 2767 → 2771. Backend untouched. `tsc
 --noEmit` clean.
 
+### Sequencing audit: does reveal order match learning-formation order? (2026-09-06)
+
+Ask: "scan through every possible content and wherever there is a
+visual/intuition/graph, draw them in the order that student must learn to
+understand... `/ui-ux-pro-max` for a `/design-review` strategy... convey
+the sequence in which the order was formed." Full detail:
+`docs/designs/2026-09-06-sequencing-audit-formation-order.md`.
+
+**Method: audit by mechanism, not by file.** "Every possible content" is
+101 concepts × up to 12 atom types × 3 stances — not tractable file by
+file. Every visual/intuition/graph is rendered by exactly one of six
+distinct code mechanisms, so auditing the mechanism audits every concept
+that reaches it, at once (the same principle `focus_point`'s corpus-wide
+extension and the ghost-label fixes both used).
+
+**Five of six mechanisms already sequence correctly, confirmed against
+their real code, not assumed:** resonance beats hold one at a time until
+the student taps Continue, with the trap schema-locked to being the LAST
+reveal a scene can make; `discrete-bars`/curve `gif-scene`s reveal
+left-to-right or forward-in-`t`; `guided_walkthrough` reveals one
+prompt/hint/answer at a time; `line-panels`' simultaneity is a
+*deliberate, correct* exception — CLAUDE.md's own earlier section already
+states the pedagogical point requires side-by-side comparison, not
+sequence, so sequencing it would be the wrong fix.
+
+**The sixth, `manipulable` widgets, has no code-level ordering opinion at
+all** — `Manipulable.tsx:33` renders `outputs[]` in whatever order the
+atom author wrote it, so this is the one place the audit had to read
+content instead of code. All 21 concepts carrying a `manipulable` spec,
+all `outputs[]` arrays, checked against how a student actually derives
+each value.
+
+**One real defect found and fixed:** `matrix-norms/atoms/mnemonic.md`
+listed its sanity-check row ("should match `|det(A)|`") a full row BEFORE
+`|det(A)|` itself ever appeared — the check referenced a number not yet
+on screen, the opposite of "conveying the sequence in which the order was
+formed" (a check is supposed to be the LAST step, once both compared
+quantities are already visible). Reordered — one file, no stance
+variants, no numbers changed. 19 of the other 20 checked specs were
+already correctly ordered (e.g. `lu-factorization`'s `u11 → u12 → l21 →
+u22` is the exact Doolittle algorithm order; `gram-schmidt`'s `c → u2x →
+u2y → check` computes the projection coefficient before the vector it
+produces, verification last).
+
+**Deliberately not attempted:** a literal per-atom prose read of every
+`intuition`/`hook` atom for derivation-order in the WRITING itself (as
+opposed to the code-rendered mechanisms audited here) — open-ended
+content work at the scale of the `common_traps` ELI5 sweep or the
+hook/intuition silo audits earlier in this doc, not a bounded code check.
+`ConceptMathViz.tsx`'s complete lack of any staging mechanism was
+confirmed (not re-discovered) — it's the same root gap as its already-
+tracked missing highlight mechanism (TODOS.md), not a second entry.
+
+**Tests:** `ci:interactive-specs` 424 blocks (unchanged, one existing
+fence reordered), `ci:content-integrity` 1729, `ci:katex-fences` 1723 all
+clean. Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726
+assertions) clean against the edited content. No test-count change
+(content-only pass).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

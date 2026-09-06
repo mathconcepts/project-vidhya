@@ -3812,6 +3812,104 @@ Frontend suite 2711 → 2727/2727. Backend untouched, 4701/4701. `tsc
 26/26, `ci:variant-agreement` 610 pairs, `ci:interactive-specs` 418 blocks
 unchanged) clean.
 
+### A real 2x2 eigen-solver replaces hand-authored eigenvector derivations (2026-09-06)
+
+Direct follow-up to the `/design-review` pass above, on Ask #2 specifically:
+"how did they arrive at those coordinates for discussion? this needs to be
+in there for all topics" — and this time, explicitly: "this needs to be
+dynamically adapted for any problems. create additional solvers if
+needed." The prior fix hand-wrote a `why` sentence for exactly two concepts
+(`eigenvalues`, `quadratic-forms`), verified by hand via `python3`/sympy
+each time — real content, but the opposite of "dynamically adapted": every
+other `linear_map` scene in the corpus (`diagonalization`,
+`symmetric-matrices`, `spectral-theorem`, `svd`,
+`positive-definite-matrices`, and more — ~18 more concepts) still shows two
+highlighted arrows with zero derivation, and reaching them the same way
+would mean another hand-authoring pass per concept forever.
+
+**The key realization: the derivation doesn't need solving at render
+time — it needs FORMATTING.** Every `linear_map` scene that highlights
+eigen-arrows already carries the exact numbers on screen in its own
+`matrix` + `eigen[]` fields, and `checkLinearMap` (types.ts) already
+re-verifies at parse time that `matrix · dir ≈ value · dir` for every
+committed `eigen` pair — the correctness guarantee already exists. So the
+fix isn't "solve the eigenproblem live," it's "generate the explanatory
+sentence from data the scene already has," for whatever matrix a given
+concept happens to use.
+
+**`frontend/src/components/lesson/interactives/eigen-2x2.ts`** — still a
+genuine, independent solver (the "create additional solvers" half of the
+ask), not just a formatter:
+
+- `solveEigen2x2(matrix)` — closed-form 2x2 eigen-decomposition via the
+  trace/determinant quadratic (`λ = (trace ± √(trace² − 4·det)) / 2`, no
+  numerical iteration needed at this size). Handles all three real cases:
+  two distinct real eigenvalues, one repeated eigenvalue (a shear/Jordan
+  block — `linear-transformations`' real hook matrix `[[1,1],[0,1]]` hits
+  this), and returns `null` for genuinely complex eigenvalues (a rotation
+  matrix — `orthogonality`'s real hook matrix is exactly this case, which
+  is precisely why that content has no `eigen` field authored at all).
+  Computes a matching eigenvector via the standard null-space shortcut for
+  2x2 matrices, kept genuinely independent of any authored data so it stays
+  useful beyond formatting (a future content-generation or CI pass could
+  call it to auto-derive eigenpairs for a matrix that has none yet).
+- `deriveLinearMapWhy(linearMap)` — the actual fallback: reads the scene's
+  own (already-verified) `eigen[]` array and formats it into the
+  established "det(A − λI) = 0, then (A − λI)v = 0" sentence template.
+  Names the specific coordinates when they're small clean integers (or
+  cleanly reduce to some, e.g. an unreduced `(4, 2)` → `(2, 1)`) —
+  **deliberately preserving the authored sign** rather than canonicalizing
+  it, since flipping `(−1, 2)` to `(1, −2)` would describe a
+  different-looking arrow than the one actually drawn, even though both
+  are valid eigenvectors of the same line. Falls back to method-only
+  phrasing (no coordinates, just the λ values) for an irrational/
+  normalized eigenvector, which reads badly as `(0.71, 0.71)` in prose.
+  Returns `null` when there's no `eigen` array at all — a scene like
+  `determinants`' area-scaling demo has a `matrix` but nothing eigen-shaped
+  to explain, and manufacturing a derivation there would be scope creep,
+  not a fix. Every generated sentence is verified to stay within
+  `MAX_WHY_CHARS` (220) even at the schema's own worst-case bounds
+  (`|entry| ≤ 100`).
+
+**Wired as a fallback, never a replacement.** Both consumers of `why` —
+`AtomCardRenderer.tsx`'s promoted-figure branch (the common case: a
+`linear_map` scene on a hook/intuition atom) and `InteractiveSidecar.tsx`'s
+non-promoted path (a scene on any other atom type) — now resolve
+`why={spec.why ?? deriveLinearMapWhy(spec.linear_map) ?? undefined}`. An
+authored `why` still wins when present, so `eigenvalues`/
+`quadratic-forms` keep their existing, slightly more polished hand-written
+framing unchanged. Every OTHER concept's `linear_map` scene — already
+committed, and every future one a content-generation pass produces —
+now explains its own coordinates with zero per-concept authoring effort.
+
+**Closes the TODOS.md item this doc's previous section opened.** That
+entry proposed dispatching parallel subagent batches to hand-author `why`
+sentences across the remaining concepts, the same pattern used for every
+other corpus-wide content pass in this doc. That plan is now moot — a
+future gap here would mean the solver itself has a bug, not that content
+needs writing, so the entry is marked closed rather than carried forward.
+
+**Tests:** `eigen-2x2.test.ts` (new, 24) — every real `linear_map.matrix`
+already committed in the corpus, cross-checked via a genuine-eigenpair
+property test (`matrix · dir ≈ value · dir`, not a hardcoded expected
+vector, since eigenvectors are only defined up to scale/sign) rather than
+brittle exact-value assertions; the trace/determinant invariants
+(`sum(λ) = trace`, `product(λ) = det`); the complex-eigenvalue case
+(`orthogonality`'s real rotation matrix returns `null`); the repeated-
+eigenvalue case (`linear-transformations`' real shear, exactly one pair);
+`deriveLinearMapWhy`'s null/clean-vector/generic-fallback/repeated
+branches, each against REAL corpus matrices and eigen arrays, not
+synthetic ones. `AtomCardRenderer.resonanceFigure.test.tsx` (+3) — the
+computed fallback renders for an unauthored `linear_map` scene, an
+authored `why` still wins over it, and a matrix-only (no `eigen`) scene
+gets no fabricated sentence. `InteractiveSidecar.test.tsx` (+2) — same
+fallback contract on the non-promoted path.
+
+Frontend suite 2727 → 2756/2756. Backend untouched, 4701/4701 (content-free
+change — the two hand-authored `why` fields from the prior pass are
+untouched, so no fence edits, so `npm run ci`'s content gates are unchanged
+in count). `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

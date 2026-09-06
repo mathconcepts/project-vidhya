@@ -22,6 +22,7 @@ import { InteractiveSidecar } from './interactives/InteractiveSidecar';
 import { Simulation } from './interactives/Simulation';
 import { WhyThisHelps } from './interactives/WhyThisHelps';
 import { parseInteractiveSpec, stripAllInteractiveSpecFences, type SimulationSpec } from './interactives/types';
+import { deriveLinearMapWhy } from './interactives/eigen-2x2';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
@@ -1241,8 +1242,18 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
                     floor: authored, validated, never shown. Root-caused
                     /investigate, "connecting the dots in intuition is
                     missing" — same shared component InteractiveSidecar
-                    already uses, not a second copy of the framing rule. */}
-                <WhyThisHelps why={promotedSimSpec.why} idHint={current.id} />
+                    already uses, not a second copy of the framing rule.
+                    `?? deriveLinearMapWhy(...)` (/investigate, 2026-09-06:
+                    "dynamically adapted for any problems") — an authored
+                    `why` always wins, but a `linear_map` scene with no
+                    authored one still gets a real derivation sentence
+                    computed from ITS OWN matrix + eigen data, so every
+                    concept's "2 arrows" scene explains its coordinates,
+                    not just the 2 that got hand-written text. */}
+                <WhyThisHelps
+                  why={promotedSimSpec.why ?? deriveLinearMapWhy(promotedSimSpec.linear_map) ?? undefined}
+                  idHint={current.id}
+                />
                 <Simulation spec={promotedSimSpec} atomId={current.id} servedStance={current.served_stance} />
               </>
             ) : deferFigure ? null : (

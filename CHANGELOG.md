@@ -4,6 +4,48 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.66.0] — 2026-09-06 — A real 2x2 eigen-solver replaces hand-authored eigenvector derivations
+
+No new env vars, no migrations.
+
+Direct follow-up to v4.65.0's Ask #2 fix: "this needs to be dynamically
+adapted for any problems. create additional solvers if needed." The prior
+fix hand-wrote a `why` derivation sentence for exactly two concepts
+(`eigenvalues`, `quadratic-forms`) — real, but it didn't generalize to the
+other ~18 `linear_map` scenes in the corpus.
+
+- **`frontend/src/components/lesson/interactives/eigen-2x2.ts`** — a real
+  closed-form 2x2 eigen-solver (`solveEigen2x2`: trace/determinant quadratic
+  formula, handles distinct/repeated/complex cases) plus
+  `deriveLinearMapWhy`, which formats a scene's own (already parser-verified
+  via `checkLinearMap`'s residual check) `matrix`/`eigen` data into the same
+  "det(A−λI)=0, then (A−λI)v=0" sentence template for ANY matrix — naming
+  specific coordinates when they're clean small integers (preserving the
+  authored sign so the sentence matches the drawn arrow, not a scalar-
+  flipped twin), falling back to method-only phrasing for irrational/
+  normalized eigenvectors. Always ≤ `MAX_WHY_CHARS` (220), verified against
+  the schema's own worst-case bounds.
+- **Wired as a fallback, not a replacement**, in both `AtomCardRenderer.tsx`
+  (the promoted-figure path) and `InteractiveSidecar.tsx` (the non-promoted
+  path): an authored `why` still wins when present; a `linear_map` scene
+  with `eigen` but no authored `why` now gets a live-computed derivation for
+  free — every concept already committed (`diagonalization`,
+  `symmetric-matrices`, `spectral-theorem`, `svd`,
+  `positive-definite-matrices`, and the rest) and every future one, with
+  zero per-concept authoring pass required. A scene with a matrix but no
+  `eigen` array (e.g. `determinants`' area-scaling scene) correctly gets no
+  fabricated derivation — there's no "2 arrows" there to explain.
+- Closes the TODOS.md item that had proposed a manual multi-batch subagent
+  audit to reach the rest of the corpus — that audit is now moot; the
+  solver reaches every scene mechanically.
+
+29 new tests (`eigen-2x2.test.ts` 24 — every real corpus matrix cross-
+checked against a genuine-eigenpair property test, plus the complex/
+repeated edge cases; `AtomCardRenderer.resonanceFigure.test.tsx` +3;
+`InteractiveSidecar.test.tsx` +2). Frontend suite 2727 → 2756/2756.
+Backend untouched, 4701/4701. `tsc --noEmit` clean. `npm run ci` (18 gates)
+clean, unchanged counts (no content files touched this pass).
+
 ## [4.65.0] — 2026-09-06 — Practice explanation motion, eigenvector derivation, and an engagement gate on advance buttons
 
 No new env vars, no migrations.

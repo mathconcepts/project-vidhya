@@ -147,4 +147,34 @@ describe('InteractiveSidecar "why" framing (live-QA, 2026-09-03)', () => {
     render(<InteractiveSidecar body={body} />);
     expect(screen.queryByText(/Drag this to see how the eigenvalue changes/)).not.toBeInTheDocument();
   });
+
+  it('a linear_map scene with no authored `why` still gets a computed derivation (/investigate, 2026-09-06: "dynamically adapted for any problems") — the non-promoted path', () => {
+    const body = M_BODY({
+      v: 1,
+      kind: 'simulation',
+      title: 'Watch the two arrows',
+      x_expr: 't',
+      y_expr: 't',
+      t_min: 0,
+      t_max: 1,
+      linear_map: {
+        matrix: [[4, 1], [2, 3]],
+        eigen: [{ dir: [1, 1], value: 5 }, { dir: [1, -2], value: 2 }],
+      },
+    });
+    render(<InteractiveSidecar body={body} />);
+    expect(screen.getByText(/aren't guessed/)).toBeInTheDocument();
+  });
+
+  it('a manipulable spec (no linear_map field at all) never fabricates a why line', () => {
+    const body = M_BODY({
+      v: 1,
+      kind: 'manipulable',
+      title: 'Eigenvalue explorer',
+      inputs: [{ id: 'a', label: 'a', min: -3, max: 3, initial: 1 }],
+      outputs: [{ label: 'λ', formula: 'a + 2' }],
+    });
+    render(<InteractiveSidecar body={body} />);
+    expect(screen.queryByText(/aren't guessed/)).not.toBeInTheDocument();
+  });
 });

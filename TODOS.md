@@ -4,27 +4,26 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
-## Corpus-wide `linear_map` eigenvector-derivation audit
+## ~~Corpus-wide `linear_map` eigenvector-derivation audit~~ — closed, made unnecessary
 
-**Trigger:** an operator wants a real content pass, or a fresh live-QA
-report names another concept with the same gap.
-
-`/design-review` (2026-09-06) fixed exactly two concepts —
-`eigenvalues` and `quadratic-forms` — whose `linear_map` hook scenes state
-and verify specific eigenvector coordinates without ever explaining HOW
-those coordinates were found (solving `(A−λI)v=0` for each eigenvalue from
-`det(A−λI)=0`). Both now carry a `why` field naming the method. Every other
-concept with a `linear_map` scene (`diagonalization`, `symmetric-matrices`,
-`spectral-theorem`, `svd`, `positive-definite-matrices`, and others per the
-2026-09-04/2026-09-05 sticky-diagram and mnemonic-widget passes) is
-unaudited for this specific gap — some may already state the derivation,
-most likely don't. Same pattern as every prior corpus-wide content pass in
-this doc: dispatch parallel Sonnet subagent batches (4-6 concepts each),
-each batch reads its concepts' own hook.md first, judges honestly whether
-a `why`-field gap exists, verifies every numeric claim independently
-(python3/sympy if Wolfram MCP is unavailable) before writing, and
-propagates any fence edit byte-identically across the stance-variant trio
-via a proper `re.DOTALL` script — never `grep -o`.
+**Closed 2026-09-06.** The prior entry here proposed a manual subagent-batch
+audit (hand-author a `why` per concept, 4-6 at a time) to reach every
+`linear_map` scene beyond the two (`eigenvalues`, `quadratic-forms`) that
+got hand-written text. That plan is now moot: the same-day follow-up
+("dynamically adapted for any problems… create additional solvers if
+needed") replaced the hand-authoring approach with a real solver —
+`frontend/src/components/lesson/interactives/eigen-2x2.ts`
+(`solveEigen2x2` + `deriveLinearMapWhy`) — wired as a fallback in both
+`AtomCardRenderer.tsx`'s promoted-figure branch and
+`InteractiveSidecar.tsx`'s non-promoted path: any `linear_map` scene with
+an `eigen` array but no authored `why` now gets a derivation sentence
+computed from its OWN matrix/eigen data, for every concept already
+committed (`diagonalization`, `symmetric-matrices`, `spectral-theorem`,
+`svd`, `positive-definite-matrices`, `svd`, and the rest) and every future
+one — no per-concept authoring pass required, ever. An authored `why` still
+wins when present (`eigenvalues`/`quadratic-forms` keep their nicer
+hand-written framing). Nothing left to audit; a future gap here would mean
+the SOLVER has a bug, not that content needs writing.
 
 ## Extend the "advance-button" convention audit to any FUTURE shared control
 

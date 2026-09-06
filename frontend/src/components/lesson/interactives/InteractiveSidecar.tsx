@@ -19,6 +19,7 @@ import { Simulation } from './Simulation';
 import { GuidedWalkthrough } from './GuidedWalkthrough';
 import { WhyThisHelps } from './WhyThisHelps';
 import { parseInteractiveSpec } from './types';
+import { deriveLinearMapWhy } from './eigen-2x2';
 
 interface Props {
   body: string;
@@ -57,9 +58,18 @@ export function InteractiveSidecar({ body, showAuthoringErrors }: Props) {
     }
   })();
 
+  // Dynamic why fallback (/investigate, 2026-09-06: "dynamically adapted
+  // for any problems") — an authored `why` always wins; a `simulation`
+  // scene with a `linear_map` but no authored `why` still gets a real
+  // derivation sentence computed from its own matrix + eigen data. This is
+  // the non-promoted path (a linear_map scene authored on an atom type
+  // other than hook/intuition); AtomCardRenderer.tsx's promoted-figure
+  // branch does the same for the common case.
+  const computedWhy = spec.kind === 'simulation' ? deriveLinearMapWhy(spec.linear_map) : null;
+
   return (
     <div>
-      <WhyThisHelps why={spec.why} idHint={spec.title} />
+      <WhyThisHelps why={spec.why ?? computedWhy ?? undefined} idHint={spec.title} />
       {widget}
     </div>
   );

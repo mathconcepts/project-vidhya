@@ -4425,6 +4425,45 @@ clean. Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726
 assertions) clean against the edited content. No test-count change
 (content-only pass).
 
+**Same-day follow-up: the audit made permanent, and the two remaining
+manual sweeps closed.** Ask: "extend this formation order to drawing
+graphs, coordinates, sequences. scan through the entire content." Three
+pieces close what the original pass named as future work.
+
+`checkBeatOrder` (`scripts/lint-interactive-specs.ts`) is now a permanent
+CI gate: it refuses any `simulation` spec whose `narration_steps[]` isn't
+authored in ascending `at_progress` order. `Simulation.tsx` already
+re-sorts beats defensively before rendering, so an out-of-order file never
+crashed or misrendered — it just silently disagreed with what a reviewer
+reading the raw file would see, which is exactly the risk this closes.
+Verified against a synthetic bad fixture before running on the real
+corpus: all 133 committed `simulation` scenes pass with zero violations.
+
+All 19 committed `discrete-bars`/`line-panels` gif-scenes were read by
+hand (not just the render code) to confirm no authored data contradicts
+the mechanism's "already sequenced" / "deliberately simultaneous"
+guarantee. Zero defects; `shortest-paths`' bars ordered by Dijkstra
+settlement (not alphabetically) is a deliberately-correct example worth
+naming, not an oversight.
+
+All 80 base `worked-example.md` files carrying a `guided_walkthrough`
+spec — the corpus-wide sweep the original audit could only name as future
+work — were dispatched across 6 parallel Sonnet-model subagent batches
+(13 files each), each reading every step's actual math as a student would
+experience it. **Result: 80 of 80 clean, zero formation-order defects.**
+Unlike the `manipulable` audit (1 real defect in 20), this mechanism's
+authored content held up completely — a genuine measurement, not assumed
+from the mechanism being correct. Two batches flagged a real but
+DIFFERENT-class defect (a missing computation, not an ordering one) in
+`matrix-operations`/`partial-fractions` — correctly left unfixed (a
+reorder can't manufacture a missing step) and recorded in TODOS.md
+instead.
+
+**Verified against the real gates.** `ci:interactive-specs` (424 blocks,
+unchanged), `ci:variant-agreement` (610 pairs), `ci:content-integrity`
+(1729 files) all clean across the full 6-batch sweep — no content edits,
+since nothing needed fixing.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

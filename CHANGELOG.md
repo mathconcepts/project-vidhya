@@ -4,6 +4,43 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.73.0] — 2026-09-06 — Formation-order audit made permanent: CI gate + full corpus sweep
+
+No new env vars, no migrations.
+
+Follow-up to 4.72.0's sequencing audit, per the ask to extend it corpus-
+wide: "scan through the entire content." Full detail appended to
+`docs/designs/2026-09-06-sequencing-audit-formation-order.md`.
+
+**`checkBeatOrder` — a permanent CI gate.** `scripts/lint-interactive-
+specs.ts` now refuses any `simulation` spec whose `narration_steps[]`
+isn't authored in ascending `at_progress` order. `Simulation.tsx` already
+re-sorts beats defensively at render time, so an out-of-order file never
+crashed — it just silently disagreed with what a reviewer reading the raw
+file would see. Verified against a synthetic bad fixture before running
+on the real corpus: all 133 committed `simulation` scenes pass with zero
+violations.
+
+**Manual sweep 1: all 19 `discrete-bars`/`line-panels` gif-scenes.** Read
+every committed instance, not just the render code, to confirm no
+authored data contradicts the "already sequenced" / "deliberately
+simultaneous" guarantee. Zero defects; `shortest-paths`' bars ordered by
+Dijkstra settlement (not alphabetically) is a deliberately-correct example.
+
+**Manual sweep 2: all 80 `guided_walkthrough` worked-example files —
+the sweep the original audit could only name as future work.** Dispatched
+across 6 parallel Sonnet-model subagent batches (13 files each), each
+reading every step's actual math as a student would experience it.
+**Result: 80 of 80 clean, zero formation-order defects.** Two batches
+flagged a real but different-class defect (a missing computation, not an
+ordering one) in `matrix-operations`/`partial-fractions` — correctly left
+unfixed since a reorder can't manufacture a missing step; recorded in
+TODOS.md instead.
+
+**Tests:** `ci:interactive-specs` 424 blocks (unchanged), `ci:variant-
+agreement` 610 pairs, `ci:content-integrity` 1729 files — all clean
+across the full 6-batch sweep. No content edits (nothing needed fixing).
+
 ## [4.72.0] — 2026-09-06 — Sequencing audit: does reveal order match learning-formation order?
 
 No new env vars, no migrations.

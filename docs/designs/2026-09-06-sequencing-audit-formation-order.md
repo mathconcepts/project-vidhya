@@ -154,16 +154,33 @@ every step's actual math as a student would experience it — prerequisite
 before dependent, any verification step last — same bar as the
 `manipulable` audit held itself to.
 
-Result so far: the first 28 of 80 files (2 of 6 batches) have reported
-back **clean, zero defects found**, each validated against
-`ci:interactive-specs`/`ci:variant-agreement`/`ci:content-integrity` with
-unchanged counts. The remaining 4 batches (52 files) were still running
-at the time this section was first drafted — see CLAUDE.md's dated
-section for the final, confirmed count once every batch has reported;
-this doc is not the place to record a number before it's actually
-verified.
+**Result, all 6 batches reported: 80 of 80 files clean, zero
+formation-order defects found.** Unlike the `manipulable` audit (1 real
+defect in 20), this mechanism's content held up 80/80 — a genuine
+measurement, not assumed from the mechanism being correct elsewhere. Every
+batch validated its own files against `ci:interactive-specs`/
+`ci:variant-agreement`/`ci:content-integrity` before reporting back; the
+combined counts stayed at the exact baseline (424 / 610 / 1729) across all
+six.
 
-### Verification (this follow-up, code-only portion)
+Two batches flagged a real defect of a DIFFERENT class than this audit was
+scoped to check — a completeness gap, not an ordering one — and correctly
+declined to "fix" it by reordering, since reordering an existing array
+can't manufacture a missing computation:
 
-`ci:interactive-specs` (424 blocks, unchanged) clean — the CI gate
-addition is a code-only change; no content was edited to produce it.
+- `matrix-operations/worked-example.md` — step 1's transpose answer
+  implies the full $AB$ matrix, but no step in the array ever derives all
+  of $AB$'s entries; only one entry is explicitly computed.
+- `partial-fractions/worked-example.md` — the final step's answer uses
+  $B=2/5$, but no step in the array computes $B$ (the surrounding markdown
+  prose derives it via cover-up, the JSON steps array does not).
+
+Both recorded in TODOS.md as a distinct, real gap for a future pass — not
+silently dropped, and not conflated with this audit's own scope.
+
+### Verification (this follow-up)
+
+`ci:interactive-specs` (424 blocks, unchanged), `ci:variant-agreement`
+(610 pairs, unchanged), `ci:content-integrity` (1729 files, unchanged) all
+clean across the combined 6-batch sweep. No content edits (the sweep found
+nothing to fix); the `checkBeatOrder` CI gate is a code-only change.

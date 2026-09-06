@@ -4,6 +4,30 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Two `guided_walkthrough` worked-examples have a step-completeness gap, not an ordering one (2026-09-06)
+
+Found by the 6-batch, 80-file corpus-wide formation-order audit
+(`docs/designs/2026-09-06-sequencing-audit-formation-order.md`) — flagged
+by the auditing subagents as out of that audit's scope (reordering
+`steps[]` can't fix a missing computation) rather than silently fixed or
+dropped:
+
+- `modules/project-vidhya-content/concepts/matrix-operations/atoms/worked-example.md`
+  — step 1's transpose answer implies the full $AB$ matrix, but no step in
+  the `steps[]` array ever derives all of $AB$'s entries; only one entry
+  is explicitly computed.
+- `modules/project-vidhya-content/concepts/partial-fractions/atoms/worked-example.md`
+  — the final step's answer uses $B=2/5$, but no step in the array
+  computes $B$ (the surrounding markdown prose derives it via cover-up at
+  $x=-3$; the JSON `steps` array skips straight to using the value).
+
+**Trigger:** a content-authoring pass touching either concept, or a
+future "does every referenced value actually get computed somewhere in
+the array" completeness gate (a different, narrower check than the
+formation-order one already shipped). Fix shape: add the missing
+computation as its own step, in the correct position, verified against
+the concept's own numbers before writing.
+
 ## Ghost/real label collision when a trap is authored close to the real answer (2026-09-06)
 
 **Trigger:** a future committed `trap`/`ghost_matrix` scene where the wrong

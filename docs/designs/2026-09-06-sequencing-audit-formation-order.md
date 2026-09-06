@@ -105,3 +105,65 @@ content-specific finding in this doc has followed.
 
 `ci:interactive-specs` (424 blocks, unchanged — no new fence, one
 existing fence reordered) clean.
+
+## Follow-up: making the audit permanent, and finishing the manual sweep
+
+The audit above found the `manipulable` mechanism has no code-level
+ordering opinion at all — content discipline, not a build guarantee. The
+resonance-beat mechanism (`Simulation.tsx`'s `narration_steps[]`) has the
+opposite problem: it DOES have a correct opinion (the renderer re-sorts
+by `at_progress` before use), which means an author who typed beats out
+of order would never see a crash or a misrender — the runtime silently
+repairs the mistake, so nothing ever told anyone the raw file didn't read
+top-to-bottom in play order. Both gaps are closed here.
+
+**`checkBeatOrder` — a permanent CI gate, not just an audit finding.**
+`scripts/lint-interactive-specs.ts` now refuses any `simulation` spec
+whose `narration_steps[]` isn't authored in ascending `at_progress` order.
+Verified against a synthetic bad fixture (beats at 0, 0.7, 0.3) before
+running against the real corpus — confirmed to catch the defect, then
+confirmed the entire committed corpus is already clean: all 133 real
+`simulation` scenes pass with zero violations. This turns "authors happen
+to write beats in order" into "a build failure if they don't," for every
+concept using this mechanism from here on.
+
+**Manual audit: all 19 `discrete-bars`/`line-panels` gif-scenes, zero
+defects.** The design doc above established these two scene types are
+"already sequenced" / "deliberately simultaneous" by construction
+(reading the render code); this pass read every COMMITTED instance of
+both, not just the code path, to confirm no scene's authored data
+contradicts that guarantee (e.g. an author listing bars in an order that
+doesn't match the narrative, even though the renderer would still draw
+them left-to-right). Zero defects found. One scene is worth naming as a
+deliberately-correct example, not an oversight: `shortest-paths`' bars are
+ordered by Dijkstra SETTLEMENT order, not alphabetically or by node id —
+exactly the "formation order" this audit is checking for, already done
+right.
+
+**Worked_example `guided_walkthrough` steps — the corpus-wide sweep the
+original audit named as future work.** The original audit's table
+verified the `GuidedWalkthrough.tsx` RENDER MECHANISM reveals one step at
+a time (structurally sequenced); it did not read every committed
+`steps[]` array's CONTENT for whether the authored order itself matches
+derivation order — the exact same code-vs-content distinction the
+`manipulable` audit above had to make, and found one real defect from.
+80 base `worked-example.md` files across the corpus carry a
+`guided_walkthrough` spec; dispatched in parallel Sonnet-model subagent
+batches (13 files each, background, non-overlapping), each batch reading
+every step's actual math as a student would experience it — prerequisite
+before dependent, any verification step last — same bar as the
+`manipulable` audit held itself to.
+
+Result so far: the first 28 of 80 files (2 of 6 batches) have reported
+back **clean, zero defects found**, each validated against
+`ci:interactive-specs`/`ci:variant-agreement`/`ci:content-integrity` with
+unchanged counts. The remaining 4 batches (52 files) were still running
+at the time this section was first drafted — see CLAUDE.md's dated
+section for the final, confirmed count once every batch has reported;
+this doc is not the place to record a number before it's actually
+verified.
+
+### Verification (this follow-up, code-only portion)
+
+`ci:interactive-specs` (424 blocks, unchanged) clean — the CI gate
+addition is a code-only change; no content was edited to produce it.

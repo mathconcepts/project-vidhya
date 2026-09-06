@@ -549,11 +549,29 @@ export default function SmartPracticePage() {
                         {/* Same defect as PracticePage: the explanation was a
                             raw string in a <p> at 12px, so authored markdown
                             showed as literal syntax and the text sat well under
-                            the 17px floor for anything a student reads. */}
+                            the 17px floor for anything a student reads.
+                            `structured` + `--progressive` (/design-review,
+                            2026-09-06): a live-QA report named this exact
+                            panel as "poor readability... a boring patch of
+                            text" for a two-method cross-check explanation
+                            (e.g. "Method 1 — elimination multiplier...
+                            Method 2 — direct multiplication check..."). Never
+                            got the same treatment PracticeAttemptPage's
+                            solution-steps panel already has
+                            (.vidhya-atom-body--structured, 2026-09-04) —
+                            `structured` rows any authored list markup, and
+                            `--progressive` staggers each paragraph in, the
+                            same mechanism already shipped for hook/intuition/
+                            mnemonic prose. Zero content rewrite: whichever
+                            shape a given item's explanation was authored in
+                            (numbered steps or free paragraphs), one of the
+                            two rules now applies. */}
                         <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)' }}>
                           <MarkdownAtomRenderer
                             content={preserveHardBreaks(resolved.problem.explanation)}
                             atomId={`smart-practice-solution-${resolved.problem.id ?? topic}`}
+                            structured
+                            className="vidhya-atom-body--progressive"
                           />
                         </div>
                         <InteractiveSidecar body={resolved.problem.explanation} />

@@ -12,9 +12,25 @@
  *      for non-shaken atoms (regression).
  */
 
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { AtomCardRenderer, type ContentAtom } from './AtomCardRenderer';
+
+// "Show next step" is engagement-gated (/design-review, 2026-09-06 — see
+// useEngagementGate.ts): disabled for a minimum think-time after each step
+// reveals. Only fake `setTimeout`/`clearTimeout` (not the whole clock —
+// this file's other framer-motion entrance animations don't need faking).
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+function clearGate() {
+  act(() => {
+    vi.advanceTimersByTime(6000);
+  });
+}
 
 /**
  * /investigate (2026-09-03, live-QA: "Solve like a progression") made steps
@@ -26,6 +42,7 @@ import { AtomCardRenderer, type ContentAtom } from './AtomCardRenderer';
 function revealAllSteps() {
   let button = screen.queryByRole('button', { name: 'Show next step' });
   while (button) {
+    clearGate();
     fireEvent.click(button);
     button = screen.queryByRole('button', { name: 'Show next step' });
   }
@@ -195,7 +212,10 @@ describe('Progressive step reveal (/investigate, 2026-09-03)', () => {
     expect(screen.getByText(/Step one: setup/)).toBeInTheDocument();
     expect(screen.queryByText(/Step two: solve/)).toBeNull();
     expect(screen.queryByText(/Step three: verify/)).toBeNull();
+    // Engagement-gated (/design-review, 2026-09-06): disabled until the
+    // student has had a minimum think-time on step one.
     expect(screen.getByRole('button', { name: 'Show next step' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show next step' })).toBeDisabled();
   });
 
   it('reveals one more step per click, accumulating rather than replacing', () => {
@@ -203,6 +223,7 @@ describe('Progressive step reveal (/investigate, 2026-09-03)', () => {
       content: ['Step one: setup.', '---', 'Step two: solve.', '---', 'Step three: verify.'].join('\n'),
     });
     render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    clearGate();
     fireEvent.click(screen.getByRole('button', { name: 'Show next step' }));
     expect(screen.getByText(/Step one: setup/)).toBeInTheDocument();
     expect(screen.getByText(/Step two: solve/)).toBeInTheDocument();
@@ -214,6 +235,7 @@ describe('Progressive step reveal (/investigate, 2026-09-03)', () => {
       content: ['Step one: setup.', '---', 'Step two: solve.'].join('\n'),
     });
     render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    clearGate();
     fireEvent.click(screen.getByRole('button', { name: 'Show next step' }));
     expect(screen.getByText(/Step two: solve/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Show next step' })).toBeNull();
@@ -241,6 +263,43 @@ describe('Progressive step reveal (/investigate, 2026-09-03)', () => {
   });
 });
 
+describe('"Show next step" engagement gate (/design-review, 2026-09-06)', () => {
+  it('a click before the gate elapses is a no-op; the button works once ready', () => {
+    const atom = makeAtom({
+      content: ['Step one: setup.', '---', 'Step two: solve.'].join('\n'),
+    });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    const btn = screen.getByRole('button', { name: 'Show next step' });
+    fireEvent.click(btn);
+    expect(screen.queryByText(/Step two: solve/)).toBeNull();
+
+    clearGate();
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(screen.getByText(/Step two: solve/)).toBeInTheDocument();
+  });
+
+  it('re-arms on every reveal — the next button locks again after a click', () => {
+    const atom = makeAtom({
+      content: ['Step one: setup.', '---', 'Step two: solve.', '---', 'Step three: verify.'].join('\n'),
+    });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    clearGate();
+    fireEvent.click(screen.getByRole('button', { name: 'Show next step' }));
+    expect(screen.getByRole('button', { name: 'Show next step' })).toBeDisabled();
+  });
+
+  it('shows "Read this, then continue" while gated, and it clears once ready', () => {
+    const atom = makeAtom({
+      content: ['Step one: setup.', '---', 'Step two: solve.'].join('\n'),
+    });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    expect(screen.getByText('Read this, then continue')).toBeInTheDocument();
+    clearGate();
+    expect(screen.queryByText('Read this, then continue')).not.toBeInTheDocument();
+  });
+});
+
 // Regression (/investigate, 2026-09-03). \boxed{} is the standard KaTeX
 // command for a final boxed answer — the step containing it renders through
 // the dedicated settle-flash wrapper instead of the plain per-step fade
@@ -251,6 +310,7 @@ describe('Boxed-answer settle flash', () => {
       content: ['Step one: setup.', '---', 'Step two: $\\boxed{x = 7}$'].join('\n'),
     });
     const { container } = render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    clearGate();
     fireEvent.click(screen.getByRole('button', { name: 'Show next step' }));
     // KaTeX renders \boxed{} into its own markup — assert on the VISIBLE
     // rendering (`.katex-html`), not `container.textContent` as a whole,

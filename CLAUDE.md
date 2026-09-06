@@ -3697,6 +3697,121 @@ tag colour on the eyebrow label. Existing
 `AtomCardRenderer.trapVisualIdentity.test.tsx` passes unchanged (asserted,
 not assumed).
 
+### `/design-review`: practice explanation motion, eigenvector derivation, and an engagement gate on advance buttons (2026-09-06)
+
+Three numbered asks, three screenshots: (1) a practice question's
+"Explanation" panel showed "poor readability and static text... use
+`/ui-ux-pro-max`... this was handled for the content part before, I want
+similar for questions as well"; (2) a `linear_map` hook scene's eigenvector
+coordinates are stated and verified but never explained — "how did they
+arrive at those coordinates for discussion? this needs to be in there for
+all topics"; (3) "here step walkthrough is good. but enable it only when
+the step actually needs to be executed... or else the risk is an
+inattentive student will randomly press some button. do a research and
+brainstorm for a good next step guidance for all topics."
+
+**Ask 1 — root cause was a rendering gap, not a content-volume problem.**
+`SmartPracticePage.tsx`'s and `PracticePage.tsx`'s post-answer explanation
+panels both called `MarkdownAtomRenderer` with neither `structured` nor
+`--progressive` — the exact same defect `PracticeAttemptPage.tsx`'s
+solution-steps panel had before 2026-09-04's fix, just never propagated to
+these two sibling surfaces. Both now pass `structured` (rows any authored
+list markup with the app's standard hairline-separated, once-on-mount
+staggered entrance) and `className="vidhya-atom-body--progressive"`
+(staggers free paragraphs the same way hook/intuition prose already does).
+Zero content rewrite — whichever shape a given item's explanation happens
+to be authored in, one of the two rules now applies.
+
+**Ask 2 — verified against `eigenvalues` (the foundational concept) too,
+not just the reported one.** Read `quadratic-forms/atoms/hook.md` (the
+screenshot's own concept) first, confirmed the defect, then checked
+`eigenvalues/atoms/hook.md` on the hypothesis that the foundational concept
+teaching this exact mechanism would have the same gap — it did. Both gain
+a `why` field (`SimulationSpec.why`, already-shipped machinery) explaining
+that each eigenvector solves `(A−λI)v=0` for its own eigenvalue found from
+`det(A−λI)=0` — the derivation, not just a restatement of the verification
+check the scene already showed. Every numeric claim (matrices, eigenvalues,
+eigenvector directions) re-verified via `python3`/sympy before writing
+(Wolfram MCP disconnected this session, same fallback prior passes in this
+doc used). Propagated byte-identically across all three stance files per
+concept via a proper `re.DOTALL` Python script, verified byte-identical
+afterward — never `grep -o` (this repo's documented failure mode for
+multi-line JSON fences).
+
+**Scope, named honestly.** This fixes exactly the two concrete instances
+audited (`eigenvalues`, `quadratic-forms`) — the report's "for all topics"
+describes the desired STANDARD, not a claim that every `linear_map` scene
+in the corpus was checked. A corpus-wide audit of the remaining scenes
+(most concepts with a `linear_map` hook) is tracked in TODOS.md as the next
+wave, same pattern (read the scene, verify every claim independently,
+propagate byte-identically) as every prior content pass in this doc.
+
+**Ask 3 — `useEngagementGate`, one hook shared by every advance-button
+consumer.** `GuidedWalkthrough.tsx`'s `buttonDisabled` was
+`phase === 'answer' && isLastStep` — disabled ONLY at the very end, tappable
+at every other instant regardless of whether the student had read a word.
+The same defect exists on `Simulation.tsx`'s beat "Continue" button and
+`AtomCardRenderer.tsx`'s "Show next step" button — both explicitly named in
+`GuidedWalkthrough.tsx`'s own doc comment as sharing "the app's one advance-
+button convention," so the fix generalizes to all three rather than one.
+
+Researched via `/ui-ux-pro-max` (its "Disabled States" guideline: reduce
+opacity + `cursor: not-allowed`, already `Button.tsx`'s existing contract —
+no new styling needed there) and `WebSearch` on intelligent-tutoring-system
+literature: CMU/Carnegie Learning's ~2-second between-hint delay, UMass's
+minimum-time-on-problem gate before a hint becomes available, both
+regulating *when* help/next-step is offered rather than gating access
+outright.
+
+`frontend/src/hooks/useEngagementGate.ts` — `useEngagementGate(text, key)`
+holds `ready=false` for a duration scaled by `text`'s word count (140 wpm,
+clamped 1200–5000ms) and re-arms whenever `key` changes (a step index, a
+phase, a beat index). Deliberately does **not** collapse under
+`prefers-reduced-motion` — that preference governs decorative animation,
+not reading time, and gating the wait on it would silently remove the
+safeguard for exactly the users who opted into it for an unrelated reason.
+A purely decorative fade AROUND the gated state (the "Read this, then
+continue" microcopy's own entrance) still routes through
+`usePrefersReducedMotion`/`framerDuration` like every other reveal in these
+files.
+
+Wired into all three consumers, each keyed on whatever content is ON
+SCREEN right now (the thing that needs reading before the next reveal is
+earned): `GuidedWalkthrough`'s hint/answer button (keyed on
+`${stepIdx}.${phase}`, gated on the current phase's prompt/hint/answer
+text), `Simulation.tsx`'s Continue button (keyed on `activeIdx`, gated on
+`resolveBeatText` for the held beat), `AtomCardRenderer.tsx`'s "Show next
+step" (keyed on `shownCount`, gated on the most-recently-revealed step's
+own text). Each renders the SAME "Read this, then continue" microcopy
+while gated — a disabled control with no explanation reads as broken, not
+paced.
+
+**Deliberately not extended to `DecisionTreeWalkthrough.tsx`'s option
+buttons** — a different risk profile from a passive "next" tap: each
+option there requires reading distinct choice labels to decide which to
+click, and choosing wrong is itself informative (walkable to its dead end
+before the reveal, per the existing design contract) rather than a content
+skip. Gating option selection would slow down a genuinely deliberative
+action, not prevent a mindless one.
+
+**Tests:** `useEngagementGate.test.ts` (new, 7) — `engagementGateMs`'s
+floor/ceiling/scaling, the hook's ready/re-arm/key-vs-text-identity
+behavior via `renderHook`. `GuidedWalkthrough.test.tsx` (+5) — a new
+"engagement gate" describe block plus every existing click-driven test
+updated to advance fake timers (`vi.useFakeTimers()` + `advanceTimersByTime`
+wrapped in `act`) past the gate before each click, so the reveal-pacing
+assertions keep meaning what they always did. `WorkedExampleCard.test.tsx`
+(+3, same fake-timer treatment via a shared `clearGate()` helper).
+`Simulation.test.tsx` (+1) — scoped `vi.useFakeTimers({ toFake: ['setTimeout',
+'clearTimeout'] })` to the Continue-button describe block only, so the
+file's separate `vi.spyOn(window, 'requestAnimationFrame')` freeze (every
+other test's determinism strategy) stays untouched.
+
+Frontend suite 2711 → 2727/2727. Backend untouched, 4701/4701. `tsc
+--noEmit` clean. `npm run ci` (18 gates, including `ci:la-walkthrough`
+26/26, `ci:variant-agreement` 610 pairs, `ci:interactive-specs` 418 blocks
+unchanged) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

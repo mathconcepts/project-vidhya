@@ -4,6 +4,44 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Corpus-wide `linear_map` eigenvector-derivation audit
+
+**Trigger:** an operator wants a real content pass, or a fresh live-QA
+report names another concept with the same gap.
+
+`/design-review` (2026-09-06) fixed exactly two concepts —
+`eigenvalues` and `quadratic-forms` — whose `linear_map` hook scenes state
+and verify specific eigenvector coordinates without ever explaining HOW
+those coordinates were found (solving `(A−λI)v=0` for each eigenvalue from
+`det(A−λI)=0`). Both now carry a `why` field naming the method. Every other
+concept with a `linear_map` scene (`diagonalization`, `symmetric-matrices`,
+`spectral-theorem`, `svd`, `positive-definite-matrices`, and others per the
+2026-09-04/2026-09-05 sticky-diagram and mnemonic-widget passes) is
+unaudited for this specific gap — some may already state the derivation,
+most likely don't. Same pattern as every prior corpus-wide content pass in
+this doc: dispatch parallel Sonnet subagent batches (4-6 concepts each),
+each batch reads its concepts' own hook.md first, judges honestly whether
+a `why`-field gap exists, verifies every numeric claim independently
+(python3/sympy if Wolfram MCP is unavailable) before writing, and
+propagates any fence edit byte-identically across the stance-variant trio
+via a proper `re.DOTALL` script — never `grep -o`.
+
+## Extend the "advance-button" convention audit to any FUTURE shared control
+
+**Trigger:** a new tap-to-reveal control is added anywhere in the app.
+
+`useEngagementGate` (2026-09-06, `frontend/src/hooks/useEngagementGate.ts`)
+now gates `GuidedWalkthrough`'s hint/answer button, `Simulation.tsx`'s
+Continue button, and `AtomCardRenderer.tsx`'s "Show next step" button — the
+three consumers of the app's one advance-button convention as of this
+writing. `DecisionTreeWalkthrough.tsx`'s option buttons were deliberately
+NOT gated (a different risk profile — see CLAUDE.md's 2026-09-06 section
+for the reasoning). If a future surface adds a new "tap when you're ready"
+control, check whether the same mindless-tap risk applies before deciding
+whether it needs `useEngagementGate` too — don't assume every advance-style
+button automatically qualifies (a genuinely deliberative choice, like
+DecisionTreeWalkthrough's options, does not).
+
 ## Corpus-wide hook/intuition/mnemonic motion upgrade ("convey more in less")
 
 **Trigger:** an operator wants to spend a real multi-batch content pass on

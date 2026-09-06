@@ -14,7 +14,7 @@
  * writes) and clicks, never by letting the tick loop actually run.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import {
   Simulation,
   activeNarrationStep,
@@ -415,20 +415,39 @@ describe('Simulation — sticky diagram wrapper (student-paced beat scenes)', ()
 // and absent once the scene has fully finished (nothing left to continue
 // to), present in every other paused-mid-scene state.
 describe('Simulation — Continue button (student-paced beats)', () => {
+  // Continue is now engagement-gated (/design-review, 2026-09-06 — see
+  // useEngagementGate.ts): disabled for a minimum think-time after each
+  // beat holds. Only fake `setTimeout`/`clearTimeout` here, NOT the whole
+  // clock — this file's RAF mock (the module-level beforeEach above) must
+  // stay a plain vi.spyOn, not get swept into fake-timer territory.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('is absent while autoplay is actively playing', () => {
     render(<Simulation spec={BEAT_SPEC} />); // autoplay: playing
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
   });
 
-  it('appears once the student pauses mid-scene', () => {
+  it('appears once the student pauses mid-scene, disabled until the gate elapses', () => {
     render(<Simulation spec={BEAT_SPEC} />);
     fireEvent.click(screen.getByLabelText('Pause simulation'));
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
   });
 
-  it('clicking Continue resumes playback', () => {
+  it('clicking Continue before the gate elapses is a no-op; it resumes playback once ready', () => {
     render(<Simulation spec={BEAT_SPEC} />);
     fireEvent.click(screen.getByLabelText('Pause simulation'));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(screen.queryByLabelText('Pause simulation')).toBeNull(); // still paused — gate blocked it
+
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByLabelText('Pause simulation')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Continue' })).toBeNull();
@@ -438,6 +457,18 @@ describe('Simulation — Continue button (student-paced beats)', () => {
     render(<Simulation spec={BEAT_SPEC} />);
     fireEvent.click(screen.getByLabelText('Reset simulation'));
     expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
+  });
+
+  it('shows "Read this, then continue" while gated, and it clears once ready', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    fireEvent.click(screen.getByLabelText('Pause simulation'));
+    expect(screen.getByText('Read this, then continue')).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
+    expect(screen.queryByText('Read this, then continue')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue' })).not.toBeDisabled();
   });
 
   it('is absent once the scene has fully finished (scrubbed to the end)', () => {

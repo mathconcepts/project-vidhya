@@ -4,6 +4,60 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.65.0] — 2026-09-06 — Practice explanation motion, eigenvector derivation, and an engagement gate on advance buttons
+
+No new env vars, no migrations.
+
+`/design-review` on three numbered asks with screenshots: (1) a practice
+question's "Explanation" panel read as "poor readability... a boring patch
+of text" — the same fix already shipped for lesson content had never
+reached practice questions; (2) a `linear_map` hook scene names specific
+eigenvector coordinates without ever showing HOW they were found; (3) the
+guided-walkthrough "Show hint"/"Show answer" button was tappable the
+instant new content appeared, risking an inattentive student mashing
+through without reading.
+
+- **Practice explanation panels get the same treatment lesson prose
+  already has.** `SmartPracticePage.tsx` and `PracticePage.tsx`'s
+  explanation `MarkdownAtomRenderer` calls gain `structured` +
+  `className="vidhya-atom-body--progressive"` — the identical row-
+  separation + stagger `PracticeAttemptPage`'s solution-steps panel
+  already had (2026-09-04). Zero content rewrite; whichever shape an
+  item's explanation was authored in (numbered steps or free paragraphs),
+  one of the two rules now applies.
+- **Eigenvector derivation, not just verification.** `eigenvalues` and
+  `quadratic-forms` `hook.md` (+ stance variants) gain a `why` field on
+  their `linear_map` scene explaining the coordinates come from solving
+  `(A−λI)v=0` for each eigenvalue found via `det(A−λI)=0` — every claim
+  hand-verified via `python3`/sympy (Wolfram MCP disconnected this
+  session). Fixes the two concrete instances the report named; the
+  remaining `linear_map` scenes across the corpus are unaudited, tracked
+  in TODOS.md.
+- **`useEngagementGate` — a shared minimum think-time before an "advance"
+  control becomes tappable** (`frontend/src/hooks/useEngagementGate.ts`).
+  Scaled by word count of the content currently on screen (140 wpm,
+  1200–5000ms floor/ceiling), not a flat delay — informed by intelligent-
+  tutoring research (CMU/Carnegie Learning's between-hint delay, UMass's
+  minimum-time-on-problem gate before a hint unlocks). Deliberately does
+  NOT collapse under `prefers-reduced-motion` (that preference governs
+  decorative animation, not reading time). Wired into all three consumers
+  of the app's shared advance-button convention: `GuidedWalkthrough`'s
+  hint/answer button, `Simulation.tsx`'s beat "Continue" button, and
+  `AtomCardRenderer.tsx`'s "Show next step" button — each disabled
+  (existing opacity/`not-allowed` cursor contract) with a "Read this, then
+  continue" microcopy line until the gate clears, re-arming on every
+  phase/beat/step transition. `DecisionTreeWalkthrough`'s option buttons
+  were considered and left alone — a different risk profile (choosing a
+  wrong option is itself informative and walkable to its dead end, not a
+  content-skip).
+
+16 new tests (`useEngagementGate.test.ts` 7; `GuidedWalkthrough.test.tsx`
++5; `WorkedExampleCard.test.tsx` +3; `Simulation.test.tsx` +1); existing
+gated-button tests updated to advance fake timers past the gate first.
+Frontend suite 2711 → 2727/2727. `tsc --noEmit` clean. `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610
+pairs) clean. Backend untouched, 4701/4701.
+
 ## [4.64.0] — 2026-09-05 — Atom-kind tag colours
 
 No new env vars, no migrations.

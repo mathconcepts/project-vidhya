@@ -4,6 +4,45 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.71.0] — 2026-09-06 — Ghost labels: an off-canvas clipping bug fixed, an accessibility gap closed
+
+No new env vars, no migrations. Frontend-only.
+
+`/autoplan` follow-up to 4.70.0's ghost/trap value labels: audit every
+place the freshly-shipped labels could themselves hinder learning, not
+just confirm they render.
+
+**Real, confirmed bug — the SVG viewBox never accounted for the ghost's
+own extent.** `linearMapViewBox`/`autoViewBox` sized the box from the
+REAL matrix/trace alone; a trap whose `ghost_matrix`/`ghost` scales
+further than the real answer (a common, useful trap shape) drew its
+ghost — and now its coordinate label — partly or fully outside the
+visible viewBox, which SVG clips by default: the correction rendered
+invisible in a real browser. Confirmed reachable via this repo's own
+`BEAT_SPEC` test fixture, whose ghost circle already extends past the
+real trace's bounding box. The prior pass's own presence-only DOM test
+passed anyway — jsdom never rasterizes or clips, so it couldn't catch a
+purely-visual bug. Fixed: both view-box functions gained an optional
+ghost-extent parameter (additive, backward-compatible); the new
+regression test checks the label's actual projected pixel position.
+
+**Real accessibility gap, fixed.** Color (grey) was the only signal
+distinguishing a ghost label from the real ones — WCAG 1.4.1 (use of
+color). The ghost arrows already had a second channel (dashed stroke);
+the label text didn't. Fixed: every ghost coordinate label now renders
+in italic.
+
+**Real edge case, named not fixed.** A trap authored SUBTLE (ghost close
+to the real value) can put the real and ghost labels close enough to
+overlap, since both offset along the same radial direction. No committed
+scene triggers this; a real fix needs collision detection, bigger than
+this pass and unverifiable without a live instance. Tracked in TODOS.md.
+
+**Tests:** `Simulation.test.tsx` +4 (pixel-position regression, italic
+check, 2 pure `linearMapViewBox` widen/no-widen tests) +2 assertions on
+an existing test. Frontend suite 2767 → 2771. Backend untouched. `tsc
+--noEmit` clean.
+
 ## [4.70.0] — 2026-09-06 — Reference Highlighting Framework: the ghost/trap value label gap, closed
 
 No new env vars, no migrations. Frontend-only.

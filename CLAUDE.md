@@ -4304,6 +4304,68 @@ existing eigen-reveal test (the eigen-anchored ghost tip labels). Frontend
 suite 2765 → 2767. Backend untouched, 4708/4708 (365 files, 1 todo).
 `tsc --noEmit` clean both sides.
 
+### `/autoplan`: auditing the ghost labels for where they could themselves hinder learning (2026-09-06)
+
+Direct same-day follow-up to the Reference Highlighting Framework pass
+above — audit every place the freshly-shipped ghost coordinate labels
+could go wrong and actively work against a student, not just confirm they
+render. Full detail appended to
+`docs/designs/2026-09-06-reference-highlighting-framework.md`.
+
+**Real, confirmed bug — the SVG viewBox never accounted for the ghost's
+own extent.** `linearMapViewBox(matrix)` sized the box from the real
+matrix's image of the unit circle alone; `autoViewBox(points)` sized it
+from the real trace's sampled points alone. Neither ever looked at
+`ghost_matrix` or the sampled `ghost` path. A trap whose wrong reading
+scales the answer up or down from the real one — the common, useful trap
+shape — draws its ghost arrow, path, and now its coordinate label partly
+or entirely OUTSIDE the visible viewBox, which SVG clips by default: in a
+real browser the correction is invisible, worse than no correction at
+all. Confirmed reachable via this repo's own `BEAT_SPEC` test fixture
+(real trace bounded to `[0,1]×[0,1]`, ghost a radius-2 circle) — the
+ghost's endpoint at `(1.081, 1.683)` falls outside the `~[-0.1, 1.1]` box
+the real trace alone would produce. The PRIOR pass's own test for this
+exact label passed anyway, because it only checked the DOM text node
+exists — jsdom never rasterizes or clips anything, so a bug that is
+purely visual-clipping can't be caught by presence-only assertions.
+Fixed by folding the ghost's extent into both view-box computations
+(`linearMapViewBox`'s new optional `ghostMatrix` param, `autoViewBox`'s
+new optional `ghostPoints` param — additive, backward-compatible,
+existing single-arg call sites unaffected). The new regression test
+checks the label's actual projected pixel position, not just presence.
+
+**Real, addressed accessibility gap — color was the only differentiator
+between "look here" and "this is wrong."** `focus_eigen`/`focus_point`
+render in ink, the reveal in green, the ghost labels in grey — nothing
+OTHER than hue told a viewer with reduced color perception which was
+which (WCAG 1.4.1, use of color). The ghost ARROWS already had a second
+channel (dashed vs. solid stroke); the label TEXT did not. Fixed cheaply:
+every ghost coordinate label now renders in italic — reads as
+"hypothetical, not the real answer" independent of color perception.
+
+**Real edge case, named rather than fixed.** A trap authored to be
+SUBTLE (ghost_matrix close to the real matrix — often the more
+pedagogically useful trap) can put the real `×λ` label and the new ghost
+label close enough to visually overlap, since both are offset from the
+origin along the same radial direction as their own tip. No committed
+scene triggers this today; a real fix needs actual collision detection,
+which is bigger than this pass's two fixes and has no live instance to
+verify against. Tracked in TODOS.md with the concrete fix shape.
+
+**Considered and correctly not changed:** long-number edge-clipping at
+the SVG's outer margin and 12px mobile legibility are both risks the
+PRE-EXISTING real reveal labels already share identically — not a new
+regression the ghost labels introduced, so fixing them here would be
+scope creep onto an unrelated, already-existing risk rather than the
+ghost-label audit this pass was asked to do.
+
+**Tests:** `Simulation.test.tsx` +4 (pixel-position regression for the
+ghost endpoint label, its italic-style check, two pure `linearMapViewBox`
+tests for widening/non-widening against a ghost_matrix) plus 2 assertions
+appended to the existing eigen-reveal test (italic on both eigen-anchored
+ghost labels). Frontend suite 2767 → 2771. Backend untouched. `tsc
+--noEmit` clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

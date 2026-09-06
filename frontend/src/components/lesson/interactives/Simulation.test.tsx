@@ -33,7 +33,7 @@ import {
   ghostArrowDirs,
   formatSignificant,
 } from './Simulation';
-import type { SimulationSpec } from './types';
+import type { SimulationSpec, Mat2 } from './types';
 
 const BASE_SPEC: SimulationSpec = {
   v: 1,
@@ -679,6 +679,40 @@ describe('Simulation — trap row + ghost (design contract items 6, 7, 8)', () =
     expect(container.textContent).toContain('(1.081, 1.683)');
   });
 
+  // Regression (/autoplan, 2026-09-06): BEAT_SPEC's ghost (a radius-2
+  // circle) extends well past its real trace's [0,1]x[0,1] bounding box.
+  // Before folding the ghost's extent into autoViewBox, the SVG's viewBox
+  // was sized from the real trace alone (~[-0.1, 1.1]) — the ghost
+  // endpoint at (1.081, 1.683) projected to a pixel OUTSIDE the 320x200
+  // canvas, invisible in a real browser (SVG clips by default) even
+  // though jsdom's DOM-text-only checks never caught it. This test checks
+  // the actual projected pixel position, not just that the text exists.
+  it('projects the ghost endpoint label to a pixel INSIDE the SVG canvas, not clipped off it', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+    const label = Array.from(container.querySelectorAll('svg text')).find((t) =>
+      t.textContent?.includes('1.081'),
+    );
+    expect(label).toBeTruthy();
+    const x = Number(label!.getAttribute('x'));
+    const y = Number(label!.getAttribute('y'));
+    expect(x).toBeGreaterThanOrEqual(0);
+    expect(x).toBeLessThanOrEqual(320);
+    expect(y).toBeGreaterThanOrEqual(0);
+    expect(y).toBeLessThanOrEqual(200);
+  });
+
+  it('renders the ghost endpoint label in italic — a color-independent "this is wrong" signal', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+    const label = Array.from(container.querySelectorAll('svg text')).find((t) =>
+      t.textContent?.includes('1.081'),
+    );
+    expect(label?.getAttribute('font-style')).toBe('italic');
+  });
+
   it('renders inline math in the trap text/avoid lines through KaTeX, not as raw source', () => {
     const spec: SimulationSpec = {
       ...BEAT_SPEC,
@@ -837,6 +871,30 @@ describe('linear-map pure helpers', () => {
     expect(vb.x_min).toBe(-vb.x_max);
     expect(vb.y_min).toBe(-vb.y_max);
   });
+
+  // Regression (/autoplan, 2026-09-06): a trap whose ghost_matrix scales
+  // MORE aggressively than the real matrix used to draw ghost arrows (and
+  // now ghost coordinate labels) partly or fully outside the SVG's own
+  // viewBox — the box was sized from the real matrix alone. A=[[2,1],[1,2]]
+  // has a Wolfram-verified unit-circle extent of √5≈2.236; a ghost scaling
+  // by 5 must widen the box past that, not leave it clipped at ~2.236.
+  it('linearMapViewBox widens to fit a ghost_matrix that scales further than the real matrix', () => {
+    const withoutGhost = linearMapViewBox(A);
+    const ghostMatrix: Mat2 = [[5, 0], [0, 5]];
+    const withGhost = linearMapViewBox(A, ghostMatrix);
+    expect(withGhost.x_max).toBeGreaterThan(withoutGhost.x_max);
+    expect(withGhost.y_max).toBeGreaterThan(withoutGhost.y_max);
+    expect(withGhost.x_max).toBeGreaterThan(5);
+  });
+
+  // A ghost that scales LESS than the real matrix must not shrink the box —
+  // the real matrix's own extent already dominates.
+  it('linearMapViewBox is unchanged when the ghost_matrix scales less than the real matrix', () => {
+    const withoutGhost = linearMapViewBox(A);
+    const smallerGhost: Mat2 = [[1, 0], [0, 1]];
+    const withGhost = linearMapViewBox(A, smallerGhost);
+    expect(withGhost).toEqual(withoutGhost);
+  });
 });
 
 describe('linear-map scene rendering', () => {
@@ -901,6 +959,12 @@ describe('linear-map scene rendering', () => {
     // and (1.414,-1.414).
     expect(container.textContent).toContain('(1.414, 1.414)');
     expect(container.textContent).toContain('(1.414, -1.414)');
+    // Italic — a color-independent "this is wrong" signal (/autoplan, 2026-09-06).
+    const ghostLabels = Array.from(container.querySelectorAll('svg text')).filter(
+      (t) => t.textContent?.includes('1.414'),
+    );
+    expect(ghostLabels).toHaveLength(2);
+    for (const label of ghostLabels) expect(label.getAttribute('font-style')).toBe('italic');
   });
 
   it('unit_square + area_label: reduced-motion mount shows the "area ×3" text and at least 2 more svg polygons than an equivalent spec without unit_square', () => {

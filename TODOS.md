@@ -4,6 +4,39 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Ghost/real label collision when a trap is authored close to the real answer (2026-09-06)
+
+**Trigger:** a future committed `trap`/`ghost_matrix` scene where the wrong
+reading is intentionally CLOSE to the real one (a subtle, believable
+near-miss — often more pedagogically useful than a wildly wrong trap),
+and a live-QA report or design review notices the real `×λ` label and the
+new ghost coordinate label visually overlapping.
+
+**Context:** found during the `/autoplan` ghost-label edge-case audit
+(2026-09-06). Both labels are offset from the origin by a fixed 16-18px
+push along the SAME radial direction as their own tip. When ghost and
+real tips point the same direction (any eigen-anchored ghost does, since
+`ghostArrowDirs` reuses the real eigen unit directions) and their
+magnitudes are close, the two labels can end up close enough to overlap.
+No currently-committed scene triggers this — the one committed case
+(`[[2,0],[0,2]]` ghost against real eigenvalues 3 and 1) has enough radial
+separation — but nothing in the code prevents a future closer trap from
+colliding.
+
+**Why not done now:** a real fix needs actual collision detection (measure
+the rendered/projected label positions, nudge one perpendicular to its
+own radial offset when too close) — genuinely more code and more risk
+than the two fixes this pass shipped (view-box extent, italic labels),
+and there's no live instance to verify the fix against.
+
+**Fix shape when picked up:** compute both label anchor points before
+rendering either, measure their screen-space distance, and if under some
+threshold (roughly the label's own rendered width, ~60-70px at 12px
+italic), offset the SECOND (ghost) label perpendicular to its radial
+direction rather than further along it — keeps the ghost label visually
+distinct from "further along the same ray" without touching the real
+label's position at all.
+
 ## `gif-generator.ts` parametric-curve/level-set scenes carry no per-point callout (2026-09-06)
 
 **Trigger:** a future live-QA report or content pass names a specific

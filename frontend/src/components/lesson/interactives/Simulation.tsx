@@ -243,8 +243,20 @@ export function applyLerpedMat2(matrix: Mat2, v: [number, number], s: number): [
  * angle it draws. Fits the unit circle and its image under the matrix (an
  * intermediate M(s)·v is a convex combination of v and A·v, so it can never
  * exceed the endpoints' extent), padded, at the SVG's inner aspect ratio.
+ *
+ * `ghostMatrix`, when present, is folded into the same sweep (Reference
+ * Highlighting Framework follow-up, /autoplan 2026-09-06). Before this, the
+ * box was sized from `matrix` alone — a trap whose `ghost_matrix` scales
+ * MORE aggressively than the real matrix (the common shape: "the wrong
+ * reading makes the answer look bigger/smaller than it is") drew ghost
+ * arrows, and now ghost coordinate labels, partly or entirely outside the
+ * SVG's own viewBox. SVG clips content outside its viewBox by default, so
+ * the exact thing meant to correct the misconception could render
+ * invisible in a real browser — jsdom-based tests never caught this,
+ * since they check the DOM text node exists, not whether it falls inside
+ * the visible coordinate range.
  */
-export function linearMapViewBox(matrix: Mat2): NonNullable<SimulationSpec['view_box']> {
+export function linearMapViewBox(matrix: Mat2, ghostMatrix?: Mat2): NonNullable<SimulationSpec['view_box']> {
   let maxX = 1;
   let maxY = 1;
   const n = 64;
@@ -253,6 +265,11 @@ export function linearMapViewBox(matrix: Mat2): NonNullable<SimulationSpec['view
     const [x, y] = applyLerpedMat2(matrix, [Math.cos(th), Math.sin(th)], 1);
     if (Math.abs(x) > maxX) maxX = Math.abs(x);
     if (Math.abs(y) > maxY) maxY = Math.abs(y);
+    if (ghostMatrix) {
+      const [gx, gy] = applyLerpedMat2(ghostMatrix, [Math.cos(th), Math.sin(th)], 1);
+      if (Math.abs(gx) > maxX) maxX = Math.abs(gx);
+      if (Math.abs(gy) > maxY) maxY = Math.abs(gy);
+    }
   }
   const innerAspect = (SVG_W - PADDING * 2) / (SVG_H - PADDING * 2);
   const halfH = Math.max(maxY * 1.14, (maxX * 1.14) / innerAspect);
@@ -303,12 +320,20 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     () => (linearMap ? { points: [], error: null } : sampleCurve(spec)),
     [spec, linearMap],
   );
+  // Computed BEFORE viewBox (Reference Highlighting Framework follow-up,
+  // /autoplan 2026-09-06) so the ghost's own extent can be folded into the
+  // box that's about to be sized — see autoViewBox's/linearMapViewBox's doc
+  // comments for the off-canvas-clipping bug this closes.
+  const ghostPoints = useMemo(() => (linearMap ? null : sampleGhost(spec)), [spec, linearMap]);
   const viewBox = useMemo(
-    () => spec.view_box ?? (linearMap ? linearMapViewBox(linearMap.matrix) : autoViewBox(samples.points)),
-    [spec.view_box, linearMap, samples.points],
+    () =>
+      spec.view_box ??
+      (linearMap
+        ? linearMapViewBox(linearMap.matrix, linearMap.ghost_matrix)
+        : autoViewBox(samples.points, ghostPoints)),
+    [spec.view_box, linearMap, samples.points, ghostPoints],
   );
   const projector = useMemo(() => makeProjector(viewBox), [viewBox]);
-  const ghostPoints = useMemo(() => (linearMap ? null : sampleGhost(spec)), [spec, linearMap]);
 
   const reducedMotion = usePrefersReducedMotion();
 
@@ -586,7 +611,10 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
               defined point — the path itself is a static full reveal, not
               progress-linked) gets the same halo-label treatment as the
               real head, in the ghost's own grey so it never reads as a
-              confirmed answer. */}
+              confirmed answer. Italicized (/autoplan follow-up,
+              2026-09-06) so "this is the wrong one" survives even when
+              grey is hard to distinguish from ink — color is never the
+              only signal. */}
           {trapRevealed && ghostPoints && ghostPoints.length > 0 && (() => {
             const gp = ghostPoints[ghostPoints.length - 1];
             const [gx, gy] = projector(gp.x, gp.y);
@@ -594,7 +622,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
               <text
                 x={gx} y={gy - 12}
                 textAnchor="middle" dominantBaseline="middle"
-                fontSize={12} fontWeight={600} fill="var(--grey-6)"
+                fontSize={12} fontWeight={600} fontStyle="italic" fill="var(--grey-6)"
                 stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
               >
                 {`(${formatSignificant(gp.x)}, ${formatSignificant(gp.y)})`}
@@ -993,7 +1021,9 @@ function LinearMapScene({
           eigen at all (matrix-operations' AB-vs-BA class): that fallback's
           trap is a general non-commutativity point, not a specific
           coordinate, so labeling all 4 cardinal arrows there would be noise
-          with no narration to anchor it. */}
+          with no narration to anchor it. Italicized, same as the
+          plain-curve ghost label below — grey alone is not always a
+          reliable "this is wrong" signal (WCAG 1.4.1, use of color). */}
       {trapRevealed && lm.ghost_matrix && eigen.length > 0 &&
         eigen.map((e, i) => {
           const g = lm.ghost_matrix!;
@@ -1010,7 +1040,7 @@ function LinearMapScene({
               key={`ghost-lbl-${i}`}
               x={px + ox} y={py + oy}
               textAnchor="middle" dominantBaseline="middle"
-              fontSize={12} fontWeight={600} fill="var(--grey-6)"
+              fontSize={12} fontWeight={600} fontStyle="italic" fill="var(--grey-6)"
               stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
             >
               {`(${formatSignificant(tip[0])}, ${formatSignificant(tip[1])})`}
@@ -1398,13 +1428,35 @@ function buildTraceSegments(
   return segments;
 }
 
-function autoViewBox(points: Array<{ x: number; y: number }>): NonNullable<SimulationSpec['view_box']> {
+/**
+ * `ghostPoints`, when present, are folded into the same min/max sweep as
+ * the real trace (Reference Highlighting Framework follow-up, /autoplan
+ * 2026-09-06) — the same off-canvas-clipping fix as `linearMapViewBox`'s
+ * `ghostMatrix` param, for the plain-curve case. Confirmed reachable, not
+ * theoretical: this repo's own `BEAT_SPEC` test fixture traces a real path
+ * bounded to [0,1]×[0,1] with a `ghost` circle of radius 2 — before this
+ * fix, `autoViewBox(samples.points)` alone sized the box to roughly
+ * [-0.1, 1.1], and the ghost's own endpoint label (freshly added) would
+ * have rendered at x≈2, entirely outside the visible viewBox.
+ */
+function autoViewBox(
+  points: Array<{ x: number; y: number }>,
+  ghostPoints?: Array<{ x: number; y: number }> | null,
+): NonNullable<SimulationSpec['view_box']> {
   let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
   for (const p of points) {
     if (p.x < xMin) xMin = p.x;
     if (p.x > xMax) xMax = p.x;
     if (p.y < yMin) yMin = p.y;
     if (p.y > yMax) yMax = p.y;
+  }
+  if (ghostPoints) {
+    for (const p of ghostPoints) {
+      if (p.x < xMin) xMin = p.x;
+      if (p.x > xMax) xMax = p.x;
+      if (p.y < yMin) yMin = p.y;
+      if (p.y > yMax) yMax = p.y;
+    }
   }
   const padX = (xMax - xMin) * 0.1 || 1;
   const padY = (yMax - yMin) * 0.1 || 1;

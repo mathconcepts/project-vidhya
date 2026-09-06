@@ -147,3 +147,87 @@ scene and show the correct wrong-reading coordinates; the 4-cardinal
 fallback scene (no declared `eigen`) renders its ghost arrows with **no**
 coordinate labels, confirming the noise-avoidance rule above is real
 behavior, not just a comment.
+
+## Follow-up: where the new labels themselves could hinder learning (`/autoplan`, same day)
+
+Ask: audit every place the freshly-added ghost labels could go wrong and
+actively work against a student, not just confirm they render.
+
+**Real, confirmed bug — the SVG viewBox never accounted for the ghost's
+extent.** `linearMapViewBox(matrix)` sized the box from the real matrix's
+image of the unit circle alone; `autoViewBox(points)` sized it from the
+real trace's sampled points alone. Neither ever looked at `ghost_matrix`
+or the sampled `ghost` path. A trap whose wrong reading scales the answer
+UP (the common, pedagogically useful shape — "the mistake makes it look
+bigger/smaller than it really is") draws its ghost arrow, path, and now
+its coordinate label partly or entirely **outside the visible viewBox**.
+SVG clips content outside its own viewBox by default, so in a real
+browser the correction is invisible — worse than no correction at all,
+since the trap row still says "look at the figure" and there is nothing
+usable to look at.
+
+Confirmed reachable, not theoretical: this repo's own `BEAT_SPEC` test
+fixture (real trace bounded to `[0,1]×[0,1]`, `ghost: {x_expr: '2*cos(t)',
+y_expr: '2*sin(t)'}`) hits this exactly — the ghost's endpoint at
+`(1.081, 1.683)` falls outside the `~[-0.1, 1.1]` box `autoViewBox` would
+compute from the real trace alone. The earlier pass's own test for this
+label (`toContain('(1.081, 1.683)')`) passed anyway, because it only
+checks the DOM text node exists — jsdom never rasterizes or clips
+anything, so a test written against DOM presence alone cannot catch a
+purely-visual clipping bug. Fixed by folding the ghost's own extent into
+both view-box computations (`linearMapViewBox`'s new optional
+`ghostMatrix` param, `autoViewBox`'s new optional `ghostPoints` param) —
+additive, backward-compatible signatures; a scene with no ghost computes
+exactly as before. The new regression test checks the actual projected
+pixel position of the label, not just its presence, specifically so this
+class of bug can't recur silently again.
+
+**Real, addressed accessibility gap — color was the only differentiator
+between "look here" and "this is wrong."** `focus_eigen`/`focus_point`
+render in ink, the reveal in green, the new ghost labels in grey — but
+nothing OTHER than hue tells a viewer with reduced color perception which
+is which, and grey-vs-ink-vs-green can compress toward each other under
+some forms of color-vision deficiency (WCAG 1.4.1, use of color, is
+exactly this failure mode). The ghost ARROWS already had a second,
+color-independent channel (dashed vs. solid stroke) — the new LABEL TEXT
+did not. Fixed cheaply: every ghost coordinate label now renders in
+italic. No geometry, no new dependency, and it reads as "hypothetical /
+not the real answer" independent of whether grey is perceptible as
+distinct from ink.
+
+**Real edge case, named rather than fixed — label collision when a trap
+is authored to be subtle.** The ghost label's screen position is offset
+from the origin along the SAME radial direction the real reveal's `×λ`
+label uses (a fixed 16-18px push outward from whichever tip it belongs
+to). When a trap's `ghost_matrix` is intentionally close to the real
+matrix (a believable near-miss, which is often the MORE pedagogically
+useful trap to author — "just a little wrong" teaches more than "wildly
+wrong"), the real and ghost labels can end up close enough to visually
+overlap. No currently-committed scene was found to trigger this (the one
+committed eigen-anchored ghost, `[[2,0],[0,2]]` against real eigenvalues
+3 and 1, is colinear per-direction but far enough apart in radius), but
+nothing in the code prevents a future one from doing so. A full label-
+collision-avoidance pass (detect overlap, nudge one label perpendicular
+to its radial offset) is real, scoped, future work — not attempted here,
+since it is meaningfully larger than the two fixes above and no live
+instance justifies it yet. Named in TODOS.md.
+
+**Considered and correctly NOT changed:** long-number edge-clipping at
+the SVG's outer edge (a label for a coordinate near `MAX_LINEAR_MAP_ENTRY`
+could still theoretically clip against the padding margin even inside a
+correctly-sized viewBox) — this risk is shared identically by the
+pre-existing real reveal's `×λ`/coordinate labels, not unique to the new
+ghost labels, so fixing it here would be scope creep onto a pre-existing,
+unrelated risk rather than the ghost-label audit this pass was asked to
+do. Mobile font-legibility at 12px is the same story — systemic, already
+shared by every label in this file, not a new regression introduced by
+the ghost labels. Both named, neither fixed, in TODOS.md.
+
+**Tests:** `Simulation.test.tsx` gained 4 new cases — the pixel-position
+regression (ghost endpoint label projects inside the SVG canvas, not
+clipped off it), the italic-style check on that same label, and two pure
+`linearMapViewBox` tests (widens when `ghost_matrix` scales further than
+the real matrix; stays unchanged when it scales less) — plus 2 assertions
+appended to the existing eigen-reveal test confirming both eigen-anchored
+ghost labels render `font-style: italic`. Frontend suite 2767 → 2771.
+Backend untouched. `tsc --noEmit` clean.

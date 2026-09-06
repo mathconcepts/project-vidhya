@@ -81,7 +81,12 @@ describe('StudymateSessionPage — MCQ option rendering', () => {
   it('shows the option text (not just the bare letter) in the "Expected" line on a wrong answer', async () => {
     mockFetchRouting({
       '/api/studymate/sessions/resume': () => SESSION,
-      '/api/studymate/sessions/sm-1/answer': () => ({ ok: true }),
+      // Grading now happens server-side (/ui-ux-pro-max, 2026-09-06) — the
+      // page reads was_correct/expected_answer/options from THIS response,
+      // not from the problem it already had.
+      '/api/studymate/sessions/sm-1/answer': () => ({
+        ok: true, was_correct: false, expected_answer: 'B', options: MCQ_PROBLEM.options,
+      }),
     });
     await renderPage();
 
@@ -92,6 +97,55 @@ describe('StudymateSessionPage — MCQ option rendering', () => {
 
     await waitFor(() => expect(screen.getByText('Not quite')).toBeInTheDocument());
     expect(screen.getByText(/2\*pi\*i/)).toBeInTheDocument();
+  });
+});
+
+describe('StudymateSessionPage — grading is server-decided, not client-computed (/ui-ux-pro-max, 2026-09-06)', () => {
+  beforeEach(() => {
+    vi.resetModules();
+    vi.unstubAllGlobals();
+  });
+
+  it('trusts the server verdict even when it disagrees with a naive client-side string compare', async () => {
+    // Pick option A, whose text ("0") looks nothing like the "real" answer
+    // text — but the server says it graded correct anyway (e.g. partial
+    // credit, an alternate accepted form). If the page still computed
+    // was_correct itself, this would render "Not quite".
+    mockFetchRouting({
+      '/api/studymate/sessions/resume': () => SESSION,
+      '/api/studymate/sessions/sm-1/answer': () => ({ ok: true, was_correct: true }),
+    });
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('The value of the integral is:')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]); // option A
+    fireEvent.click(screen.getByText('Submit Answer'));
+
+    await waitFor(() => expect(screen.getByText('Correct')).toBeInTheDocument());
+    expect(screen.queryByText('Not quite')).toBeNull();
+  });
+
+  it('never sends was_correct in the request body — the server decides it', async () => {
+    let sentBody: any = null;
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : (input as Request).url ?? String(input);
+      if (url.includes('/api/studymate/sessions/sm-1/answer')) {
+        sentBody = JSON.parse(init?.body as string);
+        return { ok: true, json: async () => ({ ok: true, was_correct: false, expected_answer: 'B' }) } as Response;
+      }
+      if (url.includes('/api/studymate/sessions/resume')) {
+        return { ok: true, json: async () => SESSION } as Response;
+      }
+      return { ok: true, json: async () => ({}) } as Response;
+    }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('The value of the integral is:')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit Answer'));
+
+    await waitFor(() => expect(sentBody).not.toBeNull());
+    expect(sentBody).toEqual({ problem_id: 'p-1', user_answer: 'A' });
   });
 });
 
@@ -106,7 +160,9 @@ describe('StudymateSessionPage — insight-unavailable fallback', () => {
     // /resume never carries gap_text — the poll loop exhausts every time.
     mockFetchRouting({
       '/api/studymate/sessions/resume': () => SESSION,
-      '/api/studymate/sessions/sm-1/answer': () => ({ ok: true }),
+      '/api/studymate/sessions/sm-1/answer': () => ({
+        ok: true, was_correct: false, expected_answer: 'B', options: MCQ_PROBLEM.options,
+      }),
     });
     await renderPage();
 

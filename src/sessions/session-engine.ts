@@ -20,6 +20,7 @@
  */
 
 import { getOrCreateStudentModel } from '../gbrain/student-model';
+import type { MasteryEntry } from '../gbrain/student-model';
 import { getConceptsInExam, getConceptLink, depthToMaxDifficulty } from '../curriculum/concept-exam-map';
 import { loadAllExams } from '../curriculum/exam-loader';
 import { getSessionStore, RESUME_WINDOW_HOURS_DEFAULT, type SessionProblemRow } from './session-store';
@@ -231,25 +232,121 @@ export async function recordAnswer(
   await store.recordAnswer(studymateId, problemId, userAnswer, wasCorrect);
 }
 
-export async function completeSession(studymateId: string): Promise<string> {
+export interface GradedAnswer {
+  was_correct: boolean;
+  expected_answer: string;
+  question: string;
+  concept_id: string;
+  options?: Record<string, string> | null;
+}
+
+/**
+ * The ONLY place `was_correct` may be decided for a Studymate answer.
+ *
+ * Root-caused (/ui-ux-pro-max, 2026-09-06): "student competency evaluation
+ * is completely wrong" traced back past the "Strong on X" labeling
+ * heuristic (see chooseSessionHighlight above) to something more basic —
+ * `h_answer` (studymate-routes.ts) required and trusted a client-supplied
+ * `was_correct` boolean verbatim, with the answer key it was nominally
+ * checked against unconditionally empty on the DB-less demo path (the
+ * content-bundle.json answer-stripping fix from v4.36.0 was never threaded
+ * through this flow — see session-store.ts's resolveRealAnswer). Grading
+ * happened nowhere: the client decided, and the "check" had nothing to
+ * check against.
+ *
+ * Grades against the row THIS session itself stored at build time —
+ * fetchProblemsForConcept already refuses to store a candidate with no
+ * resolvable real answer, so `row.expected_answer` here is always either a
+ * genuine answer key or (for pre-fix legacy sessions) an honest empty
+ * string, which grades every answer false rather than fabricating a
+ * verdict against nothing.
+ */
+export async function submitAnswer(
+  studymateId: string,
+  problemId: string,
+  userAnswer: string,
+): Promise<GradedAnswer> {
+  const store = getSessionStore();
+  const problems = await store.getSessionProblems(studymateId);
+  const row = problems.find((p) => p.problem_id === problemId);
+  if (!row) throw new Error(`Problem '${problemId}' not found in session '${studymateId}'`);
+
+  const expected = (row.expected_answer ?? '').trim();
+  const wasCorrect = expected.length > 0
+    && userAnswer.trim().toLowerCase() === expected.toLowerCase();
+
+  await store.recordAnswer(studymateId, problemId, userAnswer, wasCorrect);
+
+  return {
+    was_correct: wasCorrect,
+    expected_answer: row.expected_answer,
+    question: row.question,
+    concept_id: row.concept_id,
+    options: row.options ?? null,
+  };
+}
+
+export async function completeSession(studymateId: string, sessionId: string): Promise<string> {
   const store = getSessionStore();
   const attempts = await store.getCompletionAttempts(studymateId);
-  const stat = buildSessionStat(attempts);
+  const model = await getOrCreateStudentModel(sessionId);
+  const stat = buildSessionStat(attempts, model.mastery_vector);
   await store.markCompleted(studymateId, stat);
   return stat;
 }
 
-function buildSessionStat(
+/**
+ * Mirrors `cross-exam-coverage.ts`'s own mastery bar — deliberately the
+ * SAME numbers, not a third independently-tuned pair, so a session summary
+ * and the giveaway banner never disagree about what "mastered" means.
+ */
+const STRONG_MASTERY_THRESHOLD = 0.8;
+const STRONG_MIN_ATTEMPTS = 2;
+
+/**
+ * Which (if any) of this session's correctly-answered concepts has earned
+ * the word "Strong" — a claim about the student's CUMULATIVE history on
+ * that concept, never about one lucky answer in this one session.
+ *
+ * Root-caused (/investigate, /ui-ux-pro-max, 2026-09-06): the prior version
+ * called any concept "Strong" the instant its first IN-SESSION attempt
+ * landed correct — a 3-question session with one correct answer surfaced
+ * "Strong on probability basics," no different from a coin flip. Pure and
+ * DB-free so it's directly unit-testable without a live student model.
+ */
+export function chooseSessionHighlight(
+  correctConceptIds: string[],
+  masteryVector: Record<string, MasteryEntry>,
+): string | null {
+  let best: string | null = null;
+  let bestScore = -1;
+  for (const conceptId of correctConceptIds) {
+    const entry = masteryVector[conceptId];
+    if (!entry || entry.attempts < STRONG_MIN_ATTEMPTS || entry.score < STRONG_MASTERY_THRESHOLD) continue;
+    if (entry.score > bestScore) {
+      bestScore = entry.score;
+      best = conceptId;
+    }
+  }
+  return best;
+}
+
+export function buildSessionStat(
   attempts: Array<{ concept_id: string; was_correct: boolean }>,
+  masteryVector: Record<string, MasteryEntry>,
 ): string {
   if (attempts.length === 0) return 'Session complete.';
   const correctCount = attempts.filter(a => a.was_correct).length;
-  const topConcept = attempts
-    .filter(a => a.was_correct)
-    .map(a => a.concept_id)[0] ?? attempts[0].concept_id;
   if (correctCount === 0) {
     return `${correctCount}/${attempts.length} today — every attempt builds pattern recognition.`;
   }
-  const label = topConcept.replace(/-/g, ' ');
-  return `${correctCount}/${attempts.length} today. Strong on ${label}.`;
+  const correctConceptIds = attempts.filter(a => a.was_correct).map(a => a.concept_id);
+  const highlight = chooseSessionHighlight(correctConceptIds, masteryVector);
+  if (highlight) {
+    return `${correctCount}/${attempts.length} today. Strong on ${highlight.replace(/-/g, ' ')}.`;
+  }
+  // Honest fallback: real progress, but not yet enough cumulative evidence
+  // to call any one concept "strong" — never fabricate confidence a couple
+  // of answers haven't earned.
+  return `${correctCount}/${attempts.length} today — keep going.`;
 }

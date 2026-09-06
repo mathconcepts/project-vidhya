@@ -4,6 +4,49 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## "Failed to build session" — literal 500 not conclusively reproduced (2026-09-06)
+
+**Trigger:** a production server log or a Render error report showing the
+actual stack trace / exception for `[studymate-routes] buildSession
+error:` — the one thing this investigation couldn't get without access to
+the live deployment's Postgres instance.
+
+`/ui-ux-pro-max` reported "I get failed to build session all the time."
+Investigated by building 5 sessions in a row against a fresh local DB-less
+demo (all succeeded, 201), a bad `exam_id` (correctly 422, not 500), and a
+missing `exam_id` (correctly 400, not 500) — no literal 500 reproduced.
+The Postgres-only path (`PostgresStore.createSession`/`fetchProblemsForConcept`)
+was statically reviewed for obvious defects (CHECK constraints, column
+types, FK requirements) with nothing found, but was never exercised
+against a real Postgres instance in this pass — this sandbox has no
+`DATABASE_URL` to test against. The grading bugs fixed the same pass
+(always-empty `expected_answer`, the `getSessionProblems` known-bug SQL)
+are the likeliest contributor given both complaints arrived in the same
+report, but neither is confirmed as the exact 500-triggering exception.
+Next step: reproduce with `DATABASE_URL` pointed at a real Postgres
+instance, or read the actual server-side exception from a production log.
+
+## `focus_point` — corpus-wide application beyond `inner-product-spaces.hook` (2026-09-06)
+
+**Trigger:** the next `/design-review` or `/investigate` pass touching a
+plain-curve (non-`linear_map`) simulation scene, or a dedicated sweep pass
+with subagent-batch capacity, same pattern as every other "mechanism
+shipped, corpus application deferred" entry in this file.
+
+`focus_point?: boolean` (`types.ts`, `Simulation.tsx`) generalizes
+`focus_eigen`'s "highlight the coordinate being discussed, only for that
+beat" mechanism to plain parametric-trace scenes — the more common scene
+shape across the corpus. Shipped and wired into ONE concept
+(`inner-product-spaces.hook`, whose 5 beats each name a specific $v=(...)$
+coordinate). Not audited: how many other hooks/intuitions with a plain
+`x_expr`/`y_expr` scene ALSO name a specific coordinate pre-reveal the way
+this one did — likely several, given `focus_eigen` itself was originally
+shipped on one concept and then found to recur. The audit pattern that
+worked for `focus_eigen`'s own corpus rollout (read each hook, check for a
+beat naming coordinates the figure doesn't yet highlight, add the field,
+propagate byte-identically across stance files) is the template to repeat
+here.
+
 ## Corpus-wide `mnemonic` ELI5/register audit (2026-09-06 live-QA)
 
 **Trigger:** the next content pass with subagent-batch capacity, same

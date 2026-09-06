@@ -472,6 +472,10 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // focus_eigen's doc comment in types.ts). Cleared the instant the beat
   // passes, same as emphasize.
   const focusedEigenIndices = activeIdx !== null ? sortedSteps[activeIdx]?.focus_eigen ?? [] : [];
+  // Plain-curve counterpart to focus_eigen — see focus_point's doc comment
+  // in types.ts. Only ever set on a non-linear_map scene (validator refuses
+  // otherwise), so it's safe to read unconditionally here.
+  const focusPointActive = activeIdx !== null && sortedSteps[activeIdx]?.focus_point === true;
   // Engagement gate (/design-review, 2026-09-06 — see useEngagementGate.ts
   // and GuidedWalkthrough.tsx, the other consumer of the app's shared
   // advance-button convention): Continue was tappable the instant a beat
@@ -577,14 +581,29 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           {segments.map((seg) => (
             <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
           ))}
-          {head && (
-            <circle
-              cx={projector(head.x, head.y)[0]}
-              cy={projector(head.x, head.y)[1]}
-              r={4}
-              fill="var(--green)"
-            />
-          )}
+          {head && (() => {
+            const [hx, hy] = projector(head.x, head.y);
+            return (
+              <>
+                <circle cx={hx} cy={hy} r={focusPointActive ? 6 : 4} fill="var(--green)" />
+                {/* "Look here" coordinate label — the focus_eigen mechanism's
+                    plain-curve counterpart (types.ts's focus_point doc
+                    comment). Same halo-stroke treatment as the linear_map
+                    eigen label above, ink (not green — nothing about this
+                    point is a payoff, it's just what's being discussed). */}
+                {focusPointActive && (
+                  <text
+                    x={hx} y={hy - 12}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fontSize={12} fontWeight={600} fill="var(--text-primary)"
+                    stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+                  >
+                    {`(${formatSignificant(head.x)}, ${formatSignificant(head.y)})`}
+                  </text>
+                )}
+              </>
+            );
+          })()}
         </svg>
 
         {/* Controls sit directly under the SVG, before any text — a

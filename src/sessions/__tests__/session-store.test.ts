@@ -180,6 +180,74 @@ describe('FlatFileStore — selected when DATABASE_URL is unset', () => {
     expect(reread[0].gap_text).toBe('You mixed up the sign.');
   });
 
+  it('resolves a real answer key from data/practice-items/*.json when the bundle row has none (/ui-ux-pro-max, 2026-09-06)', async () => {
+    // Mirrors the real content-bundle.json shape for a practice-items-sourced
+    // row: NO correct_answer/expected_answer/answer field at all (the
+    // v4.36.0 answer-key-stripping fix). Before this fix, fetchProblemsForConcept
+    // read `r.expected_answer ?? r.answer ?? ''` straight off this row and
+    // silently served an always-ungradable '' answer key.
+    const bundlePath = path.join(testDir, 'frontend/public/data/content-bundle.json');
+    const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf-8'));
+    bundle.problems.push({
+      id: 'pi-real-answer-1',
+      concept_id: 'sequences',
+      topic: 'calculus',
+      difficulty: 0.25,
+      question_text: 'Find the limit.',
+      source: 'practice-items',
+    });
+    fs.writeFileSync(bundlePath, JSON.stringify(bundle));
+
+    const itemsDir = path.join(testDir, 'data/practice-items');
+    fs.mkdirSync(itemsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(itemsDir, 'gate-ma-calculus.json'),
+      JSON.stringify({
+        items: [{
+          id: 'pi-real-answer-1',
+          concept_id: 'sequences',
+          topic: 'calculus',
+          difficulty: 0.25,
+          question_type: 'mcq',
+          marks: 1,
+          question_text: 'Find the limit.',
+          options: ['2', '0', 'infinity', '2/5'],
+          answer_index: 0,
+          correct_answer: '2',
+        }],
+      }),
+    );
+
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+    const problem = await store.fetchProblemsForConcept('sequences', 1.0, new Set());
+    expect(problem).not.toBeNull();
+    expect(problem!.problem_id).toBe('pi-real-answer-1');
+    expect(problem!.expected_answer).toBe('A');
+    expect(problem!.options).toEqual({ A: '2', B: '0', C: 'infinity', D: '2/5' });
+  });
+
+  it('refuses a bundle row with no resolvable real answer anywhere, rather than serving an ungradable question', async () => {
+    const bundlePath = path.join(testDir, 'frontend/public/data/content-bundle.json');
+    const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf-8'));
+    bundle.problems.push({
+      id: 'pi-no-answer-1',
+      concept_id: 'unanswerable-concept',
+      topic: 'calculus',
+      difficulty: 0.25,
+      question_text: 'This has no answer key anywhere.',
+      source: 'practice-items',
+    });
+    fs.writeFileSync(bundlePath, JSON.stringify(bundle));
+
+    const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
+    _resetSessionStoreForTests();
+    const store = getSessionStore();
+    const problem = await store.fetchProblemsForConcept('unanswerable-concept', 1.0, new Set());
+    expect(problem).toBeNull();
+  });
+
   it('returns null for concept with no problems', async () => {
     const { getSessionStore, _resetSessionStoreForTests } = await import('../session-store');
     _resetSessionStoreForTests();

@@ -31,6 +31,7 @@ import {
   MORPH_START_PROGRESS,
   MORPH_END_PROGRESS,
   ghostArrowDirs,
+  formatSignificant,
 } from './Simulation';
 import type { SimulationSpec } from './types';
 
@@ -1004,6 +1005,53 @@ describe('linear-map scene rendering', () => {
     // low-contrast --text-secondary these ×λ/area labels used before.
     expect(zeroLabel!.getAttribute('fill')).toBe('var(--text-primary)');
     expect(zeroLabel!.getAttribute('stroke')).toBe('var(--surface-fill)');
+  });
+});
+
+describe('focus_point — focus_eigen\'s plain-curve counterpart (/ui-ux-pro-max, 2026-09-06)', () => {
+  const PLAIN_SPEC: SimulationSpec = {
+    v: 1,
+    kind: 'simulation',
+    title: 'A rotating point',
+    duration_sec: 4,
+    x_expr: 't',
+    y_expr: 't',
+    t_min: 0,
+    t_max: 1,
+    narration_steps: [
+      { at_progress: 0, text: 'Starting out.' },
+      { at_progress: 0.2, text: 'Look at this exact point.', focus_point: true },
+      { at_progress: 0.6, text: 'Moved on, nothing special now.' },
+    ],
+  };
+
+  it('highlights the head point with a bigger dot + coordinate label only while the focus_point beat is active', () => {
+    const { container } = render(<Simulation spec={PLAIN_SPEC} />);
+    const beatButtons = screen.getAllByRole('button', { name: /Beat \d of 3/ });
+    const headCircles = () => Array.from(container.querySelectorAll('svg circle[fill="var(--green)"]'));
+
+    // Beat 1: no focus_point — small (unhighlighted) head dot, no coordinate label.
+    expect(headCircles()).toHaveLength(1);
+    expect(headCircles()[0].getAttribute('r')).toBe('4');
+    expect(container.querySelector('svg text')).toBeNull();
+
+    // Beat 2: focus_point:true — head dot grows, coordinate label appears.
+    fireEvent.click(beatButtons[1]);
+    expect(headCircles()[0].getAttribute('r')).toBe('6');
+    const label = container.querySelector('svg text');
+    expect(label).not.toBeNull();
+    // x_expr = y_expr = 't', so the label names identical (x, y) —
+    // computed via the same formatSignificant the component itself uses,
+    // rather than a hardcoded value that would silently drift from the
+    // real sampling if the curve's sample density ever changes.
+    const [xText, yText] = label!.textContent!.slice(1, -1).split(', ');
+    expect(xText).toBe(yText);
+    expect(xText).toBe(formatSignificant(Number(xText)));
+
+    // Beat 3: focus_point cleared — back to the small, unlabeled dot.
+    fireEvent.click(beatButtons[2]);
+    expect(headCircles()[0].getAttribute('r')).toBe('4');
+    expect(container.querySelector('svg text')).toBeNull();
   });
 });
 

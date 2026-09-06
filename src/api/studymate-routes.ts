@@ -22,7 +22,7 @@
 import type { ServerResponse } from 'http';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
-import { buildSession, resumeSession, recordAnswer, completeSession, isSessionOwner } from '../sessions/session-engine';
+import { buildSession, resumeSession, submitAnswer, completeSession, isSessionOwner } from '../sessions/session-engine';
 import { attachThinkingGap } from '../sessions/thinking-gap-service';
 import { getAuth } from '../api/auth-middleware';
 
@@ -36,6 +36,24 @@ function extractSessionId(req: ParsedRequest): string | null {
   const fromHeader = req.headers?.['x-session-id'];
   if (typeof fromHeader === 'string' && fromHeader.trim()) return fromHeader.trim();
   return null;
+}
+
+/**
+ * Strips `expected_answer` from every problem in a session payload before it
+ * reaches the client — the answer key must never be visible before the
+ * student answers (/ui-ux-pro-max, 2026-09-06). Grading now happens
+ * server-side (session-engine.ts's submitAnswer) and the real answer is
+ * only ever returned in the /answer response, AFTER the student's own
+ * answer is already recorded.
+ */
+function stripAnswerKeys(session: any): any {
+  return {
+    ...session,
+    problems: (session.problems ?? []).map((p: any) => {
+      const { expected_answer, ...rest } = p;
+      return rest;
+    }),
+  };
 }
 
 // ============================================================================
@@ -58,7 +76,7 @@ async function h_build(req: ParsedRequest, res: ServerResponse): Promise<void> {
 
   try {
     const session = await buildSession(sessionId, body.exam_id, sessionType);
-    return sendJSON(res, session, 201);
+    return sendJSON(res, stripAnswerKeys(session), 201);
   } catch (err: any) {
     if (err?.message?.includes('No concepts found') || err?.message?.includes('No problems available')) {
       return sendError(res, 422, err.message);
@@ -79,7 +97,7 @@ async function h_resume(req: ParsedRequest, res: ServerResponse): Promise<void> 
   try {
     const session = await resumeSession(sessionId);
     if (!session) return sendJSON(res, { session: null }, 200);
-    return sendJSON(res, session, 200);
+    return sendJSON(res, stripAnswerKeys(session), 200);
   } catch (err) {
     console.error('[studymate-routes] resumeSession error:', err);
     return sendError(res, 500, 'Failed to resume session');
@@ -110,26 +128,27 @@ async function h_answer(req: ParsedRequest, res: ServerResponse): Promise<void> 
   const body = (req.body ?? {}) as {
     problem_id?: string;
     user_answer?: string;
-    was_correct?: boolean;
-    question?: string;
-    expected_answer?: string;
-    concept_id?: string;
     top_misconceptions?: string[];
   };
 
   if (!body.problem_id) return sendError(res, 400, 'problem_id required');
   if (typeof body.user_answer !== 'string') return sendError(res, 400, 'user_answer (string) required');
-  if (typeof body.was_correct !== 'boolean') return sendError(res, 400, 'was_correct (boolean) required');
 
   try {
-    await recordAnswer(studymateId, body.problem_id, body.user_answer, body.was_correct);
+    // Grades server-side against the session's own stored answer key —
+    // was_correct is NEVER accepted from the client (/ui-ux-pro-max,
+    // 2026-09-06: a client-trusted verdict, checked against an answer key
+    // that was unconditionally empty on the DB-less demo path, is what
+    // "student competency evaluation is completely wrong" traced back to).
+    // See session-engine.ts's submitAnswer for the full root cause.
+    const graded = await submitAnswer(studymateId, body.problem_id, body.user_answer);
 
     // Fire thinking-gap lazily for wrong answers — no await, don't block response
-    if (!body.was_correct && body.concept_id && body.question && body.expected_answer) {
+    if (!graded.was_correct) {
       attachThinkingGap(studymateId, body.problem_id, {
-        concept_id: body.concept_id,
-        question: body.question,
-        expected_answer: body.expected_answer,
+        concept_id: graded.concept_id,
+        question: graded.question,
+        expected_answer: graded.expected_answer,
         user_answer: body.user_answer,
         top_misconceptions: body.top_misconceptions,
         // The framing (mastery band / stance / representation mode) that makes
@@ -142,9 +161,14 @@ async function h_answer(req: ParsedRequest, res: ServerResponse): Promise<void> 
       }).catch(err => console.error('[studymate-routes] attachThinkingGap error:', err));
     }
 
-    return sendJSON(res, { ok: true });
+    return sendJSON(res, {
+      ok: true,
+      was_correct: graded.was_correct,
+      expected_answer: graded.expected_answer,
+      options: graded.options ?? null,
+    });
   } catch (err) {
-    console.error('[studymate-routes] recordAnswer error:', err);
+    console.error('[studymate-routes] submitAnswer error:', err);
     return sendError(res, 500, 'Failed to record answer');
   }
 }
@@ -164,7 +188,7 @@ async function h_complete(req: ParsedRequest, res: ServerResponse): Promise<void
   }
 
   try {
-    const stat = await completeSession(studymateId);
+    const stat = await completeSession(studymateId, sessionId);
     return sendJSON(res, { stat });
   } catch (err) {
     console.error('[studymate-routes] completeSession error:', err);

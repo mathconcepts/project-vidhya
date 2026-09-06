@@ -4,6 +4,108 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.68.0] — 2026-09-06 — Studymate grading was structurally broken, generalized focus_eigen, fixed inner-product-spaces
+
+No new env vars, no migrations.
+
+`/ui-ux-pro-max` on 4 asks, one of which ("how can you determine
+competency with just 3 questions and mark them 'strong'?") led past a
+labeling heuristic into the deepest bug found in this doc's history: the
+"Anytime Studymate" 15-min session mode's entire correctness-tracking was
+non-functional on the DB-less demo path, and its grading trusted the
+client outright everywhere it ran.
+
+**Root cause, traced past the symptom.** `buildSessionStat`'s "Strong on
+X" line fired off a single same-session correct answer with zero
+cumulative evidence — fixed first, gated on the same `score>=0.8,
+attempts>=2` bar `cross-exam-coverage.ts` already uses for "mastered"
+elsewhere in the app (`chooseSessionHighlight`, new). But investigating
+"how could 3 questions ever look like mastery" surfaced the real defect:
+`h_answer` (`studymate-routes.ts`) required and trusted a client-supplied
+`was_correct: boolean` verbatim, checked against an `expected_answer` that
+was UNCONDITIONALLY EMPTY on the flat-file backend —
+`FlatFileStore.fetchProblemsForConcept` read `expected_answer`/`answer`
+straight off `content-bundle.json`, which deliberately strips those fields
+for practice-items-sourced rows (the v4.36.0 answer-key-stripping fix was
+never threaded through this flow). Grading happened nowhere: the client
+decided, and the "check" had nothing to check against.
+
+**Fixed at the source, not the symptom.** `session-store.ts`'s
+`resolveRealAnswer()` resolves a real answer key from `r.correct_answer`
+(PYQ-sourced bundle rows keep it inline — PYQ answers are public) or, for
+practice-items-sourced rows, from `data/practice-items/*.json` via the
+existing `loadAuthoredItemsRaw()` seam (the same one the admin review
+queue already uses) — refusing any candidate with no resolvable answer
+rather than serving an always-wrong question.
+`PostgresStore.getSessionProblems`'s self-documented "KNOWN BUG" SQL
+(`pq.question`/`pq.expected_answer` — columns that don't exist;
+`question_text`/`correct_answer` do) is fixed too, plus `pq.options`
+threaded through for resumed/graded MCQ rows.
+
+`session-engine.ts`'s new `submitAnswer()` is the ONLY place `was_correct`
+may be decided — grades server-side against the session's own stored row,
+records it, and returns the verdict. `studymate-routes.ts`'s `h_answer` no
+longer accepts `was_correct` at all; `h_build`/`h_resume` strip
+`expected_answer` from every problem before it reaches the client (the
+answer key must never be visible before the student answers).
+`StudymateSessionPage.tsx` stopped grading client-side entirely — it POSTs
+only `user_answer`, and reads `was_correct`/`expected_answer`/`options`
+back from the server's response for the result banner. Verified live: a
+fresh local demo session graded a practice-items-sourced MCQ correctly,
+graded a wrong free-text answer as wrong, and a spoofed
+`was_correct: true` in the request body was silently ignored.
+
+**"Failed to build session" — investigated, not conclusively reproduced.**
+5/5 session builds succeeded against the DB-less demo path (various
+session ids), a bad exam_id correctly returned 422 (not 500), a missing
+exam_id correctly returned 400. The literal 500 was not reproduced in this
+sandbox (no access to the production Postgres instance); the concrete bugs
+found and fixed above are the most likely contributors given both
+complaints arrived in the same report, but this is named honestly as
+unconfirmed rather than claimed as the exact root cause.
+
+**`inner-product-spaces.visual_analogy`** had a genuine `t_range: [0, 2]`
+authoring bug (sweeps ~114° of a circle, not the "rotating vector v" the
+title claims — default range is `[0, 2π]`), an inconsistent example
+(`u=(3,0)` vs the concept's own hook using `u=(1,0)`), and a dense
+three-domain analogy paragraph. Rewritten: full-turn sweep, `u=(1,0)`
+matching the hook, and the analogy split into a scannable per-domain list
+(vectors / functions / matrices) — same formulas, ELI5 framing, real
+motion via the `--structured` list stagger.
+
+**`focus_eigen` generalized beyond `linear_map` scenes.** The 2026-09-04
+"look here" coordinate-highlight mechanism only ever reached `linear_map`
+(eigen-arrow) scenes — every plain parametric-curve scene (the more common
+shape: `inner-product-spaces.hook`, and most other concepts' hooks) had no
+highlight-while-discussed mechanism at all. `focus_point?: boolean` (new,
+`types.ts`) is its counterpart: while the active beat carries it, the
+trace's current head point draws larger plus an `(x, y)` coordinate label,
+reverting the instant the beat passes — same halo-stroke treatment as
+`focus_eigen`'s label. Validator refuses it on a `linear_map` scene
+(`focus_eigen` is the mechanism there). Wired into
+`inner-product-spaces.hook`'s 5 coordinate-naming beats (all three stance
+files, fence kept byte-identical).
+
+**Tests:** backend 4701 → 4708 (365 files, +7: 2 new `session-store.test.ts`
+cases — resolves a real answer from `data/practice-items/*.json`; refuses
+a row with no resolvable answer anywhere — plus 5 new
+`session-engine.test.ts` cases for `chooseSessionHighlight`'s cumulative
+gate). Frontend 2757 → 2765 (+8: 5
+`focus_point` validator tests, 1 `Simulation.tsx` render test, 2
+`StudymateSessionPage` server-decides-grading tests) plus 2 existing
+`StudymateSessionPage.test.tsx` mocks updated to the new `/answer`
+response contract. `tsc --noEmit` clean both sides. `npm run ci` (18
+gates) clean; `ci:interactive-specs` 424 blocks (unchanged — no new
+fence), `ci:variant-agreement` 610 pairs, `ci:la-walkthrough` 26/26,
+`ci:gif-scenes` 89 render clean (+1).
+
+**Connection-budget allowlist line-shift, caught by the gate itself.**
+Adding an import to `session-store.ts` shifted `PostgresStore`'s
+constructor down one line, which `ci:connection-budget`'s line-keyed
+allowlist entry doesn't tolerate by design (a deliberate ratchet, not a
+bug) — updated per the file's own established convention of recording each
+shift's cause in the entry's own comment.
+
 ## [4.67.0] — 2026-09-06 — Sticky-diagram opacity bug + two silo intuition atoms fixed with real resonance scenes
 
 No new env vars, no migrations.

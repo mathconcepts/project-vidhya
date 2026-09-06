@@ -4029,6 +4029,144 @@ stance files each). `ci:katex-fences` (1723), `ci:content-integrity`
 frontend 2756 → 2757/2757 (+1, the sticky-background regression test).
 `tsc --noEmit` clean both sides.
 
+### `/ui-ux-pro-max`: Studymate grading was structurally broken, `focus_eigen` generalized, inner-product-spaces fixed (2026-09-06)
+
+Four asks: highlight/emphasize graph visuals while a specific value is
+being discussed, for every topic, not just where `focus_eigen` already
+reaches; "student competency evaluation is completely wrong — how can you
+determine competency with just 3 questions and mark them 'strong'?
+`/autoplan` a robust foolproof mechanism"; "I get failed to build session
+all the time"; and inner-product-spaces' visual card reading as cramped,
+tiny, non-attention-grabbing.
+
+**Competency mislabeling was the visible symptom of a much deeper bug.**
+`buildSessionStat`'s "Strong on X" line fired the instant a single
+same-session answer landed correct — no different from a coin flip.
+Fixed first, cheaply: `chooseSessionHighlight()` (`session-engine.ts`)
+gates it on the SAME cumulative-mastery bar `cross-exam-coverage.ts`
+already uses elsewhere (`score >= 0.8`, `attempts >= 2`) rather than
+inventing a third pair of numbers. But asking "how could 3 questions ever
+look like mastery" led further: the entire "Anytime Studymate" 15-min
+session mode's grading was non-functional, not just mislabeled.
+
+`h_answer` (`studymate-routes.ts`) required and trusted a client-supplied
+`was_correct: boolean` verbatim — a client-trusted-grading hole, the same
+vulnerability class the mock-exam IDOR and `/api/practice/item/:id`'s
+render-safe-view fixes closed elsewhere in this doc, never closed here.
+Worse: on the DB-less demo path, the answer key it was nominally checked
+against was UNCONDITIONALLY EMPTY. `FlatFileStore.fetchProblemsForConcept`
+(`session-store.ts`) read `expected_answer`/`answer` straight off
+`content-bundle.json` rows — but that bundle deliberately strips the
+answer key for practice-items-sourced problems (the v4.36.0 fix
+documented earlier in this doc), and this flow was never updated to
+account for it. Confirmed via direct testing: every practice-items-sourced
+Studymate question graded off an empty string, always wrong regardless of
+the student's answer, while the client's own (also-wrong) verdict silently
+overrode the server's non-check anyway.
+
+**Fixed at the source.** `resolveRealAnswer()` (new, `session-store.ts`)
+resolves a genuine answer: PYQ-sourced bundle rows keep `correct_answer`/
+`options` inline (PYQ answers are already public knowledge, matching this
+doc's existing reasoning for `pyq-bank.json`), so those resolve directly;
+practice-items-sourced rows fall back to `data/practice-items/*.json` via
+the already-existing `loadAuthoredItemsRaw()` seam (the same one the admin
+review queue uses to show a real answer key). A candidate with no
+resolvable answer anywhere is refused outright — never served as an
+always-ungradable question. `PostgresStore.getSessionProblems`'s
+self-documented "KNOWN BUG" SQL (querying `pq.question`/
+`pq.expected_answer`, columns that don't exist — real ones are
+`question_text`/`correct_answer`, the same wrong names `fetchProblemsForConcept`
+had before an earlier T3 fix) is fixed too, with `pq.options` now
+threaded through for resumed/graded MCQ rows.
+
+`session-engine.ts`'s new `submitAnswer()` is the ONLY place `was_correct`
+may ever be decided: it grades server-side against the row the SESSION
+ITSELF stored at build time (never anything client-supplied), records the
+verdict, and returns it. `h_answer` no longer accepts a `was_correct`
+field at all; `h_build`/`h_resume` strip `expected_answer` from every
+problem before it ever reaches the client — the answer key must never be
+visible before the student answers.
+`StudymateSessionPage.tsx`'s `submitAnswer` stopped computing `correct`
+client-side entirely: it POSTs only `user_answer`, and reads
+`was_correct`/`expected_answer`/`options` back from the server's response
+for the result banner. Verified live against a fresh local demo: a
+practice-items-sourced MCQ graded correctly server-side, a wrong free-text
+answer graded wrong, and a spoofed `was_correct: true` in the request body
+was silently ignored — the server's own computed verdict always won.
+
+**"Failed to build session" — investigated, named honestly as
+unconfirmed.** 5/5 session builds succeeded against the DB-less demo path
+across distinct session ids; a bad `exam_id` correctly returned 422 (not
+500); a missing `exam_id` correctly returned 400 — no literal 500
+reproduced in this sandbox, which has no access to whatever Postgres
+instance backs the live deployment. The concrete grading bugs above are
+the likeliest contributor given both complaints arrived in the same
+report, but this is NOT claimed as the confirmed root cause of the
+specific 500 — a genuine gap, tracked in TODOS.md, not silently closed.
+
+**`inner-product-spaces.visual_analogy`** carried a real authoring bug
+alongside the reported density complaint: its `gif-scene`'s
+`t_range: [0, 2]` sweeps only ~114° of a circle (2 radians, not the
+default full `[0, 2π]`) while the title claims "rotating vector v" — a
+partial arc where a full turn was clearly intended. It also used
+`u=(3,0)`, disconnected from the concept's own hook, which already
+established `u=(1,0)`. Rewritten: full-turn sweep, `u=(1,0)` matching the
+hook, and the dense three-domain analogy paragraph (vectors, functions,
+matrices crammed into one sentence each) split into a scannable per-domain
+list — same formulas, ELI5 framing, real motion via the existing
+`--structured` list-row stagger mechanism.
+
+**`focus_eigen` generalized to plain-curve scenes.** The 2026-09-04
+"highlight the coordinate being discussed" mechanism only ever reached
+`linear_map` (eigen-arrow) scenes — every OTHER simulation shape (a bare
+parametric trace, `x_expr`/`y_expr`/`t_min`/`t_max` — the more common
+scene across the corpus, including `inner-product-spaces.hook` itself) had
+no highlight mechanism at all, so a beat naming a specific coordinate
+("$v=(0,1)$ is perpendicular...") drew the trace's head point identically
+whether or not that exact moment was under discussion. `focus_point?:
+boolean` (new, additive field on `narration_steps[]`, `types.ts`) is the
+plain-curve counterpart: while the active beat carries it, the head point
+draws at radius 6 instead of 4 plus an $(x, y)$ coordinate label (same
+halo-stroke treatment as `focus_eigen`'s label — ink, not green, since
+nothing here is a confirmed payoff), reverting the instant the beat
+passes. Validator refuses `focus_point:true` on a `linear_map` scene —
+`focus_eigen` is the dedicated mechanism there, and mixing both would be
+ambiguous. Wired into `inner-product-spaces.hook`'s 5 coordinate-naming
+beats (all three stance files, fence kept byte-identical via the
+established `re.DOTALL` Python propagation script, never `grep -o`).
+
+**Deliberately not attempted in this pass:** a corpus-wide sweep applying
+`focus_point` to every OTHER plain-curve scene that names a coordinate
+pre-reveal (this pass wired the one reported concept's hook only, plus
+shipped the reusable mechanism) — tracked in TODOS.md, same pattern as
+every other "mechanism shipped, corpus-wide application is the next wave"
+entry in this doc.
+
+**Tests:** backend 4701 → 4708 (365 files, +7: 2 new
+`session-store.test.ts` cases resolving/refusing real answers, 5 new
+`session-engine.test.ts` cases for `chooseSessionHighlight`'s cumulative
+gate — which now imports the REAL `buildSessionStat`/`chooseSessionHighlight`
+from `session-engine.ts` instead of a stale inline duplicate, closing the
+exact drift risk that let the old buggy heuristic go untested for so
+long). Frontend 2757 → 2765 (+8: 5 `focus_point` validator tests, 1
+`Simulation.tsx` render test, 2 new `StudymateSessionPage` tests proving
+the server's verdict wins even when it disagrees with a naive client
+compare, and that `was_correct` is never sent in the request body; 2
+existing `StudymateSessionPage.test.tsx` mocks updated to the new
+`/answer` response shape). `tsc --noEmit` clean both sides. `npm run ci`
+(18 gates) clean — `ci:interactive-specs` 424 blocks (unchanged, no new
+fence), `ci:variant-agreement` 610 pairs, `ci:la-walkthrough` 26/26,
+`ci:gif-scenes` 89 render clean (+1), `ci:content-integrity` 1729,
+`ci:katex-fences` 1723, all unchanged besides the one edited file.
+Verified live end-to-end against a fresh local demo (seed, boot, curl),
+not just unit-tested.
+
+**Incidental fix, caught by the gate itself.** Adding an import to
+`session-store.ts` shifted `PostgresStore`'s constructor down one line;
+`ci:connection-budget`'s line-keyed allowlist entry (a deliberate ratchet,
+not a bug) failed as designed and was updated per its own established
+convention of recording each shift's cause inline.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

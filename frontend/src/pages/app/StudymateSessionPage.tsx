@@ -24,13 +24,21 @@ interface SessionProblem {
   topic: string;
   difficulty: number;
   question: string;
-  expected_answer: string;
+  // No expected_answer here — the server never sends the answer key before
+  // the student answers (/ui-ux-pro-max, 2026-09-06: grading now happens
+  // server-side; see RevealedAnswer below for what /answer returns after).
   source: string;
   source_url?: string;
   options?: Record<string, string> | null;
   user_answer?: string;
   was_correct?: boolean;
   gap_text?: string;
+}
+
+/** What POST /answer returns, once the student's answer is already recorded. */
+interface RevealedAnswer {
+  expected_answer: string;
+  options?: Record<string, string> | null;
 }
 
 interface StudymateSession {
@@ -106,6 +114,7 @@ export default function StudymateSessionPage() {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
   const [wasCorrect, setWasCorrect] = useState<boolean | null>(null);
+  const [revealed, setRevealed] = useState<RevealedAnswer | null>(null);
   const [gapText, setGapText] = useState<string | null>(null);
   const [gapUnavailable, setGapUnavailable] = useState(false);
   const [statLine, setStatLine] = useState('');
@@ -152,6 +161,7 @@ export default function StudymateSessionPage() {
       setCurrentIdx(0);
       setUserAnswer('');
       setWasCorrect(null);
+      setRevealed(null);
       setGapText(null);
       setPageState('answering');
     } catch (err: unknown) {
@@ -166,26 +176,29 @@ export default function StudymateSessionPage() {
     if (!session || !currentProblem || !userAnswer.trim()) return;
     setPageState('checking');
 
-    const correct = userAnswer.trim().toLowerCase() === currentProblem.expected_answer.trim().toLowerCase();
-    setWasCorrect(correct);
-
     try {
-      await apiFetch('/api/studymate/sessions/' + session.id + '/answer', {
-        method: 'POST',
-        // Required so the server can verify this session actually owns
-        // studymateId before writing to it (/ship review army, 2026-09-02).
-        headers: { 'X-Session-Id': sessionId },
-        body: JSON.stringify({
-          problem_id: currentProblem.problem_id,
-          user_answer: userAnswer.trim(),
-          was_correct: correct,
-          concept_id: currentProblem.concept_id,
-          question: currentProblem.question,
-          expected_answer: currentProblem.expected_answer,
-        }),
-      });
+      // Grading happens server-side now — the client never decides
+      // was_correct (/ui-ux-pro-max, 2026-09-06). The response carries the
+      // verdict plus the real answer, safe to reveal only now that the
+      // student's own answer is already recorded.
+      const result = await apiFetch<{ ok: boolean; was_correct: boolean; expected_answer: string; options?: Record<string, string> | null }>(
+        '/api/studymate/sessions/' + session.id + '/answer',
+        {
+          method: 'POST',
+          // Required so the server can verify this session actually owns
+          // studymateId before writing to it (/ship review army, 2026-09-02).
+          headers: { 'X-Session-Id': sessionId },
+          body: JSON.stringify({
+            problem_id: currentProblem.problem_id,
+            user_answer: userAnswer.trim(),
+          }),
+        },
+      );
 
-      if (!correct) {
+      setWasCorrect(result.was_correct);
+      setRevealed({ expected_answer: result.expected_answer, options: result.options ?? currentProblem.options ?? null });
+
+      if (!result.was_correct) {
         setGapUnavailable(false);
         setPollGap(true);
         setPageState('answered');
@@ -198,7 +211,7 @@ export default function StudymateSessionPage() {
       setError(err instanceof Error ? err.message : 'Failed to record answer');
       setPageState('answering');
     }
-  }, [session, currentProblem, userAnswer]);
+  }, [session, currentProblem, userAnswer, sessionId]);
 
   // ── Poll for thinking-gap (lazy fetch may take 1-3s) ───────────────────────
 
@@ -264,6 +277,7 @@ export default function StudymateSessionPage() {
       setCurrentIdx(nextIdx);
       setUserAnswer('');
       setWasCorrect(null);
+      setRevealed(null);
       setGapText(null);
       setGapUnavailable(false);
       setPollGap(false);
@@ -557,11 +571,11 @@ export default function StudymateSessionPage() {
                     : <XCircle className="w-5 h-5 flex-shrink-0" />}
                   <div className="flex flex-col gap-0.5">
                     <span className="text-sm font-semibold">{wasCorrect ? 'Correct' : 'Not quite'}</span>
-                    {!wasCorrect && (
+                    {!wasCorrect && revealed && (
                       <span className="text-xs opacity-75">
-                        Expected: <span className="font-mono">{currentProblem.expected_answer}</span>
-                        {currentProblem.options?.[currentProblem.expected_answer] && (
-                          <> — {currentProblem.options[currentProblem.expected_answer]}</>
+                        Expected: <span className="font-mono">{revealed.expected_answer}</span>
+                        {revealed.options?.[revealed.expected_answer] && (
+                          <> — {revealed.options[revealed.expected_answer]}</>
                         )}
                       </span>
                     )}

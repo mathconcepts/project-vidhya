@@ -32,6 +32,7 @@ import { Play, Pause, RotateCcw, ChevronRight, AlertTriangle } from 'lucide-reac
 import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type Mat2 } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useEngagementGate } from '@/hooks/useEngagementGate';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { EASE_STANDARD, DUR_INSTANT_S, framerDuration } from '@/lib/motion-tokens';
@@ -471,6 +472,14 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // focus_eigen's doc comment in types.ts). Cleared the instant the beat
   // passes, same as emphasize.
   const focusedEigenIndices = activeIdx !== null ? sortedSteps[activeIdx]?.focus_eigen ?? [] : [];
+  // Engagement gate (/design-review, 2026-09-06 — see useEngagementGate.ts
+  // and GuidedWalkthrough.tsx, the other consumer of the app's shared
+  // advance-button convention): Continue was tappable the instant a beat
+  // held, so a student could tap through every beat without reading a
+  // single caption. Gated on the ACTIVE beat's own resolved text, re-arming
+  // whenever activeIdx changes (a new beat holds).
+  const activeBeatText = activeIdx != null ? resolveBeatText(sortedSteps[activeIdx], servedStance) : '';
+  const continueGateReady = useEngagementGate(activeBeatText, activeIdx ?? -1);
 
   return (
     <div
@@ -670,16 +679,32 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           gesture in the app shares one button language AND one press-scale
           feedback implementation instead of each surface hand-rolling its
           own copy. Only the caption's own icon Play/Pause stays reversible
-          mid-scene; this one is the unmissable next step. */}
+          mid-scene; this one is the unmissable next step.
+          Engagement-gated (/design-review, 2026-09-06): disabled until
+          continueGateReady, same mechanism and microcopy as
+          GuidedWalkthrough's advance button — see useEngagementGate.ts. */}
       {showLiveBeatUI && !playing && progress < 1 && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-2">
+          {!continueGateReady && (
+            <motion.p
+              key={`continue-gate-${activeIdx}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
+              className="min-w-0"
+              style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)', margin: 0 }}
+            >
+              Read this, then continue
+            </motion.p>
+          )}
           <Button
             variant="grey"
             tone="neutral"
             size="md"
             onClick={play}
-            iconAfter={<ChevronRight size={16} />}
-            style={{ background: 'var(--surface-fill-strong)' }}
+            disabled={!continueGateReady}
+            iconAfter={continueGateReady ? <ChevronRight size={16} /> : undefined}
+            style={{ background: 'var(--surface-fill-strong)', flexShrink: 0 }}
           >
             Continue
           </Button>

@@ -27,6 +27,7 @@ import { ChevronRight, Lightbulb, Eye, BookOpen } from 'lucide-react';
 import { DecisionTreeWalkthrough } from './DecisionTreeWalkthrough';
 import type { GuidedWalkthroughSpec } from './types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useEngagementGate } from '@/hooks/useEngagementGate';
 import { EASE_STANDARD, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 import { Button } from '@/components/ui/Button';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
@@ -65,6 +66,20 @@ function LinearWalkthrough({ spec }: Props) {
   const isLastStep = stepIdx === spec.steps.length - 1;
   const hasHint = !!currentStep?.hint;
 
+  // Engagement gate (/design-review, 2026-09-06): a live-QA report flagged
+  // that this button was tappable the instant a new phase appeared — an
+  // inattentive student could blast through prompt -> hint -> answer -> next
+  // step without reading any of them. Gated on whatever text is ON SCREEN
+  // right now (the thing that needs reading before the NEXT reveal is
+  // earned), re-arming on every step/phase transition. See
+  // useEngagementGate.ts for the research this is based on and why it does
+  // NOT collapse under prefers-reduced-motion.
+  const visibleContent =
+    phase === 'prompt' ? currentStep?.prompt ?? ''
+      : phase === 'hint' ? currentStep?.hint ?? ''
+      : currentStep?.answer ?? '';
+  const gateReady = useEngagementGate(visibleContent, `${stepIdx}.${phase}`);
+
   function advance() {
     if (phase === 'prompt') {
       setPhase(hasHint ? 'hint' : 'answer');
@@ -87,7 +102,7 @@ function LinearWalkthrough({ spec }: Props) {
       : phase === 'hint' ? 'Show answer'
       : isLastStep ? 'Done' : 'Next step';
 
-  const buttonDisabled = phase === 'answer' && isLastStep;
+  const buttonDisabled = (phase === 'answer' && isLastStep) || !gateReady;
 
   return (
     <div
@@ -188,7 +203,29 @@ function LinearWalkthrough({ spec }: Props) {
         </AnimatePresence>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between gap-2">
+        {/* Engagement-gate microcopy: the button is legitimately disabled
+            (opacity + not-allowed cursor, Button.tsx's existing contract)
+            while gateReady is false, but a disabled control with no
+            explanation reads as broken, not paced — this is the difference
+            between "the app is stuck" and "I'm meant to read first."
+            Fades in on mount only (no AnimatePresence/exit — once the gate
+            clears this unmounts immediately, same instant the button
+            itself becomes tappable, rather than lingering through an exit
+            transition); collapses to ~1ms under reduced motion via the same
+            revealDuration every other reveal in this file already uses. */}
+        {!gateReady && !(phase === 'answer' && isLastStep) && (
+          <motion.p
+            key={`gate-${stepIdx}-${phase}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: revealDuration, ease: EASE_STANDARD }}
+            className="min-w-0"
+            style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)', margin: 0 }}
+          >
+            Read this, then continue
+          </motion.p>
+        )}
         {/* This is the app's one advance-button convention (variant="grey",
             press-scale feedback baked into the shared Button component) —
             Simulation.tsx's "Continue" and WorkedExampleCard's "Show next
@@ -202,7 +239,7 @@ function LinearWalkthrough({ spec }: Props) {
           onClick={advance}
           disabled={buttonDisabled}
           iconAfter={!buttonDisabled ? <ChevronRight size={16} /> : undefined}
-          style={{ background: 'var(--surface-fill-strong)', fontSize: 'var(--text-body)', minHeight: 44 }}
+          style={{ background: 'var(--surface-fill-strong)', fontSize: 'var(--text-body)', minHeight: 44, flexShrink: 0 }}
         >
           {buttonLabel}
         </Button>

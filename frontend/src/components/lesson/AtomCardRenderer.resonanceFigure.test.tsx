@@ -189,10 +189,50 @@ describe('AtomCardRenderer — W2 resonance figure promotion', () => {
     expect(screen.getByText('This is the bridge sentence.')).toBeInTheDocument();
   });
 
-  it('a promoted resonance scene with no authored `why` renders nothing extra (contract unchanged for unauthored scenes)', () => {
+  it('a promoted resonance scene with no authored `why` and no linear_map renders nothing extra (contract unchanged for unauthored, non-eigen scenes)', () => {
     const content = ['Watch the vector sweep the circle.', '', simulationFence()].join('\n');
     const atom = makeAtom({ atom_type: 'intuition', content });
     render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+    expect(screen.queryByLabelText('Hide these why-this-helps tips')).not.toBeInTheDocument();
+  });
+
+  it('a promoted linear_map scene with NO authored `why` still gets a computed derivation sentence (/investigate, 2026-09-06: "dynamically adapted for any problems")', () => {
+    // diagonalization's real hook matrix/eigen — no hand-authored `why` in
+    // the actual content, unlike eigenvalues/quadratic-forms.
+    const content = ['Watch the two arrows.', '', simulationFence({
+      linear_map: {
+        matrix: [[4, 1], [2, 3]],
+        eigen: [{ dir: [1, 1], value: 5 }, { dir: [1, -2], value: 2 }],
+      },
+    })].join('\n');
+    const atom = makeAtom({ atom_type: 'intuition', content });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+    expect(screen.getByText(/aren't guessed/)).toBeInTheDocument();
+    expect(screen.getByText(/\(1, 1\)/)).toBeInTheDocument();
+    expect(screen.getByText(/\(1, -2\)/)).toBeInTheDocument();
+  });
+
+  it('an authored `why` still wins over the computed fallback when both are present', () => {
+    const content = ['Watch the two arrows.', '', simulationFence({
+      why: 'Hand-authored framing sentence.',
+      linear_map: {
+        matrix: [[4, 1], [2, 3]],
+        eigen: [{ dir: [1, 1], value: 5 }, { dir: [1, -2], value: 2 }],
+      },
+    })].join('\n');
+    const atom = makeAtom({ atom_type: 'intuition', content });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+    expect(screen.getByText('Hand-authored framing sentence.')).toBeInTheDocument();
+    expect(screen.queryByText(/aren't guessed/)).not.toBeInTheDocument();
+  });
+
+  it('a linear_map scene with a matrix but no eigen array (e.g. an area-scaling scene) gets no fabricated derivation', () => {
+    const content = ['Watch the area scale.', '', simulationFence({
+      linear_map: { matrix: [[2, 1], [0, 1.5]], unit_square: true, area_label: true },
+    })].join('\n');
+    const atom = makeAtom({ atom_type: 'hook', content });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+    expect(screen.queryByText(/aren't guessed/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Hide these why-this-helps tips')).not.toBeInTheDocument();
   });
 

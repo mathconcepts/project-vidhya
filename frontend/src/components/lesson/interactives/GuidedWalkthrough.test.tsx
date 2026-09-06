@@ -12,8 +12,8 @@
  *      "correct" treatment, and progress dots must not imply grading.
  *   5. Motion honors the token curve/duration and prefers-reduced-motion.
  */
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import {
   GuidedWalkthrough,
   EASE_STANDARD,
@@ -21,6 +21,25 @@ import {
   revealTransitionDuration,
 } from './GuidedWalkthrough';
 import type { GuidedWalkthroughSpec } from './types';
+
+// The engagement gate (/design-review, 2026-09-06 — see
+// useEngagementGate.ts) disables the advance button until a minimum
+// think-time elapses after each phase transition. Every test below that
+// clicks the advance button now runs under fake timers and advances past
+// the gate's 5000ms ceiling first, so these tests keep asserting the
+// SAME reveal-pacing behavior they always did — the gate itself has its
+// own dedicated describe block + useEngagementGate.test.ts.
+beforeEach(() => {
+  vi.useFakeTimers();
+});
+afterEach(() => {
+  vi.useRealTimers();
+});
+async function clearGate() {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(6000);
+  });
+}
 
 const SPEC: GuidedWalkthroughSpec = {
   v: 1,
@@ -64,16 +83,19 @@ describe('GuidedWalkthrough — 17px floor', () => {
     expect(eqn.style.fontSize).toBe('var(--text-body)');
   });
 
-  it('renders the hint at the body token once revealed', () => {
+  it('renders the hint at the body token once revealed', async () => {
     render(<GuidedWalkthrough spec={SPEC} />);
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
     const hint = screen.getByText('Look at det(A − λI).');
     expect(hint.closest('.vidhya-atom-body')).not.toBeNull();
   });
 
-  it('renders the answer — the payoff — at the body token, not text-xs', () => {
+  it('renders the answer — the payoff — at the body token, not text-xs', async () => {
     render(<GuidedWalkthrough spec={SPEC} />);
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     const answer = screen.getByText('λ² − 5λ + 6.');
     expect(answer.closest('.vidhya-atom-body')).not.toBeNull();
@@ -105,9 +127,11 @@ describe('GuidedWalkthrough — 44px touch target', () => {
 });
 
 describe('GuidedWalkthrough — reserved indigo', () => {
-  it('never sets an indigo token or literal anywhere in the rendered tree', () => {
+  it('never sets an indigo token or literal anywhere in the rendered tree', async () => {
     const { container } = render(<GuidedWalkthrough spec={SPEC} />);
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     const html = container.innerHTML;
     expect(html).not.toMatch(/--indigo/);
@@ -124,18 +148,22 @@ describe('GuidedWalkthrough — reserved indigo', () => {
 });
 
 describe('GuidedWalkthrough — revealed ≠ correct', () => {
-  it('the revealed answer is NOT rendered in mastery green', () => {
+  it('the revealed answer is NOT rendered in mastery green', async () => {
     render(<GuidedWalkthrough spec={SPEC} />);
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     const answer = screen.getByText('λ² − 5λ + 6.');
     expect(answer.style.color).not.toBe('var(--green-ink)');
     expect(answer.style.color).not.toBe('var(--green)');
   });
 
-  it('progress dots for revealed steps use a neutral fill, never green or indigo', () => {
+  it('progress dots for revealed steps use a neutral fill, never green or indigo', async () => {
     const { container } = render(<GuidedWalkthrough spec={SPEC} />);
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i })); // step 1 now "revealed"
     const dots = container.querySelectorAll<HTMLElement>('.flex-1.h-1.rounded-full');
     expect(dots.length).toBe(2);
@@ -189,13 +217,15 @@ describe('GuidedWalkthrough — LaTeX renders, not raw source (bug #3, live QA)'
     expect(container.querySelector('.katex')).not.toBeNull();
   });
 
-  it('renders the hint and (once revealed) the answer through KaTeX too', () => {
+  it('renders the hint and (once revealed) the answer through KaTeX too', async () => {
     const { container } = render(<GuidedWalkthrough spec={LATEX_SPEC} />);
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
     expect(queryExactText(container, LATEX_SPEC.steps[0].hint!)).toBeNull();
     // A second .katex block for the hint's inline math.
     expect(container.querySelectorAll('.katex').length).toBeGreaterThanOrEqual(2);
 
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     expect(queryExactText(container, LATEX_SPEC.steps[0].answer)).toBeNull();
     expect(container.querySelectorAll('.katex').length).toBeGreaterThanOrEqual(3);
@@ -203,23 +233,79 @@ describe('GuidedWalkthrough — LaTeX renders, not raw source (bug #3, live QA)'
 });
 
 describe('GuidedWalkthrough — reveal pacing (unchanged behavior)', () => {
-  it('advances prompt -> hint -> answer -> next step, and disables on the final answer', () => {
+  it('advances prompt -> hint -> answer -> next step, and disables on the final answer', async () => {
     render(<GuidedWalkthrough spec={SPEC} />);
     expect(screen.getByText(/Step 1 \/ 2/)).toBeInTheDocument();
     expect(screen.queryByText('Look at det(A − λI).')).not.toBeInTheDocument();
 
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
     expect(screen.getByText('Look at det(A − λI).')).toBeInTheDocument();
 
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     expect(screen.getByText('λ² − 5λ + 6.')).toBeInTheDocument();
 
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /next step/i }));
     expect(screen.getByText(/Step 2 \/ 2/)).toBeInTheDocument();
     expect(screen.getByText('Now factor it.')).toBeInTheDocument();
 
+    await clearGate();
     fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
     const doneBtn = screen.getByRole('button', { name: /done/i });
     expect(doneBtn).toBeDisabled();
+  });
+});
+
+describe('GuidedWalkthrough — engagement gate (/design-review, 2026-09-06)', () => {
+  it('disables the advance button immediately after a new phase appears', () => {
+    render(<GuidedWalkthrough spec={SPEC} />);
+    expect(screen.getByRole('button', { name: /show hint/i })).toBeDisabled();
+  });
+
+  it('shows "Read this, then continue" while gated, and it disappears once ready', async () => {
+    render(<GuidedWalkthrough spec={SPEC} />);
+    expect(screen.getByText('Read this, then continue')).toBeInTheDocument();
+    await clearGate();
+    expect(screen.queryByText('Read this, then continue')).not.toBeInTheDocument();
+  });
+
+  it('a click before the gate elapses is a no-op; the button works once ready', async () => {
+    render(<GuidedWalkthrough spec={SPEC} />);
+    const btn = screen.getByRole('button', { name: /show hint/i });
+    fireEvent.click(btn);
+    expect(screen.queryByText('Look at det(A − λI).')).not.toBeInTheDocument();
+
+    await clearGate();
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(screen.getByText('Look at det(A − λI).')).toBeInTheDocument();
+  });
+
+  it('re-arms on every phase transition — revealing the hint locks "Show answer" again', async () => {
+    render(<GuidedWalkthrough spec={SPEC} />);
+    await clearGate();
+    fireEvent.click(screen.getByRole('button', { name: /show hint/i }));
+
+    const answerBtn = screen.getByRole('button', { name: /show answer/i });
+    expect(answerBtn).toBeDisabled();
+
+    await clearGate();
+    expect(answerBtn).not.toBeDisabled();
+  });
+
+  it('does not show the gate microcopy on the final disabled "Done" state', async () => {
+    const ONE_STEP_SPEC: GuidedWalkthroughSpec = {
+      v: 1,
+      kind: 'guided_walkthrough',
+      title: 'One-step check',
+      steps: [{ prompt: 'Prompt.', answer: 'Answer.' }],
+    };
+    render(<GuidedWalkthrough spec={ONE_STEP_SPEC} />);
+    await clearGate();
+    fireEvent.click(screen.getByRole('button', { name: /show answer/i }));
+    expect(screen.getByRole('button', { name: /done/i })).toBeDisabled();
+    expect(screen.queryByText('Read this, then continue')).not.toBeInTheDocument();
   });
 });

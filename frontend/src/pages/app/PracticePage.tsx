@@ -464,11 +464,18 @@ export default function PracticePage() {
                 options are wrong" section; a bare <p> with pre-wrap flattened
                 all of that into one grey block, and at 13px it sat under the
                 17px floor DESIGN-SYSTEM.md sets for anything a student reads.
+                `structured` + `--progressive` (/design-review, 2026-09-06):
+                this panel had never been given the same row-separation +
+                stagger treatment PracticeAttemptPage's solution-steps panel
+                already has — same fix as SmartPracticePage's identical call
+                site, applied here too rather than left to drift.
               */}
               <div style={{ fontSize: 'var(--text-body)', color: 'var(--text-primary)', lineHeight: 'var(--leading-relaxed)' }}>
                 <MarkdownAtomRenderer
                   content={preserveHardBreaks(problem.explanation)}
                   atomId={`practice-solution-${problem.id}`}
+                  structured
+                  className="vidhya-atom-body--progressive"
                 />
               </div>
               {/* An explanation may carry an `interactive-spec` block. Without

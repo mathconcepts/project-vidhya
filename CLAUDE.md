@@ -3697,6 +3697,219 @@ tag colour on the eyebrow label. Existing
 `AtomCardRenderer.trapVisualIdentity.test.tsx` passes unchanged (asserted,
 not assumed).
 
+### `/design-review`: practice explanation motion, eigenvector derivation, and an engagement gate on advance buttons (2026-09-06)
+
+Three numbered asks, three screenshots: (1) a practice question's
+"Explanation" panel showed "poor readability and static text... use
+`/ui-ux-pro-max`... this was handled for the content part before, I want
+similar for questions as well"; (2) a `linear_map` hook scene's eigenvector
+coordinates are stated and verified but never explained — "how did they
+arrive at those coordinates for discussion? this needs to be in there for
+all topics"; (3) "here step walkthrough is good. but enable it only when
+the step actually needs to be executed... or else the risk is an
+inattentive student will randomly press some button. do a research and
+brainstorm for a good next step guidance for all topics."
+
+**Ask 1 — root cause was a rendering gap, not a content-volume problem.**
+`SmartPracticePage.tsx`'s and `PracticePage.tsx`'s post-answer explanation
+panels both called `MarkdownAtomRenderer` with neither `structured` nor
+`--progressive` — the exact same defect `PracticeAttemptPage.tsx`'s
+solution-steps panel had before 2026-09-04's fix, just never propagated to
+these two sibling surfaces. Both now pass `structured` (rows any authored
+list markup with the app's standard hairline-separated, once-on-mount
+staggered entrance) and `className="vidhya-atom-body--progressive"`
+(staggers free paragraphs the same way hook/intuition prose already does).
+Zero content rewrite — whichever shape a given item's explanation happens
+to be authored in, one of the two rules now applies.
+
+**Ask 2 — verified against `eigenvalues` (the foundational concept) too,
+not just the reported one.** Read `quadratic-forms/atoms/hook.md` (the
+screenshot's own concept) first, confirmed the defect, then checked
+`eigenvalues/atoms/hook.md` on the hypothesis that the foundational concept
+teaching this exact mechanism would have the same gap — it did. Both gain
+a `why` field (`SimulationSpec.why`, already-shipped machinery) explaining
+that each eigenvector solves `(A−λI)v=0` for its own eigenvalue found from
+`det(A−λI)=0` — the derivation, not just a restatement of the verification
+check the scene already showed. Every numeric claim (matrices, eigenvalues,
+eigenvector directions) re-verified via `python3`/sympy before writing
+(Wolfram MCP disconnected this session, same fallback prior passes in this
+doc used). Propagated byte-identically across all three stance files per
+concept via a proper `re.DOTALL` Python script, verified byte-identical
+afterward — never `grep -o` (this repo's documented failure mode for
+multi-line JSON fences).
+
+**Scope, named honestly.** This fixes exactly the two concrete instances
+audited (`eigenvalues`, `quadratic-forms`) — the report's "for all topics"
+describes the desired STANDARD, not a claim that every `linear_map` scene
+in the corpus was checked. A corpus-wide audit of the remaining scenes
+(most concepts with a `linear_map` hook) is tracked in TODOS.md as the next
+wave, same pattern (read the scene, verify every claim independently,
+propagate byte-identically) as every prior content pass in this doc.
+
+**Ask 3 — `useEngagementGate`, one hook shared by every advance-button
+consumer.** `GuidedWalkthrough.tsx`'s `buttonDisabled` was
+`phase === 'answer' && isLastStep` — disabled ONLY at the very end, tappable
+at every other instant regardless of whether the student had read a word.
+The same defect exists on `Simulation.tsx`'s beat "Continue" button and
+`AtomCardRenderer.tsx`'s "Show next step" button — both explicitly named in
+`GuidedWalkthrough.tsx`'s own doc comment as sharing "the app's one advance-
+button convention," so the fix generalizes to all three rather than one.
+
+Researched via `/ui-ux-pro-max` (its "Disabled States" guideline: reduce
+opacity + `cursor: not-allowed`, already `Button.tsx`'s existing contract —
+no new styling needed there) and `WebSearch` on intelligent-tutoring-system
+literature: CMU/Carnegie Learning's ~2-second between-hint delay, UMass's
+minimum-time-on-problem gate before a hint becomes available, both
+regulating *when* help/next-step is offered rather than gating access
+outright.
+
+`frontend/src/hooks/useEngagementGate.ts` — `useEngagementGate(text, key)`
+holds `ready=false` for a duration scaled by `text`'s word count (140 wpm,
+clamped 1200–5000ms) and re-arms whenever `key` changes (a step index, a
+phase, a beat index). Deliberately does **not** collapse under
+`prefers-reduced-motion` — that preference governs decorative animation,
+not reading time, and gating the wait on it would silently remove the
+safeguard for exactly the users who opted into it for an unrelated reason.
+A purely decorative fade AROUND the gated state (the "Read this, then
+continue" microcopy's own entrance) still routes through
+`usePrefersReducedMotion`/`framerDuration` like every other reveal in these
+files.
+
+Wired into all three consumers, each keyed on whatever content is ON
+SCREEN right now (the thing that needs reading before the next reveal is
+earned): `GuidedWalkthrough`'s hint/answer button (keyed on
+`${stepIdx}.${phase}`, gated on the current phase's prompt/hint/answer
+text), `Simulation.tsx`'s Continue button (keyed on `activeIdx`, gated on
+`resolveBeatText` for the held beat), `AtomCardRenderer.tsx`'s "Show next
+step" (keyed on `shownCount`, gated on the most-recently-revealed step's
+own text). Each renders the SAME "Read this, then continue" microcopy
+while gated — a disabled control with no explanation reads as broken, not
+paced.
+
+**Deliberately not extended to `DecisionTreeWalkthrough.tsx`'s option
+buttons** — a different risk profile from a passive "next" tap: each
+option there requires reading distinct choice labels to decide which to
+click, and choosing wrong is itself informative (walkable to its dead end
+before the reveal, per the existing design contract) rather than a content
+skip. Gating option selection would slow down a genuinely deliberative
+action, not prevent a mindless one.
+
+**Tests:** `useEngagementGate.test.ts` (new, 7) — `engagementGateMs`'s
+floor/ceiling/scaling, the hook's ready/re-arm/key-vs-text-identity
+behavior via `renderHook`. `GuidedWalkthrough.test.tsx` (+5) — a new
+"engagement gate" describe block plus every existing click-driven test
+updated to advance fake timers (`vi.useFakeTimers()` + `advanceTimersByTime`
+wrapped in `act`) past the gate before each click, so the reveal-pacing
+assertions keep meaning what they always did. `WorkedExampleCard.test.tsx`
+(+3, same fake-timer treatment via a shared `clearGate()` helper).
+`Simulation.test.tsx` (+1) — scoped `vi.useFakeTimers({ toFake: ['setTimeout',
+'clearTimeout'] })` to the Continue-button describe block only, so the
+file's separate `vi.spyOn(window, 'requestAnimationFrame')` freeze (every
+other test's determinism strategy) stays untouched.
+
+Frontend suite 2711 → 2727/2727. Backend untouched, 4701/4701. `tsc
+--noEmit` clean. `npm run ci` (18 gates, including `ci:la-walkthrough`
+26/26, `ci:variant-agreement` 610 pairs, `ci:interactive-specs` 418 blocks
+unchanged) clean.
+
+### A real 2x2 eigen-solver replaces hand-authored eigenvector derivations (2026-09-06)
+
+Direct follow-up to the `/design-review` pass above, on Ask #2 specifically:
+"how did they arrive at those coordinates for discussion? this needs to be
+in there for all topics" — and this time, explicitly: "this needs to be
+dynamically adapted for any problems. create additional solvers if
+needed." The prior fix hand-wrote a `why` sentence for exactly two concepts
+(`eigenvalues`, `quadratic-forms`), verified by hand via `python3`/sympy
+each time — real content, but the opposite of "dynamically adapted": every
+other `linear_map` scene in the corpus (`diagonalization`,
+`symmetric-matrices`, `spectral-theorem`, `svd`,
+`positive-definite-matrices`, and more — ~18 more concepts) still shows two
+highlighted arrows with zero derivation, and reaching them the same way
+would mean another hand-authoring pass per concept forever.
+
+**The key realization: the derivation doesn't need solving at render
+time — it needs FORMATTING.** Every `linear_map` scene that highlights
+eigen-arrows already carries the exact numbers on screen in its own
+`matrix` + `eigen[]` fields, and `checkLinearMap` (types.ts) already
+re-verifies at parse time that `matrix · dir ≈ value · dir` for every
+committed `eigen` pair — the correctness guarantee already exists. So the
+fix isn't "solve the eigenproblem live," it's "generate the explanatory
+sentence from data the scene already has," for whatever matrix a given
+concept happens to use.
+
+**`frontend/src/components/lesson/interactives/eigen-2x2.ts`** — still a
+genuine, independent solver (the "create additional solvers" half of the
+ask), not just a formatter:
+
+- `solveEigen2x2(matrix)` — closed-form 2x2 eigen-decomposition via the
+  trace/determinant quadratic (`λ = (trace ± √(trace² − 4·det)) / 2`, no
+  numerical iteration needed at this size). Handles all three real cases:
+  two distinct real eigenvalues, one repeated eigenvalue (a shear/Jordan
+  block — `linear-transformations`' real hook matrix `[[1,1],[0,1]]` hits
+  this), and returns `null` for genuinely complex eigenvalues (a rotation
+  matrix — `orthogonality`'s real hook matrix is exactly this case, which
+  is precisely why that content has no `eigen` field authored at all).
+  Computes a matching eigenvector via the standard null-space shortcut for
+  2x2 matrices, kept genuinely independent of any authored data so it stays
+  useful beyond formatting (a future content-generation or CI pass could
+  call it to auto-derive eigenpairs for a matrix that has none yet).
+- `deriveLinearMapWhy(linearMap)` — the actual fallback: reads the scene's
+  own (already-verified) `eigen[]` array and formats it into the
+  established "det(A − λI) = 0, then (A − λI)v = 0" sentence template.
+  Names the specific coordinates when they're small clean integers (or
+  cleanly reduce to some, e.g. an unreduced `(4, 2)` → `(2, 1)`) —
+  **deliberately preserving the authored sign** rather than canonicalizing
+  it, since flipping `(−1, 2)` to `(1, −2)` would describe a
+  different-looking arrow than the one actually drawn, even though both
+  are valid eigenvectors of the same line. Falls back to method-only
+  phrasing (no coordinates, just the λ values) for an irrational/
+  normalized eigenvector, which reads badly as `(0.71, 0.71)` in prose.
+  Returns `null` when there's no `eigen` array at all — a scene like
+  `determinants`' area-scaling demo has a `matrix` but nothing eigen-shaped
+  to explain, and manufacturing a derivation there would be scope creep,
+  not a fix. Every generated sentence is verified to stay within
+  `MAX_WHY_CHARS` (220) even at the schema's own worst-case bounds
+  (`|entry| ≤ 100`).
+
+**Wired as a fallback, never a replacement.** Both consumers of `why` —
+`AtomCardRenderer.tsx`'s promoted-figure branch (the common case: a
+`linear_map` scene on a hook/intuition atom) and `InteractiveSidecar.tsx`'s
+non-promoted path (a scene on any other atom type) — now resolve
+`why={spec.why ?? deriveLinearMapWhy(spec.linear_map) ?? undefined}`. An
+authored `why` still wins when present, so `eigenvalues`/
+`quadratic-forms` keep their existing, slightly more polished hand-written
+framing unchanged. Every OTHER concept's `linear_map` scene — already
+committed, and every future one a content-generation pass produces —
+now explains its own coordinates with zero per-concept authoring effort.
+
+**Closes the TODOS.md item this doc's previous section opened.** That
+entry proposed dispatching parallel subagent batches to hand-author `why`
+sentences across the remaining concepts, the same pattern used for every
+other corpus-wide content pass in this doc. That plan is now moot — a
+future gap here would mean the solver itself has a bug, not that content
+needs writing, so the entry is marked closed rather than carried forward.
+
+**Tests:** `eigen-2x2.test.ts` (new, 24) — every real `linear_map.matrix`
+already committed in the corpus, cross-checked via a genuine-eigenpair
+property test (`matrix · dir ≈ value · dir`, not a hardcoded expected
+vector, since eigenvectors are only defined up to scale/sign) rather than
+brittle exact-value assertions; the trace/determinant invariants
+(`sum(λ) = trace`, `product(λ) = det`); the complex-eigenvalue case
+(`orthogonality`'s real rotation matrix returns `null`); the repeated-
+eigenvalue case (`linear-transformations`' real shear, exactly one pair);
+`deriveLinearMapWhy`'s null/clean-vector/generic-fallback/repeated
+branches, each against REAL corpus matrices and eigen arrays, not
+synthetic ones. `AtomCardRenderer.resonanceFigure.test.tsx` (+3) — the
+computed fallback renders for an unauthored `linear_map` scene, an
+authored `why` still wins over it, and a matrix-only (no `eigen`) scene
+gets no fabricated sentence. `InteractiveSidecar.test.tsx` (+2) — same
+fallback contract on the non-promoted path.
+
+Frontend suite 2727 → 2756/2756. Backend untouched, 4701/4701 (content-free
+change — the two hand-authored `why` fields from the prior pass are
+untouched, so no fence edits, so `npm run ci`'s content gates are unchanged
+in count). `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

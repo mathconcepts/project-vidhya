@@ -22,11 +22,13 @@ import { InteractiveSidecar } from './interactives/InteractiveSidecar';
 import { Simulation } from './interactives/Simulation';
 import { WhyThisHelps } from './interactives/WhyThisHelps';
 import { parseInteractiveSpec, stripAllInteractiveSpecFences, type SimulationSpec } from './interactives/types';
+import { deriveLinearMapWhy } from './interactives/eigen-2x2';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff,
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useEngagementGate } from '@/hooks/useEngagementGate';
 import { EASE_STANDARD, DUR_BASE_S, DUR_SLOW_S, DUR_FAST_S, framerDuration } from '@/lib/motion-tokens';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
@@ -509,6 +511,14 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   }, [atom.id]);
 
   const shownCount = reducedMotion ? visibleCount : Math.min(revealedCount, visibleCount);
+  // Engagement gate (/design-review, 2026-09-06 — see useEngagementGate.ts
+  // and the same mechanism on GuidedWalkthrough's and Simulation's advance
+  // buttons): "Show next step" was tappable the instant the previous step
+  // rendered, so a student could blast to the boxed final answer without
+  // reading any of the work. Gated on the MOST RECENTLY revealed step's own
+  // text, re-arming each time shownCount advances.
+  const lastRevealedStep = shownCount > 0 ? steps[shownCount - 1] ?? '' : '';
+  const nextStepGateReady = useEngagementGate(lastRevealedStep, shownCount);
 
   return (
     <div>
@@ -557,14 +567,27 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
         );
       })}
       {!reducedMotion && revealedCount < visibleCount && (
-        <div className="flex justify-end pt-1">
+        <div className="flex items-center justify-between gap-2 pt-1">
+          {!nextStepGateReady && (
+            <motion.p
+              key={`gate-${shownCount}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: framerDuration(DUR_FAST_S, reducedMotion), ease: EASE_STANDARD }}
+              className="min-w-0"
+              style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)', margin: 0 }}
+            >
+              Read this, then continue
+            </motion.p>
+          )}
           <Button
             variant="grey"
             tone="neutral"
             size="md"
             onClick={() => setRevealedCount((c) => Math.min(c + 1, visibleCount))}
-            iconAfter={<ChevronRight size={16} />}
-            style={{ background: 'var(--surface-fill-strong)' }}
+            disabled={!nextStepGateReady}
+            iconAfter={nextStepGateReady ? <ChevronRight size={16} /> : undefined}
+            style={{ background: 'var(--surface-fill-strong)', flexShrink: 0 }}
           >
             Show next step
           </Button>
@@ -1219,8 +1242,18 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
                     floor: authored, validated, never shown. Root-caused
                     /investigate, "connecting the dots in intuition is
                     missing" — same shared component InteractiveSidecar
-                    already uses, not a second copy of the framing rule. */}
-                <WhyThisHelps why={promotedSimSpec.why} idHint={current.id} />
+                    already uses, not a second copy of the framing rule.
+                    `?? deriveLinearMapWhy(...)` (/investigate, 2026-09-06:
+                    "dynamically adapted for any problems") — an authored
+                    `why` always wins, but a `linear_map` scene with no
+                    authored one still gets a real derivation sentence
+                    computed from ITS OWN matrix + eigen data, so every
+                    concept's "2 arrows" scene explains its coordinates,
+                    not just the 2 that got hand-written text. */}
+                <WhyThisHelps
+                  why={promotedSimSpec.why ?? deriveLinearMapWhy(promotedSimSpec.linear_map) ?? undefined}
+                  idHint={current.id}
+                />
                 <Simulation spec={promotedSimSpec} atomId={current.id} servedStance={current.served_stance} />
               </>
             ) : deferFigure ? null : (

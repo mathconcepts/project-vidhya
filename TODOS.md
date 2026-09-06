@@ -4,6 +4,43 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## ~~Corpus-wide `linear_map` eigenvector-derivation audit~~ — closed, made unnecessary
+
+**Closed 2026-09-06.** The prior entry here proposed a manual subagent-batch
+audit (hand-author a `why` per concept, 4-6 at a time) to reach every
+`linear_map` scene beyond the two (`eigenvalues`, `quadratic-forms`) that
+got hand-written text. That plan is now moot: the same-day follow-up
+("dynamically adapted for any problems… create additional solvers if
+needed") replaced the hand-authoring approach with a real solver —
+`frontend/src/components/lesson/interactives/eigen-2x2.ts`
+(`solveEigen2x2` + `deriveLinearMapWhy`) — wired as a fallback in both
+`AtomCardRenderer.tsx`'s promoted-figure branch and
+`InteractiveSidecar.tsx`'s non-promoted path: any `linear_map` scene with
+an `eigen` array but no authored `why` now gets a derivation sentence
+computed from its OWN matrix/eigen data, for every concept already
+committed (`diagonalization`, `symmetric-matrices`, `spectral-theorem`,
+`svd`, `positive-definite-matrices`, `svd`, and the rest) and every future
+one — no per-concept authoring pass required, ever. An authored `why` still
+wins when present (`eigenvalues`/`quadratic-forms` keep their nicer
+hand-written framing). Nothing left to audit; a future gap here would mean
+the SOLVER has a bug, not that content needs writing.
+
+## Extend the "advance-button" convention audit to any FUTURE shared control
+
+**Trigger:** a new tap-to-reveal control is added anywhere in the app.
+
+`useEngagementGate` (2026-09-06, `frontend/src/hooks/useEngagementGate.ts`)
+now gates `GuidedWalkthrough`'s hint/answer button, `Simulation.tsx`'s
+Continue button, and `AtomCardRenderer.tsx`'s "Show next step" button — the
+three consumers of the app's one advance-button convention as of this
+writing. `DecisionTreeWalkthrough.tsx`'s option buttons were deliberately
+NOT gated (a different risk profile — see CLAUDE.md's 2026-09-06 section
+for the reasoning). If a future surface adds a new "tap when you're ready"
+control, check whether the same mindless-tap risk applies before deciding
+whether it needs `useEngagementGate` too — don't assume every advance-style
+button automatically qualifies (a genuinely deliberative choice, like
+DecisionTreeWalkthrough's options, does not).
+
 ## Corpus-wide hook/intuition/mnemonic motion upgrade ("convey more in less")
 
 **Trigger:** an operator wants to spend a real multi-batch content pass on

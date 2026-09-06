@@ -28,6 +28,29 @@
   --orange-ink: #b25000;
   --orange-tint: rgba(255, 159, 10, 0.14);
 
+  /* Atom-kind tag palette (2026-09-05 /ui-ux-pro-max decision). Four more
+     real Apple system colours, used ONLY for the small eyebrow label + icon
+     on a lesson atom card — never a card background, a button, or a filled
+     surface. Green and indigo keep their exact reserved meanings above;
+     this is a separate, narrower lane clustering the 11 AtomTypes by
+     pedagogical role (see AtomCardRenderer.tsx's ATOM_PRESENTATION_MAP) so a
+     student can tell "intro" from "practice" from "recall" from "reference"
+     at a glance, the way a course platform colour-codes chapters — not an
+     e-commerce rainbow. common_traps keeps its pre-existing --orange
+     (a system warning state, not part of this palette). */
+  --teal: #30b0c7;
+  --teal-ink: #1b6a76;
+  --teal-tint: rgba(48, 176, 199, 0.13);
+  --purple: #af52de;
+  --purple-ink: #7d3aa6;
+  --purple-tint: rgba(175, 82, 222, 0.13);
+  --mint: #00c7be;
+  --mint-ink: #077a73;
+  --mint-tint: rgba(0, 199, 190, 0.13);
+  --brown: #a2845e;
+  --brown-ink: #6e5738;
+  --brown-tint: rgba(162, 132, 94, 0.13);
+
   /* Semantic surfaces */
   --surface-canvas: var(--grey-1);
   --surface-card: var(--grey-2);
@@ -77,6 +100,23 @@
   --red-ink: #ff6961;
   --orange: #ffd60a;
   --orange-ink: #ffd426;
+
+  /* Atom-kind tag palette, dark-mode variants — brighter base hues (matching
+     how --green/--indigo go vivid in dark mode) and lighter "ink" variants
+     for contrast against near-black cards (matching --indigo-ink going
+     lighter, not darker, in this same block). */
+  --teal: #40c8e0;
+  --teal-ink: #6fd8ea;
+  --teal-tint: rgba(64, 200, 224, 0.18);
+  --purple: #bf5af2;
+  --purple-ink: #d291f5;
+  --purple-tint: rgba(191, 90, 242, 0.18);
+  --mint: #66d4cf;
+  --mint-ink: #8fe8e1;
+  --mint-tint: rgba(102, 212, 207, 0.18);
+  --brown: #ac8e68;
+  --brown-ink: #c7ad87;
+  --brown-tint: rgba(172, 142, 104, 0.18);
 
   --surface-canvas: #000000;
   --surface-card: #1c1c1e;

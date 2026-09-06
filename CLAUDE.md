@@ -65,7 +65,7 @@ cd frontend && npm run dev        # frontend on :3000 (separate terminal)
 The UI is **Vidhya Clarity** — an Apple-HIG light theme. The full system lives at `design/clarity/`. Always read `DESIGN-SYSTEM.md` before making any visual or UI decisions.
 
 Non-negotiables when writing frontend code:
-- Two accents, both semantic. Green (`--green` / `--green-ink`) = mastery, correctness, primary action. Indigo (`--indigo` / `--indigo-ink`) = AI, tutor, study plan, and nothing else.
+- Two accents, both semantic. Green (`--green` / `--green-ink`) = mastery, correctness, primary action. Indigo (`--indigo` / `--indigo-ink`) = AI, tutor, study plan, and nothing else. **One scoped exception (2026-09-05):** `--teal` / `--purple` / `--mint` / `--brown` (+ `-ink`/`-tint` variants) exist solely as the eyebrow-label + icon colour on a lesson atom card, one hue per pedagogical cluster in `AtomCardRenderer.tsx`'s `ATOM_PRESENTATION_MAP` — never a background, button, or filled surface, and never reused elsewhere. See DESIGN-SYSTEM.md's Colour section for the full rationale.
 - Never hard-code a colour. Use the custom properties in `frontend/src/styles/tokens/`.
 - 17px is the body floor for anything a student reads. 15px supporting, 13px only for timestamps and metadata.
 - One focal card per screen. Everything else is plain text or hairline-separated rows on the canvas.
@@ -3644,6 +3644,58 @@ probability-statistics, transform-theory, vector-calculus). The sticky
 diagram fix is structurally complete but visually unverified — a live
 device or working browse session is the next real check, tracked in
 TODOS.md as "Sticky diagram: live-device verification still owed."
+
+### `/ui-ux-pro-max`: a constrained atom-kind color palette, not an "Amazon rainbow" (2026-09-05)
+
+Ask: "all the lessons are in singular color... need multiple colors for
+better attention grabbing (refer to Amazon)... in line with the existing
+color theme." Researched before touching anything, per the skill's own
+domain-search requirement — the literal ask conflicted with a written
+non-negotiable (`CLAUDE.md`'s "two accents, both semantic," `DESIGN-
+SYSTEM.md`'s "everything else is grey"), so the tension was put to the user
+rather than silently resolved either direction.
+
+**What the research actually showed.** Every product-type palette in
+`ui-ux-pro-max`'s color database — e-commerce, e-commerce luxury, language-
+learning, e-learning, educational-app — uses exactly 2-3 accents (a primary,
+a secondary tint, one CTA colour), never more. Amazon's own real palette is
+navy-on-white with one orange CTA button and yellow reserved for star
+ratings, not a rainbow. `design/clarity/readme.md`'s own stated philosophy
+— "colour used so sparingly that when green or indigo appears, it means
+something" — was built specifically for a tired, often-anxious student
+studying at 11pm, the opposite audience from an e-commerce conversion page.
+
+**Put to the user as a real decision, not assumed.** Three options at
+different scope: (1) a small, constrained "atom-kind" palette as tags/icons
+only, never backgrounds/buttons — closest to what the research showed
+actually works; (2) zero new hues, just using green/indigo/orange more
+visibly; (3) a genuinely broad Amazon-style multi-colour treatment,
+which would require rewriting the "two accents" law itself. The user chose
+option 1.
+
+**Shipped.** Four more real Apple system colours — teal `#30b0c7`, purple
+`#af52de`, mint `#00c7be`, brown `#a2845e` (`+ -ink` contrast variants,
+`.13`-alpha tints; `frontend/src/styles/tokens/colors.css`, light + dark) —
+wired into `AtomCardRenderer.tsx`'s existing `ATOM_PRESENTATION_MAP` (one
+source-of-truth table per the file's own anti-drift discipline, not a
+second parallel table) as a new `tagColor` field, one hue per pedagogical
+cluster across the 11 `AtomType`s: **teal** (discovery — hook, intuition,
+visual_analogy), **purple** (practice — worked_example, micro_exercise,
+interleaved_drill), **mint** (retention — retrieval_prompt, mnemonic),
+**brown** (reference — formal_definition, exam_pattern). `common_traps`
+keeps its pre-existing `var(--orange)` verbatim, unchanged, so its own
+locked test (`AtomCardRenderer.trapVisualIdentity.test.tsx`) still passes
+byte-for-byte. Applies to the small eyebrow label + icon only — never a
+card background, button, or filled surface — so the calm, deferential
+Apple-HIG canvas underneath is untouched; green and indigo keep their exact
+reserved meanings. `DESIGN-SYSTEM.md`'s Colour section and Decisions Log,
+plus this file's own non-negotiables bullet, were updated in the same pass
+so a future QA pass reads this as the documented law, not a violation of it.
+
+**Tests:** `AtomCardRenderer.tagColor.test.tsx` (new) asserts each cluster's
+tag colour on the eyebrow label. Existing
+`AtomCardRenderer.trapVisualIdentity.test.tsx` passes unchanged (asserted,
+not assumed).
 
 ## Skill routing
 

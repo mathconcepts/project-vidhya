@@ -26,26 +26,68 @@ report, but neither is confirmed as the exact 500-triggering exception.
 Next step: reproduce with `DATABASE_URL` pointed at a real Postgres
 instance, or read the actual server-side exception from a production log.
 
-## `focus_point` — corpus-wide application beyond `inner-product-spaces.hook` (2026-09-06)
+## ~~`focus_point` — corpus-wide application beyond `inner-product-spaces.hook`~~ — closed (2026-09-06)
 
-**Trigger:** the next `/design-review` or `/investigate` pass touching a
-plain-curve (non-`linear_map`) simulation scene, or a dedicated sweep pass
-with subagent-batch capacity, same pattern as every other "mechanism
-shipped, corpus application deferred" entry in this file.
+Closed by a full corpus audit the same day: every base (non-`linear_map`,
+non-variant) `hook`/`intuition`/`formal-definition` atom carrying a
+`simulation` interactive-spec was found (22 files across 20 concepts, via
+`x_expr`/`y_expr` presence + absence of `linear_map`), and each beat was
+checked with a real cross-check script — evaluate the traced curve at
+`t_min + at_progress*(t_max-t_min)` and test whether the resulting `(x,y)`
+actually appears (within tolerance) among the numbers stated in that
+beat's own text — rather than eyeballing which beats "sound like" they
+name a coordinate. `focus_point:true` landed only on beats that passed
+this check: 13 concepts gained it on 1–5 beats each
+(`cayley-hamilton.hook` 4, `cayley-hamilton.intuition` 1,
+`complex-numbers.hook` 1, `continuity.hook` 3, `definite-integrals.hook`
+5, `derivatives-basic.hook` 3, `differentiability.hook` 3,
+`gram-schmidt.hook` 3, `improper-integrals.hook` 2, `limits.hook` 4,
+`multivariable-calculus.hook` 2, `systems-of-equations.hook` 3,
+`trace.hook` 4). 7 concepts were correctly left untouched, each for a
+verified reason, not a guess: `conformal-mapping.hook`,
+`line-integrals.hook`, `ode-higher-order.hook`, `ode-second-order-homo.hook`,
+`ode-second-order-nonhomo.hook` discuss qualitative dynamics (direction
+reversal, dominance, decay/growth rate) with no beat ever naming a
+specific traced coordinate; `systems-of-equations.intuition` and
+`trace.intuition` discuss abstract matrix/rank/basis properties that never
+correspond to the literal point the curve is tracing at that instant, even
+though the same concept's `hook.md` does. Fences kept byte-identical
+across all touched stance trios (verified programmatically both before
+and after edits — the propagation script refused to touch any pair that
+wasn't already byte-identical, and none were found).
 
-`focus_point?: boolean` (`types.ts`, `Simulation.tsx`) generalizes
-`focus_eigen`'s "highlight the coordinate being discussed, only for that
-beat" mechanism to plain parametric-trace scenes — the more common scene
-shape across the corpus. Shipped and wired into ONE concept
-(`inner-product-spaces.hook`, whose 5 beats each name a specific $v=(...)$
-coordinate). Not audited: how many other hooks/intuitions with a plain
-`x_expr`/`y_expr` scene ALSO name a specific coordinate pre-reveal the way
-this one did — likely several, given `focus_eigen` itself was originally
-shipped on one concept and then found to recur. The audit pattern that
-worked for `focus_eigen`'s own corpus rollout (read each hook, check for a
-beat naming coordinates the figure doesn't yet highlight, add the field,
-propagate byte-identically across stance files) is the template to repeat
-here.
+## `at_progress` sometimes doesn't match the x-value its own beat text states
+
+**Trigger:** the next content-authoring pass on any of the four concepts
+named below, or a dedicated corpus sweep for the same defect class on
+other plain-curve scenes not yet checked this way.
+
+Discovered as a side effect of the `focus_point` audit above: the
+verification script (evaluate the curve at each beat's own `at_progress`,
+compare against numbers the beat text states) surfaced beats where the
+STATED x-value and the value `at_progress` actually produces disagree —
+not a rounding difference, a real mismatch. Confirmed in
+`improper-integrals.hook` (beat text says "By x=2" / "At x=4.5" at
+progresses that actually evaluate to x≈2.75 / x≈5.2),
+`multivariable-calculus.hook` (beat text says "At x=0" / "At x=1" at
+progresses that actually evaluate to x≈-0.4 / x≈0.8), `continuity.hook`
+(one beat says "x=1.96" where the real value is x≈1.82), and
+`systems-of-equations.hook` (one beat says "At t=0, the crossing lands at
+(1.5,1.5)" at a progress that actually evaluates to (1.35,1.65) — off by
+one crossing-family-parameter value, likely a rounding slip when picking
+`at_progress` by hand). None of these were fixed here — doing so means
+either recomputing each affected beat's `at_progress` to the value that
+actually produces the stated x (a content-pacing change, not a highlight
+annotation) or rewriting the beat's stated numbers to match what
+`at_progress` really produces; either is a real editorial call this pass
+correctly declined to make unilaterally while just adding a highlight
+field. The beats affected were simply excluded from `focus_point` rather
+than tagged with a coordinate that would visibly contradict its own prose.
+A script skeleton for finding more instances: evaluate `x_expr`/`y_expr`
+at `t_min + at_progress*(t_max-t_min)` per beat and diff against every
+number the beat's `text`/`text_shaken`/`text_assured` state, the same
+check the `focus_point` audit above used — just re-run it looking for
+mismatches instead of matches.
 
 ## Corpus-wide `mnemonic` ELI5/register audit (2026-09-06 live-QA)
 

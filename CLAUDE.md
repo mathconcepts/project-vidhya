@@ -4167,6 +4167,82 @@ not just unit-tested.
 not a bug) failed as designed and was updated per its own established
 convention of recording each shift's cause inline.
 
+### `focus_point` extended corpus-wide, verified against the real traced curve (2026-09-06)
+
+Direct follow-up to the `/ui-ux-pro-max` pass above: "extend this to all
+topics." That pass shipped `focus_point` (the plain-curve counterpart to
+`focus_eigen`'s "highlight the coordinate under discussion") on exactly
+one concept, `inner-product-spaces.hook`. This pass closes the corpus-wide
+gap the prior pass's own TODOS.md entry named.
+
+**Scoped the real worklist first, not guessed.** Every base (non-variant,
+non-`linear_map`) `hook`/`intuition`/`formal-definition` atom carrying a
+`simulation` scene with `x_expr`/`y_expr` was enumerated: 22 files across
+20 concepts (`inner-product-spaces` already done, `ode-first-order`'s
+lone match has zero `narration_steps` — a static trace, nothing to tag).
+
+**Method: verify against the actual traced curve, not eyeball the
+prose.** A cross-check script evaluates each scene's `x_expr`/`y_expr` at
+`t_min + at_progress·(t_max−t_min)` for every beat, then tests whether
+the resulting `(x, y)` genuinely appears (within tolerance) among the
+numbers the beat's own text states. This caught real subtleties a
+manual read would have missed or gotten wrong:
+
+- `cayley-hamilton.intuition` and `trace.intuition` both discuss "eigen-
+  DIRECTIONS" (e.g. "the arrow swung to $(1,1)$") while the scene actually
+  traces the OUTPUT of $A$ applied to those directions — at that beat's
+  progress the real traced point is $(1.414,1.414)$ (already scaled by
+  the eigenvalue), not $(1,1)$ as stated. Tagging these would show a
+  label contradicting the prose it sits next to. Left untouched — the
+  same concepts' `hook.md` files, which correctly discuss the OUTPUT
+  value directly, got tagged normally.
+- `definite-integrals.hook`'s beats state a "running total" (a cumulative
+  integral) alongside the traced curve's own y-value (the instantaneous
+  rate, $\sin t$) — two different numbers that happen to look similar in
+  places. The script separates them correctly: it matches on the RATE
+  value the beat also states (which does equal the traced y), not the
+  running-total number (which doesn't correspond to any point on the
+  curve at all).
+- Three concepts (`improper-integrals`, `multivariable-calculus`,
+  `continuity`) and one crossing-value in `systems-of-equations` turned
+  up a genuine, previously-unknown authoring bug: the beat's stated
+  x-value (or crossing point) doesn't match what its own `at_progress`
+  actually produces on the curve — e.g. `improper-integrals.hook` says
+  "By $x=2$" at a progress that evaluates to $x≈2.75$. Not a coincidence
+  — confirmed by recomputing the map by hand for several beats. These
+  specific beats were excluded from `focus_point` rather than tagged with
+  a contradicting label; fixing the `at_progress` values themselves is a
+  content-pacing edit, a distinct editorial call this pass declined to
+  make unilaterally while only adding a highlight field. Tracked in
+  TODOS.md with the script pattern to find more instances corpus-wide.
+
+**Result: 13 concepts gained `focus_point` on 1–5 beats each**
+(`cayley-hamilton` hook +4/intuition +1, `complex-numbers` +1,
+`continuity` +3, `definite-integrals` +5, `derivatives-basic` +3,
+`differentiability` +3, `gram-schmidt` +3, `improper-integrals` +2,
+`limits` +4, `multivariable-calculus` +2, `systems-of-equations` +3,
+`trace` +4) — every addition backed by a real numeric match, not a
+guess. **7 concepts correctly left untouched**, each independently
+verified to have no beat naming a literal traced coordinate:
+`conformal-mapping`, `line-integrals`, `ode-higher-order`,
+`ode-second-order-homo`, `ode-second-order-nonhomo` (all discuss
+qualitative dynamics — direction reversal, term dominance, decay/growth
+rate — never a specific point), `systems-of-equations.intuition` and
+`trace.intuition` (abstract rank/basis discussion, decoupled from the
+literal traced point). Fences kept byte-identical across every touched
+stance trio — verified programmatically both before AND after editing,
+via the same propagation-refuses-on-mismatch discipline established
+2026-09-04.
+
+**Verified against the real gates.** `ci:interactive-specs` (424 blocks,
+unchanged — no new fence, only new fields inside existing ones),
+`ci:variant-agreement` (610 pairs), `ci:katex-fences` (1723),
+`ci:content-integrity` (1729), `ci:la-walkthrough` (26/26) all clean.
+Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726 assertions) and
+`Simulation.test.tsx` (88 tests) both pass against the edited content —
+content-only pass, no new test cases, no test-count change. Backend
+untouched.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

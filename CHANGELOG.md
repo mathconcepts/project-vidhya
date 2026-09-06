@@ -4,6 +4,62 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.69.0] — 2026-09-06 — `focus_point` extended corpus-wide, verified against the actual traced curve
+
+No new env vars, no migrations.
+
+Follow-up to 4.68.0's `focus_point` mechanism, shipped there on exactly
+one concept (`inner-product-spaces.hook`). This pass audited every other
+base `hook`/`intuition` atom in the corpus carrying a plain
+(non-`linear_map`) `simulation` scene — 22 files across 20 concepts — and
+extended coverage to every beat that genuinely warrants it.
+
+**Method: verify against the real trace, not eyeball the prose.** A
+script evaluates each scene's `x_expr`/`y_expr` at
+`t_min + at_progress*(t_max-t_min)` for every beat, then checks whether
+the resulting `(x, y)` actually appears among the numbers the beat's own
+text states. Only beats that pass this check get `focus_point:true` — a
+beat that merely sounds like it names a coordinate, without one matching
+the literal traced point, is left alone rather than guessed.
+
+**13 concepts gained `focus_point` on 1–5 beats each:** `cayley-hamilton`
+(hook +4, intuition +1), `complex-numbers` (+1), `continuity` (+3),
+`definite-integrals` (+5), `derivatives-basic` (+3), `differentiability`
+(+3), `gram-schmidt` (+3), `improper-integrals` (+2), `limits` (+4),
+`multivariable-calculus` (+2), `systems-of-equations` (+3), `trace` (+4).
+Fences kept byte-identical across every touched stance trio, verified
+both before and after the edit — the propagation step refuses to touch
+any variant whose fence doesn't already match its base exactly.
+
+**7 concepts correctly left untouched, each for a verified reason:**
+`conformal-mapping`, `line-integrals`, `ode-higher-order`,
+`ode-second-order-homo`, `ode-second-order-nonhomo` discuss qualitative
+dynamics (direction reversal, term dominance, decay/growth rate) with no
+beat ever naming a literal traced coordinate; `systems-of-equations.intuition`
+and `trace.intuition` discuss abstract rank/basis properties that never
+correspond to the point the curve is tracing at that instant, even though
+the same concept's `hook.md` does.
+
+**A real, pre-existing content bug surfaced as a side effect, not fixed
+here.** The verification script found beats in `improper-integrals.hook`,
+`multivariable-calculus.hook`, `continuity.hook`, and
+`systems-of-equations.hook` whose stated x-value (or, for the last, whose
+stated crossing point) doesn't match what the beat's own `at_progress`
+actually produces on the traced curve — a real authoring inconsistency,
+not a rounding artifact. Those specific beats were excluded from
+`focus_point` (tagging them would show a coordinate visibly contradicting
+the prose) rather than silently patched — fixing the underlying
+`at_progress` values is a content-pacing decision, out of scope for a
+pass that was only supposed to add a highlight annotation. Tracked in
+TODOS.md with the exact script pattern to find more instances.
+
+**Tests:** `ci:interactive-specs` 424 blocks (unchanged, no new fence),
+`ci:variant-agreement` 610 pairs, `ci:katex-fences` 1723,
+`ci:content-integrity` 1729, `ci:la-walkthrough` 26/26 all clean. Frontend
+`MarkdownAtomRenderer.regression.test.tsx` (1726 assertions) and
+`Simulation.test.tsx` (88 tests) both clean against the edited content —
+no test count change (content-only pass, no new frontend test cases).
+
 ## [4.68.0] — 2026-09-06 — Studymate grading was structurally broken, generalized focus_eigen, fixed inner-product-spaces
 
 No new env vars, no migrations.

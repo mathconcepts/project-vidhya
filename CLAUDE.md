@@ -4464,9 +4464,315 @@ unchanged), `ci:variant-agreement` (610 pairs), `ci:content-integrity`
 (1729 files) all clean across the full 6-batch sweep — no content edits,
 since nothing needed fixing.
 
+### Linear Algebra content completion: mnemonic register, silo, and visual-density audit (2026-09-07)
+
+Ask: "use sonnet subagents and complete all the content required for
+linear algebra based on the latest visual and design decisions." Read as
+closing the LA-scoped content gaps still standing in TODOS.md after the
+prior sessions' code-level mechanisms (`focus_eigen`/`focus_point`, the
+Reference Highlighting Framework's ghost labels, the 1-1 mapping chip) —
+those are all corpus-wide by construction and needed no further authoring
+— versus the CONTENT gaps that genuinely still needed a hand: the
+`mnemonic` ELI5/register audit (only `eigenvalues` done, from a single
+live-QA report), the `mnemonic`-example silo check (named but not
+attempted in the 2026-09-04 intuition-only silo pass), and the
+`visual-analogy` redundant-paragraph check (only `rank-nullity` done).
+
+**Dispatched as 5 parallel Claude Sonnet subagents** (5-6 concepts each,
+all 26 GATE-EM Linear Algebra concepts covered, no file overlap between
+batches), on a fresh branch off `main` — kept separate from the
+concurrently-open PR #165, which this session was independently
+babysitting to green throughout this pass. Each batch given the same
+three-check-per-concept brief:
+
+1. **`mnemonic.md` ELI5/register.** Read `hook.md` first (ground truth),
+   then judge `mnemonic.md`'s PROSE only — any pre-existing `manipulable`
+   widget fence from the 2026-09-05 pass is finished work, left
+   byte-identical, never re-derived. Glossed unglossed jargon in plain
+   words on first use across roughly 20 of the 26 concepts —
+   "characteristic polynomial," "orthogonal," "generalized eigenvector,"
+   "defective (matrix)," "condition number," "Sylvester's criterion," and
+   more — same mnemonic device, same math, simpler sentences.
+2. **`mnemonic.md` example-silo check.** Does the mnemonic invent its own
+   numbers where it could reuse the hook's already-verified worked
+   example? One genuine instance: `gram-schmidt/atoms/mnemonic.md` was
+   demonstrating the algorithm on $v_2=(2,1)$ against $u_1=(1,0)$ while
+   `hook.md` already establishes $v_1=(1,1)$, $v_2=(2,0)$ — rewritten to
+   continue hook's own example ($c=1$, $u_2=(2,0)-(1,1)=(1,-1)$, dot
+   product $0$, verified via SymPy). Every other concept was individually
+   confirmed already reusing hook's numbers, or correctly
+   verbal/categorical with no worked example to silo (forcing a numeric
+   example onto a purely mnemonic device like "RREF" or "Swap, Sign,
+   Split" would be padding, not a fix — batches were explicitly told not
+   to force this).
+3. **`visual-analogy.md` redundancy check.** The specific defect fixed on
+   `rank-nullity` (2026-09-04): a closing paragraph restating an earlier
+   paragraph's point in different words. Three more genuine instances
+   found and trimmed: `determinants` (a restated curve-crossing-zero
+   point), `cayley-hamilton` (a restated "cyclic pattern" point),
+   `change-of-basis` (a restated "destination never moves" point, kept
+   only the new bidirectionality claim). Every other concept's file was
+   read and confirmed non-redundant — density alone was explicitly not
+   grounds to trim.
+
+**A fourth, lightweight check rode along:** `focus_eigen`/`focus_point`
+coverage re-confirmed (not re-litigated) against the 2026-09-04 audit on
+every batch's concepts — zero new gaps found, including on
+`jordan-normal-form`'s genuinely hard case (a repeated eigenvalue, one
+independent eigenvector), confirmed to correctly carry no
+`interactive-spec` scene at all. Batches were explicitly told a false
+positive here is worse than leaving a beat untagged, and to skip rather
+than guess.
+
+**Batch 5's two concepts (`jordan-normal-form`, `matrix-norms`) got a
+deeper pass**, since a 2-concept batch had spare capacity: `common-
+traps.md`, `exam-pattern.md`, `formal-definition.md`, and `worked-
+example.md` were also register-audited for the same unglossed-jargon
+pattern (prose only — no example/numbers touched), every full
+computation re-verified via SymPy before any prose changed
+(`matrix-norms`: $\sigma_1{\approx}4.16$, $\sigma_2{\approx}1.92$,
+$\kappa_2{\approx}2.16$ against its own $A=\begin{pmatrix}4&1\\0&2\end{pmatrix}$;
+`jordan-normal-form`: $P^{-1}AP=\begin{pmatrix}3&1\\0&3\end{pmatrix}$).
+
+**A genuine, already-known bug case handled correctly, not mistagged.**
+`systems-of-equations/atoms/hook.md`'s beat at `at_progress: 0.45` states
+a coordinate that doesn't match what that progress actually traces on the
+curve — a previously-documented pacing bug (`TODOS.md`, "`at_progress`
+sometimes doesn't match the x-value its own beat text states"). Batch 1
+found it again independently, confirmed it against the same class of
+defect, and correctly left it untagged for `focus_eigen` rather than
+tagging a coordinate that would visibly contradict its own beat text —
+the same discipline the original bug report itself established.
+
+**Verified as one combined whole, not per-batch.** Each batch validated
+its own concepts before reporting; after all 5 landed, `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26, `ci:interactive-specs` 424
+blocks unchanged, `ci:variant-agreement` 610 pairs unchanged,
+`ci:katex-fences` 1723, `ci:content-integrity` 1729) ran clean against
+the full 24-file combined diff, plus the frontend's full-corpus render
+regression (`MarkdownAtomRenderer.regression.test.tsx`, 1726 assertions)
+mounting every edited atom through React with no throw. No commit
+happened until every batch had reported back, per this repo's own
+standing rule against fabricating results from work still in flight.
+
+**Scope, named honestly.** This closes the Linear Algebra slice of three
+separate TODOS.md entries (`mnemonic` ELI5/register audit, the
+`mnemonic`-half of the intuition/mnemonic silo audit, and the
+`visual-analogy` redundancy trim) — not the corpus. The other 9 GATE-EM
+topic families (75 more concepts) remain unaudited on all three axes,
+tracked in TODOS.md with the same 5-6-concept subagent-batch pattern that
+worked here as the template. `common_traps`' own prose budget (a
+standing, separate TODOS.md item) still awaits an editorial ceiling
+decision this pass didn't make. The `focus_eigen`/`emphasize`
+"second-color" question TODOS.md posed for LA hook/intuition scenes was
+answered by re-confirmation rather than new authoring: every batch found
+the existing ghost/dashed-grey trap convention already carrying that
+signal, so no new color was introduced — consistent with Vidhya
+Clarity's locked two-accent design law and the 2026-09-05 "not an Amazon
+rainbow" decision.
+
+**Tests:** none new — content-only pass, no schema or component changed.
+Backend and frontend suite counts unchanged from the prior release.
+
 ---
 
-### Linear Algebra content completion: mnemonic register, silo, and visual-density audit (2026-09-07)
+### `/investigate`: an inert intuition diagram, chat history losing focus, and a practice-explanation visual gap (2026-09-07)
+
+Three numbered asks, three screenshots: (1) `trace`'s intuition card shows
+a bare, unlabeled ellipse while its own text is explicitly about
+eigenvalues/stretch factors; (2) the AI tutor chat shows previous
+questions from a different session mixed in ahead of the current one —
+"the current question must be in focus"; (3) a practice question's
+explanation is good text but "convey more in less via other visuals."
+Each root-caused against the real code/content before any fix.
+
+**Issue 1 — `trace.intuition`'s scene had zero coordinate/color anchoring,
+confirmed against `trace.hook`.** Both atoms trace the IDENTICAL curve
+(`x_expr`/`y_expr`, same `t_min`/`t_max` — the same $A=\begin{pmatrix}5&1\\2&4\end{pmatrix}$
+ellipse). `hook.md` tags 4 of 5 beats `focus_point:true`; `intuition.md`
+tags zero — not a bug, but a real gap: the 2026-09-06 `focus_point`
+corpus audit correctly excluded every one of intuition's beats (none
+state a literal traced coordinate — they discuss abstract facts like
+"eigenvalues 6 and 3" rather than a specific point on screen at that
+progress), but that left the SAME diagram inert in exactly the atom whose
+job is to explain why those numbers matter. Fixed by giving beat 0 a real
+anchor: reused hook's own already-verified $t=0$ point, $(5,2)$ — "this
+is the same curve from the hook, starting again at $(5,2)$" — and tagged
+it `focus_point:true`. No new example invented, no numbers changed;
+verified independently ($5\cos 0+\sin 0=5$, $2\cos 0+4\sin 0=2$) before
+writing. Propagated byte-identically across `intuition.md`/`-shaken.md`/
+`-assured.md` (all three were already byte-identical fences; verified
+again after edit).
+
+**Issue 2 — real architecture bug, root-caused and fixed client-side
+without a schema change.** `chat_messages` has no thread/conversation
+concept at all: `(session_id, role, content, created_at)`, and
+`useSession()`'s session id is a 365-day anonymous DEVICE identity, not a
+per-sitting id. `GET /api/chat/:sessionId` returns every message a
+student has EVER sent (up to 100), and `ChatPage.tsx` rendered all of it,
+expanded, on every load — a brand-new question landed under however many
+old, unrelated ones from past visits. A real conversation-threading
+redesign (own browsing UI, does the LLM context span threads?) is exactly
+the kind of decision the report itself flagged for `/plan-eng-review` —
+correctly out of scope for a single `/investigate` pass. What ships now
+solves the actual complaint without one: `frontend/src/lib/chat-
+session-grouping.ts`'s `splitChatHistoryByRecency()` — a pure function
+that walks the loaded history plus an implicit trailing `now` boundary
+and finds the LAST gap exceeding 30 minutes; everything from there is
+"current" (rendered expanded, the way the page already worked),
+everything before collapses behind a one-tap "N messages from an earlier
+visit" disclosure (same `ChevronDown`/`aria-expanded` pattern as
+`ProblemStatementBlock`'s existing disclosure row). The trailing-`now`
+boundary matters and was caught by the fix's own tests: without it, a
+short, internally-tight conversation from a week ago (no gap between its
+OWN two messages) would still render as "current" on a fresh visit —
+exactly the bug this closes, just with fewer messages. Multiple old
+visits collapse into one earlier bucket; nothing is ever discarded, only
+the CURRENT run counts toward `isEmpty` (so a genuinely fresh visit, with
+only stale history sitting behind the disclosure, correctly shows the
+welcome/suggestions screen instead of nothing).
+
+**Issue 3 — investigated, confirmed as a real but genuinely new
+capability, not a quick fix.** The reported item's explanation panel
+(`pi-vector-spaces-004`, a subspace-identification MCQ) already has the
+motion/structure treatment from 2026-09-06. Grepped `data/practice-
+items/*.json` before concluding anything: zero items carry a `gif-scene`
+or `interactive-spec` block — practice-item explanations have NO visual
+mechanism at all, unlike lesson atoms which have had one since §4.15.
+Adding it is a real schema + renderer + per-item-authoring decision
+(505 committed items), sized the same as every other "mechanism doesn't
+exist yet, corpus-wide" TODOS.md entry — not attempted unilaterally here.
+Recorded with a concrete starting point (reuse `line-panels`, the exact
+scene type built 2026-09-03 for "compare N things side by side," which
+is what this item's own four candidate subsets need).
+
+**Tests:** `chat-session-grouping.test.ts` (new, 11) — every branch of
+the split logic, including the trailing-now-boundary case that a
+message-to-message-only check misses. `ChatPage.test.tsx` (new, 3) — the
+earlier-visit disclosure collapses on load, is absent when history is one
+recent run, and the welcome screen shows (not stale content) when only
+old history exists. Frontend suite 2771 → 2785/2785. `tsc --noEmit`
+clean. Content gates (`ci:interactive-specs` 424 blocks unchanged,
+`ci:variant-agreement` 610 pairs, `ci:katex-fences` 1723,
+`ci:content-integrity` 1729) clean. Backend untouched (frontend + content
+only).
+
+---
+
+### `/investigate` + `/design-review` + `/ui-ux-pro-max`: confidence-honest mastery numbers, a 1-1 hook mapping (2026-09-07)
+
+Three asks in one report, on a live Progress-page screenshot ("27% Exam
+Readiness Score", "Differential Equations 100% (1 due)") and a hook
+screenshot (the determinants "area ×3" scene): (1) "sample size is too
+low to be completed 100%. brainstorm and deduce a clear methodology"; (2)
+"in hook, the current approach is good but requires more resonance...
+draw the sequence, also explain in each step how theoretical step matches
+with the visual/hook (1-1 mapping explicitly)"; (3) "use colors/highlight/
+effects for attention grabbing and improving grasping."
+
+**Root cause (ask 1), confirmed via a dedicated Explore pass before any
+fix.** `src/api/gate-routes.ts`'s `handleGetProgress` (Progress page's
+per-topic bar) and `handleExamReadiness` (the 27% composite score) both
+computed a naive `correct/attempts` ratio, gated only by `attempts > 0` —
+1 correct out of 1 attempt reads as a confident "100%", identical to a
+topic mastered over 50 attempts. The codebase already has a family of
+ad-hoc n-thresholds tuned to their own stakes
+(`cross-exam-coverage.ts`'s `MIN_ATTEMPTS = 2`, `session-engine.ts`'s
+`STRONG_MIN_ATTEMPTS = 2`, `attempt-counterfactual.ts`'s
+`MIN_TOPIC_ATTEMPTS_FOR_SKIP_EV = 8`, `elo.ts`'s
+`ITEM_CONFIDENT_N = 100`) — but every one of them gates whether a signal
+is used at all, never what NUMBER is displayed. No Wilson-interval or
+similar small-sample correction existed anywhere in `src/`.
+
+**The methodology, deduced and shipped as a reusable module, not a
+one-off patch.** `src/lib/mastery-confidence.ts` (mirrored, per the
+established `frontend/src/lib/ledger-suggestions.ts` "kept in sync
+manually" pattern, at `frontend/src/lib/mastery-confidence.ts` for the one
+client-side aggregate — the top "Accuracy" stat tile — the backend
+doesn't already send) implements the **Wilson score interval lower
+bound**: the standard, well-studied correction for exactly this failure
+mode (the same math behind, e.g., Reddit's "best" comment ranking, per
+Evan Miller's "How Not To Sort By Average Rating"). It shrinks toward 0
+the fewer trials there are and converges to the raw ratio as trials grow
+— 1/1 now shows ~21%, 5/5 shows ~57%, 100/100 shows ~96%, never a flat
+100% off one data point. `MASTERY_MIN_ATTEMPTS_FOR_LABEL = 5` (chosen
+between the codebase's existing n=2 "soft rollup" and n=8 "real decision"
+precedents — a per-topic badge a student reads as "you know this" sits
+closer to the latter) additionally withholds confident LABEL language
+below 5 attempts; the Progress page now captions those rows "Based on N
+attempt(s) — still finding out" instead of a bare, misleadingly precise
+percentage. The same mechanism closes the mirror-image bug for free: a
+single wrong attempt no longer flags a topic "weak" with equal false
+confidence (`handleExamReadiness`'s weak-topics query moved from a raw
+SQL `HAVING` ratio to the same JS-side `wilsonLowerBound()` +
+min-attempts gate).
+
+**One field change reaches four pages.** `TopicPage.tsx`, `SpinePage.tsx`,
+and `Home.tsx` all read the same backend `topics[].mastery` /
+`TopicMastery.mastery` field the Progress page does — none needed a code
+change to inherit the fix, since the backend is the one source of truth
+for the number, not each page re-deriving it (avoiding exactly the
+"parallel truths that drift" bug class named elsewhere in this doc,
+v4.25.0).
+
+**Deliberately not migrated in this pass, named honestly in TODOS.md:**
+`cross-exam-coverage.ts`, `session-engine.ts`, and
+`attempt-counterfactual.ts` keep their own existing min-n gates on raw
+ratios — swapping all three onto the Wilson bound too is a separate,
+scoped refactor with its own blast radius, not silently folded into a bug
+fix whose report named one specific screen.
+
+**Hook resonance (ask 2) — the 1-1 mapping, derived from data every beat
+already has, not new authoring.** `Simulation.tsx`'s beat scenes already
+drove a specific visual event per beat (`emphasize`'s green payoff
+styling, `focus_eigen`/`focus_point`'s ink "look here" highlight) but the
+caption never named WHICH one a student was reading about — the exact gap
+the report pointed at on the determinants "area ×3" scene. Two additions,
+both pure functions of fields the render already branches on so they
+reach every existing and future beat-carrying scene at once, zero content
+edits: a visible **"Step X of N"** counter next to the beat bar ("draw
+the sequence" — the beat bar's fill/empty segments always encoded
+position but never as a number a student could read at a glance), pinned
+inside the same sticky diagram+controls wrapper the 2026-09-05 fix
+already established; and a small **mapping chip** above the caption —
+`beatHighlightKind(step)` returns `'payoff'` on an `emphasize` beat or
+`'focus'` on a `focus_eigen`/`focus_point` beat (`null` otherwise),
+rendered as "This is the payoff — look at the highlighted shape" (green)
+or "Look at the highlighted arrow or point" (ink). The trap beat is
+deliberately excluded from the chip — `TrapRow` ("Where marks are lost")
+already owns that moment with its own persistent row; a second "this is
+the trap" chip stacked on top would be redundant, not helpful, the same
+non-duplication discipline this file's `common_traps`/trap-row sections
+already apply elsewhere.
+
+**Colors/highlights (ask 3) — reused hues, not new ones, and said so
+explicitly.** The chip's green/ink choice IS the "use color for attention
+grabbing" ask, answered within the constraint the 2026-09-05 `/ui-ux-pro-
+max` pass already settled for this exact tension (CLAUDE.md's own
+"Amazon rainbow" section above): Vidhya Clarity's two-accent law plus the
+scoped atom-kind exception, not a new palette. Green already meant
+"payoff/mastery" in this exact scene (the unit-square fill, the eigen
+reveal's `×λ` label) and ink already meant "look here" (`focus_eigen`/
+`focus_point`'s own coordinate labels) — the fix is using those same
+meanings MORE consistently (in the caption, not just the diagram), which
+is a more defensible reading of "improve grasping" than adding a fifth
+hue that would dilute what green and ink already mean everywhere else in
+the app.
+
+**Tests:** backend +12 (`src/lib/__tests__/mastery-confidence.test.ts` —
+`wilsonLowerBound`'s monotonicity/bounds/z-score behavior,
+`topicMasteryDisplay`'s confidence-tier crossings). Frontend +18
+(`frontend/src/lib/mastery-confidence.test.ts` +5 mirror-consistency
+tests; `ProgressPage.test.tsx` +4 — the low-confidence caption
+present/absent across three cases, the Accuracy tile no longer showing a
+naive 100%; `Simulation.test.tsx` +13 — `beatHighlightKind`'s 7 branches
+including the "trap excluded" and "payoff wins over focus" cases, the
+step counter's rendering/update/single-beat-suppression, the chip's
+payoff/focus/trap-absent rendering). Full suites: backend 4720/4720 (1
+todo, 366 files), frontend 2807/2807 (102 files). `tsc --noEmit` clean
+both sides. `npm run ci` (18 gates, including `ci:la-walkthrough` 26/26
+and `ci:variant-agreement` 610 pairs, both unchanged — no content files
+touched this pass) clean.
 
 Ask: "use sonnet subagents and complete all the content required for
 linear algebra based on the latest visual and design decisions." Read as

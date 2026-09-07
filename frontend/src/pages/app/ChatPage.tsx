@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Send, BookOpen, Trash2, Upload } from 'lucide-react';
+import { Send, BookOpen, Trash2, Upload, ChevronDown } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
 import { useStorageMode } from '@/hooks/useStorageMode';
 import { useActiveExam } from '@/hooks/useActiveExam';
@@ -14,6 +14,7 @@ import { isDemoMode } from '@/lib/demoMode';
 import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 import { streamGroundedChat } from '@/lib/gbrain/client';
 import { extractErrorDetail } from '@/lib/api-error';
+import { splitChatHistoryByRecency } from '@/lib/chat-session-grouping';
 import { ChatBubble } from '@/components/ui/ChatBubble';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -85,6 +86,8 @@ export default function ChatPage() {
     : FALLBACK_SUGGESTIONS;
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [earlierMessages, setEarlierMessages] = useState<ChatMessage[]>([]);
+  const [showEarlier, setShowEarlier] = useState(false);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -108,12 +111,21 @@ export default function ChatPage() {
       .then(r => r.ok ? r.json() : { messages: [] })
       .then(data => {
         if (data.messages?.length) {
-          setMessages(data.messages.map((m: any) => ({
+          const all: ChatMessage[] = data.messages.map((m: any) => ({
             id: m.id,
             role: m.role,
             content: m.content,
             created_at: m.created_at,
-          })));
+          }));
+          // Keep the CURRENT question in focus: `chat_messages` has no
+          // conversation/thread concept (session_id is a 365-day anonymous
+          // device id, not a per-visit id), so this history can span
+          // months of unrelated questions. Only the most recent unbroken
+          // run renders expanded; everything older is one tap away, never
+          // discarded. See chat-session-grouping.ts for the root cause.
+          const { earlier, current } = splitChatHistoryByRecency(all);
+          setEarlierMessages(earlier);
+          setMessages(current);
         }
         setLoaded(true);
       })
@@ -315,6 +327,55 @@ export default function ChatPage() {
           <p style={{ margin: 0, fontSize: 'var(--text-caption2)', color: 'var(--green-ink)' }}>
             Grounded in your materials — {groundingCount} chunk{groundingCount === 1 ? '' : 's'} available
           </p>
+        </div>
+      )}
+
+      {/* Earlier conversation — collapsed by default so a new question stays
+          in focus instead of surfacing under a wall of past questions from
+          a different visit. See chat-session-grouping.ts. */}
+      {earlierMessages.length > 0 && (
+        <div style={{ margin: '0 16px 4px' }}>
+          <button
+            type="button"
+            onClick={() => setShowEarlier(v => !v)}
+            aria-expanded={showEarlier}
+            data-testid="earlier-chat-toggle"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              minHeight: 44, padding: '0 4px', width: '100%',
+              background: 'none', border: 'none', cursor: 'pointer',
+              font: 'inherit', textAlign: 'left',
+              fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)',
+            }}
+          >
+            <ChevronDown
+              size={13}
+              aria-hidden
+              style={{
+                flexShrink: 0,
+                transform: showEarlier ? 'rotate(0deg)' : 'rotate(-90deg)',
+                transition: 'transform var(--dur-base) var(--ease-standard)',
+              }}
+            />
+            <span>
+              {earlierMessages.length} message{earlierMessages.length === 1 ? '' : 's'} from an earlier visit
+            </span>
+          </button>
+          {showEarlier && (
+            <div
+              data-testid="earlier-chat-messages"
+              style={{
+                maxWidth: 720, margin: '4px auto 8px', opacity: 0.65,
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}
+            >
+              {earlierMessages.map(msg => (
+                <ChatBubble key={msg.id} from={msg.role === 'user' ? 'student' : 'tutor'}>
+                  {msg.content}
+                </ChatBubble>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

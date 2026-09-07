@@ -201,6 +201,31 @@ export function beatSegmentFill(sortedSteps: SimulationSpec['narration_steps'], 
   return Math.min(1, Math.max(0, (progress - start) / (end - start)));
 }
 
+/**
+ * The 1-1 mapping (/design-review, 2026-09-07: "explain in each step how
+ * theoretical step matches with the visual/hook explicitly"). Every beat
+ * ALREADY drives a specific visual event — `emphasize` turns on the payoff
+ * styling, `focus_eigen`/`focus_point` heavy-strokes one specific arrow or
+ * point, `trap` reveals the dashed wrong-answer ghost — but until now the
+ * caption never named which one, so a student had to infer the connection
+ * between the sentence they're reading and the pixels that just changed.
+ * This derives the label from the SAME fields the render already branches
+ * on (no new authoring, reaches every existing and future beat-carrying
+ * scene by construction), not a second guess at what's on screen.
+ *
+ * `trap` is deliberately excluded here — that beat already gets its own
+ * dedicated, persistent `TrapRow` ("Where marks are lost") once revealed;
+ * a second "this is the trap" chip on top would be redundant, not helpful.
+ */
+export type BeatHighlightKind = 'payoff' | 'focus' | null;
+
+export function beatHighlightKind(step: Beat | undefined | null): BeatHighlightKind {
+  if (!step) return null;
+  if (step.emphasize) return 'payoff';
+  if ((step.focus_eigen && step.focus_eigen.length > 0) || step.focus_point) return 'focus';
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // Linear-map scene helpers (pure, exported for tests)
 // ---------------------------------------------------------------------------
@@ -501,6 +526,9 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // in types.ts. Only ever set on a non-linear_map scene (validator refuses
   // otherwise), so it's safe to read unconditionally here.
   const focusPointActive = activeIdx !== null && sortedSteps[activeIdx]?.focus_point === true;
+  // The 1-1 mapping chip's kind for the active beat — see beatHighlightKind's
+  // doc comment above for why `trap` is excluded.
+  const activeHighlightKind = activeIdx != null ? beatHighlightKind(sortedSteps[activeIdx]) : null;
   // Engagement gate (/design-review, 2026-09-06 — see useEngagementGate.ts
   // and GuidedWalkthrough.tsx, the other consumer of the app's shared
   // advance-button convention): Continue was tappable the instant a beat
@@ -669,6 +697,21 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           <ScrubSlider progress={effectiveProgress} onScrub={scrub} label="Drag to move through the trace manually" />
         )}
 
+        {/* "Draw the sequence" (/design-review, 2026-09-07): the beat bar's
+            filled/unfilled segments always encoded position, but never as a
+            number a student could read at a glance — "am I on step 2 of 4,
+            or 3 of 5?" took counting bars. One line, derived from data the
+            bar already has (no new authoring), fixes that for every
+            beat-carrying scene at once. */}
+        {showLiveBeatUI && sortedSteps.length > 1 && (
+          <p
+            className="text-[11px]"
+            style={{ margin: 0, color: 'var(--text-tertiary)', fontWeight: 'var(--weight-semibold)' }}
+          >
+            Step {(activeIdx ?? 0) + 1} of {sortedSteps.length}
+          </p>
+        )}
+
         {showLiveBeatUI && (
           <div className="flex items-center gap-2">
             {sortedSteps.length > 1 && (
@@ -733,6 +776,38 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
               exit={{ opacity: 0 }}
               transition={{ duration: framerDuration(DUR_INSTANT_S, reducedMotion), ease: EASE_STANDARD }}
             >
+              {/* 1-1 mapping chip (/design-review, 2026-09-07): names WHICH
+                  visual event this beat's sentence is about, in the same
+                  color the diagram itself just used for it — green for the
+                  payoff (`emphasize`), ink for "look here" (`focus_eigen`/
+                  `focus_point`). Reused hues, not new ones — Vidhya Clarity's
+                  own reserved meanings (DESIGN-SYSTEM.md), not a rainbow. */}
+              {activeHighlightKind && (
+                <p
+                  className="text-[11px]"
+                  style={{
+                    margin: '0 0 4px',
+                    fontWeight: 'var(--weight-semibold)',
+                    color: activeHighlightKind === 'payoff' ? 'var(--green-ink)' : 'var(--text-primary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      display: 'inline-block',
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: activeHighlightKind === 'payoff' ? 'var(--green)' : 'var(--text-primary)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  {activeHighlightKind === 'payoff' ? 'This is the payoff — look at the highlighted shape' : 'Look at the highlighted arrow or point'}
+                </p>
+              )}
               <MarkdownAtomRenderer
                 atomId={`${resolvedId}::beat-${activeIdx ?? 0}`}
                 content={activeIdx != null ? resolveBeatText(sortedSteps[activeIdx], servedStance) : ''}

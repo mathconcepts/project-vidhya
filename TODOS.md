@@ -4,6 +4,74 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Other small-n ratio consumers not yet on the Wilson bound (2026-09-07)
+
+**Trigger:** a live-QA report names a second confidently-wrong small-sample
+number, or an operator decides consolidating these is worth the blast
+radius.
+
+`/investigate` (2026-09-07, "sample size is too low to be completed 100%")
+fixed the Progress page's per-topic mastery bar and the Exam Readiness
+Score (`src/api/gate-routes.ts`) with `src/lib/mastery-confidence.ts`'s
+Wilson-lower-bound methodology. Three other codebase modules compute a
+raw or lightly-gated success ratio for their own purposes and were
+deliberately NOT migrated in that pass, to keep the fix's blast radius
+matched to the actual bug report: `src/gbrain/cross-exam-coverage.ts`
+(`MIN_ATTEMPTS = 2`, a soft coverage rollup), `src/sessions/
+session-engine.ts` (`STRONG_MIN_ATTEMPTS = 2`, the "Strong on X" session
+highlight — already fixed once, 2026-09-06, for the "3 questions = 100%"
+class of bug, but still a fixed n-gate on a raw ratio rather than a
+confidence interval), and `src/readiness/attempt-counterfactual.ts`
+(`MIN_TOPIC_ATTEMPTS_FOR_SKIP_EV = 8`). Each has its own tuned threshold
+and its own tests; swapping all three onto `wilsonLowerBound()` is a real,
+separate refactor, not a follow-up line item.
+
+**Where to start:** `src/lib/mastery-confidence.ts`'s header comment lists
+these three sites explicitly. Each swap is small in isolation (replace a
+raw ratio + fixed-n gate with `wilsonLowerBound()`); the work is auditing
+each site's existing tests for hardcoded expected percentages that assume
+the raw ratio, not the mechanism itself.
+
+## Practice-item explanations have no visual mechanism at all (2026-09-07)
+
+**Trigger:** an operator wants to build this, or a live-QA report repeats
+the ask on a different practice item.
+
+`/investigate` (live-QA report, 3 screenshots): the vector-spaces subspace
+question's post-answer explanation (`pi-vector-spaces-004`,
+`data/practice-items/gate-ma-la-vector-spaces.json`) already routes
+through `MarkdownAtomRenderer` with `structured`/`--progressive` motion
+(the 2026-09-06 fix), but the ask was for something deeper — "convey more
+in less via other visuals," i.e. a diagram, not just well-paced text.
+Confirmed by grep before concluding anything: **zero** practice items in
+`data/practice-items/*.json` carry a `gif-scene` or `interactive-spec`
+block — practice-item `solution_steps` has no visual mechanism of any
+kind, unlike lesson atoms (`hook`/`intuition`/etc.), which have had one
+since §4.15 (v4.11.0). This is a real, new capability gap, not a
+one-file bug: adding it means a schema decision (a new field on
+`AuthoredItem`, e.g. `solution_visual`), a renderer decision (reuse
+`Simulation.tsx`/`gif-generator.ts`'s existing scene types, e.g.
+`line-panels` for a "compare these 4 candidate sets" case like this exact
+item — one point, one crossed line, one union-of-axes counterexample), and
+per-item authoring + Wolfram/hand verification for however many of the
+505 committed items get one. Sized the same as every other "mechanism
+doesn't exist yet, corpus-wide" entry in this file — not attempted
+unilaterally in a single `/investigate` pass.
+
+**Where to start:** `frontend/src/pages/app/PracticeAttemptPage.tsx`'s
+`solution_steps` render block (already `MarkdownAtomRenderer`-routed);
+`data/practice-items/*.json`'s `AuthoredItem` shape for the new optional
+field; `src/content/concept-orchestrator/gif-generator.ts`'s `line-panels`
+scene type (shipped 2026-09-03 for exactly this "compare N things side by
+side" need) as the most likely reusable renderer for this item's own
+concrete case, rather than inventing a new scene type.
+
+**Effort:** M for the schema/renderer decision + wiring; L to author
+visuals across any meaningful slice of the 505 committed items.
+**Priority:** P3 — one confirmed report, not yet known how often "the
+explanation is fine, but a visual would convey it faster" recurs.
+**Deferred from:** `/investigate`, 2026-09-07.
+
 ## Two `guided_walkthrough` worked-examples have a step-completeness gap, not an ordering one (2026-09-06)
 
 Found by the 6-batch, 80-file corpus-wide formation-order audit

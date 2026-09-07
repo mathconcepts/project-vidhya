@@ -4,6 +4,53 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.78.0] — 2026-09-07 — AI Tutor Chat: raw LaTeX, missing ELI5 register, dropped concept id
+
+No new env vars, no migrations.
+
+`/investigate` on two live-QA screenshots of the AI Tutor Chat page
+(matrix-operations tutoring reply): "eli5 language cid missing, formatting
+issue, no user centricity." Root-caused three independent, confirmed bugs
+before any fix.
+
+**Formatting — assistant replies never went through the shared KaTeX
+pipeline.** `ChatPage.tsx`'s `ChatBubble` rendered `msg.content` as a
+raw string — every other content surface in this app (trap rows,
+`guided_walkthrough` prompts, `solution_steps` panels, practice
+explanation panels) hit this exact bug class and was fixed by routing
+through `MarkdownAtomRenderer`; the chat tutor bubble was simply never
+migrated. Fixed for both the current-visit and earlier-visit message
+lists.
+
+**ELI5/Indian-English register — never wired into the live chat LLM
+path.** `src/content/prompt-registry/resources/modifiers.ts`'s
+`toneRegisterModifier` (unconditional since 2026-09-02) only ever reached
+atom-GENERATION prompts (`orchestrator.ts`'s `buildPrompt()`). The chat
+tutor's `buildSystemPrompt()` (`src/api/chat-routes.ts`) had NO register
+directive of any kind. `TONE_REGISTER_BLOCK` is now exported and imported
+directly into `buildSystemPrompt()` — one shared constant, not a second
+copy that could drift (the same "parallel truths" bug class documented at
+v4.25.0).
+
+**"cid missing" / "no user centricity" — the backend already computed the
+concept id, the frontend just never rendered it.** `handleChat()` sends a
+`type: 'reasoner'` SSE event carrying `concept: reasonerInstructions
+.selected_concept`, and a `type: 'atom'` event carrying `concept:
+atom.conceptId` — both always sent, neither ever read. `ChatPage.tsx`'s
+SSE loop only branched on `'chunk'`/`'error'`. Now captures either event's
+`concept` into a `messageConcepts` map (keyed by message id, closed over
+`assistantMsg.id`) and renders it as a small indigo label above the reply
+— the student's one missing orientation cue for "what is this answer
+actually about."
+
+**Tests:** 4 new (`ChatPage.test.tsx` — KaTeX rendering with no raw
+source in the visible `.katex-html`, concept label from both `reasoner`
+and `atom` events, no fabricated label when the backend sends none), 2
+new (`src/api/__tests__/chat-system-prompt.test.ts` — the shared register
+block is present, exactly once, never duplicated). Backend suite
+4720 → 4722 (367 files, 1 todo). Frontend suite 2812 → 2816 (102 files).
+`tsc --noEmit` clean both sides. `npm run ci` (18 gates) clean.
+
 ## [4.77.0] — 2026-09-07 — Walkthrough header overflow bug, corpus-wide; ELI5 spoon-feeding pilot
 
 No new env vars, no migrations.

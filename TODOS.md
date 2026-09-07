@@ -2129,3 +2129,38 @@ independent).
 more urgent than another without a product signal.
 **Deferred from:** content-strategy research integration, 2026-09-02, branch
 `claude/content-strategy-framework-o9afoc`.
+
+## Chat concept-id label doesn't survive a page reload
+
+**Trigger:** a student reloading the AI Tutor Chat page reports the
+concept label ("Matrix Operations" etc., shipped 2026-09-07) is gone from
+older messages even though it showed correctly a moment ago.
+
+**What:** the label is populated client-side from the `type: 'reasoner'`/
+`type: 'atom'` SSE events sent during a LIVE stream — `chat_messages`
+(the Postgres table `GET /api/chat/:sessionId` reads on load) only has
+`(session_id, role, content, metadata, created_at)`, and `handleChat()`'s
+INSERT never writes anything into `metadata`. So the concept a past reply
+was about is not reconstructable after a reload; it was real in the
+moment, then lost.
+
+**Why not fixed inline:** this pass's report was about the concept id
+being dropped from the CURRENT exchange (a live rendering bug); persisting
+it is a small but real schema-touching change (write `concept_id` into
+`chat_messages.metadata` on insert, read it back in `handleGetHistory`,
+thread it into `ChatPage.tsx`'s initial `messageConcepts` hydration from
+`GET /api/chat/:sessionId`'s response) — scoped separately so the
+reported bug's fix didn't grow into a schema change no one asked for yet.
+
+**Where to start:** `src/api/chat-routes.ts`'s `handleChat()` — the INSERT
+into `chat_messages` currently only sets `session_id, role, content`;
+`_reasonerInstructions?.selected_concept` (or the atom's `conceptId`) is
+already in scope at that point in the function and just needs threading
+into a `metadata` JSONB column. `handleGetHistory` already selects
+`metadata` — it just isn't populated yet.
+
+**Effort:** S human / S CC.
+**Priority:** P3 — cosmetic once resolved; the live-turn fix is what the
+report asked for.
+**Deferred from:** `/investigate` — AI Tutor Chat raw LaTeX/ELI5/concept-id
+pass, 2026-09-07, branch `claude/content-strategy-framework-o9afoc`.

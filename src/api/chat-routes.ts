@@ -23,6 +23,12 @@ import { tryReserveTokens, recordUsage, cancelReservation } from '../lib/llm-bud
 import { checkChatSpendCap, recordCapTrip, recordChatSpend, estimateChatCostUsd } from '../lib/chat-spend';
 import { getLlmForRole } from '../llm/runtime';
 import { resolveAtom, resolveAtomFromMessage, streamAtomContent } from './atom-responder';
+// Shared with content-generation's tone modifier (src/content/prompt-registry/
+// resources/modifiers.ts) — /investigate found the live chat LLM path had NO
+// register directive at all, unlike every atom-generation prompt. Importing
+// the same constant (not a second copy) keeps the two surfaces from drifting,
+// the exact "parallel truths" bug class this repo has hit before (v4.25.0).
+import { TONE_REGISTER_BLOCK } from '../content/prompt-registry/resources/modifiers';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 
 const { Pool } = pg;
@@ -94,7 +100,7 @@ export function setChatEmbedder(fn: (text: string) => Promise<number[]>): void {
 // Build an exam-aware system prompt for the student.
 // Reads the student's exam + prep_intent from JWT profile; falls back to a
 // generic tutor.
-async function buildSystemPrompt(req: any): Promise<string> {
+export async function buildSystemPrompt(req: any): Promise<string> {
   let examName = 'competitive exam';
   let topicList = '';
   let knowledgeContext = ''; // e.g. " (a CBSE Class 12 student)"
@@ -188,6 +194,8 @@ This student is preparing for BOTH their school board AND ${examName}.
 - **Motivation**: Encourage students and celebrate progress
 
 ${topicList ? `## ${examName} Topics\n${topicList}\n` : ''}${curriculumGuidance}${intentPolicy}
+## Tone & Register
+${TONE_REGISTER_BLOCK}
 ## Response Guidelines
 - Use LaTeX for math: inline $...$ and display $$...$$
 - Be concise but thorough — students are preparing for a competitive exam

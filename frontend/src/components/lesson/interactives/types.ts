@@ -210,6 +210,22 @@ export interface SimulationSpec {
      */
     focus_eigen?: number[];
     /**
+     * Non-`linear_map` scenes only: while this beat is active, the trace's
+     * current head point draws larger plus an $(x, y)$ coordinate label —
+     * the plain-curve counterpart to `focus_eigen` above, for the more
+     * common shape of scene (a single traced point, not several eigen-
+     * arrows) that had no "look here" mechanism at all before this
+     * (/ui-ux-pro-max, 2026-09-06: "whenever the concept is being
+     * discussed, suitable highlight/emphasis on the graph/visuals must be
+     * enabled" — `focus_eigen` only ever reached `linear_map` scenes).
+     * Reverts the instant the beat passes, same discipline as `emphasize`
+     * and `focus_eigen`. Mutually exclusive with `focus_eigen` by
+     * construction: a scene is either `linear_map` (uses `focus_eigen`) or
+     * a plain trace (uses `focus_point`), never both, so the validator
+     * refuses `focus_point` on a beat belonging to a `linear_map` scene.
+     */
+    focus_point?: boolean;
+    /**
      * Presence makes this THE trap beat. Schema-enforced: at most one beat
      * per scene may carry `trap` (design contract item 8) — the single
      * top-level `ghost` path is its counterpart, and two trap beats with
@@ -479,6 +495,17 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
           return {
             ok: false,
             reason: `simulation.narration_steps[${i}].focus_eigen must be a non-empty array of indices into linear_map.eigen[] (0..${eigenCount - 1})`,
+          };
+        }
+      }
+      if (step.focus_point !== undefined) {
+        if (typeof step.focus_point !== 'boolean') {
+          return { ok: false, reason: `simulation.narration_steps[${i}].focus_point must be a boolean` };
+        }
+        if (step.focus_point && raw.linear_map) {
+          return {
+            ok: false,
+            reason: `simulation.narration_steps[${i}].focus_point is not valid on a linear_map scene — use focus_eigen instead`,
           };
         }
       }

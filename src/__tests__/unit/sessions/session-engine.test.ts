@@ -4,15 +4,26 @@
  *
  * Tested:
  *   - rankConcepts: 4 student-state scenarios (cold-start, frustrated, normal, high-mastery)
- *   - buildSessionStat: deterministic template output
+ *   - buildSessionStat / chooseSessionHighlight: imported directly from the real
+ *     module (not reimplemented — a duplicate copy is exactly how this suite
+ *     went stale the first time, see below) — deterministic template output,
+ *     and the cumulative-mastery gate on "Strong on X" (/ui-ux-pro-max, 2026-09-06)
  *   - FRUSTRATION_STATES membership
  *
  * Not tested here:
  *   - buildSession / resumeSession (require live DB — covered by E2E)
- *   - recordAnswer / completeSession (DB-bound)
+ *   - submitAnswer / completeSession (DB-bound)
+ *
+ * rankConcepts below is still a reimplementation of the pure logic (the real
+ * one isn't exported), but buildSessionStat/chooseSessionHighlight are
+ * imported for real — an inline duplicate of THOSE previously reimplemented
+ * the OLD (buggy) same-session heuristic, so this suite kept passing even
+ * after the real function's signature and behavior changed underneath it.
  */
 
 import { describe, it, expect } from 'vitest';
+import { buildSessionStat, chooseSessionHighlight } from '../../../sessions/session-engine';
+import type { MasteryEntry } from '../../../gbrain/student-model';
 
 // ─── Inline the pure logic under test ────────────────────────────────────────
 // The session engine exports its public API but not its internal helpers.
@@ -77,17 +88,6 @@ function rankConcepts(
     })
     .filter(Boolean)
     .sort((a, b) => b.score - a.score);
-}
-
-function buildSessionStat(attempts: Array<{ concept_id: string; was_correct: boolean }>): string {
-  if (attempts.length === 0) return 'Session complete.';
-  const correctCount = attempts.filter(a => a.was_correct).length;
-  const topConcept = attempts.filter(a => a.was_correct).map(a => a.concept_id)[0] ?? attempts[0].concept_id;
-  if (correctCount === 0) {
-    return `${correctCount}/${attempts.length} today — every attempt builds pattern recognition.`;
-  }
-  const label = topConcept.replace(/-/g, ' ');
-  return `${correctCount}/${attempts.length} today. Strong on ${label}.`;
 }
 
 // ─── Test data ────────────────────────────────────────────────────────────────
@@ -185,33 +185,78 @@ describe('rankConcepts — prerequisite gating', () => {
 
 describe('buildSessionStat', () => {
   it('empty attempts returns generic line', () => {
-    expect(buildSessionStat([])).toBe('Session complete.');
+    expect(buildSessionStat([], {})).toBe('Session complete.');
   });
 
   it('zero correct returns encouragement line', () => {
     const result = buildSessionStat([
       { concept_id: 'eigenvalues', was_correct: false },
       { concept_id: 'integration', was_correct: false },
-    ]);
+    ], {});
     expect(result).toMatch(/^0\/2/);
     expect(result).toContain('pattern recognition');
   });
 
-  it('partial correct names top concept', () => {
+  it('correct answers with no cumulative mastery evidence get the honest fallback, never "Strong"', () => {
+    // Root-caused (/ui-ux-pro-max, 2026-09-06): a 3-question session with one
+    // correct answer previously said "Strong on X" off that single in-session
+    // correct answer alone — no different from a coin flip.
     const result = buildSessionStat([
       { concept_id: 'eigenvalues', was_correct: true },
       { concept_id: 'integration', was_correct: false },
       { concept_id: 'probability', was_correct: true },
-    ]);
+    ], {});
     expect(result).toMatch(/^2\/3/);
-    expect(result).toContain('eigenvalues'); // first correct
+    expect(result).not.toContain('Strong');
+    expect(result).toContain('keep going');
   });
 
-  it('all correct uses first concept', () => {
+  it('names the concept "Strong" once its cumulative mastery clears the bar', () => {
+    const masteryVector: Record<string, MasteryEntry> = {
+      eigenvalues: { score: 0.85, attempts: 6, correct: 5, last_update: '2026-09-01' },
+    };
+    const result = buildSessionStat([
+      { concept_id: 'eigenvalues', was_correct: true },
+      { concept_id: 'integration', was_correct: false },
+    ], masteryVector);
+    expect(result).toMatch(/^1\/2/);
+    expect(result).toContain('Strong on eigenvalues');
+  });
+
+  it('all correct with no mastery evidence still gets the honest fallback, not "Strong"', () => {
     const result = buildSessionStat([
       { concept_id: 'ode-first-order', was_correct: true },
-    ]);
+    ], {});
     expect(result).toMatch(/^1\/1/);
-    expect(result).toContain('ode first order');
+    expect(result).not.toContain('Strong');
+    expect(result).toContain('keep going');
+  });
+});
+
+describe('chooseSessionHighlight', () => {
+  it('returns null when no concept has any cumulative mastery evidence', () => {
+    expect(chooseSessionHighlight(['eigenvalues'], {})).toBeNull();
+  });
+
+  it('requires the minimum attempt count, not just a high score', () => {
+    const masteryVector: Record<string, MasteryEntry> = {
+      eigenvalues: { score: 0.95, attempts: 1, correct: 1, last_update: '2026-09-01' },
+    };
+    expect(chooseSessionHighlight(['eigenvalues'], masteryVector)).toBeNull();
+  });
+
+  it('requires the score to clear the mastery threshold, not just enough attempts', () => {
+    const masteryVector: Record<string, MasteryEntry> = {
+      eigenvalues: { score: 0.5, attempts: 10, correct: 5, last_update: '2026-09-01' },
+    };
+    expect(chooseSessionHighlight(['eigenvalues'], masteryVector)).toBeNull();
+  });
+
+  it('picks the highest-scoring qualifying concept among several correct ones', () => {
+    const masteryVector: Record<string, MasteryEntry> = {
+      eigenvalues: { score: 0.82, attempts: 4, correct: 3, last_update: '2026-09-01' },
+      probability: { score: 0.91, attempts: 8, correct: 7, last_update: '2026-09-01' },
+    };
+    expect(chooseSessionHighlight(['eigenvalues', 'probability'], masteryVector)).toBe('probability');
   });
 });

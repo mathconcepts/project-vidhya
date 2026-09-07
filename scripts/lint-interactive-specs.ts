@@ -107,8 +107,37 @@ function exerciseManipulable(file: string, spec: ManipulableSpec): void {
   }
 }
 
+/**
+ * Beats must be AUTHORED in ascending `at_progress` order (Sequencing Audit,
+ * /autoplan 2026-09-06 follow-up: "formation order" extended from
+ * `manipulable` outputs to every rendering mechanism). `Simulation.tsx`
+ * defensively re-sorts `narration_steps` before use (`[...steps].sort(...)`),
+ * so an out-of-order file has never crashed or misrendered — the runtime
+ * silently repairs it. That's exactly the risk: nothing before this check
+ * ever told an author (or a future generation pass) that the file they
+ * committed doesn't read, top to bottom, in the order it plays. A raw file
+ * is also what a content reviewer reads directly — an author who typed
+ * beats out of order was very likely also thinking about them out of order.
+ */
+function checkBeatOrder(file: string, spec: SimulationSpec): void {
+  const steps = spec.narration_steps;
+  if (!steps || steps.length < 2) return;
+  for (let i = 1; i < steps.length; i++) {
+    if (steps[i].at_progress < steps[i - 1].at_progress) {
+      fail(
+        file,
+        `narration_steps[${i}] has at_progress=${steps[i].at_progress}, which is LESS than ` +
+          `narration_steps[${i - 1}]'s ${steps[i - 1].at_progress} — beats must be authored in ` +
+          `ascending order (the renderer re-sorts at runtime, but an out-of-order file no longer ` +
+          `reads, top to bottom, in the order it plays)`,
+      );
+    }
+  }
+}
+
 /** Sample a simulation's parametric expressions across its declared t-range. */
 function exerciseSimulation(file: string, spec: SimulationSpec): void {
+  checkBeatOrder(file, spec);
   if (spec.linear_map) {
     // A linear-map scene has no t-sampled expressions to exercise; its one
     // semantic hazard — a claimed eigenpair that isn't one — is already

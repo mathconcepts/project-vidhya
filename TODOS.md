@@ -4,6 +4,262 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Two `guided_walkthrough` worked-examples have a step-completeness gap, not an ordering one (2026-09-06)
+
+Found by the 6-batch, 80-file corpus-wide formation-order audit
+(`docs/designs/2026-09-06-sequencing-audit-formation-order.md`) — flagged
+by the auditing subagents as out of that audit's scope (reordering
+`steps[]` can't fix a missing computation) rather than silently fixed or
+dropped:
+
+- `modules/project-vidhya-content/concepts/matrix-operations/atoms/worked-example.md`
+  — step 1's transpose answer implies the full $AB$ matrix, but no step in
+  the `steps[]` array ever derives all of $AB$'s entries; only one entry
+  is explicitly computed.
+- `modules/project-vidhya-content/concepts/partial-fractions/atoms/worked-example.md`
+  — the final step's answer uses $B=2/5$, but no step in the array
+  computes $B$ (the surrounding markdown prose derives it via cover-up at
+  $x=-3$; the JSON `steps` array skips straight to using the value).
+
+**Trigger:** a content-authoring pass touching either concept, or a
+future "does every referenced value actually get computed somewhere in
+the array" completeness gate (a different, narrower check than the
+formation-order one already shipped). Fix shape: add the missing
+computation as its own step, in the correct position, verified against
+the concept's own numbers before writing.
+
+## Ghost/real label collision when a trap is authored close to the real answer (2026-09-06)
+
+**Trigger:** a future committed `trap`/`ghost_matrix` scene where the wrong
+reading is intentionally CLOSE to the real one (a subtle, believable
+near-miss — often more pedagogically useful than a wildly wrong trap),
+and a live-QA report or design review notices the real `×λ` label and the
+new ghost coordinate label visually overlapping.
+
+**Context:** found during the `/autoplan` ghost-label edge-case audit
+(2026-09-06). Both labels are offset from the origin by a fixed 16-18px
+push along the SAME radial direction as their own tip. When ghost and
+real tips point the same direction (any eigen-anchored ghost does, since
+`ghostArrowDirs` reuses the real eigen unit directions) and their
+magnitudes are close, the two labels can end up close enough to overlap.
+No currently-committed scene triggers this — the one committed case
+(`[[2,0],[0,2]]` ghost against real eigenvalues 3 and 1) has enough radial
+separation — but nothing in the code prevents a future closer trap from
+colliding.
+
+**Why not done now:** a real fix needs actual collision detection (measure
+the rendered/projected label positions, nudge one perpendicular to its
+own radial offset when too close) — genuinely more code and more risk
+than the two fixes this pass shipped (view-box extent, italic labels),
+and there's no live instance to verify the fix against.
+
+**Fix shape when picked up:** compute both label anchor points before
+rendering either, measure their screen-space distance, and if under some
+threshold (roughly the label's own rendered width, ~60-70px at 12px
+italic), offset the SECOND (ghost) label perpendicular to its radial
+direction rather than further along it — keeps the ghost label visually
+distinct from "further along the same ray" without touching the real
+label's position at all.
+
+## `gif-generator.ts` parametric-curve/level-set scenes carry no per-point callout (2026-09-06)
+
+**Trigger:** a future live-QA report or content pass names a specific
+plotted point on one of these gif-scene types that the caption never
+labels — the same "coordinates merely mentioned, never marked" complaint
+the Reference Highlighting Framework closed for `Simulation.tsx`'s
+`ghost`/`trap` mechanism, but on the static-GIF side of the corpus.
+
+**Context:** `discrete-bars` and `line-panels` already get baked, computed
+per-bar/per-panel captions (`computeSceneLabels` in `gif-generator.ts`) —
+verified while writing `docs/designs/2026-09-06-reference-highlighting-
+framework.md`. `parametric-curve`, `level-set`, and `function-trace` get
+only a title label; no scene-authored field exists to name a specific
+point on the curve the way a bar's `labels[]` or a panel's `label` does.
+
+**Why not done now:** closing it properly needs a new authored field
+(something like `callouts: [{t, label}]`) validated the same way `eigen`
+pairs are (residual-checked against the actual curve, never trusted
+blind), PLUS re-rendering every already-committed GIF to pick it up. This
+environment has no live LLM provider key to drive a content-authoring pass
+regenerating them — the same "known-unrun" constraint noted throughout
+this doc (v4.33.0 and later).
+
+**Fix shape when picked up:** add the `callouts` field to the relevant
+`SceneDescription` variants in `gif-generator.ts`, validate each callout's
+`t` maps to a point actually on the curve (same discipline as `eigen`'s
+residual check in `types.ts`), draw it via `computeSceneLabels`'
+established pattern, then re-run `demo/generate-demo-audio.ts`'s sibling
+GIF-regeneration path (or the operator's own render pipeline) once a
+provider key exists.
+
+## `ConceptMathViz.tsx` has no highlight-while-discussed mechanism (2026-09-06)
+
+**Trigger:** a live-QA report on a `ConceptMathViz` widget (the separate,
+hardcoded 53-entry legacy system bolted onto lesson pages, pre-dating and
+architecturally disconnected from the `interactive-spec` pipeline) naming
+a coordinate its `why`/description text states but the plot never marks.
+
+**Context:** `ConceptMathViz.tsx` already has a `why` framing sentence
+(`WhyThisHelps`) but nothing like `focus_eigen`/`focus_point` — no beat
+concept exists there at all, since it's a single static (or simple-
+animated) plot per entry, not a narrated multi-beat scene.
+
+**Why not done now:** found during the Reference Highlighting Framework
+accumulation (2026-09-06), out of scope for that pass — extending it means
+either duplicating the halo-label pattern into a second, architecturally
+separate component family, or migrating `ConceptMathViz`'s content onto
+`Simulation.tsx` outright. Both are real, standalone decisions bigger than
+"add a highlight," not attempted here.
+
+## "Failed to build session" — literal 500 not conclusively reproduced (2026-09-06)
+
+**Trigger:** a production server log or a Render error report showing the
+actual stack trace / exception for `[studymate-routes] buildSession
+error:` — the one thing this investigation couldn't get without access to
+the live deployment's Postgres instance.
+
+`/ui-ux-pro-max` reported "I get failed to build session all the time."
+Investigated by building 5 sessions in a row against a fresh local DB-less
+demo (all succeeded, 201), a bad `exam_id` (correctly 422, not 500), and a
+missing `exam_id` (correctly 400, not 500) — no literal 500 reproduced.
+The Postgres-only path (`PostgresStore.createSession`/`fetchProblemsForConcept`)
+was statically reviewed for obvious defects (CHECK constraints, column
+types, FK requirements) with nothing found, but was never exercised
+against a real Postgres instance in this pass — this sandbox has no
+`DATABASE_URL` to test against. The grading bugs fixed the same pass
+(always-empty `expected_answer`, the `getSessionProblems` known-bug SQL)
+are the likeliest contributor given both complaints arrived in the same
+report, but neither is confirmed as the exact 500-triggering exception.
+Next step: reproduce with `DATABASE_URL` pointed at a real Postgres
+instance, or read the actual server-side exception from a production log.
+
+## ~~`focus_point` — corpus-wide application beyond `inner-product-spaces.hook`~~ — closed (2026-09-06)
+
+Closed by a full corpus audit the same day: every base (non-`linear_map`,
+non-variant) `hook`/`intuition`/`formal-definition` atom carrying a
+`simulation` interactive-spec was found (22 files across 20 concepts, via
+`x_expr`/`y_expr` presence + absence of `linear_map`), and each beat was
+checked with a real cross-check script — evaluate the traced curve at
+`t_min + at_progress*(t_max-t_min)` and test whether the resulting `(x,y)`
+actually appears (within tolerance) among the numbers stated in that
+beat's own text — rather than eyeballing which beats "sound like" they
+name a coordinate. `focus_point:true` landed only on beats that passed
+this check: 13 concepts gained it on 1–5 beats each
+(`cayley-hamilton.hook` 4, `cayley-hamilton.intuition` 1,
+`complex-numbers.hook` 1, `continuity.hook` 3, `definite-integrals.hook`
+5, `derivatives-basic.hook` 3, `differentiability.hook` 3,
+`gram-schmidt.hook` 3, `improper-integrals.hook` 2, `limits.hook` 4,
+`multivariable-calculus.hook` 2, `systems-of-equations.hook` 3,
+`trace.hook` 4). 7 concepts were correctly left untouched, each for a
+verified reason, not a guess: `conformal-mapping.hook`,
+`line-integrals.hook`, `ode-higher-order.hook`, `ode-second-order-homo.hook`,
+`ode-second-order-nonhomo.hook` discuss qualitative dynamics (direction
+reversal, dominance, decay/growth rate) with no beat ever naming a
+specific traced coordinate; `systems-of-equations.intuition` and
+`trace.intuition` discuss abstract matrix/rank/basis properties that never
+correspond to the literal point the curve is tracing at that instant, even
+though the same concept's `hook.md` does. Fences kept byte-identical
+across all touched stance trios (verified programmatically both before
+and after edits — the propagation script refused to touch any pair that
+wasn't already byte-identical, and none were found).
+
+## `at_progress` sometimes doesn't match the x-value its own beat text states
+
+**Trigger:** the next content-authoring pass on any of the four concepts
+named below, or a dedicated corpus sweep for the same defect class on
+other plain-curve scenes not yet checked this way.
+
+Discovered as a side effect of the `focus_point` audit above: the
+verification script (evaluate the curve at each beat's own `at_progress`,
+compare against numbers the beat text states) surfaced beats where the
+STATED x-value and the value `at_progress` actually produces disagree —
+not a rounding difference, a real mismatch. Confirmed in
+`improper-integrals.hook` (beat text says "By x=2" / "At x=4.5" at
+progresses that actually evaluate to x≈2.75 / x≈5.2),
+`multivariable-calculus.hook` (beat text says "At x=0" / "At x=1" at
+progresses that actually evaluate to x≈-0.4 / x≈0.8), `continuity.hook`
+(one beat says "x=1.96" where the real value is x≈1.82), and
+`systems-of-equations.hook` (one beat says "At t=0, the crossing lands at
+(1.5,1.5)" at a progress that actually evaluates to (1.35,1.65) — off by
+one crossing-family-parameter value, likely a rounding slip when picking
+`at_progress` by hand). None of these were fixed here — doing so means
+either recomputing each affected beat's `at_progress` to the value that
+actually produces the stated x (a content-pacing change, not a highlight
+annotation) or rewriting the beat's stated numbers to match what
+`at_progress` really produces; either is a real editorial call this pass
+correctly declined to make unilaterally while just adding a highlight
+field. The beats affected were simply excluded from `focus_point` rather
+than tagged with a coordinate that would visibly contradict its own prose.
+A script skeleton for finding more instances: evaluate `x_expr`/`y_expr`
+at `t_min + at_progress*(t_max-t_min)` per beat and diff against every
+number the beat's `text`/`text_shaken`/`text_assured` state, the same
+check the `focus_point` audit above used — just re-run it looking for
+mismatches instead of matches.
+
+## Corpus-wide `mnemonic` ELI5/register audit (2026-09-06 live-QA)
+
+**Trigger:** the next content pass with subagent-batch capacity, same
+5-6-concepts-per-batch pattern used for `common_traps`/hook/intuition
+elsewhere in this file.
+
+Live-QA report (screenshots) flagged `eigenvalues.mnemonic` as too dense for
+a tier-3 engineering-college student — phrases like "solve the pair by
+inspection," "factor cleanly," and an unglossed "characteristic polynomial"
+assume more fluency than the ELI5/Indian-English tone directive (CLAUDE.md,
+2026-09-02) targets. Fixed as a single concrete instance this pass
+(`eigenvalues/atoms/mnemonic.md` rewritten: glossed jargon, simpler
+sentence structure, same "SAD" mnemonic device kept). **Not** audited: the
+other 100 concepts' `mnemonic` atoms almost certainly have the same
+register gap in places — `mnemonic` was the ONE atom type still unbudgeted/
+unaudited as of the 2026-09-03 "Content delivery: first-principles review"
+section in CLAUDE.md (that review flagged `common_traps` as unbudgeted;
+`mnemonic`'s specific register-density question was never separately
+measured). A corpus sweep should read each concept's `mnemonic.md` (+
+stance variants) against the tone directive and rewrite where jargon is
+unglossed, following the exact pattern this pass demonstrated.
+
+## Same-day: "matrix crossing boundary" (issue #2) resolved as the same bug as issue #1
+
+**Closed 2026-09-06.** A live-QA report bundled two phrasings — "readability
+in the scroll after scrolling above" and "matrix crossing boundary,
+formatting poor and unintuitive" — that read as two defects. Investigated
+live via a local Playwright session against the actual demo (seeded,
+booted, logged in as a demo student, navigated to
+`null-space-column-space`'s hook card): the ONLY visual defect reproducible
+in the SVG/sticky-diagram region was the sticky wrapper's translucent
+background (root-caused: `var(--surface-fill)` is a 12%-opacity token, not
+opaque) letting scrolled-under caption text and the play/pause/reset icons
+bleed together — exactly "crossing" each other's visual boundary. Fixed in
+`Simulation.tsx` (swap to the genuinely opaque `var(--surface-card)`,
+locked with a new regression test). No second, independent boundary-
+clipping defect was found in the diagram's own arrow/label rendering after
+live verification — `linearMapViewBox()`'s ×1.14 padding and the label-
+offset math were checked against this concept's real matrix and stayed
+safely inside the SVG's drawable area. If a FUTURE report describes
+labels/arrows literally clipped at the SVG edge (not a translucency
+symptom), that would be a different, still-open bug — re-verify live
+before assuming this entry covers it.
+
+## Corpus-wide "1000x more resonant" content upgrade — scope note
+
+The 2026-09-06 live-QA report's closing ask ("/design-review for all
+topics… rethink how the content needs to be… resonant storytelling,
+attention grabbing… 1000x improved") describes the same class of
+corpus-wide initiative as the "Corpus-wide hook/intuition/mnemonic motion
+upgrade" entry below — sized at the same order of magnitude (every atom,
+every one of 101 concepts, every one of 10 topic families) and therefore
+carrying the same honest scope note: not attempted in one pass. This
+session closed the SPECIFIC reported instances (see CLAUDE.md's dated
+section for the concrete list: sticky-diagram opacity bug, two silo-content
+`intuition` atoms given real resonance-beat scenes, one `visual_analogy`
+wall-of-text rewritten with real motion, one `mnemonic` register pass, one
+`intuition` atom's storytelling upgraded) using the same "verify root
+cause, reuse the concept's own already-verified numbers, propagate
+byte-identically across stance variants" discipline as every prior pass in
+this file. The entry below is the standing worklist for the broader
+initiative — extend it with today's confirmed instances rather than
+opening a parallel tracking entry.
+
 ## ~~Corpus-wide `linear_map` eigenvector-derivation audit~~ — closed, made unnecessary
 
 **Closed 2026-09-06.** The prior entry here proposed a manual subagent-batch

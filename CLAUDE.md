@@ -3910,6 +3910,560 @@ change — the two hand-authored `why` fields from the prior pass are
 untouched, so no fence edits, so `npm run ci`'s content gates are unchanged
 in count). `tsc --noEmit` clean. `npm run ci` (18 gates) clean.
 
+### `/investigate`: sticky-diagram opacity bug + two silo intuition atoms fixed with real resonance scenes (2026-09-06)
+
+A live-QA report bundled 6 screenshots into 7 numbered asks plus a
+closing "make everything 1000x better" ask. Root-caused each reported item
+against a LIVE local render — seeded the demo, booted backend + frontend,
+logged in via `/demo-login` (setting `localStorage.vidhya.demo_welcomed`
+to skip the one-time welcome redirect), and drove a headless Playwright
+session through the actual concept pages — rather than guessing from the
+screenshots alone. Screenshots turned out to span two concepts:
+`null-space-column-space` (issues 1-4) and `eigenvalues` (issues 6-7,
+literally labeled "REVISIT #21"/"REVISIT #17" in the UI's own SR-revisit
+badge).
+
+**Issue 1 ("readability in the scroll") — root cause found and fixed.**
+`Simulation.tsx`'s beat-carrying sticky wrapper (shipped 2026-09-05, its
+own doc comment already flagged an UNVERIFIED risk that sticky positioning
+might silently degrade) used `background: var(--surface-fill)` — Apple's
+"secondarySystemFill" token, `rgba(120,120,128,0.12)`, only 12% opaque.
+That token is designed to sit as a subtle tint on an ALREADY-opaque card
+(a button, a chip) — never to BE the opaque surface a sticky overlay needs
+to occlude the content scrolling beneath it. As the page scrolled, the
+pinned diagram + beat-bar + play/pause/reset + scrub slider let the
+caption text scrolling underneath bleed through, producing exactly the
+double-exposed, unreadable overlap in the screenshot. Fixed with the
+genuinely opaque `var(--surface-card)` token — the SAME solid token the
+card's own outer wrapper already uses (`#ffffff` / `#1c1c1e`) — locked with
+a new regression test asserting the wrapper's background can never regress
+back to the translucent fill token. Verified live, pre- and post-fix, via
+the Playwright session: post-fix, the diagram, controls, and caption
+render with no overlap at every scroll position tested.
+
+**Issue 2 ("matrix crossing boundary") resolved as the SAME bug as issue
+1, not a second one.** After the fix, the live render showed no evidence
+of a second, independent defect in the diagram's own arrow/label
+rendering — `linearMapViewBox()`'s ×1.14 padding and the eigen-label
+offset math were checked against this concept's real matrix and stayed
+comfortably inside the SVG's drawable area. The "crossing boundary"
+phrasing is treated as describing the same overlap issue 1 named
+differently, not a distinct clipping bug — see TODOS.md for what would
+reopen this (a future report describing labels literally clipped at the
+SVG edge, not a translucency symptom).
+
+**Issue 4 ("in intuition — animation was not displayed") — confirmed live,
+root cause was a genuine content gap, not a rendering bug.**
+`null-space-column-space.intuition`'s prose says "exactly like the arrow
+that shrank to the centre dot in the animation," but the atom itself
+carries ZERO interactive-spec block — a leftover from the 2026-09-04
+silo-audit pass, which gave 19 concepts a prose-only fix (thread the
+hook's own numbers into the prose) and only 5 a brand-new resonance-beat
+scene. `rank-nullity.intuition` had the identical gap (also prose-only in
+that same pass). Both fixed the same way: a real predict-observe-explain
+`simulation` scene, reusing each concept's own hook matrix/eigen data
+verbatim (no new math) — `null-space-column-space`: $C=\begin{pmatrix}1&-1\\-1&1\end{pmatrix}$,
+testing $(1,1)$ (dies) vs $(1,-1)$ (survives, doubled); `rank-nullity`:
+$A=\begin{pmatrix}1&2\\0.5&1\end{pmatrix}$, testing $(2,-1)$ (crushed) vs
+$(1,0.5)$ (survives). Each scene's own `why` line states the point
+directly: naming which vector dies/survives IS the null-space/column-space
+(or rank/nullity) split, read as a definition instead of a re-demonstration.
+
+**Issue 6 ("revisit #21", eigenvalues intuition — needs storytelling) —
+confirmed live: the existing `manipulable` slider widget was real but
+purely numeric, no narrative.** Added a predict-observe-explain scene
+ahead of it, reusing the hook's own matrix $[[2,1],[1,2]]$ and testing
+THREE named vectors: $(1,0)$ (not an eigenvector — direction changes),
+$(1,1)$ ($\lambda=3$), $(1,-1)$ ($\lambda=1$) — the exact three vectors
+the `shaken` stance variant's prose already walked through statically;
+that prose is now the register-appropriate narration for the animated
+version of the same three vectors, not a duplicate. The manipulable widget
+stays, unchanged, as the follow-up open-ended exploration tool once the
+fixed-example story lands.
+
+**Issue 7 ("revisit #17", eigenvalues visual_analogy) — closed a silo,
+not just "make it better."** The atom's `gif-scene` traced an unrelated
+$y=2x$/$\lambda=2$ example that never connected to the hook's own matrix
+or eigenlines — read both files side by side before touching either,
+confirming the mismatch rather than assuming it. Rewritten to trace the
+hook's REAL eigenline $y=x$ ($\lambda=3$, matching the newly-added
+intuition scene) — same numbers now threaded through hook → intuition →
+visual_analogy for this concept.
+
+**Issue 3 (visual — long static text, no motion) — `null-space-column-
+space.visual_analogy` ("The Printing Press Analogy") had literally zero
+gif-scene or interactive-spec, confirmed by reading the file before
+assuming.** Rewrote reusing the concept's own matrix and a real
+`function-trace` of the column-space line ($y=-x$), trimming the prose
+the animation now carries.
+
+**Issue 5 (region-specific ELI5 too weak — "a tier-3 engineering college
+student will not understand this") — one concrete instance fixed, corpus
+sweep honestly deferred.** `eigenvalues.mnemonic` was verified against the
+live file (dense phrasing: "solve the pair by inspection," "factor
+cleanly," an unglossed "characteristic polynomial") and rewritten with
+simpler, glossed language while keeping the same "SAD" mnemonic device.
+`mnemonic` was the one atom type never separately register-audited in the
+2026-09-03 "Content delivery: first-principles review" (which flagged
+`common_traps` as unbudgeted, not `mnemonic`'s register) — TODOS.md now
+carries the standing entry for a corpus sweep.
+
+**Deliberately not attempted: the closing "1000x, every topic" ask.** Sized
+at the same order of magnitude as the standing "Corpus-wide hook/
+intuition/mnemonic motion upgrade" TODOS.md entry — given the same honest
+scope note (see TODOS.md) rather than a fabricated blanket claim of
+completion.
+
+**Method used throughout, not assumed:** a local demo stack (seeded,
+backend + frontend booted, Playwright driving a real headless Chromium)
+reproduced every reported screenshot's exact scene before any fix was
+written, and re-verified the fix live afterward — the first time this
+particular investigation used a live browser rather than static code
+reading alone, per the environment's pre-installed Chromium.
+
+**Verified against the real gates.** `npm run ci` (18 gates, including
+`ci:la-walkthrough` 26/26 and `ci:variant-agreement` 610 pairs) clean.
+`ci:interactive-specs` 424 blocks (+6 — the two new intuition scenes, 3
+stance files each). `ci:katex-fences` (1723), `ci:content-integrity`
+(1729) unchanged. Full suites: backend 4701/4701 (365 files, 1 todo),
+frontend 2756 → 2757/2757 (+1, the sticky-background regression test).
+`tsc --noEmit` clean both sides.
+
+### `/ui-ux-pro-max`: Studymate grading was structurally broken, `focus_eigen` generalized, inner-product-spaces fixed (2026-09-06)
+
+Four asks: highlight/emphasize graph visuals while a specific value is
+being discussed, for every topic, not just where `focus_eigen` already
+reaches; "student competency evaluation is completely wrong — how can you
+determine competency with just 3 questions and mark them 'strong'?
+`/autoplan` a robust foolproof mechanism"; "I get failed to build session
+all the time"; and inner-product-spaces' visual card reading as cramped,
+tiny, non-attention-grabbing.
+
+**Competency mislabeling was the visible symptom of a much deeper bug.**
+`buildSessionStat`'s "Strong on X" line fired the instant a single
+same-session answer landed correct — no different from a coin flip.
+Fixed first, cheaply: `chooseSessionHighlight()` (`session-engine.ts`)
+gates it on the SAME cumulative-mastery bar `cross-exam-coverage.ts`
+already uses elsewhere (`score >= 0.8`, `attempts >= 2`) rather than
+inventing a third pair of numbers. But asking "how could 3 questions ever
+look like mastery" led further: the entire "Anytime Studymate" 15-min
+session mode's grading was non-functional, not just mislabeled.
+
+`h_answer` (`studymate-routes.ts`) required and trusted a client-supplied
+`was_correct: boolean` verbatim — a client-trusted-grading hole, the same
+vulnerability class the mock-exam IDOR and `/api/practice/item/:id`'s
+render-safe-view fixes closed elsewhere in this doc, never closed here.
+Worse: on the DB-less demo path, the answer key it was nominally checked
+against was UNCONDITIONALLY EMPTY. `FlatFileStore.fetchProblemsForConcept`
+(`session-store.ts`) read `expected_answer`/`answer` straight off
+`content-bundle.json` rows — but that bundle deliberately strips the
+answer key for practice-items-sourced problems (the v4.36.0 fix
+documented earlier in this doc), and this flow was never updated to
+account for it. Confirmed via direct testing: every practice-items-sourced
+Studymate question graded off an empty string, always wrong regardless of
+the student's answer, while the client's own (also-wrong) verdict silently
+overrode the server's non-check anyway.
+
+**Fixed at the source.** `resolveRealAnswer()` (new, `session-store.ts`)
+resolves a genuine answer: PYQ-sourced bundle rows keep `correct_answer`/
+`options` inline (PYQ answers are already public knowledge, matching this
+doc's existing reasoning for `pyq-bank.json`), so those resolve directly;
+practice-items-sourced rows fall back to `data/practice-items/*.json` via
+the already-existing `loadAuthoredItemsRaw()` seam (the same one the admin
+review queue uses to show a real answer key). A candidate with no
+resolvable answer anywhere is refused outright — never served as an
+always-ungradable question. `PostgresStore.getSessionProblems`'s
+self-documented "KNOWN BUG" SQL (querying `pq.question`/
+`pq.expected_answer`, columns that don't exist — real ones are
+`question_text`/`correct_answer`, the same wrong names `fetchProblemsForConcept`
+had before an earlier T3 fix) is fixed too, with `pq.options` now
+threaded through for resumed/graded MCQ rows.
+
+`session-engine.ts`'s new `submitAnswer()` is the ONLY place `was_correct`
+may ever be decided: it grades server-side against the row the SESSION
+ITSELF stored at build time (never anything client-supplied), records the
+verdict, and returns it. `h_answer` no longer accepts a `was_correct`
+field at all; `h_build`/`h_resume` strip `expected_answer` from every
+problem before it ever reaches the client — the answer key must never be
+visible before the student answers.
+`StudymateSessionPage.tsx`'s `submitAnswer` stopped computing `correct`
+client-side entirely: it POSTs only `user_answer`, and reads
+`was_correct`/`expected_answer`/`options` back from the server's response
+for the result banner. Verified live against a fresh local demo: a
+practice-items-sourced MCQ graded correctly server-side, a wrong free-text
+answer graded wrong, and a spoofed `was_correct: true` in the request body
+was silently ignored — the server's own computed verdict always won.
+
+**"Failed to build session" — investigated, named honestly as
+unconfirmed.** 5/5 session builds succeeded against the DB-less demo path
+across distinct session ids; a bad `exam_id` correctly returned 422 (not
+500); a missing `exam_id` correctly returned 400 — no literal 500
+reproduced in this sandbox, which has no access to whatever Postgres
+instance backs the live deployment. The concrete grading bugs above are
+the likeliest contributor given both complaints arrived in the same
+report, but this is NOT claimed as the confirmed root cause of the
+specific 500 — a genuine gap, tracked in TODOS.md, not silently closed.
+
+**`inner-product-spaces.visual_analogy`** carried a real authoring bug
+alongside the reported density complaint: its `gif-scene`'s
+`t_range: [0, 2]` sweeps only ~114° of a circle (2 radians, not the
+default full `[0, 2π]`) while the title claims "rotating vector v" — a
+partial arc where a full turn was clearly intended. It also used
+`u=(3,0)`, disconnected from the concept's own hook, which already
+established `u=(1,0)`. Rewritten: full-turn sweep, `u=(1,0)` matching the
+hook, and the dense three-domain analogy paragraph (vectors, functions,
+matrices crammed into one sentence each) split into a scannable per-domain
+list — same formulas, ELI5 framing, real motion via the existing
+`--structured` list-row stagger mechanism.
+
+**`focus_eigen` generalized to plain-curve scenes.** The 2026-09-04
+"highlight the coordinate being discussed" mechanism only ever reached
+`linear_map` (eigen-arrow) scenes — every OTHER simulation shape (a bare
+parametric trace, `x_expr`/`y_expr`/`t_min`/`t_max` — the more common
+scene across the corpus, including `inner-product-spaces.hook` itself) had
+no highlight mechanism at all, so a beat naming a specific coordinate
+("$v=(0,1)$ is perpendicular...") drew the trace's head point identically
+whether or not that exact moment was under discussion. `focus_point?:
+boolean` (new, additive field on `narration_steps[]`, `types.ts`) is the
+plain-curve counterpart: while the active beat carries it, the head point
+draws at radius 6 instead of 4 plus an $(x, y)$ coordinate label (same
+halo-stroke treatment as `focus_eigen`'s label — ink, not green, since
+nothing here is a confirmed payoff), reverting the instant the beat
+passes. Validator refuses `focus_point:true` on a `linear_map` scene —
+`focus_eigen` is the dedicated mechanism there, and mixing both would be
+ambiguous. Wired into `inner-product-spaces.hook`'s 5 coordinate-naming
+beats (all three stance files, fence kept byte-identical via the
+established `re.DOTALL` Python propagation script, never `grep -o`).
+
+**Deliberately not attempted in this pass:** a corpus-wide sweep applying
+`focus_point` to every OTHER plain-curve scene that names a coordinate
+pre-reveal (this pass wired the one reported concept's hook only, plus
+shipped the reusable mechanism) — tracked in TODOS.md, same pattern as
+every other "mechanism shipped, corpus-wide application is the next wave"
+entry in this doc.
+
+**Tests:** backend 4701 → 4708 (365 files, +7: 2 new
+`session-store.test.ts` cases resolving/refusing real answers, 5 new
+`session-engine.test.ts` cases for `chooseSessionHighlight`'s cumulative
+gate — which now imports the REAL `buildSessionStat`/`chooseSessionHighlight`
+from `session-engine.ts` instead of a stale inline duplicate, closing the
+exact drift risk that let the old buggy heuristic go untested for so
+long). Frontend 2757 → 2765 (+8: 5 `focus_point` validator tests, 1
+`Simulation.tsx` render test, 2 new `StudymateSessionPage` tests proving
+the server's verdict wins even when it disagrees with a naive client
+compare, and that `was_correct` is never sent in the request body; 2
+existing `StudymateSessionPage.test.tsx` mocks updated to the new
+`/answer` response shape). `tsc --noEmit` clean both sides. `npm run ci`
+(18 gates) clean — `ci:interactive-specs` 424 blocks (unchanged, no new
+fence), `ci:variant-agreement` 610 pairs, `ci:la-walkthrough` 26/26,
+`ci:gif-scenes` 89 render clean (+1), `ci:content-integrity` 1729,
+`ci:katex-fences` 1723, all unchanged besides the one edited file.
+Verified live end-to-end against a fresh local demo (seed, boot, curl),
+not just unit-tested.
+
+**Incidental fix, caught by the gate itself.** Adding an import to
+`session-store.ts` shifted `PostgresStore`'s constructor down one line;
+`ci:connection-budget`'s line-keyed allowlist entry (a deliberate ratchet,
+not a bug) failed as designed and was updated per its own established
+convention of recording each shift's cause inline.
+
+### `focus_point` extended corpus-wide, verified against the real traced curve (2026-09-06)
+
+Direct follow-up to the `/ui-ux-pro-max` pass above: "extend this to all
+topics." That pass shipped `focus_point` (the plain-curve counterpart to
+`focus_eigen`'s "highlight the coordinate under discussion") on exactly
+one concept, `inner-product-spaces.hook`. This pass closes the corpus-wide
+gap the prior pass's own TODOS.md entry named.
+
+**Scoped the real worklist first, not guessed.** Every base (non-variant,
+non-`linear_map`) `hook`/`intuition`/`formal-definition` atom carrying a
+`simulation` scene with `x_expr`/`y_expr` was enumerated: 22 files across
+20 concepts (`inner-product-spaces` already done, `ode-first-order`'s
+lone match has zero `narration_steps` — a static trace, nothing to tag).
+
+**Method: verify against the actual traced curve, not eyeball the
+prose.** A cross-check script evaluates each scene's `x_expr`/`y_expr` at
+`t_min + at_progress·(t_max−t_min)` for every beat, then tests whether
+the resulting `(x, y)` genuinely appears (within tolerance) among the
+numbers the beat's own text states. This caught real subtleties a
+manual read would have missed or gotten wrong:
+
+- `cayley-hamilton.intuition` and `trace.intuition` both discuss "eigen-
+  DIRECTIONS" (e.g. "the arrow swung to $(1,1)$") while the scene actually
+  traces the OUTPUT of $A$ applied to those directions — at that beat's
+  progress the real traced point is $(1.414,1.414)$ (already scaled by
+  the eigenvalue), not $(1,1)$ as stated. Tagging these would show a
+  label contradicting the prose it sits next to. Left untouched — the
+  same concepts' `hook.md` files, which correctly discuss the OUTPUT
+  value directly, got tagged normally.
+- `definite-integrals.hook`'s beats state a "running total" (a cumulative
+  integral) alongside the traced curve's own y-value (the instantaneous
+  rate, $\sin t$) — two different numbers that happen to look similar in
+  places. The script separates them correctly: it matches on the RATE
+  value the beat also states (which does equal the traced y), not the
+  running-total number (which doesn't correspond to any point on the
+  curve at all).
+- Three concepts (`improper-integrals`, `multivariable-calculus`,
+  `continuity`) and one crossing-value in `systems-of-equations` turned
+  up a genuine, previously-unknown authoring bug: the beat's stated
+  x-value (or crossing point) doesn't match what its own `at_progress`
+  actually produces on the curve — e.g. `improper-integrals.hook` says
+  "By $x=2$" at a progress that evaluates to $x≈2.75$. Not a coincidence
+  — confirmed by recomputing the map by hand for several beats. These
+  specific beats were excluded from `focus_point` rather than tagged with
+  a contradicting label; fixing the `at_progress` values themselves is a
+  content-pacing edit, a distinct editorial call this pass declined to
+  make unilaterally while only adding a highlight field. Tracked in
+  TODOS.md with the script pattern to find more instances corpus-wide.
+
+**Result: 13 concepts gained `focus_point` on 1–5 beats each**
+(`cayley-hamilton` hook +4/intuition +1, `complex-numbers` +1,
+`continuity` +3, `definite-integrals` +5, `derivatives-basic` +3,
+`differentiability` +3, `gram-schmidt` +3, `improper-integrals` +2,
+`limits` +4, `multivariable-calculus` +2, `systems-of-equations` +3,
+`trace` +4) — every addition backed by a real numeric match, not a
+guess. **7 concepts correctly left untouched**, each independently
+verified to have no beat naming a literal traced coordinate:
+`conformal-mapping`, `line-integrals`, `ode-higher-order`,
+`ode-second-order-homo`, `ode-second-order-nonhomo` (all discuss
+qualitative dynamics — direction reversal, term dominance, decay/growth
+rate — never a specific point), `systems-of-equations.intuition` and
+`trace.intuition` (abstract rank/basis discussion, decoupled from the
+literal traced point). Fences kept byte-identical across every touched
+stance trio — verified programmatically both before AND after editing,
+via the same propagation-refuses-on-mismatch discipline established
+2026-09-04.
+
+**Verified against the real gates.** `ci:interactive-specs` (424 blocks,
+unchanged — no new fence, only new fields inside existing ones),
+`ci:variant-agreement` (610 pairs), `ci:katex-fences` (1723),
+`ci:content-integrity` (1729), `ci:la-walkthrough` (26/26) all clean.
+Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726 assertions) and
+`Simulation.test.tsx` (88 tests) both pass against the edited content —
+content-only pass, no new test cases, no test-count change. Backend
+untouched.
+
+### Reference Highlighting Framework: the ghost/trap value label gap, closed (2026-09-06)
+
+`/ui-ux-pro-max`, direct follow-up to the `focus_point` corpus-wide pass
+above: "coordinates numbers/references shall be suitably highlighted or
+marked in addition to be just merely mentioned... accumulate all such
+attention points and derive a robust framework for all topics." Full
+detail: `docs/designs/2026-09-06-reference-highlighting-framework.md`.
+
+**Accumulated, not re-derived per mechanism.** Every existing "look here"
+mechanism (`focus_eigen`, `focus_point`, the eigen reveal's green `×λ`,
+`area_label`) independently arrived at the same three rules — worth
+locking down once: (1) any authored text naming a literal number/
+coordinate that corresponds to something drawn must mark that thing for
+exactly the period the text is active; (2) the visual language is a
+heavier stroke + halo-backed label, colored by what it means (ink = "look
+here, unconfirmed", green = "confirmed payoff", and now grey = "this is
+the wrong one"); (3) it reverts the instant the narration moves on, except
+the reveal and the trap row, which are sticky because they state a
+standing fact rather than a fleeting beat. Two `/ui-ux-pro-max` domain
+searches grounded this rather than asserting it from memory: the UX
+domain's "current state must be visually indicated" (Active State,
+severity Medium) and the chart domain's anomaly-marker-plus-annotation
+pattern (marker + text callout) — confirming the existing halo-label
+language was already the right shape to extend.
+
+**The one real gap the accumulation found: the trap's ghost path/arrows
+drew the WRONG answer with no coordinate on it.** `trap.avoid` names a
+specific wrong number ("students read the diagonal as the eigenvalues",
+"students read the 2 as scaling both axes") but the dashed grey ghost line
+`Simulation.tsx` draws once the trap fires never labeled it — the one
+place in the file that drew a value while leaving it merely implied.
+Fixed as two additions, both computed from data every existing scene
+already carries (no new schema field, no content re-authoring — reaches
+every `trap`/`ghost` scene, present and future, by construction):
+- Plain-curve `ghost`: its endpoint (the ghost is a static full reveal
+  across `[t_min, t_max]`, not progress-linked, so the endpoint is its one
+  stable point) gets the same halo-label treatment as the real trace's
+  head, in grey (`var(--grey-6)`, matching the ghost's own dashed stroke)
+  rather than the "look here" ink or the reveal's green.
+- `linear_map` `ghost_matrix` arrows: each tip labeled with its coordinate,
+  ONLY when the scene declares real `eigen` directions — the 4-cardinal
+  fallback (matrix-operations' AB-vs-BA class, no eigen at all) has no
+  specific coordinate its trap is about, so labeling those four would be
+  noise with nothing in the narration to anchor it.
+
+**Scope, named honestly.** Two more real gaps surfaced and were NOT
+closed: `gif-generator.ts`'s parametric-curve/level-set/function-trace
+scenes carry no per-point callout at all, unlike `discrete-bars`/
+`line-panels`'s already-baked captions — closing it needs a new authored
+field plus re-rendering every committed GIF, and this environment has no
+live LLM provider key to drive that (the same "known-unrun" constraint
+noted elsewhere in this doc). `ConceptMathViz.tsx` (the separate,
+hardcoded 53-entry legacy widget system) has a `why` framing sentence but
+no highlight-while-discussed mechanism at all. Both tracked in TODOS.md.
+
+**Tests:** `Simulation.test.tsx` gained 2 new cases (ghost endpoint label,
+no labels on the 4-cardinal fallback) plus 2 assertions added to the
+existing eigen-reveal test (the eigen-anchored ghost tip labels). Frontend
+suite 2765 → 2767. Backend untouched, 4708/4708 (365 files, 1 todo).
+`tsc --noEmit` clean both sides.
+
+### `/autoplan`: auditing the ghost labels for where they could themselves hinder learning (2026-09-06)
+
+Direct same-day follow-up to the Reference Highlighting Framework pass
+above — audit every place the freshly-shipped ghost coordinate labels
+could go wrong and actively work against a student, not just confirm they
+render. Full detail appended to
+`docs/designs/2026-09-06-reference-highlighting-framework.md`.
+
+**Real, confirmed bug — the SVG viewBox never accounted for the ghost's
+own extent.** `linearMapViewBox(matrix)` sized the box from the real
+matrix's image of the unit circle alone; `autoViewBox(points)` sized it
+from the real trace's sampled points alone. Neither ever looked at
+`ghost_matrix` or the sampled `ghost` path. A trap whose wrong reading
+scales the answer up or down from the real one — the common, useful trap
+shape — draws its ghost arrow, path, and now its coordinate label partly
+or entirely OUTSIDE the visible viewBox, which SVG clips by default: in a
+real browser the correction is invisible, worse than no correction at
+all. Confirmed reachable via this repo's own `BEAT_SPEC` test fixture
+(real trace bounded to `[0,1]×[0,1]`, ghost a radius-2 circle) — the
+ghost's endpoint at `(1.081, 1.683)` falls outside the `~[-0.1, 1.1]` box
+the real trace alone would produce. The PRIOR pass's own test for this
+exact label passed anyway, because it only checked the DOM text node
+exists — jsdom never rasterizes or clips anything, so a bug that is
+purely visual-clipping can't be caught by presence-only assertions.
+Fixed by folding the ghost's extent into both view-box computations
+(`linearMapViewBox`'s new optional `ghostMatrix` param, `autoViewBox`'s
+new optional `ghostPoints` param — additive, backward-compatible,
+existing single-arg call sites unaffected). The new regression test
+checks the label's actual projected pixel position, not just presence.
+
+**Real, addressed accessibility gap — color was the only differentiator
+between "look here" and "this is wrong."** `focus_eigen`/`focus_point`
+render in ink, the reveal in green, the ghost labels in grey — nothing
+OTHER than hue told a viewer with reduced color perception which was
+which (WCAG 1.4.1, use of color). The ghost ARROWS already had a second
+channel (dashed vs. solid stroke); the label TEXT did not. Fixed cheaply:
+every ghost coordinate label now renders in italic — reads as
+"hypothetical, not the real answer" independent of color perception.
+
+**Real edge case, named rather than fixed.** A trap authored to be
+SUBTLE (ghost_matrix close to the real matrix — often the more
+pedagogically useful trap) can put the real `×λ` label and the new ghost
+label close enough to visually overlap, since both are offset from the
+origin along the same radial direction as their own tip. No committed
+scene triggers this today; a real fix needs actual collision detection,
+which is bigger than this pass's two fixes and has no live instance to
+verify against. Tracked in TODOS.md with the concrete fix shape.
+
+**Considered and correctly not changed:** long-number edge-clipping at
+the SVG's outer margin and 12px mobile legibility are both risks the
+PRE-EXISTING real reveal labels already share identically — not a new
+regression the ghost labels introduced, so fixing them here would be
+scope creep onto an unrelated, already-existing risk rather than the
+ghost-label audit this pass was asked to do.
+
+**Tests:** `Simulation.test.tsx` +4 (pixel-position regression for the
+ghost endpoint label, its italic-style check, two pure `linearMapViewBox`
+tests for widening/non-widening against a ghost_matrix) plus 2 assertions
+appended to the existing eigen-reveal test (italic on both eigen-anchored
+ghost labels). Frontend suite 2767 → 2771. Backend untouched. `tsc
+--noEmit` clean.
+
+### Sequencing audit: does reveal order match learning-formation order? (2026-09-06)
+
+Ask: "scan through every possible content and wherever there is a
+visual/intuition/graph, draw them in the order that student must learn to
+understand... `/ui-ux-pro-max` for a `/design-review` strategy... convey
+the sequence in which the order was formed." Full detail:
+`docs/designs/2026-09-06-sequencing-audit-formation-order.md`.
+
+**Method: audit by mechanism, not by file.** "Every possible content" is
+101 concepts × up to 12 atom types × 3 stances — not tractable file by
+file. Every visual/intuition/graph is rendered by exactly one of six
+distinct code mechanisms, so auditing the mechanism audits every concept
+that reaches it, at once (the same principle `focus_point`'s corpus-wide
+extension and the ghost-label fixes both used).
+
+**Five of six mechanisms already sequence correctly, confirmed against
+their real code, not assumed:** resonance beats hold one at a time until
+the student taps Continue, with the trap schema-locked to being the LAST
+reveal a scene can make; `discrete-bars`/curve `gif-scene`s reveal
+left-to-right or forward-in-`t`; `guided_walkthrough` reveals one
+prompt/hint/answer at a time; `line-panels`' simultaneity is a
+*deliberate, correct* exception — CLAUDE.md's own earlier section already
+states the pedagogical point requires side-by-side comparison, not
+sequence, so sequencing it would be the wrong fix.
+
+**The sixth, `manipulable` widgets, has no code-level ordering opinion at
+all** — `Manipulable.tsx:33` renders `outputs[]` in whatever order the
+atom author wrote it, so this is the one place the audit had to read
+content instead of code. All 21 concepts carrying a `manipulable` spec,
+all `outputs[]` arrays, checked against how a student actually derives
+each value.
+
+**One real defect found and fixed:** `matrix-norms/atoms/mnemonic.md`
+listed its sanity-check row ("should match `|det(A)|`") a full row BEFORE
+`|det(A)|` itself ever appeared — the check referenced a number not yet
+on screen, the opposite of "conveying the sequence in which the order was
+formed" (a check is supposed to be the LAST step, once both compared
+quantities are already visible). Reordered — one file, no stance
+variants, no numbers changed. 19 of the other 20 checked specs were
+already correctly ordered (e.g. `lu-factorization`'s `u11 → u12 → l21 →
+u22` is the exact Doolittle algorithm order; `gram-schmidt`'s `c → u2x →
+u2y → check` computes the projection coefficient before the vector it
+produces, verification last).
+
+**Deliberately not attempted:** a literal per-atom prose read of every
+`intuition`/`hook` atom for derivation-order in the WRITING itself (as
+opposed to the code-rendered mechanisms audited here) — open-ended
+content work at the scale of the `common_traps` ELI5 sweep or the
+hook/intuition silo audits earlier in this doc, not a bounded code check.
+`ConceptMathViz.tsx`'s complete lack of any staging mechanism was
+confirmed (not re-discovered) — it's the same root gap as its already-
+tracked missing highlight mechanism (TODOS.md), not a second entry.
+
+**Tests:** `ci:interactive-specs` 424 blocks (unchanged, one existing
+fence reordered), `ci:content-integrity` 1729, `ci:katex-fences` 1723 all
+clean. Frontend `MarkdownAtomRenderer.regression.test.tsx` (1726
+assertions) clean against the edited content. No test-count change
+(content-only pass).
+
+**Same-day follow-up: the audit made permanent, and the two remaining
+manual sweeps closed.** Ask: "extend this formation order to drawing
+graphs, coordinates, sequences. scan through the entire content." Three
+pieces close what the original pass named as future work.
+
+`checkBeatOrder` (`scripts/lint-interactive-specs.ts`) is now a permanent
+CI gate: it refuses any `simulation` spec whose `narration_steps[]` isn't
+authored in ascending `at_progress` order. `Simulation.tsx` already
+re-sorts beats defensively before rendering, so an out-of-order file never
+crashed or misrendered — it just silently disagreed with what a reviewer
+reading the raw file would see, which is exactly the risk this closes.
+Verified against a synthetic bad fixture before running on the real
+corpus: all 133 committed `simulation` scenes pass with zero violations.
+
+All 19 committed `discrete-bars`/`line-panels` gif-scenes were read by
+hand (not just the render code) to confirm no authored data contradicts
+the mechanism's "already sequenced" / "deliberately simultaneous"
+guarantee. Zero defects; `shortest-paths`' bars ordered by Dijkstra
+settlement (not alphabetically) is a deliberately-correct example worth
+naming, not an oversight.
+
+All 80 base `worked-example.md` files carrying a `guided_walkthrough`
+spec — the corpus-wide sweep the original audit could only name as future
+work — were dispatched across 6 parallel Sonnet-model subagent batches
+(13 files each), each reading every step's actual math as a student would
+experience it. **Result: 80 of 80 clean, zero formation-order defects.**
+Unlike the `manipulable` audit (1 real defect in 20), this mechanism's
+authored content held up completely — a genuine measurement, not assumed
+from the mechanism being correct. Two batches flagged a real but
+DIFFERENT-class defect (a missing computation, not an ordering one) in
+`matrix-operations`/`partial-fractions` — correctly left unfixed (a
+reorder can't manufacture a missing step) and recorded in TODOS.md
+instead.
+
+**Verified against the real gates.** `ci:interactive-specs` (424 blocks,
+unchanged), `ci:variant-agreement` (610 pairs), `ci:content-integrity`
+(1729 files) all clean across the full 6-batch sweep — no content edits,
+since nothing needed fixing.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

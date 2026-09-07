@@ -21,6 +21,7 @@ import fs from 'fs';
 import path from 'path';
 import pg from 'pg';
 import { createFlatFileStore } from '../lib/flat-file-store';
+import { loadAuthoredItemsRaw, type AuthoredItem } from '../scoring/learning-object-catalog-file';
 
 const { Pool } = pg;
 
@@ -279,15 +280,19 @@ class PostgresStore implements SessionStore {
   }
 
   async getSessionProblems(studymateId: string) {
-    // KNOWN BUG, out of scope for T3: pq.question / pq.expected_answer are
-    // the same wrong column names fetchProblemsForConcept had — pyq_questions
-    // has question_text/correct_answer instead — so this query throws too.
-    // Not touched here; T3's scope is fetchProblemsForConcept + concept_id.
+    // Fixed (/ui-ux-pro-max, 2026-09-06): this previously selected
+    // pq.question / pq.expected_answer, columns that don't exist on
+    // pyq_questions (question_text/correct_answer instead) — the same wrong
+    // names fetchProblemsForConcept had before T3's fix. Every call to this
+    // method threw on a Postgres-backed deployment. options is now also
+    // selected so a resumed/graded MCQ problem carries its option map, the
+    // same as fetchProblemsForConcept already does.
     const { rows } = await this.pool.query(
       `SELECT ssp.studymate_id, ssp.problem_id, ssp.concept_id, ssp.position,
               ssp.user_answer, ssp.was_correct, ssp.gap_text, ssp.answered_at,
-              pq.topic, pq.difficulty, pq.question, pq.expected_answer,
-              pq.source, pq.source_url
+              pq.topic, pq.difficulty, pq.question_text AS question,
+              pq.correct_answer AS expected_answer,
+              pq.source, pq.source_url, pq.options
        FROM studymate_session_problems ssp
        JOIN pyq_questions pq ON pq.id = ssp.problem_id
        WHERE ssp.studymate_id = $1
@@ -364,6 +369,62 @@ function shortId(): string {
   return out;
 }
 
+// ─── Real answer-key resolution (/ui-ux-pro-max, 2026-09-06) ──────────────
+//
+// content-bundle.json deliberately strips the answer key for
+// practice-items-sourced problems (v4.36.0 — it ships to every browser as a
+// public static file), but the Studymate flat-file bundle reader was never
+// updated to account for that: it read `expected_answer`/`answer` straight
+// off the bundle row, which is unconditionally '' for every practice-item
+// question. PYQ-sourced rows DO keep `correct_answer`/`options` inline in
+// the bundle (PYQ answers are already public knowledge — same reasoning
+// content-bundle.json's own header documents), so those still resolve
+// directly; only practice-items-sourced rows need the extra hop below.
+
+let _authoredItemsById: Map<string, AuthoredItem> | null = null;
+function getAuthoredItemsById(): Map<string, AuthoredItem> {
+  if (_authoredItemsById) return _authoredItemsById;
+  const map = new Map<string, AuthoredItem>();
+  for (const item of loadAuthoredItemsRaw()) map.set(item.id, item);
+  _authoredItemsById = map;
+  return map;
+}
+
+function letterOptionsFromArray(options: string[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  options.forEach((text, i) => { out[String.fromCharCode(65 + i)] = text; });
+  return out;
+}
+
+/**
+ * Resolves a REAL, server-verified answer for a bundle problem row.
+ * `r.correct_answer` / `r.expected_answer` / `r.answer` are accepted
+ * interchangeably (aliases already in use across bundle rows and existing
+ * fixtures) — first non-empty wins. When none of those are present (the
+ * practice-items case), falls back to `data/practice-items/*.json` via
+ * `loadAuthoredItemsRaw()` — the same seam the admin review queue already
+ * uses to read a real answer key server-side. Returns null when no real
+ * answer can be resolved at all: the caller must refuse the candidate
+ * rather than serve a question nothing can ever grade correctly.
+ */
+function resolveRealAnswer(r: any): { expected_answer: string; options: Record<string, string> | null } | null {
+  const inline = r.correct_answer ?? r.expected_answer ?? r.answer;
+  if (typeof inline === 'string' && inline.trim()) {
+    return { expected_answer: inline, options: r.options ?? null };
+  }
+  const authored = getAuthoredItemsById().get(r.id);
+  if (authored && typeof authored.correct_answer === 'string' && authored.correct_answer.trim()) {
+    if (authored.question_type === 'mcq' && Array.isArray(authored.options) && typeof authored.answer_index === 'number') {
+      return {
+        expected_answer: String.fromCharCode(65 + authored.answer_index),
+        options: letterOptionsFromArray(authored.options),
+      };
+    }
+    return { expected_answer: authored.correct_answer, options: null };
+  }
+  return null;
+}
+
 let _bundleCache: any = null;
 function loadBundleProblems(): any[] {
   if (_bundleCache) return _bundleCache;
@@ -425,7 +486,11 @@ class FlatFileStore implements SessionStore {
         : p.difficulty === 'easy' ? 0.25
         : p.difficulty === 'hard' ? 0.75
         : 0.5;
-      return d <= maxDifficulty;
+      if (d > maxDifficulty) return false;
+      // Refuse a candidate with no resolvable real answer rather than
+      // serving a question that will always grade wrong — see
+      // resolveRealAnswer's own doc comment above.
+      return resolveRealAnswer(p) !== null;
     });
     if (candidates.length === 0) return null;
     const r = candidates[Math.floor(Math.random() * candidates.length)];
@@ -433,16 +498,17 @@ class FlatFileStore implements SessionStore {
       : r.difficulty === 'easy' ? 0.25
       : r.difficulty === 'hard' ? 0.75
       : 0.5;
+    const resolved = resolveRealAnswer(r)!;
     return {
       problem_id: r.id,
       concept_id: r.concept_id ?? conceptId,
       topic: r.topic ?? '',
       difficulty: numericDiff,
       question: r.question_text ?? r.question ?? '',
-      expected_answer: r.expected_answer ?? r.answer ?? '',
+      expected_answer: resolved.expected_answer,
       source: r.source ?? 'bundle',
       source_url: r.source_url,
-      options: r.options ?? null,
+      options: resolved.options,
     };
   }
 
@@ -586,6 +652,7 @@ export function getSessionStore(): SessionStore {
 export function _resetSessionStoreForTests(): void {
   _store = null;
   _bundleCache = null;
+  _authoredItemsById = null;
 }
 
 export const RESUME_WINDOW_HOURS_DEFAULT = 4;

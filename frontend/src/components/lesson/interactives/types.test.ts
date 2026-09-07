@@ -1021,6 +1021,67 @@ describe('validateSimulation — linear_map mode', () => {
     };
     expect(parse(ok).ok).toBe(true);
   });
+
+  // ==========================================================================
+  // focus_point — focus_eigen's plain-curve counterpart
+  // (/ui-ux-pro-max, 2026-09-06: "whenever the concept is being discussed,
+  // suitable highlight/emphasis on the graph/visuals must be enabled...
+  // extend this feature for all topics")
+  // ==========================================================================
+
+  const PLAIN_CURVE_BASE = {
+    v: INTERACTIVE_SPEC_VERSION,
+    kind: 'simulation',
+    title: 'plain trace',
+    x_expr: 'cos(t)',
+    y_expr: 'sin(t)',
+    t_min: 0,
+    t_max: 1,
+  };
+
+  it('accepts focus_point:true on a plain-curve (non-linear_map) scene', () => {
+    const ok = {
+      ...PLAIN_CURVE_BASE,
+      narration_steps: [{ at_progress: 0, text: 'watch this point', focus_point: true }],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('accepts focus_point:false explicitly', () => {
+    const ok = {
+      ...PLAIN_CURVE_BASE,
+      narration_steps: [{ at_progress: 0, text: 'nothing special', focus_point: false }],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('rejects a non-boolean focus_point', () => {
+    const bad = {
+      ...PLAIN_CURVE_BASE,
+      narration_steps: [{ at_progress: 0, text: 'x', focus_point: 'yes' }],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('focus_point');
+  });
+
+  it('rejects focus_point:true on a linear_map scene — focus_eigen is the mechanism there', () => {
+    const bad = {
+      ...LM_BASE,
+      narration_steps: [{ at_progress: 0, text: 'x', focus_point: true }],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('focus_point');
+  });
+
+  it('a beat with no focus_point still validates unchanged', () => {
+    const ok = {
+      ...PLAIN_CURVE_BASE,
+      narration_steps: [{ at_progress: 0, text: 'no focus here' }],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
 });
 
 // ============================================================================

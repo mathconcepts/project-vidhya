@@ -10,7 +10,7 @@ exam_ids: ["*"]
 
 **"Spectrum" is borrowed from optics.** A prism splits white light into pure colours; the spectral theorem splits a symmetric matrix into pure directions, each scaled by its own $\lambda$. The set of eigenvalues *is* the spectrum.
 
-**Three guarantees — R.O.D.:** **R**eal eigenvalues (never complex), **O**rthogonal eigenvectors (for distinct eigenvalues), **D**iagonalizable, always (no symmetric matrix is defective). Say "Real, Orthogonal, Diagonalizable" and you've restated the theorem.
+**Three guarantees — R.O.D.:** **R**eal eigenvalues (never complex), **O**rthogonal eigenvectors (perpendicular to each other, for distinct eigenvalues), **D**iagonalizable, always — a symmetric matrix always has a full set of independent eigenvectors; it is never "defective" (the technical term for a matrix that comes up short and can't be diagonalized). Say "Real, Orthogonal, Diagonalizable" and you've restated the theorem.
 
 **The practical payoff: $Q^{-1} = Q^{T}$.** Every other diagonalization $A = PDP^{-1}$ makes you invert $P$. Here you transpose — free, no arithmetic to slip on.
 

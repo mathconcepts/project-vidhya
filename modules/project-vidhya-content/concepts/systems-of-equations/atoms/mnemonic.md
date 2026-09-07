@@ -18,7 +18,7 @@ modality: mnemonic
 
 $$\text{free parameters} = n - \text{rank}(A)$$
 
-That last line is rank–nullity in different clothes: the free parameters span $\ker(A)$, so the solution set is one particular solution plus the null space.
+That last line is rank–nullity in different clothes: the free parameters span $\ker(A)$ — the null space, the set of vectors $A$ crushes down to zero — so the solution set is one particular solution plus the null space.
 
 **Five-second reflexes:** $\text{rank}([A\mid b])$ is always $\text{rank}(A)$ or $\text{rank}(A)+1$ — only one question matters, *did adding $b$ raise the rank?* A **homogeneous** system ($b=0$) can never be inconsistent — $x=0$ always works. "Two solutions" is never an option; linear systems have $0$, $1$, or $\infty$.
 

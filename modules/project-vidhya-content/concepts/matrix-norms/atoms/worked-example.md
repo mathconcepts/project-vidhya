@@ -20,7 +20,7 @@ scaffold_fade: true
 
 ---
 
-**Step 3 — Singular values via $A^TA$.** $A^TA=\begin{pmatrix}16&4\\4&5\end{pmatrix}$. Characteristic equation: $(16-\lambda)(5-\lambda)-16=\lambda^2-21\lambda+64=0$, so $\lambda=\dfrac{21\pm\sqrt{185}}{2}$, giving $\lambda_1\approx17.30$, $\lambda_2\approx3.70$ (check: $\lambda_1+\lambda_2=21=\operatorname{tr}(A^TA)$ ✓, $\lambda_1\lambda_2\approx64=\det(A^TA)$ ✓).
+**Step 3 — Singular values via $A^TA$.** (A singular value just measures how much $A$ stretches along one direction — finding them through $A^TA$ works even when $A$ itself isn't symmetric.) $A^TA=\begin{pmatrix}16&4\\4&5\end{pmatrix}$. Characteristic equation: $(16-\lambda)(5-\lambda)-16=\lambda^2-21\lambda+64=0$, so $\lambda=\dfrac{21\pm\sqrt{185}}{2}$, giving $\lambda_1\approx17.30$, $\lambda_2\approx3.70$ (check: $\lambda_1+\lambda_2=21=\operatorname{tr}(A^TA)$ ✓, $\lambda_1\lambda_2\approx64=\det(A^TA)$ ✓).
 
 $$\sigma_1=\sqrt{\lambda_1}\approx4.16, \qquad \sigma_2=\sqrt{\lambda_2}\approx1.92$$
 

@@ -4,6 +4,78 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.74.0] — 2026-09-07 — Linear Algebra content completion: mnemonic register, silo, and visual-density audit
+
+No new env vars, no migrations.
+
+"Complete all the content required for Linear Algebra based on the latest
+visual and design decisions" — a corpus-wide close of the LA-scoped
+content gaps standing in TODOS.md, dispatched as 5 parallel Claude Sonnet
+subagent batches (5-6 concepts each), the established pattern for content
+work this size in this repo. Every batch validated its own concepts
+against the real content gates before reporting; a final combined run
+confirmed the whole diff together.
+
+**Three checks per concept, all 26 GATE Linear Algebra concepts covered:**
+
+1. **`mnemonic.md` ELI5/register audit** — the one atom type flagged in
+   TODOS.md as never corpus-swept against the 2026-09-02 ELI5/Indian-
+   English tone directive (only `eigenvalues.mnemonic.md` had been fixed,
+   from a single live-QA report). Unglossed jargon — "characteristic
+   polynomial," "orthogonal," "generalized eigenvector," "condition
+   number," "defective (matrix)," and more — rewritten in plain words on
+   first use across ~20 concepts. Every `manipulable`-widget fence from
+   the 2026-09-05 pass was left completely untouched as finished work;
+   only surrounding prose was in scope.
+2. **`mnemonic.md` example-silo check** — does the mnemonic invent its own
+   numbers when it could reuse the hook's already-verified worked example?
+   One genuine instance found and fixed: `gram-schmidt/atoms/mnemonic.md`
+   was demonstrating Gram-Schmidt on $v_2=(2,1)$ against $u_1=(1,0)$ while
+   `hook.md` already establishes $v_1=(1,1)$, $v_2=(2,0)$ — rewritten to
+   continue the hook's own example ($u_2=(1,-1)$, verified $u_1\cdot
+   u_2=0$ via SymPy). Most other concepts were independently confirmed
+   already reusing hook's numbers or correctly verbal/categorical with no
+   example to silo.
+3. **`visual-analogy.md` redundancy check** — the specific defect pattern
+   fixed on `rank-nullity` (2026-09-04): a closing paragraph restating an
+   earlier paragraph's point in different words. Three more genuine
+   instances found and trimmed: `determinants`, `cayley-hamilton`,
+   `change-of-basis`. Every other concept's `visual-analogy.md` was read
+   and confirmed non-redundant, not skipped.
+
+**`focus_eigen`/`focus_point` coverage re-confirmed, not re-litigated.**
+Every batch re-checked its concepts' `hook.md` scenes against the 2026-09-04
+audit's coverage — zero new gaps found; the existing 7-then-19-concept
+coverage holds. `jordan-normal-form`'s hard case (repeated eigenvalue, one
+independent eigenvector) was checked carefully and confirmed to have no
+`interactive-spec` scene at all (correctly nothing to tag).
+
+**`jordan-normal-form` and `matrix-norms`, the two lightest-touched
+concepts, got a deeper pass** (batch 5 had only 2 concepts, so it also
+register-audited `common-traps.md`, `exam-pattern.md`,
+`formal-definition.md`, and `worked-example.md` — every full computation
+re-verified via SymPy before any prose was touched).
+
+**Verified against the real gates, on the combined diff, not just per-
+batch.** `npm run ci` (18 gates, including `ci:la-walkthrough` 26/26,
+`ci:interactive-specs` 424 blocks unchanged, `ci:variant-agreement` 610
+pairs unchanged, `ci:katex-fences` 1723, `ci:content-integrity` 1729) all
+clean. Frontend's full-corpus render regression
+(`MarkdownAtomRenderer.regression.test.tsx`) — 1726 assertions — passes
+against the edited content.
+
+**Tests:** none new — content-only pass, no schema or component change.
+Frontend/backend suite counts unchanged from the prior release.
+
+**Deliberately not touched, named honestly:** the mnemonic register audit
+for the other 9 GATE-EM topic families (TODOS.md's standing entry, LA
+slice now closed); `common_traps`' own prose budget (needs an editorial
+ceiling decision, not authoring); the `focus_eigen`/`emphasize`
+"second-color" question TODOS.md posed for LA hook/intuition scenes —
+every batch's re-confirmation found the existing ghost/dashed-grey trap
+convention already doing that job, so no new color was introduced,
+consistent with the locked two-accent design law.
+
 ## [4.73.0] — 2026-09-06 — Formation-order audit made permanent: CI gate + full corpus sweep
 
 No new env vars, no migrations.

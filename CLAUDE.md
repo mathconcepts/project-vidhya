@@ -4464,6 +4464,118 @@ unchanged), `ci:variant-agreement` (610 pairs), `ci:content-integrity`
 (1729 files) all clean across the full 6-batch sweep — no content edits,
 since nothing needed fixing.
 
+---
+
+### Linear Algebra content completion: mnemonic register, silo, and visual-density audit (2026-09-07)
+
+Ask: "use sonnet subagents and complete all the content required for
+linear algebra based on the latest visual and design decisions." Read as
+closing the LA-scoped content gaps still standing in TODOS.md after the
+prior sessions' code-level mechanisms (`focus_eigen`/`focus_point`, the
+Reference Highlighting Framework's ghost labels, the 1-1 mapping chip) —
+those are all corpus-wide by construction and needed no further authoring
+— versus the CONTENT gaps that genuinely still needed a hand: the
+`mnemonic` ELI5/register audit (only `eigenvalues` done, from a single
+live-QA report), the `mnemonic`-example silo check (named but not
+attempted in the 2026-09-04 intuition-only silo pass), and the
+`visual-analogy` redundant-paragraph check (only `rank-nullity` done).
+
+**Dispatched as 5 parallel Claude Sonnet subagents** (5-6 concepts each,
+all 26 GATE-EM Linear Algebra concepts covered, no file overlap between
+batches), on a fresh branch off `main` — kept separate from the
+concurrently-open PR #165, which this session was independently
+babysitting to green throughout this pass. Each batch given the same
+three-check-per-concept brief:
+
+1. **`mnemonic.md` ELI5/register.** Read `hook.md` first (ground truth),
+   then judge `mnemonic.md`'s PROSE only — any pre-existing `manipulable`
+   widget fence from the 2026-09-05 pass is finished work, left
+   byte-identical, never re-derived. Glossed unglossed jargon in plain
+   words on first use across roughly 20 of the 26 concepts —
+   "characteristic polynomial," "orthogonal," "generalized eigenvector,"
+   "defective (matrix)," "condition number," "Sylvester's criterion," and
+   more — same mnemonic device, same math, simpler sentences.
+2. **`mnemonic.md` example-silo check.** Does the mnemonic invent its own
+   numbers where it could reuse the hook's already-verified worked
+   example? One genuine instance: `gram-schmidt/atoms/mnemonic.md` was
+   demonstrating the algorithm on $v_2=(2,1)$ against $u_1=(1,0)$ while
+   `hook.md` already establishes $v_1=(1,1)$, $v_2=(2,0)$ — rewritten to
+   continue hook's own example ($c=1$, $u_2=(2,0)-(1,1)=(1,-1)$, dot
+   product $0$, verified via SymPy). Every other concept was individually
+   confirmed already reusing hook's numbers, or correctly
+   verbal/categorical with no worked example to silo (forcing a numeric
+   example onto a purely mnemonic device like "RREF" or "Swap, Sign,
+   Split" would be padding, not a fix — batches were explicitly told not
+   to force this).
+3. **`visual-analogy.md` redundancy check.** The specific defect fixed on
+   `rank-nullity` (2026-09-04): a closing paragraph restating an earlier
+   paragraph's point in different words. Three more genuine instances
+   found and trimmed: `determinants` (a restated curve-crossing-zero
+   point), `cayley-hamilton` (a restated "cyclic pattern" point),
+   `change-of-basis` (a restated "destination never moves" point, kept
+   only the new bidirectionality claim). Every other concept's file was
+   read and confirmed non-redundant — density alone was explicitly not
+   grounds to trim.
+
+**A fourth, lightweight check rode along:** `focus_eigen`/`focus_point`
+coverage re-confirmed (not re-litigated) against the 2026-09-04 audit on
+every batch's concepts — zero new gaps found, including on
+`jordan-normal-form`'s genuinely hard case (a repeated eigenvalue, one
+independent eigenvector), confirmed to correctly carry no
+`interactive-spec` scene at all. Batches were explicitly told a false
+positive here is worse than leaving a beat untagged, and to skip rather
+than guess.
+
+**Batch 5's two concepts (`jordan-normal-form`, `matrix-norms`) got a
+deeper pass**, since a 2-concept batch had spare capacity: `common-
+traps.md`, `exam-pattern.md`, `formal-definition.md`, and `worked-
+example.md` were also register-audited for the same unglossed-jargon
+pattern (prose only — no example/numbers touched), every full
+computation re-verified via SymPy before any prose changed
+(`matrix-norms`: $\sigma_1{\approx}4.16$, $\sigma_2{\approx}1.92$,
+$\kappa_2{\approx}2.16$ against its own $A=\begin{pmatrix}4&1\\0&2\end{pmatrix}$;
+`jordan-normal-form`: $P^{-1}AP=\begin{pmatrix}3&1\\0&3\end{pmatrix}$).
+
+**A genuine, already-known bug case handled correctly, not mistagged.**
+`systems-of-equations/atoms/hook.md`'s beat at `at_progress: 0.45` states
+a coordinate that doesn't match what that progress actually traces on the
+curve — a previously-documented pacing bug (`TODOS.md`, "`at_progress`
+sometimes doesn't match the x-value its own beat text states"). Batch 1
+found it again independently, confirmed it against the same class of
+defect, and correctly left it untagged for `focus_eigen` rather than
+tagging a coordinate that would visibly contradict its own beat text —
+the same discipline the original bug report itself established.
+
+**Verified as one combined whole, not per-batch.** Each batch validated
+its own concepts before reporting; after all 5 landed, `npm run ci` (18
+gates, including `ci:la-walkthrough` 26/26, `ci:interactive-specs` 424
+blocks unchanged, `ci:variant-agreement` 610 pairs unchanged,
+`ci:katex-fences` 1723, `ci:content-integrity` 1729) ran clean against
+the full 24-file combined diff, plus the frontend's full-corpus render
+regression (`MarkdownAtomRenderer.regression.test.tsx`, 1726 assertions)
+mounting every edited atom through React with no throw. No commit
+happened until every batch had reported back, per this repo's own
+standing rule against fabricating results from work still in flight.
+
+**Scope, named honestly.** This closes the Linear Algebra slice of three
+separate TODOS.md entries (`mnemonic` ELI5/register audit, the
+`mnemonic`-half of the intuition/mnemonic silo audit, and the
+`visual-analogy` redundancy trim) — not the corpus. The other 9 GATE-EM
+topic families (75 more concepts) remain unaudited on all three axes,
+tracked in TODOS.md with the same 5-6-concept subagent-batch pattern that
+worked here as the template. `common_traps`' own prose budget (a
+standing, separate TODOS.md item) still awaits an editorial ceiling
+decision this pass didn't make. The `focus_eigen`/`emphasize`
+"second-color" question TODOS.md posed for LA hook/intuition scenes was
+answered by re-confirmation rather than new authoring: every batch found
+the existing ghost/dashed-grey trap convention already carrying that
+signal, so no new color was introduced — consistent with Vidhya
+Clarity's locked two-accent design law and the 2026-09-05 "not an Amazon
+rainbow" decision.
+
+**Tests:** none new — content-only pass, no schema or component changed.
+Backend and frontend suite counts unchanged from the prior release.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

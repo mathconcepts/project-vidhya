@@ -196,27 +196,46 @@ number the beat's `text`/`text_shaken`/`text_assured` state, the same
 check the `focus_point` audit above used — just re-run it looking for
 mismatches instead of matches.
 
-## Corpus-wide `mnemonic` ELI5/register audit (2026-09-06 live-QA)
+## Corpus-wide `mnemonic` ELI5/register audit — Linear Algebra closed (2026-09-07)
+
+**2026-09-07 update:** the Linear Algebra slice named below is closed. 5
+parallel Sonnet subagent batches (5-6 concepts each) read every one of the
+26 LA concepts' `mnemonic.md` (`eigenvalues` already done) against the tone
+directive and rewrote unglossed jargon in ~20 of them — "characteristic
+polynomial," "orthogonal," "generalized eigenvector," "defective (matrix),"
+"condition number," and more, glossed in plain words on first use, same
+mnemonic device and math kept. Every `manipulable`-widget fence from the
+2026-09-05 pass was left byte-identical (finished work, prose-only scope).
+The same dispatch also closed the "mnemonic atoms specifically were also
+not audited" half of the silo-check entry below — one genuine instance
+found (`gram-schmidt/atoms/mnemonic.md` used an invented example instead
+of hook's own; rewritten to reuse it, verified via SymPy) — and a
+`visual-analogy.md` redundant-paragraph check (three more instances found
+and trimmed: `determinants`, `cayley-hamilton`, `change-of-basis`). See
+CLAUDE.md's 2026-09-07 "Linear Algebra content completion" section for the
+full per-concept breakdown. Verified against `ci:content-integrity`,
+`ci:katex-fences`, `ci:interactive-specs`, `ci:variant-agreement`,
+`ci:la-walkthrough` (26/26) on the combined diff, plus the frontend's
+1726-assertion full-corpus render regression.
+
+**What's still open:** the same audit for the other 9 GATE-EM topic
+families (calculus, vector-calculus, probability-statistics, transform-
+theory, numerical-methods, differential-equations, complex-variables,
+discrete-mathematics, graph-theory) — 75 more concepts' `mnemonic.md`
+files, never touched by this pass, per the explicit LA-only scope of the
+request that triggered it.
 
 **Trigger:** the next content pass with subagent-batch capacity, same
-5-6-concepts-per-batch pattern used for `common_traps`/hook/intuition
-elsewhere in this file.
+5-6-concepts-per-batch pattern this LA pass used.
 
-Live-QA report (screenshots) flagged `eigenvalues.mnemonic` as too dense for
-a tier-3 engineering-college student — phrases like "solve the pair by
-inspection," "factor cleanly," and an unglossed "characteristic polynomial"
-assume more fluency than the ELI5/Indian-English tone directive (CLAUDE.md,
-2026-09-02) targets. Fixed as a single concrete instance this pass
-(`eigenvalues/atoms/mnemonic.md` rewritten: glossed jargon, simpler
-sentence structure, same "SAD" mnemonic device kept). **Not** audited: the
-other 100 concepts' `mnemonic` atoms almost certainly have the same
-register gap in places — `mnemonic` was the ONE atom type still unbudgeted/
-unaudited as of the 2026-09-03 "Content delivery: first-principles review"
-section in CLAUDE.md (that review flagged `common_traps` as unbudgeted;
-`mnemonic`'s specific register-density question was never separately
-measured). A corpus sweep should read each concept's `mnemonic.md` (+
-stance variants) against the tone directive and rewrite where jargon is
-unglossed, following the exact pattern this pass demonstrated.
+**Original entry, for context:** Live-QA report (screenshots) flagged
+`eigenvalues.mnemonic` as too dense for a tier-3 engineering-college
+student — phrases like "solve the pair by inspection," "factor cleanly,"
+and an unglossed "characteristic polynomial" assume more fluency than the
+ELI5/Indian-English tone directive (CLAUDE.md, 2026-09-02) targets. Fixed
+as a single concrete instance in that pass; `mnemonic` was the ONE atom
+type still unbudgeted/unaudited as of the 2026-09-03 "Content delivery:
+first-principles review" section in CLAUDE.md.
 
 ## Same-day: "matrix crossing boundary" (issue #2) resolved as the same bug as issue #1
 
@@ -562,30 +581,36 @@ families (calculus, vector-calculus, probability-statistics, transform-
 theory, numerical-methods, differential-equations, complex-variables,
 discrete-mathematics, graph-theory) has NOT been attempted — those
 concepts' `intuition`/`mnemonic` atoms may carry the identical defect,
-unaudited. `mnemonic` atoms specifically were also not audited in this
-pass (only `intuition`) — the original trigger below still applies to
-`mnemonic` corpus-wide, LA included.
+unaudited.
 
-## `visual_analogy` redundant-paragraph trim needed corpus-wide
+**2026-09-07 update:** the `mnemonic`-atoms half of this entry (deferred
+above as "not audited in this pass, only `intuition`") is now closed for
+Linear Algebra too — see the "Corpus-wide `mnemonic` ELI5/register audit"
+entry elsewhere in this file for the full breakdown (one genuine example-
+silo instance found, `gram-schmidt`; the rest of the 26 confirmed already
+reusing hook's numbers or correctly verbal/categorical). The other 9
+topic families' `mnemonic` atoms remain unaudited for both the register
+question and this silo question.
+
+## `visual_analogy` redundant-paragraph trim — Linear Algebra closed (2026-09-07)
+
+**2026-09-07 update:** all 26 LA concepts' `visual-analogy.md` files were
+read for this specific defect (a closing paragraph restating an earlier
+paragraph's point in different words), as part of the same 5-batch
+mnemonic/silo audit dispatch. Three more genuine instances found and
+trimmed beyond `rank-nullity`'s original fix: `determinants`,
+`cayley-hamilton`, `change-of-basis`. Every other LA concept's
+`visual-analogy.md` was confirmed non-redundant, not skipped. See
+CLAUDE.md's 2026-09-07 "Linear Algebra content completion" section.
+
+**What's still open:** the other 9 GATE-EM topic families (75 more
+concepts) have not been swept for this pattern. `npm run
+content:reading-load-report` remains the designated worklist source for a
+systematic pass there, same discipline as this LA pass used.
 
 **Trigger:** the next live-QA report naming a different concept's visual
-card as text-heavy, or a decision to sweep this systematically.
-
-`/design-review` (2026-09-04, rank-nullity live-QA: "visual — too much
-text") found `visual-analogy.md`'s closing paragraph restated its own
-curve-explanation paragraph's point in different words — real redundancy,
-not just density. Fixed for rank-nullity only (merged the restated idea
-into the curve paragraph's closing clause, dropped the third paragraph,
-~150 words → ~110, no math changed). Not audited corpus-wide.
-`npm run content:reading-load-report` already flags atoms by real reading
-load and is the designated worklist source for a systematic pass, same as
-the intuition/mnemonic sweep above.
-
-**Effort:** S per concept once flagged, same read-hook-first-then-trim
-discipline as every other content-density fix in this doc.
-**Priority:** P3 — one confirmed instance, not yet known how common corpus-wide.
-**Deferred from:** `/design-review`, 2026-09-04, branch
-`claude/content-strategy-framework-o9afoc`.
+card as text-heavy, or a decision to sweep the remaining 9 topics
+systematically.
 
 ## `formal_definition`/hook eigenvalue-label fixes — verify they don't mask a deeper `focus_eigen` coverage gap
 

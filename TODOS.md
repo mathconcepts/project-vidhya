@@ -4,6 +4,46 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Practice-item explanations have no visual mechanism at all (2026-09-07)
+
+**Trigger:** an operator wants to build this, or a live-QA report repeats
+the ask on a different practice item.
+
+`/investigate` (live-QA report, 3 screenshots): the vector-spaces subspace
+question's post-answer explanation (`pi-vector-spaces-004`,
+`data/practice-items/gate-ma-la-vector-spaces.json`) already routes
+through `MarkdownAtomRenderer` with `structured`/`--progressive` motion
+(the 2026-09-06 fix), but the ask was for something deeper — "convey more
+in less via other visuals," i.e. a diagram, not just well-paced text.
+Confirmed by grep before concluding anything: **zero** practice items in
+`data/practice-items/*.json` carry a `gif-scene` or `interactive-spec`
+block — practice-item `solution_steps` has no visual mechanism of any
+kind, unlike lesson atoms (`hook`/`intuition`/etc.), which have had one
+since §4.15 (v4.11.0). This is a real, new capability gap, not a
+one-file bug: adding it means a schema decision (a new field on
+`AuthoredItem`, e.g. `solution_visual`), a renderer decision (reuse
+`Simulation.tsx`/`gif-generator.ts`'s existing scene types, e.g.
+`line-panels` for a "compare these 4 candidate sets" case like this exact
+item — one point, one crossed line, one union-of-axes counterexample), and
+per-item authoring + Wolfram/hand verification for however many of the
+505 committed items get one. Sized the same as every other "mechanism
+doesn't exist yet, corpus-wide" entry in this file — not attempted
+unilaterally in a single `/investigate` pass.
+
+**Where to start:** `frontend/src/pages/app/PracticeAttemptPage.tsx`'s
+`solution_steps` render block (already `MarkdownAtomRenderer`-routed);
+`data/practice-items/*.json`'s `AuthoredItem` shape for the new optional
+field; `src/content/concept-orchestrator/gif-generator.ts`'s `line-panels`
+scene type (shipped 2026-09-03 for exactly this "compare N things side by
+side" need) as the most likely reusable renderer for this item's own
+concrete case, rather than inventing a new scene type.
+
+**Effort:** M for the schema/renderer decision + wiring; L to author
+visuals across any meaningful slice of the 505 committed items.
+**Priority:** P3 — one confirmed report, not yet known how often "the
+explanation is fine, but a visual would convey it faster" recurs.
+**Deferred from:** `/investigate`, 2026-09-07.
+
 ## Two `guided_walkthrough` worked-examples have a step-completeness gap, not an ordering one (2026-09-06)
 
 Found by the 6-batch, 80-file corpus-wide formation-order audit

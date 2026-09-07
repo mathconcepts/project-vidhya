@@ -4,6 +4,49 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.74.0] — 2026-09-07 — Chat history stays in focus; trace.intuition gets a real coordinate anchor
+
+No new env vars, no migrations.
+
+`/investigate` on a live-QA report (3 asks). Full detail in
+CLAUDE.md's 2026-09-07 section.
+
+**Chat history losing focus (real bug, root-caused).** `chat_messages` has
+no thread/conversation concept — `useSession()`'s id is a 365-day
+anonymous device identity, not a per-sitting id, so the tutor page loaded
+and rendered every message a student had EVER sent, expanded. Fixed
+client-side, no schema change: `frontend/src/lib/chat-session-
+grouping.ts`'s `splitChatHistoryByRecency()` splits the loaded history at
+the last 30-minute gap (including the gap to "now" — a stale,
+internally-tight old conversation is still recognized as a past visit,
+not just conversations with an internal gap). Only the current run
+renders expanded; older messages collapse behind a one-tap disclosure,
+nothing discarded. A real conversation-threading redesign is correctly
+out of scope for this pass — flagged for a future `/plan-eng-review`.
+
+**`trace.intuition`'s diagram was inert.** Traces the identical curve as
+`trace.hook` (same matrix, same parametrization) but carried zero
+`focus_point` tags while hook has 4 — not a bug in the 2026-09-06 audit
+(none of intuition's beats state a literal traced coordinate), but a real
+gap: the diagram never anchors to any number its own text discusses.
+Fixed by giving beat 0 a real, already-verified coordinate (hook's own
+$t=0$ point, $(5,2)$) and tagging it `focus_point:true`. Byte-identical
+across all three stance files.
+
+**Practice-item explanations have no visual mechanism at all — confirmed,
+not fixed.** The reported item's explanation already has 2026-09-06's
+motion treatment; the ask was for an actual diagram. Grepped before
+concluding: zero of 505 practice items carry a `gif-scene`/
+`interactive-spec` block. Real, new capability — schema + renderer +
+per-item authoring — recorded in TODOS.md with a concrete starting point
+(`line-panels`, already built for exactly this "compare N things"
+shape), not attempted unilaterally.
+
+**Tests:** `chat-session-grouping.test.ts` (11 new), `ChatPage.test.tsx`
+(3 new). Frontend suite 2771 → 2785/2785. `tsc --noEmit` clean. Content
+gates (`ci:interactive-specs` 424, `ci:variant-agreement` 610,
+`ci:katex-fences` 1723, `ci:content-integrity` 1729) unchanged, clean.
+
 ## [4.73.0] — 2026-09-06 — Formation-order audit made permanent: CI gate + full corpus sweep
 
 No new env vars, no migrations.

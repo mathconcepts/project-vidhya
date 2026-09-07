@@ -4464,6 +4464,87 @@ unchanged), `ci:variant-agreement` (610 pairs), `ci:content-integrity`
 (1729 files) all clean across the full 6-batch sweep — no content edits,
 since nothing needed fixing.
 
+### `/investigate`: an inert intuition diagram, chat history losing focus, and a practice-explanation visual gap (2026-09-07)
+
+Three numbered asks, three screenshots: (1) `trace`'s intuition card shows
+a bare, unlabeled ellipse while its own text is explicitly about
+eigenvalues/stretch factors; (2) the AI tutor chat shows previous
+questions from a different session mixed in ahead of the current one —
+"the current question must be in focus"; (3) a practice question's
+explanation is good text but "convey more in less via other visuals."
+Each root-caused against the real code/content before any fix.
+
+**Issue 1 — `trace.intuition`'s scene had zero coordinate/color anchoring,
+confirmed against `trace.hook`.** Both atoms trace the IDENTICAL curve
+(`x_expr`/`y_expr`, same `t_min`/`t_max` — the same $A=\begin{pmatrix}5&1\\2&4\end{pmatrix}$
+ellipse). `hook.md` tags 4 of 5 beats `focus_point:true`; `intuition.md`
+tags zero — not a bug, but a real gap: the 2026-09-06 `focus_point`
+corpus audit correctly excluded every one of intuition's beats (none
+state a literal traced coordinate — they discuss abstract facts like
+"eigenvalues 6 and 3" rather than a specific point on screen at that
+progress), but that left the SAME diagram inert in exactly the atom whose
+job is to explain why those numbers matter. Fixed by giving beat 0 a real
+anchor: reused hook's own already-verified $t=0$ point, $(5,2)$ — "this
+is the same curve from the hook, starting again at $(5,2)$" — and tagged
+it `focus_point:true`. No new example invented, no numbers changed;
+verified independently ($5\cos 0+\sin 0=5$, $2\cos 0+4\sin 0=2$) before
+writing. Propagated byte-identically across `intuition.md`/`-shaken.md`/
+`-assured.md` (all three were already byte-identical fences; verified
+again after edit).
+
+**Issue 2 — real architecture bug, root-caused and fixed client-side
+without a schema change.** `chat_messages` has no thread/conversation
+concept at all: `(session_id, role, content, created_at)`, and
+`useSession()`'s session id is a 365-day anonymous DEVICE identity, not a
+per-sitting id. `GET /api/chat/:sessionId` returns every message a
+student has EVER sent (up to 100), and `ChatPage.tsx` rendered all of it,
+expanded, on every load — a brand-new question landed under however many
+old, unrelated ones from past visits. A real conversation-threading
+redesign (own browsing UI, does the LLM context span threads?) is exactly
+the kind of decision the report itself flagged for `/plan-eng-review` —
+correctly out of scope for a single `/investigate` pass. What ships now
+solves the actual complaint without one: `frontend/src/lib/chat-
+session-grouping.ts`'s `splitChatHistoryByRecency()` — a pure function
+that walks the loaded history plus an implicit trailing `now` boundary
+and finds the LAST gap exceeding 30 minutes; everything from there is
+"current" (rendered expanded, the way the page already worked),
+everything before collapses behind a one-tap "N messages from an earlier
+visit" disclosure (same `ChevronDown`/`aria-expanded` pattern as
+`ProblemStatementBlock`'s existing disclosure row). The trailing-`now`
+boundary matters and was caught by the fix's own tests: without it, a
+short, internally-tight conversation from a week ago (no gap between its
+OWN two messages) would still render as "current" on a fresh visit —
+exactly the bug this closes, just with fewer messages. Multiple old
+visits collapse into one earlier bucket; nothing is ever discarded, only
+the CURRENT run counts toward `isEmpty` (so a genuinely fresh visit, with
+only stale history sitting behind the disclosure, correctly shows the
+welcome/suggestions screen instead of nothing).
+
+**Issue 3 — investigated, confirmed as a real but genuinely new
+capability, not a quick fix.** The reported item's explanation panel
+(`pi-vector-spaces-004`, a subspace-identification MCQ) already has the
+motion/structure treatment from 2026-09-06. Grepped `data/practice-
+items/*.json` before concluding anything: zero items carry a `gif-scene`
+or `interactive-spec` block — practice-item explanations have NO visual
+mechanism at all, unlike lesson atoms which have had one since §4.15.
+Adding it is a real schema + renderer + per-item-authoring decision
+(505 committed items), sized the same as every other "mechanism doesn't
+exist yet, corpus-wide" TODOS.md entry — not attempted unilaterally here.
+Recorded with a concrete starting point (reuse `line-panels`, the exact
+scene type built 2026-09-03 for "compare N things side by side," which
+is what this item's own four candidate subsets need).
+
+**Tests:** `chat-session-grouping.test.ts` (new, 11) — every branch of
+the split logic, including the trailing-now-boundary case that a
+message-to-message-only check misses. `ChatPage.test.tsx` (new, 3) — the
+earlier-visit disclosure collapses on load, is absent when history is one
+recent run, and the welcome screen shows (not stale content) when only
+old history exists. Frontend suite 2771 → 2785/2785. `tsc --noEmit`
+clean. Content gates (`ci:interactive-specs` 424 blocks unchanged,
+`ci:variant-agreement` 610 pairs, `ci:katex-fences` 1723,
+`ci:content-integrity` 1729) clean. Backend untouched (frontend + content
+only).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

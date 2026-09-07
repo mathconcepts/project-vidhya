@@ -121,9 +121,13 @@ export function DecisionTreeWalkthrough({ spec, startAt }: Props) {
       className="rounded-xl border p-4 space-y-3"
       style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)' }}
     >
-      <header className="flex items-center justify-between gap-2">
+      {/* items-start, not items-center — same bug + fix as GuidedWalkthrough.tsx's
+          header (live-QA, /investigate 2026-09-07): a wrapped multi-line
+          title otherwise centers the badge against its full height,
+          landing it mid-sentence instead of beside the first line. */}
+      <header className="flex items-start justify-between gap-2">
         <h4
-          className="font-semibold"
+          className="font-semibold flex-1 min-w-0"
           style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}
         >
           {spec.title}

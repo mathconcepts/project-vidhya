@@ -4,6 +4,31 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## `guided_walkthrough` ELI5/spoon-feeding audit — corpus-wide (2026-09-07)
+
+Live-QA report on the null-space-column-space walkthrough flagged its
+`prompt`/`hint`/`answer` text as assuming prior knowledge (jargon used
+bare, no reason given for each step) — fixed for that one atom
+(`/investigate`, same date): RREF spelled out, each row operation paired
+with what it accomplishes, pivot columns/free variables defined in
+context, a `why` framing field added. 105+ other `guided_walkthrough`
+atoms in the corpus carry their own prompt/hint/answer text, written by
+different passes at different times — unaudited for the same pattern.
+
+**Trigger:** another live-QA report on a different `guided_walkthrough`
+atom naming the same gap, or a deliberate corpus sweep session.
+
+**Pattern to repeat** (same one used for the `common_traps` ELI5 sweep
+and the LA mnemonic register audit elsewhere in this doc): 5-6 concepts
+per parallel Sonnet subagent batch, read the surrounding worked-example
+prose first as ground truth, judge the `interactive-spec` widget text's
+register against it (not against an absolute bar — some concepts'
+widget text may already be fine), re-verify every number via
+SymPy/Wolfram before rewriting, propagate byte-identically across
+stance variants via `re.DOTALL` (never `grep -o`), validate the whole
+combined diff against `ci:interactive-specs`/`ci:variant-agreement`/
+`ci:katex-fences`/`ci:content-integrity` before committing.
+
 ## Other small-n ratio consumers not yet on the Wilson bound (2026-09-07)
 
 **Trigger:** a live-QA report names a second confidently-wrong small-sample

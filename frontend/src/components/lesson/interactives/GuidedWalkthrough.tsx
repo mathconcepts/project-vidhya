@@ -109,8 +109,17 @@ function LinearWalkthrough({ spec }: Props) {
       className="rounded-xl border p-4 space-y-3"
       style={{ borderColor: 'var(--separator)', background: 'var(--surface-fill)' }}
     >
-      <header className="flex items-center justify-between gap-2">
-        <h4 className="font-semibold" style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}>{spec.title}</h4>
+      {/* items-start, not items-center (live-QA, /investigate 2026-09-07):
+          with items-center, a long `spec.title` that wraps to 2+ lines on a
+          phone-width viewport gets the "Step X / Y" badge vertically
+          centered against the FULL HEIGHT of the wrapped heading — the
+          badge lands beside an interior line instead of the first one,
+          reading as text spilling past its card ("...space and STEP 1/4
+          space and column space"). items-start pins both boxes to the top
+          of the row; a single-line title looks identical either way, so
+          this has no effect on the common case. */}
+      <header className="flex items-start justify-between gap-2">
+        <h4 className="font-semibold flex-1 min-w-0" style={{ color: 'var(--text-primary)', fontSize: 'var(--text-body)' }}>{spec.title}</h4>
         <span
           className="uppercase tracking-wide font-medium flex-shrink-0"
           style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)' }}

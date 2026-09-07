@@ -4,6 +4,75 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.77.0] — 2026-09-07 — Walkthrough header overflow bug, corpus-wide; ELI5 spoon-feeding pilot
+
+No new env vars, no migrations.
+
+`/investigate` on a live-QA screenshot (null-space-column-space, "finding
+null space and column space" walkthrough): (1) text overflowing card
+boundaries; (2) "the content language is not quite ELI5 — Indian students
+expect spoon feeding."
+
+**Root cause (ask 1), confirmed against the real render code, not
+patched at the symptom.** `GuidedWalkthrough.tsx`'s and
+`DecisionTreeWalkthrough.tsx`'s headers both used `flex items-center
+justify-between` for a `<h4>` title beside a fixed "Step X / Y" /
+"Question N" badge. `items-center` vertically centers the badge against
+the FULL HEIGHT of the title box — on a phone-width viewport, this
+concept's 52-character title wraps to 4 lines, so the single-line badge
+lands beside an interior line (line 2) instead of the first one, reading
+as the badge box spilling into the middle of the sentence
+("...space and STEP 1/4 space and column space"). Fixed: `items-start`
+pins both boxes to the top of the row — a single-line title (the common
+case) looks identical either way, so this is a pure fix with no
+regression. `flex-1 min-w-0` added to both titles, matching this
+codebase's established convention for text beside a fixed-width flex
+sibling. Corpus-wide by construction — both are shared components, so
+every atom using either widget (105+ of 125 interactive uses in the
+corpus per `GuidedWalkthrough.test.tsx`'s own count) is fixed at once,
+no per-concept content edit needed.
+
+**Content pilot (ask 2) — one concrete instance rewritten, not the
+corpus.** The reported atom's `guided_walkthrough` widget text (prompt/
+hint/answer, distinct from the surrounding worked-example prose, which
+was already reasonably ELI5) assumed prior knowledge the surrounding
+prose didn't require: "RREF" used with no gloss, "pivot columns"/"free
+variables" introduced with no explanation of what they mean or why they
+matter, row operations listed with no reason given for each one. Rewritten
+end to end — every numeric claim (RREF, pivot columns 1 and 3, both null
+space basis vectors, the column space basis, rank + nullity = 4)
+re-verified via SymPy before writing, none changed: only the words
+around them. Added a `why` field (schema already supported it,
+`GuidedWalkthroughSpec.why`, previously unused on this atom) giving a
+one-line framing sentence before the widget — the mechanism
+`InteractiveSidecar.tsx` already renders for exactly this purpose.
+Byte-identical fence propagated across `worked-example.md`/`-shaken.md`/
+`-assured.md` (verified via Python `re.DOTALL`, never `grep -o` — this
+repo's documented failure mode for multi-line JSON fences; the first
+propagation attempt in this pass accidentally double-escaped every
+LaTeX backslash via a stray `.replace()` inside the substitution
+callback, caught immediately by re-reading the file before validating
+further, restored from git, redone correctly).
+
+**Scope, named honestly.** This fixes the ONE reported atom's widget
+text — not a corpus-wide ELI5 sweep of every `guided_walkthrough` spec.
+105+ other atoms use this same component with their own prompt/hint/
+answer text, unaudited in this pass. Tracked in TODOS.md with the same
+5-6-concept subagent-batch pattern used for every other content pass
+this size in this doc.
+
+**Tests:** 5 new (`GuidedWalkthrough.test.tsx` +3 — header uses
+`items-start` not `items-center`, title carries `flex-1 min-w-0`, badge
+stays `flex-shrink-0`; `DecisionTreeWalkthrough.test.tsx` +2 — same
+header-alignment assertions). Full suites: backend 4720/4720 (unchanged,
+frontend+content-only pass), frontend 2807 → 2812/2812 (102 files,
+including the 1726-assertion full-corpus render regression passing
+against the edited content). `tsc --noEmit` clean both sides. `npm run
+ci` (18 gates) clean — `ci:interactive-specs` 424 blocks (unchanged, one
+existing fence edited in place, not added), `ci:variant-agreement` 610
+pairs, `ci:katex-fences` 1723, `ci:content-integrity` 1729,
+`ci:la-walkthrough` 26/26, all unchanged counts.
+
 ## [4.76.0] — 2026-09-07 — Confidence-honest mastery numbers; a 1-1 hook mapping
 
 No new env vars, no migrations.

@@ -19,5 +19,3 @@ For a $2 \times 2$ matrix, once you compute $A^2$, every higher power collapses 
 ```gif-scene
 {"type":"parametric","expression":"sin(x)*sin(t)+cos(x)*cos(t)","x_range":[-6.28,6.28],"y_range":[-2,2],"t_range":[0,6.28],"frames":30,"fps":12}
 ```
-
-The animation shows how a composed transformation (like repeated matrix application) cycles according to an underlying pattern—exactly as Cayley-Hamilton predicts.

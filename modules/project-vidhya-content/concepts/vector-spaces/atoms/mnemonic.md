@@ -16,7 +16,7 @@ modality: mnemonic
 
 Always run Zero first — it's the fastest disqualifier. $\{(x,y,z):x+y+z=1\}$ dies in five seconds: substitute $(0,0,0)$, get $0\neq1$, done.
 
-**The shape rule (what to look for before testing anything):** a subspace is defined by equations that are **homogeneous and linear**.
+**The shape rule (what to look for before testing anything):** a subspace is defined by equations that are **homogeneous** (equal to zero, no constant term) **and linear** (no squares, products, or curves).
 
 > **A constant term or a curve kills it.**
 

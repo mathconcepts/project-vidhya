@@ -15,5 +15,3 @@ The curve on this card plots $\det(A_t) = 1 - t^2$ for the one-parameter family 
 ```gif-scene
 {"type":"function-trace","expression":"1-x**2","x_range":[-2,2],"y_range":[-3,1.5],"frames":30,"fps":12}
 ```
-
-That single curve is the whole intuition in motion: area shrinking to zero, then reappearing negative, is exactly what a vanishing-then-flipping determinant looks like.

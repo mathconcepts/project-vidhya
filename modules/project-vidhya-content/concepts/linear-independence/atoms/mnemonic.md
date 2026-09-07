@@ -12,11 +12,11 @@ modality: mnemonic
 
 **The cheapest-test-first ladder — run it in this order and stop at the first hit:**
 
-1. **Zero** — does the set contain $\mathbf{0}$? Dependent. ($1 \cdot \mathbf{0} = \mathbf{0}$ is a non-trivial recipe.) No computation.
-2. **Count** — more vectors than the dimension of the space they live in? Dependent, always. No computation.
-3. **Two vectors?** Independent iff neither is a scalar multiple of the other. Glance, don't solve.
-4. **Square case** — exactly $n$ vectors in an $n$-dimensional space? Independent iff $\det \neq 0$. One determinant.
-5. **Otherwise** — stack as columns, row-reduce, independent iff $\text{rank} = k$ (the number of vectors).
+1. **Zero** — does the set contain $\mathbf{0}$? Dependent. ($1 \cdot \mathbf{0} = \mathbf{0}$ is a non-trivial recipe.) No computation needed.
+2. **Count** — more vectors than the dimension of the space they live in? Dependent, always. No computation needed.
+3. **Two vectors?** Independent as long as neither is a "scalar multiple" of the other — meaning one isn't just the other stretched or flipped by some number, like $(2,4)$ being $2\times(1,2)$. Just glance, don't solve.
+4. **Square case** — exactly $n$ vectors in an $n$-dimensional space? Independent as long as $\det \neq 0$ (the determinant: one number you compute from the matrix; zero means the vectors have collapsed onto each other). One determinant to compute.
+5. **Otherwise** — stack the vectors as columns of a matrix, row-reduce it (simplify row by row into a staircase pattern), and check: independent as long as the "rank" (how many non-zero rows are left after that) equals $k$, the number of vectors.
 
 Steps 1–3 cost nothing and settle most exam options. Only reach for step 5 when the shape is genuinely rectangular.
 

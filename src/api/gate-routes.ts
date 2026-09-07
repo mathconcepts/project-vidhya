@@ -36,6 +36,7 @@ import {
   getModernProblemById,
 } from './gate-topics-modern-bridge';
 import { checkRateLimit } from '../lib/rate-limit';
+import { wilsonLowerBound, topicMasteryDisplay, MASTERY_MIN_ATTEMPTS_FOR_LABEL } from '../lib/mastery-confidence';
 import { TOPIC_DIR_ALIAS } from '../db/seed-static-pyqs';
 import { gateMcqNegativeMarksFallback } from '../syllabus/exam-catalog';
 const { Pool } = pg;
@@ -718,26 +719,48 @@ async function handleGetProgress(req: ParsedRequest, res: ServerResponse): Promi
     return sendJSON(res, EMPTY_PROGRESS);
   }
 
-  // Weak topics: lowest easiness = hardest for student
+  // Weak topics: lowest easiness = hardest for student. The ratio-based half
+  // of this OR now goes through the same small-sample-honest bound as the
+  // topic display below (mastery-confidence.ts) instead of a naive ratio —
+  // a single wrong attempt no longer confidently flags a topic as "weak"
+  // any more than a single correct one confidently flags it "mastered".
   const weakTopics = topicStats.rows
-    .filter((r: any) => parseFloat(r.avg_easiness) < 2.5 || (parseInt(r.attempts) > 0 && parseInt(r.correct) / parseInt(r.attempts) < 0.6))
-    .map((r: any) => ({
-      topic: r.topic,
-      mastery: parseInt(r.attempts) > 0 ? parseInt(r.correct) / parseInt(r.attempts) : 0,
-      easiness: parseFloat(r.avg_easiness),
-      due: parseInt(r.due),
-    }));
+    .filter((r: any) => {
+      const attempts = parseInt(r.attempts) || 0;
+      const easinessWeak = parseFloat(r.avg_easiness) < 2.5;
+      const ratioWeak = attempts >= MASTERY_MIN_ATTEMPTS_FOR_LABEL && wilsonLowerBound(parseInt(r.correct) || 0, attempts) < 0.6;
+      return easinessWeak || ratioWeak;
+    })
+    .map((r: any) => {
+      const display = topicMasteryDisplay(parseInt(r.correct) || 0, parseInt(r.attempts) || 0);
+      return {
+        topic: r.topic,
+        mastery: display.displayPct / 100,
+        easiness: parseFloat(r.avg_easiness),
+        due: parseInt(r.due),
+      };
+    });
 
   sendJSON(res, {
-    topics: topicStats.rows.map((r: any) => ({
-      topic: r.topic,
-      totalProblems: parseInt(r.total_problems),
-      correct: parseInt(r.correct) || 0,
-      attempts: parseInt(r.attempts) || 0,
-      mastery: parseInt(r.attempts) > 0 ? parseInt(r.correct) / parseInt(r.attempts) : 0,
-      easiness: parseFloat(r.avg_easiness),
-      due: parseInt(r.due),
-    })),
+    topics: topicStats.rows.map((r: any) => {
+      const correct = parseInt(r.correct) || 0;
+      const attempts = parseInt(r.attempts) || 0;
+      const display = topicMasteryDisplay(correct, attempts);
+      return {
+        topic: r.topic,
+        totalProblems: parseInt(r.total_problems),
+        correct,
+        attempts,
+        // Wilson lower bound, not the naive ratio — see mastery-confidence.ts.
+        // A topic with 1/1 correct now reads ~21%, not a misleading 100%.
+        mastery: display.displayPct / 100,
+        masteryConfidence: display.confidence,
+        hasEnoughDataForLabel: display.hasEnoughDataForLabel,
+        rawMastery: display.rawPct / 100,
+        easiness: parseFloat(r.avg_easiness),
+        due: parseInt(r.due),
+      };
+    }),
     overall: overall.rows[0],
     weakTopics,
   });
@@ -771,16 +794,26 @@ async function handleExamReadiness(req: ParsedRequest, res: ServerResponse): Pro
       [sessionId],
     );
 
-    // Weak topics (mastery < 50%)
-    const weakTopics = await pool.query(
+    // Per-topic correct/attempts — "weak" is decided in JS below via the
+    // same Wilson-bound + minimum-attempts gate the Progress page uses
+    // (mastery-confidence.ts), not a raw SQL ratio. The old HAVING clause
+    // flagged a topic as "weak" off a single wrong attempt with the same
+    // false confidence the "100% off 1 attempt" bug had in the other
+    // direction — both are the same naive-ratio-at-small-n defect.
+    const topicRatios = await pool.query(
       `SELECT pq.topic, SUM(sr.correct_count) as correct, SUM(sr.attempts) as attempts
        FROM sr_sessions sr
        JOIN pyq_questions pq ON pq.id = sr.pyq_id
        WHERE sr.session_id = $1
-       GROUP BY pq.topic
-       HAVING SUM(sr.attempts) > 0 AND (SUM(sr.correct_count)::float / SUM(sr.attempts)) < 0.5`,
+       GROUP BY pq.topic`,
       [sessionId],
     );
+    const weakTopics = {
+      rows: topicRatios.rows.filter((r: any) => {
+        const attempts = parseInt(r.attempts) || 0;
+        return attempts >= MASTERY_MIN_ATTEMPTS_FOR_LABEL && wilsonLowerBound(parseInt(r.correct) || 0, attempts) < 0.5;
+      }),
+    };
 
     // Streak
     const streak = await pool.query(
@@ -797,9 +830,11 @@ async function handleExamReadiness(req: ParsedRequest, res: ServerResponse): Pro
     const currentStreak = parseInt(streak.rows[0]?.current_streak) || 0;
     const weakCount = weakTopics.rows.length;
 
-    // Sub-scores (each 0-1)
+    // Sub-scores (each 0-1). Accuracy is the Wilson lower bound, not the
+    // naive ratio — see mastery-confidence.ts. A student with 1 correct out
+    // of 1 attempt no longer swings this sub-score to a confident 100%.
     const coverage = topicsAttempted / (GATE_TOPIC_OBJECTS.length || 1);
-    const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
+    const accuracy = wilsonLowerBound(totalCorrect, totalAttempts);
     const srHealth = totalSR > 0 ? onSchedule / totalSR : 0;
     const weakPenalty = topicsAttempted > 0 ? 1 - (weakCount / topicsAttempted) : 0;
     const consistency = Math.min(currentStreak / 30, 1.0);

@@ -32,6 +32,7 @@ import {
   MORPH_END_PROGRESS,
   ghostArrowDirs,
   formatSignificant,
+  beatHighlightKind,
 } from './Simulation';
 import type { SimulationSpec, Mat2 } from './types';
 
@@ -1188,5 +1189,133 @@ describe('ghost rendering without declared eigen directions (matrix-operations c
     const { container } = render(<Simulation spec={GHOST_NO_EIGEN_SPEC} />);
     const svgTexts = Array.from(container.querySelectorAll('svg text')).map((t) => t.textContent);
     expect(svgTexts.some((t) => /^\(.*,.*\)$/.test(t ?? ''))).toBe(false);
+  });
+});
+
+// /design-review (2026-09-07): "draw the sequence, and explain in each step
+// how the theoretical step matches with the visual/hook — 1-1 mapping
+// explicitly." beatHighlightKind derives the mapping from data the render
+// already branches on (emphasize/focus_eigen/focus_point); `trap` is
+// excluded on purpose (TrapRow already owns that moment).
+describe('beatHighlightKind', () => {
+  it('returns null for an undefined/null step', () => {
+    expect(beatHighlightKind(undefined)).toBeNull();
+    expect(beatHighlightKind(null)).toBeNull();
+  });
+
+  it('returns null for a plain beat with no highlight signal', () => {
+    expect(beatHighlightKind({ at_progress: 0, text: 'Just setting up.' })).toBeNull();
+  });
+
+  it('returns "payoff" for an emphasize beat', () => {
+    expect(beatHighlightKind({ at_progress: 0.5, text: 'The reveal.', emphasize: true })).toBe('payoff');
+  });
+
+  it('returns "focus" for a focus_eigen beat', () => {
+    expect(beatHighlightKind({ at_progress: 0.2, text: 'Look here.', focus_eigen: [0] })).toBe('focus');
+  });
+
+  it('returns "focus" for a focus_point beat', () => {
+    expect(beatHighlightKind({ at_progress: 0.2, text: 'Look here.', focus_point: true })).toBe('focus');
+  });
+
+  it('returns null for a trap beat (TrapRow already owns that moment — no redundant chip)', () => {
+    expect(
+      beatHighlightKind({
+        at_progress: 0.8,
+        text: 'The trap.',
+        trap: { text: 'wrong reading', avoid: 'right reading' },
+      }),
+    ).toBeNull();
+  });
+
+  it('prefers "payoff" over "focus" when a beat somehow carries both signals', () => {
+    expect(
+      beatHighlightKind({ at_progress: 0.5, text: 'Both.', emphasize: true, focus_point: true }),
+    ).toBe('payoff');
+  });
+});
+
+describe('Simulation — step counter and 1-1 mapping chip (/design-review, 2026-09-07)', () => {
+  const MAPPING_SPEC: SimulationSpec = {
+    v: 1,
+    kind: 'simulation',
+    title: 'Mapping demo',
+    duration_sec: 4,
+    x_expr: 't',
+    y_expr: 't',
+    t_min: 0,
+    t_max: 1,
+    narration_steps: [
+      { at_progress: 0, text: 'Setting up — no highlight yet.' },
+      { at_progress: 0.3, text: 'Look at this exact point.', focus_point: true },
+      { at_progress: 0.7, text: 'This is the payoff.', emphasize: true },
+    ],
+  };
+
+  it('shows a visible "Step X of N" counter, matching the active beat', () => {
+    render(<Simulation spec={MAPPING_SPEC} />);
+    expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
+
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+    expect(screen.getByText('Step 3 of 3')).toBeInTheDocument();
+    expect(screen.queryByText('Step 1 of 3')).toBeNull();
+  });
+
+  it('does not render a step counter for a single-beat scene (nothing to count)', () => {
+    const oneBeat: SimulationSpec = { ...MAPPING_SPEC, narration_steps: [{ at_progress: 0, text: 'Only beat.' }] };
+    render(<Simulation spec={oneBeat} />);
+    expect(screen.queryByText(/^Step \d of \d$/)).toBeNull();
+  });
+
+  it('renders no mapping chip on a beat with no highlight signal', () => {
+    render(<Simulation spec={MAPPING_SPEC} />);
+    expect(screen.getByText('Setting up — no highlight yet.')).toBeInTheDocument();
+    expect(screen.queryByText(/Look at the highlighted/)).toBeNull();
+    expect(screen.queryByText('This is the payoff — look at the highlighted shape')).toBeNull();
+  });
+
+  it('renders the "focus" mapping chip, in ink, on a focus_point beat', () => {
+    render(<Simulation spec={MAPPING_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 3/));
+
+    const chip = screen.getByText('Look at the highlighted arrow or point');
+    expect(chip).toBeInTheDocument();
+    expect(chip.style.color).toBe('var(--text-primary)');
+    // The chip stays scoped to this beat — the "payoff" chip text never appears alongside it.
+    expect(screen.queryByText('This is the payoff — look at the highlighted shape')).toBeNull();
+  });
+
+  it('renders the "payoff" mapping chip, in green, on an emphasize beat', () => {
+    render(<Simulation spec={MAPPING_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+
+    const chip = screen.getByText('This is the payoff — look at the highlighted shape');
+    expect(chip).toBeInTheDocument();
+    expect(chip.style.color).toBe('var(--green-ink)');
+  });
+
+  it('renders no mapping chip for the trap beat — TrapRow already covers it', () => {
+    const trapSpec: SimulationSpec = {
+      ...MAPPING_SPEC,
+      narration_steps: [
+        { at_progress: 0, text: 'Setup.' },
+        {
+          at_progress: 0.5,
+          text: 'The trap beat.',
+          trap: { text: 'Students read it wrong.', avoid: 'Read it right.' },
+        },
+      ],
+    };
+    render(<Simulation spec={trapSpec} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 2/));
+
+    expect(screen.getByText('The trap beat.')).toBeInTheDocument();
+    expect(screen.queryByText(/This is the payoff/)).toBeNull();
+    expect(screen.queryByText(/Look at the highlighted/)).toBeNull();
   });
 });

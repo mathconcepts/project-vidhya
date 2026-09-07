@@ -4,6 +4,61 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.75.0] — 2026-09-07 — Confidence-honest mastery numbers; a 1-1 hook mapping
+
+No new env vars, no migrations.
+
+`/investigate` on three asks: a small-sample mastery bug, a hook-resonance
+design review, and a `/ui-ux-pro-max` attention-grabbing pass.
+
+**"Sample size is too low to be completed 100%" — a real, confirmed bug,
+root-caused and fixed with a real statistical methodology, not a patch.**
+The Progress page's per-topic bar and the Exam Readiness Score
+(`src/api/gate-routes.ts`) both computed a naive `correct/attempts` ratio
+gated only by `attempts > 0` — a single lucky attempt read as a confident
+"100%", indistinguishable from a topic actually mastered over dozens.
+`src/lib/mastery-confidence.ts` (mirrored at
+`frontend/src/lib/mastery-confidence.ts` for the one client-side aggregate
+the backend doesn't already send) implements the Wilson score interval
+lower bound — the standard, well-studied correction for exactly this
+failure mode (the same math behind, e.g., Reddit's comment ranking):
+1/1 now shows ~21%, not 100%, and the bound converges to the raw ratio as
+attempts grow. `MASTERY_MIN_ATTEMPTS_FOR_LABEL = 5` additionally withholds
+a confident label below 5 attempts — the Progress page now captions those
+topics "Based on N attempt(s) — still finding out" instead of a bare,
+misleadingly precise percentage. The same fix closes the mirror-image bug:
+a single wrong attempt no longer flags a topic "weak" with equal false
+confidence. `TopicPage.tsx`, `SpinePage.tsx`, and `Home.tsx` all read the
+same backend `mastery` field and inherit the fix with zero code changes.
+Deliberately NOT migrated in this pass: `cross-exam-coverage.ts`,
+`session-engine.ts`, and `attempt-counterfactual.ts` already have their
+own min-n gates for their own purposes — named in TODOS.md as a possible
+future consolidation, not silently expanded here.
+
+**Hook resonance: a 1-1 mapping between the sentence and the pixels.**
+`Simulation.tsx`'s beat scenes already drove specific visual events per
+beat (`emphasize`'s payoff styling, `focus_eigen`/`focus_point`'s "look
+here" highlight) but never named which one a student was reading about.
+Two additions, both derived from data every beat-carrying scene already
+has (zero new content authoring, reaches the whole corpus by
+construction): a visible "Step X of N" counter next to the beat bar
+("draw the sequence"), and a small colored chip above the caption naming
+the mapping explicitly — green "This is the payoff — look at the
+highlighted shape" on an `emphasize` beat, ink "Look at the highlighted
+arrow or point" on a `focus_eigen`/`focus_point` beat. The trap beat is
+deliberately excluded — `TrapRow` already owns that moment, so a second
+chip there would be redundant, not helpful. Reused hues only (green =
+payoff/mastery, ink = "look here"), per DESIGN-SYSTEM.md's two-accent law
+— no new colors introduced for the `/ui-ux-pro-max` attention-grabbing
+ask; the existing semantic palette, applied more consistently, was the
+right answer here, not a new one.
+
+**Tests:** backend +12 (`mastery-confidence.test.ts`); frontend +18
+(`mastery-confidence.test.ts` ×2 files, `ProgressPage.test.tsx` +4,
+`Simulation.test.tsx` +13). Full suites: backend 4720/4720 (1 todo, 366
+files), frontend 2807/2807 (102 files). `tsc --noEmit` clean both sides.
+`npm run ci` (18 gates) clean.
+
 ## [4.74.0] — 2026-09-07 — Chat history stays in focus; trace.intuition gets a real coordinate anchor
 
 No new env vars, no migrations.

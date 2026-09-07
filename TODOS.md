@@ -4,6 +4,34 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Other small-n ratio consumers not yet on the Wilson bound (2026-09-07)
+
+**Trigger:** a live-QA report names a second confidently-wrong small-sample
+number, or an operator decides consolidating these is worth the blast
+radius.
+
+`/investigate` (2026-09-07, "sample size is too low to be completed 100%")
+fixed the Progress page's per-topic mastery bar and the Exam Readiness
+Score (`src/api/gate-routes.ts`) with `src/lib/mastery-confidence.ts`'s
+Wilson-lower-bound methodology. Three other codebase modules compute a
+raw or lightly-gated success ratio for their own purposes and were
+deliberately NOT migrated in that pass, to keep the fix's blast radius
+matched to the actual bug report: `src/gbrain/cross-exam-coverage.ts`
+(`MIN_ATTEMPTS = 2`, a soft coverage rollup), `src/sessions/
+session-engine.ts` (`STRONG_MIN_ATTEMPTS = 2`, the "Strong on X" session
+highlight — already fixed once, 2026-09-06, for the "3 questions = 100%"
+class of bug, but still a fixed n-gate on a raw ratio rather than a
+confidence interval), and `src/readiness/attempt-counterfactual.ts`
+(`MIN_TOPIC_ATTEMPTS_FOR_SKIP_EV = 8`). Each has its own tuned threshold
+and its own tests; swapping all three onto `wilsonLowerBound()` is a real,
+separate refactor, not a follow-up line item.
+
+**Where to start:** `src/lib/mastery-confidence.ts`'s header comment lists
+these three sites explicitly. Each swap is small in isolation (replace a
+raw ratio + fixed-n gate with `wilsonLowerBound()`); the work is auditing
+each site's existing tests for hardcoded expected percentages that assume
+the raw ratio, not the mechanism itself.
+
 ## Practice-item explanations have no visual mechanism at all (2026-09-07)
 
 **Trigger:** an operator wants to build this, or a live-QA report repeats

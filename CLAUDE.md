@@ -4545,6 +4545,123 @@ clean. Content gates (`ci:interactive-specs` 424 blocks unchanged,
 `ci:content-integrity` 1729) clean. Backend untouched (frontend + content
 only).
 
+---
+
+### `/investigate` + `/design-review` + `/ui-ux-pro-max`: confidence-honest mastery numbers, a 1-1 hook mapping (2026-09-07)
+
+Three asks in one report, on a live Progress-page screenshot ("27% Exam
+Readiness Score", "Differential Equations 100% (1 due)") and a hook
+screenshot (the determinants "area ×3" scene): (1) "sample size is too
+low to be completed 100%. brainstorm and deduce a clear methodology"; (2)
+"in hook, the current approach is good but requires more resonance...
+draw the sequence, also explain in each step how theoretical step matches
+with the visual/hook (1-1 mapping explicitly)"; (3) "use colors/highlight/
+effects for attention grabbing and improving grasping."
+
+**Root cause (ask 1), confirmed via a dedicated Explore pass before any
+fix.** `src/api/gate-routes.ts`'s `handleGetProgress` (Progress page's
+per-topic bar) and `handleExamReadiness` (the 27% composite score) both
+computed a naive `correct/attempts` ratio, gated only by `attempts > 0` —
+1 correct out of 1 attempt reads as a confident "100%", identical to a
+topic mastered over 50 attempts. The codebase already has a family of
+ad-hoc n-thresholds tuned to their own stakes
+(`cross-exam-coverage.ts`'s `MIN_ATTEMPTS = 2`, `session-engine.ts`'s
+`STRONG_MIN_ATTEMPTS = 2`, `attempt-counterfactual.ts`'s
+`MIN_TOPIC_ATTEMPTS_FOR_SKIP_EV = 8`, `elo.ts`'s
+`ITEM_CONFIDENT_N = 100`) — but every one of them gates whether a signal
+is used at all, never what NUMBER is displayed. No Wilson-interval or
+similar small-sample correction existed anywhere in `src/`.
+
+**The methodology, deduced and shipped as a reusable module, not a
+one-off patch.** `src/lib/mastery-confidence.ts` (mirrored, per the
+established `frontend/src/lib/ledger-suggestions.ts` "kept in sync
+manually" pattern, at `frontend/src/lib/mastery-confidence.ts` for the one
+client-side aggregate — the top "Accuracy" stat tile — the backend
+doesn't already send) implements the **Wilson score interval lower
+bound**: the standard, well-studied correction for exactly this failure
+mode (the same math behind, e.g., Reddit's "best" comment ranking, per
+Evan Miller's "How Not To Sort By Average Rating"). It shrinks toward 0
+the fewer trials there are and converges to the raw ratio as trials grow
+— 1/1 now shows ~21%, 5/5 shows ~57%, 100/100 shows ~96%, never a flat
+100% off one data point. `MASTERY_MIN_ATTEMPTS_FOR_LABEL = 5` (chosen
+between the codebase's existing n=2 "soft rollup" and n=8 "real decision"
+precedents — a per-topic badge a student reads as "you know this" sits
+closer to the latter) additionally withholds confident LABEL language
+below 5 attempts; the Progress page now captions those rows "Based on N
+attempt(s) — still finding out" instead of a bare, misleadingly precise
+percentage. The same mechanism closes the mirror-image bug for free: a
+single wrong attempt no longer flags a topic "weak" with equal false
+confidence (`handleExamReadiness`'s weak-topics query moved from a raw
+SQL `HAVING` ratio to the same JS-side `wilsonLowerBound()` +
+min-attempts gate).
+
+**One field change reaches four pages.** `TopicPage.tsx`, `SpinePage.tsx`,
+and `Home.tsx` all read the same backend `topics[].mastery` /
+`TopicMastery.mastery` field the Progress page does — none needed a code
+change to inherit the fix, since the backend is the one source of truth
+for the number, not each page re-deriving it (avoiding exactly the
+"parallel truths that drift" bug class named elsewhere in this doc,
+v4.25.0).
+
+**Deliberately not migrated in this pass, named honestly in TODOS.md:**
+`cross-exam-coverage.ts`, `session-engine.ts`, and
+`attempt-counterfactual.ts` keep their own existing min-n gates on raw
+ratios — swapping all three onto the Wilson bound too is a separate,
+scoped refactor with its own blast radius, not silently folded into a bug
+fix whose report named one specific screen.
+
+**Hook resonance (ask 2) — the 1-1 mapping, derived from data every beat
+already has, not new authoring.** `Simulation.tsx`'s beat scenes already
+drove a specific visual event per beat (`emphasize`'s green payoff
+styling, `focus_eigen`/`focus_point`'s ink "look here" highlight) but the
+caption never named WHICH one a student was reading about — the exact gap
+the report pointed at on the determinants "area ×3" scene. Two additions,
+both pure functions of fields the render already branches on so they
+reach every existing and future beat-carrying scene at once, zero content
+edits: a visible **"Step X of N"** counter next to the beat bar ("draw
+the sequence" — the beat bar's fill/empty segments always encoded
+position but never as a number a student could read at a glance), pinned
+inside the same sticky diagram+controls wrapper the 2026-09-05 fix
+already established; and a small **mapping chip** above the caption —
+`beatHighlightKind(step)` returns `'payoff'` on an `emphasize` beat or
+`'focus'` on a `focus_eigen`/`focus_point` beat (`null` otherwise),
+rendered as "This is the payoff — look at the highlighted shape" (green)
+or "Look at the highlighted arrow or point" (ink). The trap beat is
+deliberately excluded from the chip — `TrapRow` ("Where marks are lost")
+already owns that moment with its own persistent row; a second "this is
+the trap" chip stacked on top would be redundant, not helpful, the same
+non-duplication discipline this file's `common_traps`/trap-row sections
+already apply elsewhere.
+
+**Colors/highlights (ask 3) — reused hues, not new ones, and said so
+explicitly.** The chip's green/ink choice IS the "use color for attention
+grabbing" ask, answered within the constraint the 2026-09-05 `/ui-ux-pro-
+max` pass already settled for this exact tension (CLAUDE.md's own
+"Amazon rainbow" section above): Vidhya Clarity's two-accent law plus the
+scoped atom-kind exception, not a new palette. Green already meant
+"payoff/mastery" in this exact scene (the unit-square fill, the eigen
+reveal's `×λ` label) and ink already meant "look here" (`focus_eigen`/
+`focus_point`'s own coordinate labels) — the fix is using those same
+meanings MORE consistently (in the caption, not just the diagram), which
+is a more defensible reading of "improve grasping" than adding a fifth
+hue that would dilute what green and ink already mean everywhere else in
+the app.
+
+**Tests:** backend +12 (`src/lib/__tests__/mastery-confidence.test.ts` —
+`wilsonLowerBound`'s monotonicity/bounds/z-score behavior,
+`topicMasteryDisplay`'s confidence-tier crossings). Frontend +18
+(`frontend/src/lib/mastery-confidence.test.ts` +5 mirror-consistency
+tests; `ProgressPage.test.tsx` +4 — the low-confidence caption
+present/absent across three cases, the Accuracy tile no longer showing a
+naive 100%; `Simulation.test.tsx` +13 — `beatHighlightKind`'s 7 branches
+including the "trap excluded" and "payoff wins over focus" cases, the
+step counter's rendering/update/single-beat-suppression, the chip's
+payoff/focus/trap-absent rendering). Full suites: backend 4720/4720 (1
+todo, 366 files), frontend 2807/2807 (102 files). `tsc --noEmit` clean
+both sides. `npm run ci` (18 gates, including `ci:la-walkthrough` 26/26
+and `ci:variant-agreement` 610 pairs, both unchanged — no content files
+touched this pass) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -121,3 +121,86 @@ describe('ProgressPage — the other two hook-order transitions', () => {
     await waitFor(() => expect(screen.getByText('No progress yet')).toBeInTheDocument());
   });
 });
+
+// /investigate (2026-09-07): "sample size is too low to be completed 100%".
+// The backend now sends the Wilson lower bound (not the naive ratio) as
+// `mastery`, plus `hasEnoughDataForLabel` — the page's job is to trust that
+// bound for the percentage/tone, and to caption the ones the backend flags
+// as low-confidence rather than presenting them as an ordinary score.
+describe('ProgressPage — low-confidence topic caption', () => {
+  it('captions a topic below the min-attempts label gate, naming the attempt count', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockResolvedValueOnce({
+      topics: [
+        {
+          topic: 'discrete-mathematics', totalProblems: 5, correct: 1, attempts: 1,
+          mastery: 0.21, masteryConfidence: 'low', hasEnoughDataForLabel: false, easiness: 2.5, due: 1,
+        },
+      ],
+      overall: { problems_attempted: '1', total_correct: '1', total_attempts: '1', due_today: '1' },
+      weakTopics: [],
+    });
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('Discrete Mathematics')).toBeInTheDocument());
+    expect(screen.getByText('Based on 1 attempt — still finding out')).toBeInTheDocument();
+    // The displayed number is the Wilson bound sent by the backend, not a raw 100%.
+    expect(screen.getByText('21%')).toBeInTheDocument();
+  });
+
+  it('does not caption a topic once it has enough attempts for a real label', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockResolvedValueOnce({
+      topics: [
+        {
+          topic: 'linear-algebra', totalProblems: 20, correct: 8, attempts: 10,
+          mastery: 0.55, masteryConfidence: 'medium', hasEnoughDataForLabel: true, easiness: 2.1, due: 0,
+        },
+      ],
+      overall: { problems_attempted: '10', total_correct: '8', total_attempts: '10', due_today: '0' },
+      weakTopics: [],
+    });
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('Linear Algebra')).toBeInTheDocument());
+    expect(screen.queryByText(/still finding out/)).not.toBeInTheDocument();
+  });
+
+  it('does not caption an unattempted topic (nothing to "still be finding out" about)', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockResolvedValueOnce({
+      topics: [
+        {
+          topic: 'graph-theory', totalProblems: 8, correct: 0, attempts: 0,
+          mastery: 0, masteryConfidence: 'none', hasEnoughDataForLabel: false, easiness: 0, due: 4,
+        },
+      ],
+      overall: { problems_attempted: '0', total_correct: '0', total_attempts: '0', due_today: '4' },
+      weakTopics: [],
+    });
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('Graph Theory')).toBeInTheDocument());
+    expect(screen.queryByText(/still finding out/)).not.toBeInTheDocument();
+  });
+
+  it('the top Accuracy stat tile also uses the Wilson bound, not the naive overall ratio', async () => {
+    const apiModule = await import('@/hooks/useApi');
+    (apiModule.apiFetch as any).mockResolvedValueOnce({
+      topics: [
+        { topic: 'eigenvalues', totalProblems: 3, correct: 1, attempts: 1, mastery: 0.21, masteryConfidence: 'low', hasEnoughDataForLabel: false, easiness: 2.5, due: 0 },
+      ],
+      // Naive ratio here would be 100%; the Wilson bound must be well below it.
+      overall: { problems_attempted: '1', total_correct: '1', total_attempts: '1', due_today: '0' },
+      weakTopics: [],
+    });
+
+    await renderProgressPage();
+
+    await waitFor(() => expect(screen.getByText('Accuracy')).toBeInTheDocument());
+    expect(screen.queryByText('100%')).not.toBeInTheDocument();
+  });
+});

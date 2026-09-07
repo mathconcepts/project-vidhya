@@ -14,14 +14,20 @@ import { StatTile } from '@/components/ui/StatTile';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
+import { wilsonLowerBound } from '@/lib/mastery-confidence';
 import { BarChart3, Clock, ChevronRight, Sparkles, Calendar, FileText, BookOpen, Brain, Target } from 'lucide-react';
+
+type MasteryConfidence = 'none' | 'low' | 'medium' | 'high';
 
 interface TopicStat {
   topic: string;
   totalProblems: number;
   correct: number;
   attempts: number;
+  /** Wilson lower bound, not the naive ratio (/investigate, 2026-09-07) — see mastery-confidence.ts. */
   mastery: number;
+  masteryConfidence: MasteryConfidence;
+  hasEnoughDataForLabel: boolean;
   easiness: number;
   due: number;
 }
@@ -103,7 +109,10 @@ export default function ProgressPage() {
   const overall = data.overall;
   const totalAttempts = parseInt(overall.total_attempts) || 0;
   const totalCorrect = parseInt(overall.total_correct) || 0;
-  const accuracy = totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 100) : 0;
+  // Wilson lower bound, not the naive ratio (/investigate, 2026-09-07) — see
+  // mastery-confidence.ts. Matches the per-topic bars below, which the
+  // backend already computes the same way.
+  const accuracy = Math.round(wilsonLowerBound(totalCorrect, totalAttempts) * 100);
   const dueToday = parseInt(overall.due_today) || 0;
   const allCaughtUp = dueToday === 0;
 
@@ -189,6 +198,18 @@ export default function ProgressPage() {
                     <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-secondary)', flexShrink: 0, marginLeft: 8 }}>{masteryPct}%</span>
                   </div>
                   <ProgressBar value={masteryPct} tone={tone as any} />
+                  {/* /investigate (2026-09-07): a topic used to read a
+                      confident "100%" off a single lucky attempt. `mastery`
+                      is now the Wilson lower bound (mastery-confidence.ts),
+                      which already discounts the number itself — this
+                      caption additionally names WHY it's conservative, so
+                      "27%" off one attempt reads as "still finding out",
+                      not as a worse score than it should be. */}
+                  {topic.attempts > 0 && !topic.hasEnoughDataForLabel && (
+                    <span style={{ display: 'block', fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', marginTop: 4 }}>
+                      Based on {topic.attempts} attempt{topic.attempts === 1 ? '' : 's'} — still finding out
+                    </span>
+                  )}
                   {topic.due > 0 && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)', marginTop: 4 }}>
                       <Clock size={10} /> {topic.due} due

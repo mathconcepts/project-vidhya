@@ -309,3 +309,38 @@ describe('GuidedWalkthrough — engagement gate (/design-review, 2026-09-06)', (
     expect(screen.queryByText('Read this, then continue')).not.toBeInTheDocument();
   });
 });
+
+describe('GuidedWalkthrough — header layout (live-QA, /investigate 2026-09-07)', () => {
+  // items-center vertically centered the "Step X / Y" badge against the
+  // FULL HEIGHT of a wrapped multi-line title, landing the badge beside an
+  // interior line instead of the first one — reading as the badge box
+  // spilling into the middle of the sentence. items-start pins both boxes
+  // to the top of the row instead.
+  const LONG_TITLE_SPEC: GuidedWalkthroughSpec = {
+    v: 1,
+    kind: 'guided_walkthrough',
+    title: 'Walk through: finding null space and column space',
+    steps: [{ prompt: 'Prompt.', answer: 'Answer.' }],
+  };
+
+  it('aligns the header to the top, not the center, so a wrapped title never straddles the step badge', () => {
+    const { container } = render(<GuidedWalkthrough spec={LONG_TITLE_SPEC} />);
+    const header = container.querySelector('header');
+    expect(header).not.toBeNull();
+    expect(header!.className).toContain('items-start');
+    expect(header!.className).not.toContain('items-center');
+  });
+
+  it('gives the title flex-1 min-w-0 so it wraps within its own column instead of squeezing the badge', () => {
+    render(<GuidedWalkthrough spec={LONG_TITLE_SPEC} />);
+    const title = screen.getByText(LONG_TITLE_SPEC.title);
+    expect(title.className).toContain('flex-1');
+    expect(title.className).toContain('min-w-0');
+  });
+
+  it('keeps the step badge flex-shrink-0 so it never gets compressed by a long title', () => {
+    render(<GuidedWalkthrough spec={LONG_TITLE_SPEC} />);
+    const badge = screen.getByText('Step 1 / 1');
+    expect(badge.className).toContain('flex-shrink-0');
+  });
+});

@@ -325,3 +325,24 @@ describe('DecisionTreeWalkthrough — startAt deep link (wizard-mistake-loop fol
     expect(screen.getByText(DEEP_LINK_NOTE)).toBeInTheDocument();
   });
 });
+
+describe('DecisionTreeWalkthrough — header layout (live-QA, /investigate 2026-09-07)', () => {
+  // Same bug + fix as GuidedWalkthrough.test.tsx's header-layout block:
+  // items-center vertically centers the badge against a wrapped multi-line
+  // title's FULL HEIGHT, landing it beside an interior line instead of the
+  // first one. items-start keeps both boxes pinned to the top of the row.
+  it('aligns the header to the top, not the center', () => {
+    const { container } = render(<DecisionTreeWalkthrough spec={TREE} />);
+    const header = container.querySelector('header');
+    expect(header).not.toBeNull();
+    expect(header!.className).toContain('items-start');
+    expect(header!.className).not.toContain('items-center');
+  });
+
+  it('gives the title flex-1 min-w-0 so it wraps within its own column', () => {
+    render(<DecisionTreeWalkthrough spec={TREE} />);
+    const title = screen.getByText(TREE.title);
+    expect(title.className).toContain('flex-1');
+    expect(title.className).toContain('min-w-0');
+  });
+});

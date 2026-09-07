@@ -4882,6 +4882,95 @@ rainbow" decision.
 **Tests:** none new — content-only pass, no schema or component changed.
 Backend and frontend suite counts unchanged from the prior release.
 
+---
+
+### `/investigate`: a corpus-wide walkthrough header bug + an ELI5 spoon-feeding pilot (2026-09-07)
+
+Live-QA screenshot on the null-space-column-space `guided_walkthrough`
+widget, two asks: (1) "text overflowing boundaries"; (2) "the content
+language is not quite ELI5. Indian students expect spoon feeding. enhance
+the entire content on these lines."
+
+**Ask 1 — a real, corpus-wide CSS bug, root-caused before any fix.**
+`GuidedWalkthrough.tsx`'s and `DecisionTreeWalkthrough.tsx`'s headers
+both laid out a `<h4>` title beside a "Step X / Y" / "Question N" badge
+with `flex items-center justify-between` — `items-center` vertically
+centers the badge against the title box's FULL height. On a narrow phone
+viewport this concept's title ("Walk through: finding null space and
+column space", 52 chars) wraps to 4 lines, and the single-line badge
+lands beside an INTERIOR line (line 2 of 4) rather than the first one —
+reading exactly like the screenshot: "...space and STEP 1/4 space and
+column space", the badge box appearing to spill into the middle of the
+sentence. Confirmed identical in both files (`DecisionTreeWalkthrough.tsx`
+carries the byte-for-byte same header pattern) before touching either.
+Fixed by swapping to `items-start` (pins both boxes to the row's top —
+a single-line title, the common case, looks identical either way, so
+zero regression risk) plus `flex-1 min-w-0` on the title, matching the
+convention this codebase already uses everywhere else a flex-shrink-0
+sibling sits beside variable-length text. Corpus-wide by construction:
+both are shared components (`GuidedWalkthrough.test.tsx`'s own doc
+comment counts it as "105 of 125 interactive uses in the corpus"), so
+every atom using either widget is fixed at once — no per-concept content
+edit was needed for this half of the report.
+
+**Ask 2 — the one reported atom's widget text rewritten, ELI5/spoon-fed,
+every number re-verified, not the corpus.** The `guided_walkthrough`
+spec's own prompt/hint/answer text (distinct from — and noticeably
+terser than — the concept's surrounding worked-example prose, which
+already glossed RREF reasonably) assumed prior knowledge a first-time
+reader wouldn't have: "RREF" used bare with no expansion inside the
+widget itself, "pivot columns"/"free variables" introduced with no
+explanation, each row operation listed with no reason WHY it's the right
+move. Rewritten step by step: RREF spelled out and explained in plain
+words the first time it's used inside the widget, each row operation
+paired with what it accomplishes ("kills the 2 at the start of row 2"),
+pivot columns and free variables defined in context rather than assumed,
+and the final rank-nullity check closed with why it matches (4 columns
+total). Every number re-verified via SymPy before writing — RREF, pivot
+columns 1 and 3, both null-space basis vectors, the column-space basis,
+rank + nullity = 4 — none changed, only the words around them. Added a
+`why` field (`GuidedWalkthroughSpec.why`, already in the schema, already
+rendered by `InteractiveSidecar.tsx` above the widget — just never
+authored on this atom before) giving a one-line framing sentence.
+
+**A propagation mistake caught before it shipped, not after — the same
+class of near-miss this doc has recorded before (`grep -o` on multi-line
+JSON).** The first attempt used `re.sub()` with a lambda callback that
+called `.replace('\\', '\\\\')` on the replacement string "to be safe" —
+this DOUBLED every backslash a second time (Python's `re.sub` never
+reprocesses a callable's return value for backslash escapes, so the
+extra `.replace()` was not just unnecessary but actively wrong),
+corrupting every LaTeX command in the new fence (`\begin` became
+`\\begin` in the raw file, i.e. quadruple-escaped instead of
+double). Caught immediately by reading the actual file content back
+rather than trusting the script's own "success" print — restored all
+three files from git and redone via direct string splicing (slice the
+original content at the fence's span, concatenate — no regex
+substitution, no backslash reprocessing to get wrong). Recorded here
+because "helpfully" adding a backslash-escape step to a regex
+replacement is a specific, repeatable trap for future edits touching
+these fenced JSON blocks.
+
+**Scope, named honestly.** This closes the two reported defects — the
+CSS bug for the whole corpus (structural, code-level), the content
+rewrite for exactly the one reported atom. 105+ other `guided_walkthrough`
+atoms carry their own prompt/hint/answer text, written by different
+passes at different times, unaudited for the same
+assumed-prior-knowledge pattern in this turn. Tracked in TODOS.md with
+the same 5-6-concept parallel-subagent-batch pattern this repo has used
+for every other content pass of comparable size (the `common_traps`
+ELI5 sweep, the LA mnemonic register audit, and others earlier in this
+doc) as the template for closing it corpus-wide.
+
+**Tests:** 5 new (`GuidedWalkthrough.test.tsx` +3, `DecisionTreeWalkthrough.test.tsx`
++2 — both lock `items-start` over `items-center`, `flex-1 min-w-0` on
+the title, `flex-shrink-0` on the badge). Full suites: backend 4720/4720
+(unchanged — frontend + content only), frontend 2807 → 2812/2812 (102
+files). `tsc --noEmit` clean both sides. `npm run ci` (18 gates) clean —
+`ci:interactive-specs` 424 blocks unchanged (one existing fence edited
+in place), `ci:variant-agreement` 610 pairs, `ci:katex-fences` 1723,
+`ci:content-integrity` 1729, `ci:la-walkthrough` 26/26, all unchanged.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

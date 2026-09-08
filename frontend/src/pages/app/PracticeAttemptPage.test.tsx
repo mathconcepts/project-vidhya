@@ -16,6 +16,16 @@ function WizardStub({ label }: { label: string }) {
   return <div>{label} concept={params.get('concept') ?? ''} mistake={params.get('mistake') ?? ''}</div>;
 }
 
+// /investigate (2026-09-08): echoes ?from_delta= ONLY when present, so
+// every pre-existing `getByText('LESSON PAGE: matrix-operations')` exact
+// match (no from_delta in those flows) is unaffected — the extra text
+// only appears in the new tests that explicitly assert on it.
+function LessonStub() {
+  const [params] = useSearchParams();
+  const fromDelta = params.get('from_delta');
+  return <div>LESSON PAGE: matrix-operations{fromDelta ? ` from_delta=${fromDelta}` : ''}</div>;
+}
+
 vi.mock('@/lib/auth/client', () => ({ authFetch: vi.fn() }));
 vi.mock('@/lib/demoPersona', () => ({ setDemoOutcome: vi.fn() }));
 
@@ -43,7 +53,7 @@ async function renderPage() {
     <MemoryRouter initialEntries={['/attempt/obj-1']}>
       <Routes>
         <Route path="/attempt/:objectId" element={<Page />} />
-        <Route path="/lesson/:conceptId" element={<div>LESSON PAGE: matrix-operations</div>} />
+        <Route path="/lesson/:conceptId" element={<LessonStub />} />
         <Route path="/smart-practice" element={<div>SMART PRACTICE PAGE</div>} />
         <Route path="/theorem-wizard/:module" element={<WizardStub label="THEOREM WIZARD" />} />
         <Route path="/distribution-selector" element={<WizardStub label="DISTRIBUTION SELECTOR" />} />
@@ -308,6 +318,108 @@ describe('PracticeAttemptPage — post-wrong-answer next-move CTAs', () => {
     await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
     const receiptLabel = screen.getByText('✓').parentElement as HTMLElement;
     expect(receiptLabel.getAttribute('style')).not.toContain('--green-ink');
+  });
+});
+
+// /investigate (2026-09-08, "a path from lesson -> practice and vice
+// versa... at each step, the competency is moving to the right"): the
+// grading response's readiness_delta (null on a DB-less deploy or a
+// deduped retry) is the literal "moving to the right" moment, and the
+// "Explore this concept" link carries the just-moved % forward so
+// LessonPage can close the loop with real context.
+describe('PracticeAttemptPage — readiness delta ("competency moving to the right")', () => {
+  it('renders the ReadinessDelta line when the server returns a real delta', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 1, max: 1, correct: true, feedback: 'Nice work.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: 1,
+        failure_tag: null,
+        readiness_delta: { skill_id: 'matrix-operations', before_pct: 50, after_pct: 52 },
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[1]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
+    expect(screen.getByText(/50% → 52%/)).toBeInTheDocument();
+  });
+
+  it('renders nothing when readiness_delta is null (DB-less deploy) — never fabricated', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 1, max: 1, correct: true, feedback: 'Nice work.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: 1,
+        failure_tag: null,
+        readiness_delta: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[1]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/^Correct/)).toBeInTheDocument());
+    expect(screen.queryByText(/skill readiness/)).toBeNull();
+  });
+
+  it('"Explore this concept" carries ?from_delta=<after_pct> forward to the lesson', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: true,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+        readiness_delta: { skill_id: 'matrix-operations', before_pct: 61, after_pct: 58 },
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Explore this concept'));
+    await waitFor(() => expect(screen.getByText(/from_delta=58/)).toBeInTheDocument());
+  });
+
+  it('"Explore this concept" omits ?from_delta= when there is no real delta', async () => {
+    const { authFetch } = await import('@/lib/auth/client');
+    vi.mocked(authFetch)
+      .mockResolvedValueOnce(jsonResponse(MCQ_ITEM))
+      .mockResolvedValueOnce(jsonResponse({
+        grade: { earned: 0, max: 1, correct: false, feedback: 'Not quite.' },
+        marking: { marks_correct: 1, marks_wrong: 0.33 },
+        solution_steps: [],
+        recorded: false,
+        xp_minutes_awarded: null,
+        failure_tag: null,
+        readiness_delta: null,
+      }));
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument());
+    fireEvent.click(screen.getAllByRole('radio')[0]);
+    fireEvent.click(screen.getByText('Submit'));
+
+    await waitFor(() => expect(screen.getByText(/Not this time/)).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Explore this concept'));
+    await waitFor(() => expect(screen.getByText('LESSON PAGE: matrix-operations')).toBeInTheDocument());
   });
 });
 

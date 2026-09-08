@@ -1140,6 +1140,47 @@ describe('focus_point — focus_eigen\'s plain-curve counterpart (/ui-ux-pro-max
   });
 });
 
+describe('reference_points — fixed markers on a plain parametric scene (/investigate: "u1 info is missing")', () => {
+  const GRAM_SCHMIDT_SPEC: SimulationSpec = {
+    v: 1,
+    kind: 'simulation',
+    title: 'Subtracting v2 along u1',
+    duration_sec: 6,
+    x_expr: '2-t',
+    y_expr: '-t',
+    t_min: 0,
+    t_max: 1,
+    reference_points: [{ id: 'u1', label: 'u1', x: 1, y: 1 }],
+    narration_steps: [
+      { at_progress: 0, text: 'Starting at v2.' },
+      { at_progress: 1, text: 'Lands orthogonal to u1.', emphasize: true },
+    ],
+  };
+
+  it('renders a labeled fixed marker for each declared reference point', () => {
+    const { container } = render(<Simulation spec={GRAM_SCHMIDT_SPEC} />);
+    const inkDots = Array.from(container.querySelectorAll('svg circle[fill="var(--ink)"]'));
+    expect(inkDots).toHaveLength(1);
+    expect(container.textContent).toContain('u1');
+  });
+
+  it('stays visible across beats, unlike the beat-gated focus_point highlight', () => {
+    const { container } = render(<Simulation spec={GRAM_SCHMIDT_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 2/));
+    // Still present after advancing to the last (reveal) beat.
+    expect(container.querySelectorAll('svg circle[fill="var(--ink)"]')).toHaveLength(1);
+    expect(container.textContent).toContain('u1');
+  });
+
+  it('renders nothing extra for a scene with no reference_points', () => {
+    const { container } = render(
+      <Simulation spec={{ v: 1, kind: 'simulation', title: 'plain', x_expr: 't', y_expr: 't', t_min: 0, t_max: 1 }} />,
+    );
+    expect(container.querySelectorAll('svg circle[fill="var(--ink)"]')).toHaveLength(0);
+  });
+});
+
 describe('ghost rendering without declared eigen directions (matrix-operations class)', () => {
   const GHOST_NO_EIGEN_SPEC: SimulationSpec = {
     v: 1,

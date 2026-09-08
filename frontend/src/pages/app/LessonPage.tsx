@@ -16,7 +16,7 @@
  */
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { applyDemoPersona, getDemoCaptions, getDemoPersona } from '@/lib/demoPersona';
 import { SampleDataChip } from '@/components/app/SampleDataChip';
 import { DemoCaption } from '@/components/app/DemoCaption';
@@ -503,7 +503,19 @@ function ConnectionsBody({ c }: { c: any }) {
 export default function LessonPage() {
   const { concept_id = '' } = useParams<{ concept_id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const sessionId = useSession();
+  // /investigate (2026-09-08, "a path from lesson -> practice and vice
+  // versa... competency is moving to the right") — PracticeAttemptPage's
+  // "Explore this concept" link (on a wrong answer) carries the readiness
+  // % that attempt just landed on, so the lesson the student is sent back
+  // to can close the loop with real context instead of a bare navigation.
+  // Absent param (a direct visit, or a DB-less/deduped attempt with no
+  // real delta) → no banner, unchanged behavior.
+  const fromDeltaRaw = searchParams.get('from_delta');
+  const fromDeltaPct = fromDeltaRaw !== null && Number.isFinite(Number(fromDeltaRaw))
+    ? Math.round(Number(fromDeltaRaw))
+    : null;
   const { exam } = useActiveExam();
   // T4 — intent-driven content restructure, §7 Phase 2 (VIDHYA_INTENT_LANES,
   // default off). intentSlice is undefined for every concept outside the
@@ -733,6 +745,20 @@ export default function LessonPage() {
         </div>
         <ProblemStatementBlock conceptId={concept_id} enabled={intentLanesEnabled} onSeeWhatsNext={scrollToRail} />
         <DemoCaption step={demoStep} captions={getDemoCaptions()} />
+        {fromDeltaPct !== null && (
+          // --green (mastery/correctness), not --indigo (AI/tutor only,
+          // per DESIGN-SYSTEM.md's locked two-accent law) — this banner is
+          // about the student's own readiness, not an AI/tutor message.
+          <p
+            style={{
+              margin: '0 16px', padding: '10px 12px', borderRadius: 'var(--radius-sm)',
+              background: 'rgba(52,199,89,.08)', border: '1px solid rgba(52,199,89,.2)',
+              fontSize: 'var(--text-subhead)', color: 'var(--green-ink)', lineHeight: 1.45,
+            }}
+          >
+            You're at <strong>{fromDeltaPct}%</strong> on this — let's shore it up.
+          </p>
+        )}
         <div ref={atomStackRef}>
           <AtomCardRenderer
             // Defense-in-depth (adversarial review, /ship 2026-09-01): the
@@ -873,14 +899,30 @@ export default function LessonPage() {
                 <Target size={13} style={{ color: 'var(--indigo-ink)' }} />
                 <h3 style={{ margin: 0, fontSize: 'var(--text-body)', fontWeight: 'var(--weight-semibold)', color: 'var(--text-primary)' }}>Try these next</h3>
               </div>
+              {/* /investigate (2026-09-08, "a path from lesson -> practice
+                  and vice versa") — the one confirmed dead end in the whole
+                  lesson<->practice loop: these rows carried a real, gradable
+                  item id and rendered as plain, non-interactive text. Now a
+                  real button to /attempt/:id, the same route WalkthroughRail's
+                  own Practice row already uses. */}
               {lesson.related_problems.map(p => (
-                <div key={p.id} style={{ padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)', border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => navigate(`/attempt/${encodeURIComponent(p.id)}`)}
+                  style={{
+                    padding: 12, borderRadius: 'var(--radius-md)', background: 'var(--surface-fill)',
+                    border: 'var(--hairline) solid var(--separator)', display: 'flex', flexDirection: 'column',
+                    gap: 4, width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                    minHeight: 'var(--touch-min)',
+                  }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, color: 'var(--text-tertiary)' }}>
                     <span>{p.relationship.replace(/-/g, ' ')}</span>
                     {p.wolfram_verified && <span style={{ color: 'var(--green-ink)' }}>Wolfram ✓</span>}
                   </div>
                   <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--text-secondary)' }}>{p.question_text}</p>
-                </div>
+                </button>
               ))}
             </div>
           )}

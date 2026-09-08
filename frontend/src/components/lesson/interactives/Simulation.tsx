@@ -376,6 +376,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     () => (linearMap || graphSpec ? null : sampleGhost(spec)),
     [spec, linearMap, graphSpec],
   );
+  const referencePoints = spec.reference_points ?? null;
   const viewBox = useMemo(
     () =>
       spec.view_box ??
@@ -383,8 +384,8 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         ? linearMapViewBox(linearMap.matrix, linearMap.ghost_matrix)
         : graphSpec
           ? graphViewBox(graphSpec.nodes)
-          : autoViewBox(samples.points, ghostPoints)),
-    [spec.view_box, linearMap, graphSpec, samples.points, ghostPoints],
+          : autoViewBox(samples.points, ghostPoints, referencePoints)),
+    [spec.view_box, linearMap, graphSpec, samples.points, ghostPoints, referencePoints],
   );
   const projector = useMemo(() => makeProjector(viewBox), [viewBox]);
 
@@ -646,6 +647,30 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           }
         >
           <Axes viewBox={viewBox} projector={projector} />
+          {/* Fixed reference markers (/investigate, live-QA: "u1 info is
+              missing... highlight is mentioned in text but not visible") —
+              always visible for the scene's whole runtime, unlike
+              focus_point/focus_eigen's beat-gated highlight, since a fixed
+              anchor the narrative refers to throughout (gram-schmidt's own
+              u1, held fixed while v2 is traced against it) needs to stay on
+              screen throughout, not flash in per beat. Ink, halo-labeled —
+              same technique as every other coordinate label in this file. */}
+          {referencePoints?.map((rp) => {
+            const [px, py] = projector(rp.x, rp.y);
+            return (
+              <g key={rp.id}>
+                <circle cx={px} cy={py} r={4} fill="var(--ink)" />
+                <text
+                  x={px} y={py - 10}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize={12} fontWeight={600} fill="var(--text-primary)"
+                  stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+                >
+                  {rp.label}
+                </text>
+              </g>
+            );
+          })}
           {linearMap && (
             <LinearMapScene
               lm={linearMap}
@@ -1674,6 +1699,7 @@ function buildTraceSegments(
 function autoViewBox(
   points: Array<{ x: number; y: number }>,
   ghostPoints?: Array<{ x: number; y: number }> | null,
+  referencePoints?: Array<{ x: number; y: number }> | null,
 ): NonNullable<SimulationSpec['view_box']> {
   let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
   for (const p of points) {
@@ -1684,6 +1710,17 @@ function autoViewBox(
   }
   if (ghostPoints) {
     for (const p of ghostPoints) {
+      if (p.x < xMin) xMin = p.x;
+      if (p.x > xMax) xMax = p.x;
+      if (p.y < yMin) yMin = p.y;
+      if (p.y > yMax) yMax = p.y;
+    }
+  }
+  // Same off-canvas-clipping discipline as ghostPoints above (/autoplan,
+  // 2026-09-06) — a fixed reference marker outside the traced curve's own
+  // bounds must widen the box, never sit clipped past the SVG's edge.
+  if (referencePoints) {
+    for (const p of referencePoints) {
       if (p.x < xMin) xMin = p.x;
       if (p.x > xMax) xMax = p.x;
       if (p.y < yMin) yMin = p.y;

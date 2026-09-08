@@ -211,3 +211,43 @@ describe('WalkthroughRail', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/lesson/walkthrough/determinants'));
   });
 });
+
+// /investigate (2026-09-08, "competency moving to the right") — the
+// Practice row's subtitle gains a "currently N%" clause from
+// GET /api/readiness/expected-score?node=<concept_id>, a SEPARATE
+// best-effort fetch from the walkthrough one above (routed here by URL
+// since both tests share one global `fetch` mock).
+describe('WalkthroughRail — baseline readiness clause', () => {
+  function mockFetchByUrl(walkthroughBody: unknown, readinessBody: unknown) {
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/readiness/expected-score')) return jsonResponse(readinessBody);
+      return jsonResponse(walkthroughBody);
+    });
+  }
+
+  it('appends "currently N%" to the Practice row once a real ratio resolves', async () => {
+    mockFetchByUrl(AVAILABLE_BODY, { realized: 2, potential: 4, ratio: 0.5 });
+    renderRail();
+    expect(await screen.findByText('4 graded practice questions · currently 50%')).toBeInTheDocument();
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/readiness/expected-score?node=eigenvalues'));
+  });
+
+  it('omits the clause on the honest "building your baseline" shape (ratio: null) — never a fabricated 0%', async () => {
+    mockFetchByUrl(AVAILABLE_BODY, { realized: 0, potential: 0, ratio: null, reason: 'building your baseline' });
+    renderRail();
+    expect(await screen.findByText('4 graded practice questions')).toBeInTheDocument();
+    expect(screen.queryByText(/currently/)).toBeNull();
+  });
+
+  it('omits the clause when the readiness fetch itself fails — never a broken rail over one optional number', async () => {
+    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/readiness/expected-score')) return Promise.reject(new Error('network down'));
+      return jsonResponse(AVAILABLE_BODY);
+    });
+    renderRail();
+    expect(await screen.findByText('4 graded practice questions')).toBeInTheDocument();
+    expect(screen.queryByText(/currently/)).toBeNull();
+  });
+});

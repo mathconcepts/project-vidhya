@@ -39,12 +39,16 @@
  *     objectId, or any dependency throws) → { action, expected_score: null,
  *     reason: "building your baseline" }.
  *
- *   GET /api/readiness/expected-score
+ *   GET /api/readiness/expected-score?node=<concept_id>
  *     Returns computeExpectedScore's { realized, potential } via the same
  *     engine's `expectedScore()`, plus `ratio` (realized/potential, or null
  *     when potential is 0 — "no data yet" per expected-score.ts's own
  *     contract). DB-less / no scoped nodes → { realized: 0, potential: 0,
  *     ratio: null, reason: "building your baseline" }.
+ *     `?node=` (/investigate, 2026-09-08) scopes the computation to ONE
+ *     concept instead of the whole syllabus — an unrecognized id just has
+ *     no node to score, so it degrades to the same honest zero/null shape
+ *     rather than guessing. Omitted → unchanged whole-syllabus aggregate.
  *
  * Wired into src/server.ts. The Wave 4 endpoints have no DB dependency
  * (pure logic + injectable catalog). The Wave 7 endpoints depend on
@@ -514,7 +518,16 @@ async function handleExpectedScore(req: ParsedRequest, res: ServerResponse): Pro
 
   try {
     const engine = buildReadinessEngine();
-    const allowedNodes = resolveAllowedNodes();
+    // /investigate (2026-09-08, "competency moving to the right") — an
+    // optional single-concept scope. Without it this stays the existing
+    // whole-syllabus aggregate every caller before this got; WalkthroughRail
+    // passes ?node=<concept_id> to show "currently at N% on THIS concept"
+    // before a student starts practicing it. Not validated against the
+    // concept graph here — an unknown id simply has no node to score,
+    // degrading honestly to the same `potential === 0` "building your
+    // baseline" branch below rather than a fabricated number.
+    const nodeParam = req.query.get('node');
+    const allowedNodes = nodeParam ? [nodeParam] : resolveAllowedNodes();
     const { realized, potential } = await engine.expectedScore(user.userId, { allowedNodes });
     const ratio = potential > 0 ? realized / potential : null;
 

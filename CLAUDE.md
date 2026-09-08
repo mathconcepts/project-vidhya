@@ -5367,6 +5367,242 @@ only, no backend surface touched). `tsc --noEmit` clean both sides.
 `npm run ci` (18 gates, `ci:interactive-specs` 541→547 blocks +6, every
 other content gate unchanged) clean.
 
+### `/investigate`: a missing fixed anchor, a nested double-progression, and a platform-wide dynamic-insight gap (2026-09-08)
+
+Three numbered reports, three screenshots (gram-schmidt's hook, worked-
+example, and an "Anytime Studymate" Laplace-transform question), each
+root-caused before any fix per the skill's Iron Law.
+
+**Issue 1 — the hook's own narration named a fixed anchor the diagram
+never drew.** `gram-schmidt.hook`'s beats repeatedly reference "$u_1=(1,1)$"
+as the orthogonality target the traced point (v2's shadow-subtraction
+path) is being checked against — but the diagram only ever drew the moving
+point, never $u_1$ itself. Closed with a new, generic mechanism rather
+than a one-off: `SimulationSpec.reference_points` (`frontend/src/
+components/lesson/interactives/types.ts`) — an always-visible (not beat-
+gated, unlike `focus_point`) labeled fixed marker for a plain parametric
+scene, the same role `linear_map.eigen[]` and `graph.nodes[]` already play
+for their own figure modes. `checkReferencePoints` validates 1-4 points
+with unique ids/labels/numeric coordinates, refused on a `linear_map`/
+`graph` scene (each already has its own fixed-marker field).
+`autoViewBox()` folds every reference point's coordinates into its min/max
+bounds — the same off-canvas-clipping discipline this file's 2026-09-06
+ghost-label fix established — so a reference point can never render
+clipped outside the SVG. Renders as a halo-labeled ink dot (`var(--ink)`
+— "look here, unconfirmed," the same signal `focus_point`/`focus_eigen`
+already use), reused verbatim from the existing coordinate-label
+technique. Wired onto `gram-schmidt`'s `hook.md`/`-shaken`/`-assured`
+(fence kept byte-identical, verified via the established `re.DOTALL`
+propagation discipline — never `grep -o`): `u1` now draws as a fixed ink
+dot for the whole scene while the traced point (v2's shrinking shadow)
+moves toward it. One concept, not the corpus — TODOS.md tracks the
+same-shaped audit (does a plain-curve scene's narration name a fixed
+anchor its diagram doesn't show) as the next wave.
+
+**Issue 2 — two independent progressions stacked on one card.**
+`gram-schmidt.worked-example` carries both `WorkedExampleCard`'s own
+"Show next step" reveal AND an embedded `guided_walkthrough` widget
+(rendered by the separate `InteractiveSidecar` sibling below it) — the
+widget used to mount fully interactive from first paint regardless of how
+far the outer reveal had progressed, reading exactly like the report:
+"only the top is enabled... this is causing confusion." Root cause:
+`InteractiveSidecar` at the `AtomCardRenderer` call site rendered
+unconditionally (`{!promotedSimSpec && <InteractiveSidecar .../>}`),
+never checking the outer atom-type-specific reveal state at all.
+
+Fixed by lifting a boolean out of `WorkedExampleCard` via a new
+`onAllStepsRevealed?: (allRevealed: boolean) => void` prop — an effect
+keyed on `shownCount >= visibleCount` notifies the parent exactly on that
+transition (true immediately for a single-step atom or under
+`prefers-reduced-motion`, since there's nothing to hold back in either
+case). `AtomCardRenderer` gates the sidecar call site: while
+`current.atom_type === 'worked_example' && parsedSpec.ok &&
+!workedExampleFullyRevealed`, it renders honest locked-state microcopy
+("Complete the walkthrough above to unlock practice questions.", a `Lock`
+icon, same italic/tertiary treatment as other locked-state text in this
+file) instead of silently hiding the widget or rendering nothing —
+`parsedSpec.ok` (the already-hoisted parse of `current.content`) guards
+the microcopy itself, so it never claims something is "locked" on an atom
+with no embedded spec at all. One progression now, in order, matching the
+advance-button convention `GuidedWalkthrough` and `Simulation`'s beats
+already use elsewhere in this app — not a second one invented here.
+
+**Issue 3 — "No extra insight available" traced to a platform-wide
+dynamic-generation gap, not a content gap.** The report's own wording
+("use sonnet subagents to complete all the required content") assumed
+this was missing static content. Investigation found the opposite:
+`thinking-gap-service.ts`'s `getThinkingGap()` generates a fresh,
+PERSONALIZED explanation per wrong answer via `getLlmForRole('chat')` — a
+live LLM call, not static content with per-item gaps to fill. With no
+provider key configured in this environment (the same "known-unrun" wall
+documented repeatedly elsewhere in this doc — v4.33.0, v4.43.0, and
+others), every wrong answer's insight degrades identically, corpus-wide,
+regardless of which PYQ or concept is involved — Sonnet subagents cannot
+"complete" this the way they authored static atom content elsewhere,
+since there is no per-item file to author; the gap is a runtime
+dependency, not a corpus gap.
+
+Closed the actual, addressable defect instead: `getThinkingGap()` used to
+return `text: null` when generation failed for any reason (no provider,
+empty LLM response, or a genuine cache miss with nothing to fall back
+on), and `StudymateSessionPage.tsx` rendered that null as "No extra
+insight available for this one" — a dead end with nothing actionable in
+it. `deterministicGapFallback(errorType)` (new, pure function) returns a
+real, specific sentence keyed off the same `classifyErrorType()` heuristic
+already computed for every wrong answer: a sign-flip explanation for
+`sign_error`, a missing/doubled-coefficient hint for `factor_error`, a
+radians-vs-degrees hint for `pi_confusion`, an honest "nothing to
+diagnose yet" for `no_attempt`, and a generic-but-real "recheck which
+formula applies" for everything else. `GapSource` gains a `'fallback'`
+value (distinct from `'generated'`) so the deterministic string is never
+confused with real LLM personalization — and, deliberately, it is NEVER
+written to `thinking_gap_cache`, since that table is read elsewhere
+(`content-maturity` reporting) as evidence of genuine personalized
+generation; writing a deterministic string there would fabricate that
+evidence. A student now always sees a concrete, useful hint instead of a
+dead end — restoring the actual personalized insight still needs a
+configured provider key, tracked in TODOS.md as a config-only follow-up.
+
+**Verified against the real suites and gates, not asserted.**
+`tsc --noEmit` clean both sides. Backend: `thinking-gap-degradation.test.ts`
+(1 test's fixture corrected from a multi-value string that
+`classifyErrorType`'s regex mis-parsed, 2 tests merged into 1 asserting
+`personalized: false` unconditionally) + new `thinking-gap-fallback.test.ts`
+(6 tests, one per fallback branch) — 4722 → 4728/4728 (368 files, 1
+todo). Frontend: `types.test.ts` +9 (`reference_points` acceptance/
+bounds/duplicate-id/mutual-exclusion), `Simulation.test.tsx` +3 (fixed-
+marker renders, stays visible across beats unlike `focus_point`, absent
+when undeclared), `WorkedExampleCard.test.tsx` +4 (locked until fully
+revealed, single-step unlocks immediately, no spec means no microcopy,
+non-worked_example atom types never gate) — 2843 → 2859/2859 (102 files).
+Content gates: `ci:interactive-specs` 547 blocks (unchanged — an
+additive field on an existing fence, not a new one), `ci:variant-agreement`
+610 pairs, `ci:katex-fences` 1723, `ci:content-integrity`, `ci:la-walkthrough`
+26/26, all clean. `npm run ci` (18 gates) clean.
+
+**Issue 4, scoped separately.** The report's fourth item — a
+`/plan-design-review`'d bidirectional lesson↔practice path with visible
+forward-competency signaling at every step — is a genuinely larger,
+cross-cutting design ask (new UI surfaces on both the lesson and practice
+sides, a real "is this moving mastery forward" measurement, not a bug
+fix), scoped and planned separately rather than folded into this pass.
+
+### Competency Compass: a lesson↔practice loop where mastery visibly moves forward (2026-09-08)
+
+Closes issue 4 from the pass above — planned via `/plan-design-review` (a
+`plan-design-review` self-critique across consistency/honesty/hierarchy/
+scope, each rated and reasoned), then implemented and live-verified.
+Research confirmed the individual lesson↔practice LINKS mostly already
+existed (`WalkthroughRail.tsx`'s Practice row, `PracticeAttemptPage.tsx`'s
+"Explore this concept"/"Practice more like this") — the real gap was a
+**visible, honest mastery signal that moves at each hop**. A student could
+navigate lesson → practice → lesson all day and never see a number confirm
+any of it worked.
+
+**The core fact that shaped this pass:** `StudentModel.update()`
+(`src/gbrain/student-model-pg.ts`) already computes an Elo rating movement
+on every graded attempt — `applyAttempt()` mutates the student's skill
+rating in place, inside the same transaction `POST /api/practice/attempt`
+awaits — and threw it away. `update()` returned `Promise<void>`. The exact
+"did this attempt move my competency, and by how much" number the report
+asked for was computed on every attempt and never surfaced.
+
+**One new signal, not a second "mastery" system.** `ProgressPage`/
+`TopicPage`/`SpinePage`/`Home` already show a cumulative Wilson-bound
+accuracy % as "mastery" (`frontend/src/lib/mastery-confidence.ts`, v4
+this-doc, 2026-09-07). Inventing a competing number here would be exactly
+the "parallel truths that drift" bug class this doc has warned about since
+v4.25.0. Instead: `AttemptSkillDelta` (`src/core/interfaces.ts`) — a new,
+additive return type widening `StudentModel.update(): Promise<AttemptSkillDelta | void>`
+(void on a deduped retry — nothing new applied, nothing to report; the
+ONE real implementer, `PgStudentModel`, confirmed via `grep -rl "implements
+StudentModel"`, so the widening's blast radius is one file).
+`readinessBeforePct`/`readinessAfterPct` reuse the SAME Elo→percent
+sigmoid `src/readiness/expected-score.ts` already exports
+(`expectedShareFromRating`) for its "expected marks" figure — captured via
+one local variable (`ratingBefore`) read immediately before the existing
+`applyAttempt()` mutation, not a second computation. Called "readiness,"
+never "mastery," in every piece of UI copy, so the two numbers never read
+as disagreeing measurements of the same thing.
+
+**Backend.** `POST /api/practice/attempt` (`src/api/practice-routes.ts`)
+threads the captured delta into a new `readiness_delta: { skill_id,
+before_pct, after_pct } | null` response field — `null` on a DB-less
+deploy or a deduped retry, the same explicit-never-omitted discipline
+`failure_tag` already established on this endpoint. `GET /api/readiness/
+expected-score` (`src/api/readiness-routes.ts`) gained an optional `?node=
+<concept_id>` scope — without it, unchanged whole-syllabus aggregate; with
+it, `computeExpectedScore()`'s existing per-node loop (already there,
+never exercised with a single-node array before) returns ONE concept's
+readiness. An unrecognized node id just has no node to score, degrading to
+the same honest `{ratio: null, reason: "building your baseline"}` shape
+rather than guessing — no new validation needed.
+
+**Frontend — one line per hop, all honest-degrading to nothing:**
+- `frontend/src/components/app/ReadinessDelta.tsx` (new) — "Orthogonality
+  skill readiness: 61% → 64%", `--green-ink` + a `TrendingUp` icon on an
+  improving delta (mirrors the existing XP line's exact treatment just
+  below it), plain `--text-secondary` on flat/declining — never red, this
+  app has no punitive color. Renders nothing on `null`.
+- `PracticeAttemptPage.tsx` — renders it directly under the grade line,
+  above the common-mistake callout / solution steps / CTA row (the literal
+  "moving to the right" moment). The "Explore this concept" link (on a
+  wrong answer) now carries `?from_delta=<after_pct>` forward.
+- `WalkthroughRail.tsx` — the Practice row's subtitle gains " · currently
+  N%" from the new `?node=` scope, a SEPARATE best-effort fetch from the
+  walkthrough one (silent on failure — never a broken rail over one
+  optional number). A real bug caught before it shipped: the first cut
+  checked `body.ratio !== null`, which is `true` for `undefined` too —
+  every existing test mocking a walkthrough-shaped body (no `ratio` field
+  at all) would have rendered "currently NaN%". Fixed to `typeof body.ratio
+  === 'number'`.
+- `LessonPage.tsx` — reads `?from_delta=` and renders a one-line green
+  banner ("You're at 58% on this — let's shore it up.") above the atom
+  stack on the ContentAtom v2 path. `WizardContextBanner`'s exact visual
+  pattern was considered for reuse (per the plan's own self-critique) and
+  confirmed, on reading it, to be hardcoded to a different copy shape —
+  built as its own small banner using the same tokens instead of forcing
+  an ill-fitting component reuse.
+- **The one confirmed dead end, closed alongside it:** `lesson
+  .related_problems` rows (the legacy `components[]` completion view's
+  "Try these next" list) carried a real, gradable item id and rendered as
+  plain non-interactive text — the single broken link found while mapping
+  the loop. Now a real button to `/attempt/:id`, the same route
+  `WalkthroughRail`'s own Practice row already uses.
+
+**Verified live, not assumed.** The plan's own Information-Hierarchy
+self-critique (7/10) named result-panel re-crowding as the real open risk
+of adding a sixth element to `PracticeAttemptPage.tsx`'s already-dense
+result panel. Booted the local DB-less demo, logged in via `/demo-login`,
+and drove a headless Playwright session (this sandbox's pre-installed
+Chromium) through a real graded MCQ at a 375px viewport — intercepting
+`POST /api/practice/attempt`'s response to inject a realistic delta, since
+a DB-less deploy has no real `StudentModel` to produce one. The delta line
+renders cleanly between the grade line and the solution steps, no overlap,
+no crowding. A second run confirmed the `WalkthroughRail` baseline clause
+and the `LessonPage` banner both render correctly, and confirmed the
+honest-degradation path live: with no real ability data, the Practice row
+correctly showed NO "currently N%" clause at all (the `ratio: null`
+branch), never a fabricated number.
+
+**Tests:** backend — `student-model-pg-update-tx.test.ts` (2 existing
+happy-path assertions updated from `resolves.toBeUndefined()` to the real
+computed delta, since a non-deduped `update()` no longer resolves to
+`void` — a direct, expected consequence of the interface change; 1
+dedup-path assertion added), `practice-routes.test.ts` (+2: delta threaded
+through, `null` on a void return) — 4728 → 4730/4730 (368 files, 1 todo).
+Frontend — `ReadinessDelta.test.tsx` (new, 8), `PracticeAttemptPage.test.tsx`
+(+4: delta rendering, null-safety, `?from_delta=` present/absent — a new
+`LessonStub` echoes the param only when present so every pre-existing
+exact-match assertion on the old stub's plain text stays unaffected),
+`WalkthroughRail.test.tsx` (+3: baseline clause renders/omits on
+`ratio: null`/omits on fetch failure), `LessonPage.test.tsx` (+3: banner
+present/absent on the v2 path, related-problems navigation on the legacy
+path, driven all the way through `doneState` via a real "Got it" click) —
+2859 → 2877/2877 (103 files). `tsc --noEmit` clean both sides. `npm run
+ci` (18 gates, including `ci:boot` — the real server booting under the
+widened `StudentModel` interface) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

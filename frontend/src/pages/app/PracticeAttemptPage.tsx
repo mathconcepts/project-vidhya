@@ -31,6 +31,7 @@ import { Card } from '@/components/ui/Card';
 import { receiptFromServerGrade } from '@/lib/receipt';
 import { setDemoOutcome } from '@/lib/demoPersona';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
+import { ReadinessDelta, type ReadinessDeltaValue } from '@/components/app/ReadinessDelta';
 
 interface PracticeItem {
   id: string;
@@ -66,6 +67,12 @@ interface AttemptResult {
    * floor. See COMMON_MISTAKE_LABEL below for where it's now shown.
    */
   failure_tag?: string | null;
+  /**
+   * /investigate (2026-09-08): the skill-readiness this attempt moved —
+   * null on a DB-less deploy or a deduped retry (see AttemptSkillDelta,
+   * src/core/interfaces.ts), never omitted or guessed. See ReadinessDelta.tsx.
+   */
+  readiness_delta?: ReadinessDeltaValue | null;
 }
 
 /**
@@ -531,6 +538,12 @@ export default function PracticeAttemptPage() {
                     </p>
                     <p style={{ margin: '4px 0 0', opacity: 0.8 }}>{result.grade.feedback}</p>
                   </ReceiptBorder>
+                  {/* /investigate (2026-09-08): "competency moving to the
+                      right" — the literal moment, right under the grade
+                      line, before the common-mistake callout / solution
+                      steps / next-move buttons that follow it. Renders
+                      nothing on a DB-less deploy or a deduped retry. */}
+                  <ReadinessDelta delta={result.readiness_delta} />
                   {/* Common-mistake callout (/investigate, 2026-08-30). Same
                       icon + --orange identity as a lesson's Common Traps
                       atom (AtomCardRenderer.tsx) — a subtle, quiet line, not
@@ -628,7 +641,23 @@ export default function PracticeAttemptPage() {
                         ) : (
                           <button
                             type="button"
-                            onClick={() => navigate(`/lesson/${encodeURIComponent(item.node_id)}`)}
+                            onClick={() => {
+                              // /investigate (2026-09-08): carries the
+                              // just-moved readiness % forward so the
+                              // lesson page can close the loop with real
+                              // context ("You're at 61% on this...") —
+                              // same `?concept=&mistake=` pattern the
+                              // wizard route above already established.
+                              // Omitted when there's no real delta (a
+                              // DB-less deploy or a deduped retry) rather
+                              // than fabricating one.
+                              const lessonPath = `/lesson/${encodeURIComponent(item.node_id)}`;
+                              navigate(
+                                result.readiness_delta
+                                  ? `${lessonPath}?from_delta=${result.readiness_delta.after_pct}`
+                                  : lessonPath,
+                              );
+                            }}
                             style={{
                               ...NEXT_MOVE_BUTTON_BASE,
                               background: 'var(--indigo-tint)', border: 'var(--hairline) solid var(--indigo)',

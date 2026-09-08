@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ServerResponse } from 'http';
 import { InMemoryCatalog } from '../../scoring/learning-object-catalog';
-import type { Attempt, LearningObject, StudentModel } from '../../core/interfaces';
+import type { Attempt, AttemptSkillDelta, LearningObject, StudentModel } from '../../core/interfaces';
 
 const mockRequireRole = vi.fn();
 vi.mock('../auth-middleware', () => ({
@@ -71,7 +71,13 @@ const MARKED_NAT = obj('nat-1', {
 });
 const UNMARKED = obj('plain-1', {});
 
-function fakeStudentModel(updates: Attempt[], failUpdate = false): StudentModel {
+// /investigate (2026-09-08): a real StudentModel.update() now returns the
+// skill's before/after readiness (or void on a deduped retry — see
+// AttemptSkillDelta in src/core/interfaces.ts). `delta` lets a test opt
+// into the positive case; the default (undefined) matches every OTHER
+// existing test in this file, which never asserted on the return value
+// and should keep getting `readiness_delta: null` unchanged.
+function fakeStudentModel(updates: Attempt[], failUpdate = false, delta?: AttemptSkillDelta): StudentModel {
   return {
     abilityFor: async () => ({ studentId: 's', skillId: 'k', rating: 1500, n: 0 } as any),
     retrievability: async () => 0,
@@ -80,6 +86,7 @@ function fakeStudentModel(updates: Attempt[], failUpdate = false): StudentModel 
     update: async (a: Attempt) => {
       if (failUpdate) throw new Error('DATABASE_URL not configured');
       updates.push(a);
+      return delta;
     },
   } as unknown as StudentModel;
 }
@@ -202,6 +209,35 @@ describe('POST /api/practice/attempt', () => {
     expect(r.payload.grade.correct).toBe(true);
     expect(r.payload.recorded).toBe(false);
     expect(recalibrations).toHaveLength(0);   // no recalibration off an unrecorded attempt
+    expect(r.payload.readiness_delta).toBeNull(); // never fabricated on a DB-less deploy
+  });
+
+  // ── /investigate (2026-09-08): readiness_delta threading ──────────────
+
+  it('threads StudentModel.update()\'s AttemptSkillDelta into readiness_delta', async () => {
+    setPracticeDepsForTests({
+      catalog: () => new InMemoryCatalog([MARKED_MCQ]),
+      studentModel: () => fakeStudentModel(updates, false, {
+        skillId: 'eigenvalues', readinessBeforePct: 50, readinessAfterPct: 52,
+      }),
+      recordProblemAttempt: async (id, correct) => { recalibrations.push({ id, correct }); },
+      awardXp: async (award) => { xpAwards.push(award); },
+    });
+    const r = makeRes();
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 2 } }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.readiness_delta).toEqual({
+      skill_id: 'eigenvalues', before_pct: 50, after_pct: 52,
+    });
+  });
+
+  it('readiness_delta is null when StudentModel.update() returns void (e.g. a deduped retry)', async () => {
+    const r = makeRes();
+    // Default fakeStudentModel's update() resolves to undefined.
+    await handler(makeReq({ object_id: 'mcq-1', response: { selectedIndex: 2 } }), r.res);
+    expect(r.status).toBe(200);
+    expect(r.payload.recorded).toBe(true);
+    expect(r.payload.readiness_delta).toBeNull();
   });
 
   // ── T14 (B5): XP awarding ────────────────────────────────────────────

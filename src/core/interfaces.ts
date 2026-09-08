@@ -163,6 +163,28 @@ export interface Action {
   expectedGain: number;
 }
 
+/**
+ * /investigate (2026-09-08, "at each step, the competency is moving to the
+ * right"): the per-attempt Elo movement `update()` already computes was
+ * being discarded — `applyAttempt()` (src/gbrain/elo.ts) mutates a
+ * student's skill rating in place on every graded attempt, and nothing
+ * downstream ever saw the before/after values. Named "readiness", not
+ * "mastery" — the app already shows a DIFFERENT, cumulative Wilson-bound
+ * accuracy percentage as "mastery" on ProgressPage/TopicPage/SpinePage/
+ * Home (frontend/src/lib/mastery-confidence.ts); this is a deliberately
+ * distinct, per-attempt signal (the same Elo→percent mapping
+ * src/readiness/expected-score.ts already uses for its "expected marks"
+ * figure), so nothing on screen ever looks like two disagreeing
+ * measurements of the same thing.
+ */
+export interface AttemptSkillDelta {
+  skillId: SkillId;
+  /** expectedShareFromRating(ratingBefore) * 100, rounded. */
+  readinessBeforePct: number;
+  /** expectedShareFromRating(ratingAfter) * 100, rounded. */
+  readinessAfterPct: number;
+}
+
 // ────────────────────────────────────────────────────────────────────
 // L3 — Student Model        [plugin]   Elo+FSRS now, AKT later
 // ────────────────────────────────────────────────────────────────────
@@ -183,8 +205,13 @@ export interface StudentModel {
   /**
    * Online update. Fire-and-forget OK. MUST be idempotent on (studentId,
    * objectId, ts) — re-delivery of the same event should not double-count.
+   *
+   * Returns the skill's before/after readiness on a real, newly-applied
+   * attempt; `void` on a deduped retry (nothing new was applied, so there
+   * is no new delta to report) — never a fabricated repeat of the last
+   * real delta.
    */
-  update(attempt: Attempt): Promise<void>;
+  update(attempt: Attempt): Promise<AttemptSkillDelta | void>;
 }
 
 // ────────────────────────────────────────────────────────────────────

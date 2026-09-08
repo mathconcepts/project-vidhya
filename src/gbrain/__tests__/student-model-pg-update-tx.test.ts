@@ -114,7 +114,16 @@ describe('PgStudentModel.update() — dedup-inside-tx rollback semantics', () =>
     const client2 = makeClient(happyPathSteps());
     mockConnect.mockResolvedValueOnce(client2);
 
-    await expect(model.update(ATTEMPT)).resolves.toBeUndefined();
+    // /investigate (2026-09-08): a real (non-deduped) apply now returns the
+    // skill's before/after readiness — fresh student+item ratings (both
+    // start at ELO_INITIAL=1500) on a correct attempt: expected=0.5,
+    // newStudentRating=1500+32*0.5=1516; expectedShareFromRating(1500)=50%,
+    // expectedShareFromRating(1516)≈52%.
+    await expect(model.update(ATTEMPT)).resolves.toEqual({
+      skillId: 'k1',
+      readinessBeforePct: 50,
+      readinessAfterPct: 52,
+    });
     expect(client2.query).toHaveBeenNthCalledWith(12, 'COMMIT');
   });
 
@@ -130,7 +139,9 @@ describe('PgStudentModel.update() — dedup-inside-tx rollback semantics', () =>
     const seen: Attempt[] = [];
     onAttemptRecorded(a => seen.push(a));
 
-    await model.update(ATTEMPT);
+    // A deduped retry applied nothing new — no delta to report (never a
+    // fabricated repeat of whatever the original attempt computed).
+    await expect(model.update(ATTEMPT)).resolves.toBeUndefined();
 
     expect(client.query).toHaveBeenCalledTimes(3);
     expect(client.query).toHaveBeenNthCalledWith(3, 'COMMIT');
@@ -171,7 +182,14 @@ describe('PgStudentModel.update() — error-tag persistence moved after COMMIT',
     onAttemptRecorded(a => seen.push(a));
 
     const attemptWithTags: Attempt = { ...ATTEMPT, errorTags: ['careless'] };
-    await expect(model.update(attemptWithTags)).resolves.toBeUndefined();
+    // Same fresh-rating math as the retry test above — a real apply
+    // returns the skill delta regardless of the (unrelated) error-tag
+    // write's own success/failure.
+    await expect(model.update(attemptWithTags)).resolves.toEqual({
+      skillId: 'k1',
+      readinessBeforePct: 50,
+      readinessAfterPct: 52,
+    });
 
     expect(consoleErr).toHaveBeenCalledWith(
       expect.stringContaining('best-effort error-tag persist failed'),

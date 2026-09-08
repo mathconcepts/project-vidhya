@@ -5487,6 +5487,122 @@ cross-cutting design ask (new UI surfaces on both the lesson and practice
 sides, a real "is this moving mastery forward" measurement, not a bug
 fix), scoped and planned separately rather than folded into this pass.
 
+### Competency Compass: a lesson↔practice loop where mastery visibly moves forward (2026-09-08)
+
+Closes issue 4 from the pass above — planned via `/plan-design-review` (a
+`plan-design-review` self-critique across consistency/honesty/hierarchy/
+scope, each rated and reasoned), then implemented and live-verified.
+Research confirmed the individual lesson↔practice LINKS mostly already
+existed (`WalkthroughRail.tsx`'s Practice row, `PracticeAttemptPage.tsx`'s
+"Explore this concept"/"Practice more like this") — the real gap was a
+**visible, honest mastery signal that moves at each hop**. A student could
+navigate lesson → practice → lesson all day and never see a number confirm
+any of it worked.
+
+**The core fact that shaped this pass:** `StudentModel.update()`
+(`src/gbrain/student-model-pg.ts`) already computes an Elo rating movement
+on every graded attempt — `applyAttempt()` mutates the student's skill
+rating in place, inside the same transaction `POST /api/practice/attempt`
+awaits — and threw it away. `update()` returned `Promise<void>`. The exact
+"did this attempt move my competency, and by how much" number the report
+asked for was computed on every attempt and never surfaced.
+
+**One new signal, not a second "mastery" system.** `ProgressPage`/
+`TopicPage`/`SpinePage`/`Home` already show a cumulative Wilson-bound
+accuracy % as "mastery" (`frontend/src/lib/mastery-confidence.ts`, v4
+this-doc, 2026-09-07). Inventing a competing number here would be exactly
+the "parallel truths that drift" bug class this doc has warned about since
+v4.25.0. Instead: `AttemptSkillDelta` (`src/core/interfaces.ts`) — a new,
+additive return type widening `StudentModel.update(): Promise<AttemptSkillDelta | void>`
+(void on a deduped retry — nothing new applied, nothing to report; the
+ONE real implementer, `PgStudentModel`, confirmed via `grep -rl "implements
+StudentModel"`, so the widening's blast radius is one file).
+`readinessBeforePct`/`readinessAfterPct` reuse the SAME Elo→percent
+sigmoid `src/readiness/expected-score.ts` already exports
+(`expectedShareFromRating`) for its "expected marks" figure — captured via
+one local variable (`ratingBefore`) read immediately before the existing
+`applyAttempt()` mutation, not a second computation. Called "readiness,"
+never "mastery," in every piece of UI copy, so the two numbers never read
+as disagreeing measurements of the same thing.
+
+**Backend.** `POST /api/practice/attempt` (`src/api/practice-routes.ts`)
+threads the captured delta into a new `readiness_delta: { skill_id,
+before_pct, after_pct } | null` response field — `null` on a DB-less
+deploy or a deduped retry, the same explicit-never-omitted discipline
+`failure_tag` already established on this endpoint. `GET /api/readiness/
+expected-score` (`src/api/readiness-routes.ts`) gained an optional `?node=
+<concept_id>` scope — without it, unchanged whole-syllabus aggregate; with
+it, `computeExpectedScore()`'s existing per-node loop (already there,
+never exercised with a single-node array before) returns ONE concept's
+readiness. An unrecognized node id just has no node to score, degrading to
+the same honest `{ratio: null, reason: "building your baseline"}` shape
+rather than guessing — no new validation needed.
+
+**Frontend — one line per hop, all honest-degrading to nothing:**
+- `frontend/src/components/app/ReadinessDelta.tsx` (new) — "Orthogonality
+  skill readiness: 61% → 64%", `--green-ink` + a `TrendingUp` icon on an
+  improving delta (mirrors the existing XP line's exact treatment just
+  below it), plain `--text-secondary` on flat/declining — never red, this
+  app has no punitive color. Renders nothing on `null`.
+- `PracticeAttemptPage.tsx` — renders it directly under the grade line,
+  above the common-mistake callout / solution steps / CTA row (the literal
+  "moving to the right" moment). The "Explore this concept" link (on a
+  wrong answer) now carries `?from_delta=<after_pct>` forward.
+- `WalkthroughRail.tsx` — the Practice row's subtitle gains " · currently
+  N%" from the new `?node=` scope, a SEPARATE best-effort fetch from the
+  walkthrough one (silent on failure — never a broken rail over one
+  optional number). A real bug caught before it shipped: the first cut
+  checked `body.ratio !== null`, which is `true` for `undefined` too —
+  every existing test mocking a walkthrough-shaped body (no `ratio` field
+  at all) would have rendered "currently NaN%". Fixed to `typeof body.ratio
+  === 'number'`.
+- `LessonPage.tsx` — reads `?from_delta=` and renders a one-line green
+  banner ("You're at 58% on this — let's shore it up.") above the atom
+  stack on the ContentAtom v2 path. `WizardContextBanner`'s exact visual
+  pattern was considered for reuse (per the plan's own self-critique) and
+  confirmed, on reading it, to be hardcoded to a different copy shape —
+  built as its own small banner using the same tokens instead of forcing
+  an ill-fitting component reuse.
+- **The one confirmed dead end, closed alongside it:** `lesson
+  .related_problems` rows (the legacy `components[]` completion view's
+  "Try these next" list) carried a real, gradable item id and rendered as
+  plain non-interactive text — the single broken link found while mapping
+  the loop. Now a real button to `/attempt/:id`, the same route
+  `WalkthroughRail`'s own Practice row already uses.
+
+**Verified live, not assumed.** The plan's own Information-Hierarchy
+self-critique (7/10) named result-panel re-crowding as the real open risk
+of adding a sixth element to `PracticeAttemptPage.tsx`'s already-dense
+result panel. Booted the local DB-less demo, logged in via `/demo-login`,
+and drove a headless Playwright session (this sandbox's pre-installed
+Chromium) through a real graded MCQ at a 375px viewport — intercepting
+`POST /api/practice/attempt`'s response to inject a realistic delta, since
+a DB-less deploy has no real `StudentModel` to produce one. The delta line
+renders cleanly between the grade line and the solution steps, no overlap,
+no crowding. A second run confirmed the `WalkthroughRail` baseline clause
+and the `LessonPage` banner both render correctly, and confirmed the
+honest-degradation path live: with no real ability data, the Practice row
+correctly showed NO "currently N%" clause at all (the `ratio: null`
+branch), never a fabricated number.
+
+**Tests:** backend — `student-model-pg-update-tx.test.ts` (2 existing
+happy-path assertions updated from `resolves.toBeUndefined()` to the real
+computed delta, since a non-deduped `update()` no longer resolves to
+`void` — a direct, expected consequence of the interface change; 1
+dedup-path assertion added), `practice-routes.test.ts` (+2: delta threaded
+through, `null` on a void return) — 4728 → 4730/4730 (368 files, 1 todo).
+Frontend — `ReadinessDelta.test.tsx` (new, 8), `PracticeAttemptPage.test.tsx`
+(+4: delta rendering, null-safety, `?from_delta=` present/absent — a new
+`LessonStub` echoes the param only when present so every pre-existing
+exact-match assertion on the old stub's plain text stays unaffected),
+`WalkthroughRail.test.tsx` (+3: baseline clause renders/omits on
+`ratio: null`/omits on fetch failure), `LessonPage.test.tsx` (+3: banner
+present/absent on the v2 path, related-problems navigation on the legacy
+path, driven all the way through `doneState` via a real "Got it" click) —
+2859 → 2877/2877 (103 files). `tsc --noEmit` clean both sides. `npm run
+ci` (18 gates, including `ci:boot` — the real server booting under the
+widened `StudentModel` interface) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -266,3 +266,106 @@ describe('LessonPage — AtomCardRenderer remounts fresh on concept change', () 
     await waitFor(() => expect(screen.getByText('concept-b visual card')).toBeInTheDocument());
   });
 });
+
+// ============================================================================
+// /investigate (2026-09-08): "a path from lesson -> practice and vice
+// versa... competency is moving to the right"
+// ============================================================================
+
+describe('LessonPage — ?from_delta= readiness banner (ContentAtom v2 path)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockFetchByUrl());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('renders the readiness banner when PracticeAttemptPage carried a real delta forward', async () => {
+    render(
+      <MemoryRouter initialEntries={['/lesson/eigenvalues?from_delta=58']}>
+        <Routes>
+          <Route path="/lesson/:concept_id" element={<LessonPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(screen.getByText('The hook card body.')).toBeInTheDocument());
+    expect(screen.getByText(/You're at/)).toBeInTheDocument();
+    expect(screen.getByText('58%')).toBeInTheDocument();
+  });
+
+  it('renders no banner on a direct visit with no from_delta param', async () => {
+    renderLessonPage();
+    await waitFor(() => expect(screen.getByText('The hook card body.')).toBeInTheDocument());
+    expect(screen.queryByText(/let's shore it up/)).toBeNull();
+  });
+});
+
+// The "Try these next" related-problems list lives on the legacy
+// `components[]` completion view (doneState), not the ContentAtom v2 path
+// above — a genuinely separate render branch (Lesson.atoms empty). This
+// was the one confirmed dead end in the whole lesson<->practice loop: a
+// real, gradable item id rendered as plain, non-interactive text.
+describe('LessonPage — related_problems rows now navigate (closes the dead end)', () => {
+  const LEGACY_LESSON = {
+    concept_id: 'eigenvalues',
+    concept_label: 'Eigenvalues',
+    topic: 'linear-algebra',
+    components: [{ kind: 'hook', text: 'Legacy hook body text.' }],
+    atoms: [],
+    estimated_minutes: 5,
+    difficulty_base: 0.3,
+    quality_score: 1,
+    sources: [],
+    personalization_applied: [],
+    is_revisit: false,
+    related_problems: [{
+      id: 'rp-1', concept_id: 'eigenvalues', question_text: 'A related PYQ worth trying.',
+      difficulty: 0.5, relationship: 'prerequisite', source: 'pyq', wolfram_verified: true,
+    }],
+  };
+
+  function mockLegacyFetchByUrl() {
+    return vi.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/lesson/compose')) return jsonResponse(LEGACY_LESSON);
+      if (url.includes('/api/lesson/walkthrough/')) return jsonResponse(WALKTHROUGH);
+      if (url.includes('/api/exam/active')) return Promise.reject(new Error('no active exam in test'));
+      if (url.includes('/api/auth/config')) return jsonResponse({ intent_lanes: true });
+      if (url.includes('/api/lesson/engagement')) return jsonResponse({});
+      // /api/lesson/advance-sm2 deliberately unmocked — finalizeLesson()'s
+      // own catch branch sets doneState even on a rejected fetch, so this
+      // exercises the SAME honest-degradation path a real network hiccup
+      // would hit, without needing to fabricate an SM-2 response shape.
+      return Promise.reject(new Error(`unexpected fetch: ${url}`));
+    });
+  }
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', mockLegacyFetchByUrl());
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('navigates to /attempt/:id when a related-problem row is clicked', async () => {
+    render(
+      <MemoryRouter initialEntries={['/lesson/eigenvalues']}>
+        <Routes>
+          <Route path="/lesson/:concept_id" element={<LessonPage />} />
+          <Route path="/attempt/:objectId" element={<div>ATTEMPT PAGE: rp-1</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByText('Legacy hook body text.')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Got it')); // the lesson's only component — completes it
+    await waitFor(() => expect(screen.getByText('A related PYQ worth trying.')).toBeInTheDocument());
+
+    const row = screen.getByText('A related PYQ worth trying.').closest('button');
+    expect(row).not.toBeNull();
+    fireEvent.click(row!);
+    await waitFor(() => expect(screen.getByText('ATTEMPT PAGE: rp-1')).toBeInTheDocument());
+  });
+});

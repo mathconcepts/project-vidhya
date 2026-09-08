@@ -2283,3 +2283,41 @@ exists.
 insight is a real, still-missing capability.
 **Deferred from:** `/investigate` — gram-schmidt u1/embedded-widget/
 thinking-gap pass, 2026-09-08, branch `claude/content-strategy-framework-o9afoc`.
+
+## Competency Compass: readiness delta not shown on checkpoint-quiz/mock-exam results
+
+**Trigger:** the Competency Compass pass (2026-09-08, `/investigate` issue
+4 — "a path from lesson -> practice and vice versa... competency is
+moving to the right") deliberately scoped `ReadinessDelta` to
+`PracticeAttemptPage.tsx`'s single-item grading loop only.
+
+**What:** `POST /api/practice/attempt` now returns a real `readiness_delta`
+per graded item, rendered via `ReadinessDelta.tsx`. Checkpoint quizzes
+(`src/api/quiz-routes.ts`) and mock exams (`src/api/mock-exam-routes.ts`)
+grade through a different path (`GET /api/practice/xp/summary`, `POST
+/api/practice/quiz/:id/submit`, mock-exam's own analysis blob) and were
+not touched — a student finishing a multi-question quiz or mock exam sees
+no equivalent "your skill moved" signal today.
+
+**Why not fixed inline:** same one-metric-at-a-time discipline as every
+other "pilot on the reported surface" pass in this doc (the resonance-beat
+pilot, the `why`-field pilot, and others) — quiz/mock-exam grading
+aggregates MULTIPLE skills per submission, so "before → after" needs a
+real design decision (one delta per skill touched? one aggregate number?)
+rather than a mechanical copy-paste of the single-item version.
+
+**Where to start:** `StudentModel.update()` already returns
+`AttemptSkillDelta` per attempt (`src/core/interfaces.ts`) — a quiz/mock-exam
+submission handler already loops over per-question attempts and could
+collect the deltas it already receives, same pattern
+`quiz-routes.ts`/`mock-exam-routes.ts` already use for per-question
+grading, just not yet threading the return value through to the response.
+
+**Effort:** S-M human / S-M CC (the backend plumbing is a near-identical
+copy of the single-item version; the design call is the UI question —
+per-skill list vs. one aggregate).
+**Priority:** P3 — the single-item loop (the more frequent, tighter
+lesson↔practice cycle) is closed; quizzes/mocks are a less frequent,
+naturally lower-urgency extension.
+**Deferred from:** Competency Compass, 2026-09-08, branch
+`claude/content-strategy-framework-o9afoc`.

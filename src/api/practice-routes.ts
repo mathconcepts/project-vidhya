@@ -21,6 +21,13 @@
  *       marking: { marks_correct, marks_wrong },
  *       recorded: boolean,               // false = grade stands, student model
  *                                        //         couldn't persist (DB-less)
+ *       readiness_delta: { skill_id, before_pct, after_pct } | null,
+ *                                        // /investigate 2026-09-08 — the
+ *                                        // skill's Elo-derived readiness %
+ *                                        // this attempt moved, straight
+ *                                        // from StudentModel.update()'s
+ *                                        // AttemptSkillDelta return. null
+ *                                        // on !recorded or a deduped retry.
  *     }
  *
  * Grading is DETERMINISTIC ONLY (blueprint D4/D8: the LLM never decides
@@ -65,7 +72,7 @@ import type { LearningObjectCatalog } from '../scoring/learning-object-catalog';
 import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg';
 import { getStudentModel } from '../gbrain/student-model-pg';
 import { recordProblemAttempt } from '../gbrain/problem-generator';
-import type { Attempt, ErrorTag, StudentModel } from '../core/interfaces';
+import type { Attempt, AttemptSkillDelta, ErrorTag, StudentModel } from '../core/interfaces';
 import { xpForAttempt } from '../scoring/xp';
 import { awardXp as awardXpProd, type XpAward } from '../gbrain/xp-store';
 
@@ -278,8 +285,13 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
 
   // Best-effort persistence: a DB-less deploy still grades honestly.
   let recorded = true;
+  // /investigate (2026-09-08): the before/after skill-readiness delta
+  // update() now returns on a real (non-deduped) apply — see
+  // AttemptSkillDelta's doc comment in src/core/interfaces.ts. `void` on a
+  // deduped retry, so `skillDelta` stays undefined there too.
+  let skillDelta: AttemptSkillDelta | undefined;
   try {
-    await deps.studentModel().update(attempt);
+    skillDelta = (await deps.studentModel().update(attempt)) || undefined;
   } catch (err) {
     recorded = false;
     console.error('[practice] attempt not recorded (student model unavailable):', (err as Error).message);
@@ -329,6 +341,14 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
     // omitted — an explicit null on a correct/skipped/untagged attempt is
     // the honest shape, not a field the client has to guess is missing).
     failure_tag: failureTag,
+    // /investigate (2026-09-08, "competency moving to the right") — null
+    // on a DB-less deploy or a deduped retry, never a guessed or repeated
+    // number (same explicit-null discipline as failure_tag above).
+    readiness_delta: skillDelta ? {
+      skill_id: skillDelta.skillId,
+      before_pct: skillDelta.readinessBeforePct,
+      after_pct: skillDelta.readinessAfterPct,
+    } : null,
   });
 }
 

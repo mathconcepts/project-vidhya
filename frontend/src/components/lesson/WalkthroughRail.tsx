@@ -100,6 +100,14 @@ export function WalkthroughRail({
   const navigate = useNavigate();
   const [phase, setPhase] = useState<Phase>('loading');
   const [data, setData] = useState<WalkthroughResponse | null>(null);
+  // /investigate (2026-09-08, "competency moving to the right") — the
+  // baseline readiness % on THIS concept, shown before the student starts
+  // practicing it so there's a number to watch move once they do (the
+  // delta itself renders on the practice result, see ReadinessDelta.tsx).
+  // Best-effort, separate from the walkthrough fetch above: a failure here
+  // (anonymous session, DB-less deploy) just means no "currently at N%"
+  // clause — never a broken rail over one optional number.
+  const [baselineReadinessPct, setBaselineReadinessPct] = useState<number | null>(null);
 
   useEffect(() => {
     if (!conceptId) return;
@@ -114,6 +122,25 @@ export function WalkthroughRail({
         if (!cancelled) { setData(body); setPhase('ready'); }
       } catch {
         if (!cancelled) setPhase('error');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [conceptId]);
+
+  useEffect(() => {
+    if (!conceptId) return;
+    let cancelled = false;
+    setBaselineReadinessPct(null);
+    (async () => {
+      try {
+        const r = await fetch(`/api/readiness/expected-score?node=${encodeURIComponent(conceptId)}`);
+        if (!r.ok) return;
+        const body = (await r.json()) as { ratio: number | null };
+        if (!cancelled && typeof body.ratio === 'number') {
+          setBaselineReadinessPct(Math.round(body.ratio * 100));
+        }
+      } catch {
+        // Silent — an absent baseline just omits the clause below.
       }
     })();
     return () => { cancelled = true; };
@@ -184,7 +211,8 @@ export function WalkthroughRail({
       <RailRow
         title="Practice"
         subtitle={legs.practice.available
-          ? `${legs.practice.item_count} graded practice question${s(legs.practice.item_count)}`
+          ? `${legs.practice.item_count} graded practice question${s(legs.practice.item_count)}` +
+            (baselineReadinessPct !== null ? ` · currently ${baselineReadinessPct}%` : '')
           : 'No practice items for this concept yet'}
         available={practiceTappable}
         onClick={practiceTappable ? () => navigate(`/attempt/${legs.practice.first_object_id}`) : undefined}

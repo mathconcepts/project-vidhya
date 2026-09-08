@@ -48,6 +48,7 @@ import {
 import type {
   Ability,
   Attempt,
+  AttemptSkillDelta,
   ErrorTag,
   ErrorTypeWeights,
   MasteryState,
@@ -56,6 +57,7 @@ import type {
   StudentId,
   StudentModel,
 } from '../core/interfaces';
+import { expectedShareFromRating } from '../readiness/expected-score';
 import { publishAttemptRecorded } from '../events/attempts-bus';
 import { downClosureFor, upClosureFor, computeImplicitReviews } from './fire';
 import { latencyBucket, writeAttemptFactIn } from './attempt-facts';
@@ -264,12 +266,18 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
     }
   }
 
-  async update(attempt: Attempt): Promise<void> {
+  async update(attempt: Attempt): Promise<AttemptSkillDelta | void> {
     const pool = getPool();
 
     // ── Elo update (joint student × item) ────────────────────────────
     const client = await pool.connect();
     let deduped = false;
+    // /investigate (2026-09-08): captured inside the transaction, right
+    // where the before/after Elo rating is already computed below — see
+    // AttemptSkillDelta's doc comment (src/core/interfaces.ts) for why
+    // this is a "readiness" figure and not the app's existing "mastery"
+    // percentage. Stays null on the dedup early-return.
+    let skillDelta: AttemptSkillDelta | null = null;
     try {
       await client.query('BEGIN');
 
@@ -309,7 +317,13 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
         ? { objectId: attempt.objectId, skillId: attempt.skillId, rating: Number(iRes.rows[0].rating), n: Number(iRes.rows[0].n) }
         : newItemDifficulty(attempt.objectId, attempt.skillId);
 
+      const ratingBefore = sState.rating;
       applyAttempt(sState, iState, attempt.correct);
+      skillDelta = {
+        skillId: attempt.skillId,
+        readinessBeforePct: Math.round(expectedShareFromRating(ratingBefore) * 100),
+        readinessAfterPct: Math.round(expectedShareFromRating(sState.rating) * 100),
+      };
 
       await client.query(
         `INSERT INTO student_skill_elo (student_id, skill_id, rating, n, updated_at)
@@ -433,6 +447,8 @@ export class PgStudentModel implements StudentModel, BatchMasteryStudentModel {
 
     // ── telemetry (post-commit so subscribers see persisted state) ──
     publishAttemptRecorded(attempt);
+
+    return skillDelta ?? undefined;
   }
 
   /**

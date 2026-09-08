@@ -25,7 +25,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import {
   AtomCardRenderer,
   buildPresetVariants,
@@ -86,6 +86,33 @@ describe('AtomCardRenderer — W2 resonance figure promotion', () => {
     expect(figureSlot?.textContent).toContain('Sweep the vector');
     const stage = container.querySelector('.vidhya-atom-stage');
     expect(stage?.getAttribute('data-stage')).toBe('above');
+  });
+
+  it('a graph-mode simulation (2026-09-08 plan) promotes into the figure slot exactly like linear_map/parametric already do', () => {
+    const content = ['Three towns, two roads between them.', '', simulationFence({
+      title: 'Three towns, two roads',
+      x_expr: undefined,
+      y_expr: undefined,
+      t_min: undefined,
+      t_max: undefined,
+      graph: {
+        nodes: [
+          { id: 'A', label: 'A', x: 0, y: 0 },
+          { id: 'B', label: 'B', x: 3, y: 0 },
+        ],
+        edges: [{ from: 'A', to: 'B', weight: 4 }],
+      },
+    })].join('\n');
+    const atom = makeAtom({ atom_type: 'hook', content });
+    const { container } = render(<AtomCardRenderer atoms={[atom]} conceptId="c" studentId="s1" />);
+
+    const figureSlot = container.querySelector('.vidhya-atom-stage__figure');
+    expect(figureSlot?.textContent).toContain('Three towns, two roads');
+    const stage = container.querySelector('.vidhya-atom-stage');
+    expect(stage?.getAttribute('data-stage')).toBe('above');
+    // The graph itself rendered (both node labels), not just the scene title.
+    expect(within(figureSlot as HTMLElement).getAllByText('A').length).toBeGreaterThan(0);
+    expect(within(figureSlot as HTMLElement).getAllByText('B').length).toBeGreaterThan(0);
   });
 
   it('a non-simulation atom (no spec at all) still renders MediaSidecar/nothing as before', () => {

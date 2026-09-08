@@ -5251,6 +5251,122 @@ this doc has already named as separate, differently-scoped follow-ups
 (the `ConceptMathViz` plain-language pass, the `why`-field rollout beyond
 its pilot concepts, and others).
 
+---
+
+### Graph-theory content: a `graph` figure mode for `simulation` scenes (2026-09-08)
+
+`/plan-design-review` + `/autoplan` on the standing, repeatedly-documented
+gap named throughout this doc (the 2026-09-03 motion-coverage audit, both
+resonance-beat waves' graph-theory audits): none of the 3 existing
+`interactive-spec` kinds (`manipulable`, `simulation`, `guided_walkthrough`)
+can honestly render a discrete node/edge structure. Every prior TODOS.md
+entry assumed the fix was a brand-new `InteractiveKind`. Full plan +
+design review: `docs/designs/2026-09-08-graph-theory-simulation-figure-mode.md`.
+
+**The design decision that overturned that assumption.** Research into
+`SimulationSpec` found it already treats its figure as one of several
+mutually-exclusive modes (plain parametric curve, or a `linear_map` 2×2
+transform) sharing one beat/trap/why/promotion/CI system. A discrete graph
+is architecturally the same shape — "the thing being drawn changes at each
+beat," just discretely instead of continuously — so it shipped as a THIRD
+`simulation` figure mode instead of a parallel top-level kind, inheriting
+every existing mechanism (beats, `why`, the sticky-diagram wrapper,
+`AtomCardRenderer`'s figure-slot promotion, the CI lint script) for free.
+This is cheaper than a new kind and avoids the "second copy that drifts"
+bug class this doc has named before (v4.25.0's model-id drift).
+
+**Schema** (`frontend/src/components/lesson/interactives/types.ts`):
+`GraphSceneSpec` (`nodes[]` with author-chosen `x`/`y`, `edges[]` with
+optional `weight`, optional `directed`) as `SimulationSpec.graph`, mutually
+exclusive with `linear_map`/parametric fields/`ghost`. `Beat` gains
+`graph_highlight?: {nodes[], edges[], labels[]}` — same one-annotation-
+field-per-figure-mode precedent as `focus_point`/`focus_eigen` — with
+roles `current`/`confirmed` (node+edge) and additionally `rejected`/`trap`
+(edge only). Each beat's highlight is a full snapshot, not merged with
+prior beats — an author restates what should stay visibly confirmed.
+`MIN_GRAPH_NODES=2`/`MAX_GRAPH_NODES=10`. Dangling node/edge references
+refused by name (`checkGraphScene`/`checkGraphHighlight`, mirroring
+`validateBranches`' "name the offending id" convention) — the honest limit
+of this design is that there's no numeric self-consistency check the way
+`checkLinearMap`'s eigen-residual check works, since graph structure is
+declared, not derived math.
+
+**Renderer** (`Simulation.tsx`): a `GraphScene` sub-component (~150 lines)
+reusing every existing primitive verbatim — the halo-stroke label
+technique, `ArrowGlyph` for directed edges, a new `graphViewBox` helper
+(same fit-to-author-coordinates technique as `linearMapViewBox`). Color
+roles stay inside the locked two-accent law: `current`/default in
+`var(--ink)` ("look here, unconfirmed" — same as `focus_point`/
+`focus_eigen`), `confirmed` in `var(--green)` (settled/verified only,
+never "in progress"), `rejected`/`trap` in `var(--grey-6)` dashed +
+italic (the exact ghost/trap color-independent differentiator). No teal/
+purple/mint/brown, no indigo. A new accessibility win, not just for this
+mode: the existing `aria-live="polite"` region already announces each
+beat's text, closing what would otherwise be a silent screen-reader gap
+specific to a node/edge diagram.
+
+**CI** (`scripts/lint-interactive-specs.ts`): no new "exercise" pass
+needed (graph mode has no formulas to sample — the shared parse-time
+validator is the full check); the `--census` output gains a
+`simulation (graph)` bucket split from `simulation (linear_map)`/
+`simulation (parametric)`.
+
+**Content pilot, 2 of 7 concepts** (same "ship the mechanism, pilot on the
+clearest fit, name the rest" discipline as every prior corpus-wide pass in
+this doc): `shortest-paths` (Dijkstra's full 5-vertex trace on the
+concept's own already-published directed weighted graph — settle/relax
+maps almost 1:1 onto confirmed/current/labels roles, the trap beat reuses
+the concept's own published GATE Trap verbatim: the direct A→B edge at
+cost 4 looks obvious but never belongs to the shortest path, which goes
+through C at cost 3) and `graph-coloring` (greedy coloring on the
+concept's own $C_5$ — color 1→R,2→B,3→R,4→B, then 5 forced into conflict
+with 1 as the trap beat, recolor 5→G). Both land on `hook.md` (+
+`-shaken`/`-assured`, byte-identical fences), additive to each concept's
+existing `worked-example.md` guided_walkthrough. Every number verified
+against the concept's own already-committed, already-verified content —
+no new graph invented.
+
+**Verified live, not assumed — the plan's own named weak point closed
+with a real check.** The design review's self-critique rated
+Responsive/mobile 6/10 at plan time (a 5-6-node graph's label-collision
+risk on a 375px phone, never faced by a single traced curve) and named a
+live-browser check as the gate before shipping. Booted the local demo
+stack (DB-less), logged in via `/demo-login`, and walked both pilot
+concepts' hook scenes beat-by-beat at 375px via this sandbox's
+pre-installed Chromium (Playwright, `deviceScaleFactor: 3` for legible
+screenshots). No label overlap at any of the 7 beats on either concept;
+all four role colors rendered exactly as designed; the trap beat's dashed
+grey edge + italic weight label read clearly on both.
+
+**Still open, named honestly (TODOS.md carries the full per-concept
+scoping):** the other 5 graph-theory concepts — `trees` (Kruskal's MST)
+and `euler-hamilton` ($K_4$ degree check + Hamiltonian cycle) are equally
+strong fits with their graphs/sequences already fully specified;
+`graph-basics` (handshaking lemma) fits well; `graph-connectivity` needs a
+real editorial call first (its worked-example reasons from an abstract
+degree sequence with no single fixed labeled graph); `planar-graphs`' $K_4$
+face-counting half fits, its $K_5$ non-planarity half is a numeric proof
+with nothing to animate. Also open: automatic/force-directed layout
+(authors hand-place `x`/`y` by design, reasonable at the schema's ≤10-node
+cap) and keyboard-only node/edge navigation (a pre-existing gap every
+other `simulation` scene already has for its own curve/arrows, inherited
+not introduced).
+
+**Tests:** `types.test.ts` +18 (graph-mode validation: acceptance, dangling
+references, node-count bounds, mutual exclusion against `linear_map`/
+`ghost`, `directed`+weight, `graph_highlight` reference/role validation,
+`focus_point` refused on a graph scene, the one-trap-max rule enforced via
+a graph-highlight trap). `Simulation.test.tsx` +8 (node/edge/weight-label
+rendering, directed-vs-undirected arrowheads, all 4 role colors, a
+`labels` override replacing a node's own label, `aria-live` announcing the
+active beat). `AtomCardRenderer.resonanceFigure.test.tsx` +1 (a graph-mode
+simulation promotes into the figure slot exactly like `linear_map`/
+parametric already do). Frontend suite 2816 → 2843/2843 (102 files).
+Backend untouched, 4722/4722 (367 files, 1 todo — schema/renderer/content
+only, no backend surface touched). `tsc --noEmit` clean both sides.
+`npm run ci` (18 gates, `ci:interactive-specs` 541→547 blocks +6, every
+other content gate unchanged) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

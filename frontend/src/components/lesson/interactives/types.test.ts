@@ -1154,3 +1154,215 @@ describe('why framing field', () => {
     expect(r.ok).toBe(true);
   });
 });
+
+// ============================================================================
+// graph mode (2026-09-08 plan: a `graph` figure mode, not a 4th InteractiveKind)
+// ============================================================================
+
+describe('validateSimulation — graph mode', () => {
+  const GRAPH_BASE = {
+    v: INTERACTIVE_SPEC_VERSION,
+    kind: 'simulation',
+    title: 'A tiny graph',
+    graph: {
+      nodes: [
+        { id: 'A', label: 'A', x: 0, y: 0 },
+        { id: 'B', label: 'B', x: 1, y: 0 },
+        { id: 'C', label: 'C', x: 0.5, y: 1 },
+      ],
+      edges: [
+        { from: 'A', to: 'B', weight: 4 },
+        { from: 'B', to: 'C', weight: 2 },
+      ],
+    },
+  };
+
+  function parse(spec: unknown) {
+    return parseInteractiveSpec('```interactive-spec\n' + JSON.stringify(spec) + '\n```');
+  }
+
+  it('accepts a graph spec without x_expr/y_expr/t_min/t_max', () => {
+    expect(parse(GRAPH_BASE).ok).toBe(true);
+  });
+
+  it('refuses a dangling edge reference by name', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      graph: { ...GRAPH_BASE.graph, edges: [{ from: 'A', to: 'Z' }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('"Z"');
+  });
+
+  it('refuses a duplicate node id by name', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      graph: {
+        ...GRAPH_BASE.graph,
+        nodes: [...GRAPH_BASE.graph.nodes, { id: 'A', label: 'A again', x: 2, y: 2 }],
+      },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('duplicates id "A"');
+  });
+
+  it('bounds node count to [2, 10]', () => {
+    const tooFew = { ...GRAPH_BASE, graph: { ...GRAPH_BASE.graph, nodes: [GRAPH_BASE.graph.nodes[0]] } };
+    expect(parse(tooFew).ok).toBe(false);
+
+    const tooMany = {
+      ...GRAPH_BASE,
+      graph: {
+        ...GRAPH_BASE.graph,
+        nodes: Array.from({ length: 11 }, (_, i) => ({ id: `n${i}`, label: `${i}`, x: i, y: 0 })),
+      },
+    };
+    expect(parse(tooMany).ok).toBe(false);
+  });
+
+  it('requires a non-empty edges array', () => {
+    const bad = { ...GRAPH_BASE, graph: { ...GRAPH_BASE.graph, edges: [] } };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('refuses combining graph with linear_map', () => {
+    const bad = { ...GRAPH_BASE, linear_map: { matrix: [[1, 0], [0, 1]] } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('mutually exclusive');
+  });
+
+  it('refuses combining graph with the expression ghost', () => {
+    const bad = { ...GRAPH_BASE, ghost: { x_expr: 'cos(t)', y_expr: 'sin(t)' } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('mutually exclusive');
+  });
+
+  it('accepts directed:true and a numeric weight', () => {
+    const ok = { ...GRAPH_BASE, graph: { ...GRAPH_BASE.graph, directed: true } };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('refuses a non-boolean directed field', () => {
+    const bad = { ...GRAPH_BASE, graph: { ...GRAPH_BASE.graph, directed: 'yes' } };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('accepts a graph_highlight beat referencing declared nodes/edges', () => {
+    const ok = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        {
+          at_progress: 0,
+          text: 'Settle A first.',
+          graph_highlight: {
+            nodes: [{ id: 'A', role: 'confirmed' }],
+            edges: [{ from: 'A', to: 'B', role: 'current' }],
+            labels: [{ node_id: 'B', text: 'd[B]=4' }],
+          },
+        },
+      ],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('refuses graph_highlight naming an unknown node id', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        { at_progress: 0, text: 'x', graph_highlight: { nodes: [{ id: 'Z', role: 'current' }] } },
+      ],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('unknown node id "Z"');
+  });
+
+  it('refuses graph_highlight naming an edge not declared in graph.edges', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        { at_progress: 0, text: 'x', graph_highlight: { edges: [{ from: 'A', to: 'C', role: 'current' }] } },
+      ],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('not declared in simulation.graph.edges');
+  });
+
+  it('accepts an undirected edge referenced in either order', () => {
+    // A-C is not declared, but B-C is — referencing it as {from:'C',to:'B'}
+    // must still resolve, since undirected edges have no fixed direction.
+    const ok = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        { at_progress: 0, text: 'x', graph_highlight: { edges: [{ from: 'C', to: 'B', role: 'confirmed' }] } },
+      ],
+    };
+    expect(parse(ok).ok).toBe(true);
+  });
+
+  it('rejects graph_highlight.nodes with an invalid role', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        { at_progress: 0, text: 'x', graph_highlight: { nodes: [{ id: 'A', role: 'settled' }] } },
+      ],
+    };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('rejects graph_highlight.edges with an invalid role', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        { at_progress: 0, text: 'x', graph_highlight: { edges: [{ from: 'A', to: 'B', role: 'accepted' }] } },
+      ],
+    };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('rejects graph_highlight on a scene with no graph field', () => {
+    const bad = {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'simulation',
+      title: 'plain curve',
+      x_expr: 't',
+      y_expr: 't',
+      t_min: 0,
+      t_max: 1,
+      narration_steps: [
+        { at_progress: 0, text: 'x', graph_highlight: { nodes: [{ id: 'A', role: 'current' }] } },
+      ],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('only valid on a graph scene');
+  });
+
+  it('rejects focus_point on a graph scene — graph_highlight is the mechanism there', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      narration_steps: [{ at_progress: 0, text: 'x', focus_point: true }],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('only valid on a plain parametric scene');
+  });
+
+  it('still enforces the one-trap-beat-max rule when the trap is a graph beat', () => {
+    const bad = {
+      ...GRAPH_BASE,
+      narration_steps: [
+        { at_progress: 0, text: 'a', trap: { text: 'wrong 1', avoid: 'avoid 1' } },
+        { at_progress: 0.5, text: 'b', trap: { text: 'wrong 2', avoid: 'avoid 2' } },
+      ],
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('at most ONE trap beat');
+  });
+});

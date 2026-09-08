@@ -145,6 +145,13 @@ function exerciseSimulation(file: string, spec: SimulationSpec): void {
     // a false pair fails parseInteractiveSpec above before reaching here.
     return;
   }
+  if (spec.graph) {
+    // Same reasoning as linear_map above: a graph scene has no formulas to
+    // sample, and its full correctness surface (every node/edge/beat id
+    // reference resolves) is already checked by the shared validator
+    // (checkGraphScene/checkGraphHighlight) before reaching here.
+    return;
+  }
   if (
     typeof spec.x_expr !== 'string' || typeof spec.y_expr !== 'string' ||
     typeof spec.t_min !== 'number' || typeof spec.t_max !== 'number'
@@ -246,7 +253,13 @@ function lintFile(file: string): void {
   const censusKey =
     spec.kind === 'guided_walkthrough' && spec.branches
       ? 'guided_walkthrough (branching)'
-      : spec.kind;
+      : spec.kind === 'simulation'
+        ? spec.linear_map
+          ? 'simulation (linear_map)'
+          : spec.graph
+            ? 'simulation (graph)'
+            : 'simulation (parametric)'
+        : spec.kind;
   census[censusKey] = (census[censusKey] ?? 0) + 1;
 
   if (spec.kind === 'manipulable') exerciseManipulable(file, spec);

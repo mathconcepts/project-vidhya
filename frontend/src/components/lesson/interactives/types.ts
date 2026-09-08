@@ -126,11 +126,44 @@ export interface LinearMapSceneSpec {
 }
 
 /**
- * Parameterized animation. Plays/pauses on a single button. Two figure
+ * A discrete node/edge structure — graph theory's own "figure mode"
+ * (2026-09-08 plan: a `graph` scene, not a 4th `InteractiveKind`). Nodes are
+ * hand-placed by the author (`x`/`y` in any consistent author-chosen scale,
+ * auto-fit to the canvas the same way `x_expr`/`y_expr`'s math-space is
+ * decoupled from screen pixels) — there is no force-directed layout, on
+ * purpose: the graphs this schema needs to draw are small (bounded below)
+ * and a human placing them by hand is simpler and more deterministic than a
+ * layout algorithm that would need its own verification.
+ *
+ * Per-beat highlighting lives on `SimulationSpec.narration_steps[].graph_highlight`
+ * (mirrors `focus_eigen`/`focus_point`'s one-annotation-field-per-figure-mode
+ * precedent) — this type only declares the STATIC structure (which vertices
+ * and edges exist), never which ones are highlighted when.
+ */
+export interface GraphSceneSpec {
+  /** Every id referenced by an edge or a beat's `graph_highlight` must exist here. */
+  nodes: Array<{ id: string; label: string; x: number; y: number }>;
+  /** `from`/`to` must each name a declared node id — a dangling reference is refused by name. */
+  edges: Array<{ from: string; to: string; weight?: number }>;
+  /**
+   * Undirected (plain lines) by default. `true` draws each edge with an
+   * arrowhead from → to via the same `ArrowGlyph` primitive `linear_map`
+   * scenes already use — the one graph-theory concept this schema was
+   * built for that needs it is `shortest-paths` (Dijkstra on a directed
+   * weighted graph); every other concept's canonical graph is undirected.
+   */
+  directed?: boolean;
+}
+
+/**
+ * Parameterized animation. Plays/pauses on a single button. Three figure
  * modes share the beat/trap/storyboard machinery:
  *   - parametric (default): (x(t), y(t)) traces over a line
  *   - linear map: `linear_map` present — a field of unit arrows morphs
  *     through the matrix (see `LinearMapSceneSpec`)
+ *   - graph: `graph` present — a fixed node/edge diagram whose highlight
+ *     state changes discretely per beat (see `GraphSceneSpec`)
+ * The three are mutually exclusive — a scene declares exactly one.
  */
 export interface SimulationSpec {
   v: typeof INTERACTIVE_SPEC_VERSION;
@@ -149,6 +182,8 @@ export interface SimulationSpec {
   t_max?: number;
   /** Present → the scene renders as a morphing vector field instead of a trace. */
   linear_map?: LinearMapSceneSpec;
+  /** Present → the scene renders a fixed node/edge diagram instead of a trace. Mutually exclusive with `linear_map` and the parametric fields above. */
+  graph?: GraphSceneSpec;
   /** Total duration of one play, in seconds. Default 4. */
   duration_sec?: number;
   /** Display range. Default auto-fit from sampled points. */
@@ -225,6 +260,26 @@ export interface SimulationSpec {
      * refuses `focus_point` on a beat belonging to a `linear_map` scene.
      */
     focus_point?: boolean;
+    /**
+     * `graph` scenes only: this beat's discrete highlight state — which
+     * nodes/edges are `current` (ink, "look here, unconfirmed" — same
+     * semantic as `focus_point`/`focus_eigen`), `confirmed` (green, a
+     * settled/accepted/verified result — Dijkstra's settled vertex,
+     * Kruskal's accepted edge, a valid final coloring), or `rejected`
+     * (grey + dashed + italic edge — Kruskal's cycle-forming reject; nodes
+     * use `trap` for the equivalent "this is wrong" state, e.g. a coloring
+     * conflict). `labels` overrides a node's displayed text for this beat
+     * only (e.g. Dijkstra's evolving `d[B]=3`) — reverts once the beat
+     * passes, same discipline as `emphasize`/`focus_eigen`/`focus_point`.
+     * No separate top-level `ghost` exists for graph mode: a `rejected`/
+     * `trap`-role element on the trap beat already IS the wrong answer
+     * being shown, with nothing continuous to interpolate.
+     */
+    graph_highlight?: {
+      nodes?: Array<{ id: string; role: 'current' | 'confirmed' | 'trap' }>;
+      edges?: Array<{ from: string; to: string; role: 'current' | 'confirmed' | 'rejected' | 'trap' }>;
+      labels?: Array<{ node_id: string; text: string }>;
+    };
     /**
      * Presence makes this THE trap beat. Schema-enforced: at most one beat
      * per scene may carry `trap` (design contract item 8) — the single
@@ -437,6 +492,14 @@ export const MAX_GHOST_EXPR_CHARS = 120;
 
 function validateSimulation(raw: any): ParseSuccess | ParseFailure {
   if (typeof raw.title !== 'string') return { ok: false, reason: 'simulation.title required' };
+  const modeCount = [raw.linear_map, raw.graph].filter((v) => v !== undefined).length;
+  if (modeCount > 1) {
+    return {
+      ok: false,
+      reason:
+        'simulation.linear_map and simulation.graph are mutually exclusive — a scene declares exactly one figure mode',
+    };
+  }
   if (raw.linear_map !== undefined) {
     const lmFailure = checkLinearMap(raw.linear_map);
     if (lmFailure) return lmFailure;
@@ -445,6 +508,16 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
         ok: false,
         reason:
           'simulation.ghost and simulation.linear_map are mutually exclusive — a linear-map scene declares its wrong turn via linear_map.ghost_matrix',
+      };
+    }
+  } else if (raw.graph !== undefined) {
+    const graphFailure = checkGraphScene(raw.graph);
+    if (graphFailure) return graphFailure;
+    if (raw.ghost !== undefined) {
+      return {
+        ok: false,
+        reason:
+          'simulation.ghost and simulation.graph are mutually exclusive — a graph scene declares its wrong turn via a beat\'s graph_highlight role ("rejected"/"trap")',
       };
     }
   } else {
@@ -502,12 +575,22 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
         if (typeof step.focus_point !== 'boolean') {
           return { ok: false, reason: `simulation.narration_steps[${i}].focus_point must be a boolean` };
         }
-        if (step.focus_point && raw.linear_map) {
+        if (step.focus_point && (raw.linear_map || raw.graph)) {
           return {
             ok: false,
-            reason: `simulation.narration_steps[${i}].focus_point is not valid on a linear_map scene — use focus_eigen instead`,
+            reason: `simulation.narration_steps[${i}].focus_point is only valid on a plain parametric scene`,
           };
         }
+      }
+      if (step.graph_highlight !== undefined) {
+        if (!raw.graph) {
+          return {
+            ok: false,
+            reason: `simulation.narration_steps[${i}].graph_highlight is only valid on a graph scene`,
+          };
+        }
+        const highlightFailure = checkGraphHighlight(step.graph_highlight, raw.graph, i);
+        if (highlightFailure) return highlightFailure;
       }
       if (step.trap !== undefined) {
         trapCount++;
@@ -560,6 +643,123 @@ function checkTrapShape(trap: any, i: number): ParseFailure | null {
         ok: false,
         reason: `simulation.narration_steps[${i}].trap.${field} must be a non-empty string of at most ${MAX_BEAT_TEXT_CHARS} characters`,
       };
+    }
+  }
+  return null;
+}
+
+/** Node count bounds — every one of the 7 graph-theory concepts' canonical graphs tops out at 6 vertices; the ceiling leaves headroom before a 320×200 canvas gets illegible. */
+export const MIN_GRAPH_NODES = 2;
+export const MAX_GRAPH_NODES = 10;
+
+/**
+ * Shape checks for the static graph structure: unique node ids, and every
+ * edge's `from`/`to` resolves to a declared node — a dangling reference is
+ * refused by name, matching this schema's "name the offending id"
+ * convention (`validateBranches`' own style). There is no numeric
+ * self-consistency check the way `checkLinearMap`'s eigen-residual check
+ * works — node/edge structure is declared, not derived math, so there's no
+ * "wrong" position to catch automatically.
+ */
+function checkGraphScene(graph: any): ParseFailure | null {
+  if (!graph || typeof graph !== 'object' || Array.isArray(graph)) {
+    return { ok: false, reason: 'simulation.graph must be an object' };
+  }
+  if (!Array.isArray(graph.nodes) || graph.nodes.length < MIN_GRAPH_NODES || graph.nodes.length > MAX_GRAPH_NODES) {
+    return {
+      ok: false,
+      reason: `simulation.graph.nodes must be an array of ${MIN_GRAPH_NODES}-${MAX_GRAPH_NODES} nodes`,
+    };
+  }
+  const seenIds = new Set<string>();
+  for (let i = 0; i < graph.nodes.length; i++) {
+    const node = graph.nodes[i];
+    if (
+      !node ||
+      typeof node.id !== 'string' || !node.id ||
+      typeof node.label !== 'string' || !node.label ||
+      typeof node.x !== 'number' || !Number.isFinite(node.x) ||
+      typeof node.y !== 'number' || !Number.isFinite(node.y)
+    ) {
+      return { ok: false, reason: `simulation.graph.nodes[${i}] must have a non-empty id, non-empty label, and finite x/y` };
+    }
+    if (seenIds.has(node.id)) {
+      return { ok: false, reason: `simulation.graph.nodes[${i}] duplicates id "${node.id}"` };
+    }
+    seenIds.add(node.id);
+  }
+  if (!Array.isArray(graph.edges) || graph.edges.length === 0) {
+    return { ok: false, reason: 'simulation.graph.edges must be a non-empty array' };
+  }
+  for (let i = 0; i < graph.edges.length; i++) {
+    const edge = graph.edges[i];
+    if (!edge || typeof edge.from !== 'string' || typeof edge.to !== 'string') {
+      return { ok: false, reason: `simulation.graph.edges[${i}] must have string from/to` };
+    }
+    if (!seenIds.has(edge.from)) {
+      return { ok: false, reason: `simulation.graph.edges[${i}].from names unknown node id "${edge.from}"` };
+    }
+    if (!seenIds.has(edge.to)) {
+      return { ok: false, reason: `simulation.graph.edges[${i}].to names unknown node id "${edge.to}"` };
+    }
+    if (edge.weight !== undefined && (typeof edge.weight !== 'number' || !Number.isFinite(edge.weight))) {
+      return { ok: false, reason: `simulation.graph.edges[${i}].weight must be a finite number` };
+    }
+  }
+  if (graph.directed !== undefined && typeof graph.directed !== 'boolean') {
+    return { ok: false, reason: 'simulation.graph.directed must be a boolean' };
+  }
+  return null;
+}
+
+/** Every id a beat's `graph_highlight` names must resolve against the scene's own declared `graph.nodes`/`edges`. */
+function checkGraphHighlight(highlight: any, graph: any, i: number): ParseFailure | null {
+  if (!highlight || typeof highlight !== 'object' || Array.isArray(highlight)) {
+    return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight must be an object` };
+  }
+  const nodeIds = new Set<string>((graph.nodes ?? []).map((n: any) => n?.id));
+  const edgeKey = (from: string, to: string) => `${from} ${to}`;
+  const edgeKeys = new Set<string>((graph.edges ?? []).map((e: any) => edgeKey(e?.from, e?.to)));
+  if (highlight.nodes !== undefined) {
+    if (!Array.isArray(highlight.nodes)) {
+      return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight.nodes must be an array` };
+    }
+    for (const n of highlight.nodes) {
+      if (!n || !nodeIds.has(n.id)) {
+        return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight.nodes names unknown node id "${n?.id}"` };
+      }
+      if (n.role !== 'current' && n.role !== 'confirmed' && n.role !== 'trap') {
+        return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight.nodes role must be current/confirmed/trap` };
+      }
+    }
+  }
+  if (highlight.edges !== undefined) {
+    if (!Array.isArray(highlight.edges)) {
+      return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight.edges must be an array` };
+    }
+    for (const e of highlight.edges) {
+      if (!e || (!edgeKeys.has(edgeKey(e.from, e.to)) && !edgeKeys.has(edgeKey(e.to, e.from)))) {
+        return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight.edges names an edge not declared in simulation.graph.edges` };
+      }
+      if (e.role !== 'current' && e.role !== 'confirmed' && e.role !== 'rejected' && e.role !== 'trap') {
+        return {
+          ok: false,
+          reason: `simulation.narration_steps[${i}].graph_highlight.edges role must be current/confirmed/rejected/trap`,
+        };
+      }
+    }
+  }
+  if (highlight.labels !== undefined) {
+    if (!Array.isArray(highlight.labels)) {
+      return { ok: false, reason: `simulation.narration_steps[${i}].graph_highlight.labels must be an array` };
+    }
+    for (const l of highlight.labels) {
+      if (!l || !nodeIds.has(l.node_id) || typeof l.text !== 'string' || !l.text) {
+        return {
+          ok: false,
+          reason: `simulation.narration_steps[${i}].graph_highlight.labels names unknown node id "${l?.node_id}" or has empty text`,
+        };
+      }
     }
   }
   return null;

@@ -4,6 +4,44 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.81.0] — 2026-09-08 — Graph-theory content: a `graph` figure mode for `simulation` scenes
+
+No new env vars, no migrations.
+
+`/plan-design-review` + `/autoplan` on the standing gap named throughout
+this doc: none of the 3 existing `interactive-spec` kinds could honestly
+render a discrete node/edge structure. Ships as a THIRD `simulation`
+figure mode (alongside parametric and `linear_map`) rather than a new
+`InteractiveKind` — `SimulationSpec` already supports mutually-exclusive
+figure modes, so this inherits the whole beat/trap/why/promotion/CI
+system for free instead of duplicating it. Full design:
+`docs/designs/2026-09-08-graph-theory-simulation-figure-mode.md`; full
+writeup: CLAUDE.md's "Graph-theory content" section.
+
+`GraphSceneSpec` (`types.ts`) + `Beat.graph_highlight`
+(`current`/`confirmed`/`rejected`/`trap` roles reusing the app's existing
+look-here/confirmed/wrong color vocabulary); a `GraphScene` sub-component
+in `Simulation.tsx` reusing every existing drawing primitive verbatim; a
+`simulation (graph)` census bucket in `lint-interactive-specs.ts`.
+Piloted on 2 of 7 graph-theory concepts — `shortest-paths` (Dijkstra's
+full trace on the concept's own published graph, trap beat reuses its
+published GATE Trap) and `graph-coloring` (greedy coloring on $C_5$,
+trap beat is the vertex-5 conflict) — verified live in a 375px browser
+(this sandbox's pre-installed Chromium) with no label overlap, closing
+the design review's self-named "Responsive: 6/10" risk with a real check.
+The other 5 graph-theory concepts are named and scoped in TODOS.md as a
+follow-up wave, not silently dropped.
+
+Also fixes a `package.json` version drift: it had stuck at `4.77.0` while
+`VERSION`/CHANGELOG.md had already moved to `4.80.0` — the same drift
+class fixed at v4.39.0 ("synced up, not down").
+
+**Tests:** `types.test.ts` +18, `Simulation.test.tsx` +8,
+`AtomCardRenderer.resonanceFigure.test.tsx` +1. Frontend suite 2816 →
+2843/2843 (102 files). Backend untouched, 4722/4722 (367 files, 1 todo).
+`tsc --noEmit` clean both sides. `npm run ci` (18 gates,
+`ci:interactive-specs` 541→547 blocks) clean.
+
 ## [4.80.0] — 2026-09-08 — Resonance-beat scenes, wave 2: every remaining GATE-EM topic
 
 No new env vars, no migrations.

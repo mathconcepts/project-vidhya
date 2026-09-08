@@ -1095,36 +1095,68 @@ assessment for all 7 concepts (not just the 3 originally flagged as
 needing a new schema kind).
 
 **Every remaining non-LA GATE-EM concept has now been through this
-audit.** The "New interactive-spec kind needed for graph-theory" entry
-below is still open (a real schema decision, out of scope for a content
-pass) but is no longer blocking any content-quality work — graph-theory's
-prose is confirmed clean without it.
+audit.** graph-theory's prose was confirmed clean without any new
+interactive mechanism. The schema decision this entry used to name as
+outstanding — a way to visualize a discrete node/edge structure at all —
+has since shipped; see "Graph-theory: a `graph` figure mode for
+`simulation` scenes — CLOSED" below.
 
 Validated: `npm run ci` (18 gates) clean, backend 4722/4722 (367 files, 1
 todo, unchanged — content-only pass), frontend 2816/2816 (102 files,
 unchanged), `tsc --noEmit` clean both sides.
 
-## New interactive-spec kind needed for graph-theory's discrete-traversal concepts
+## Graph-theory: a `graph` figure mode for `simulation` scenes — CLOSED (2026-09-08)
 
-**Trigger:** an operator wants graph-theory's 3 fully-uncovered concepts
-(Eulerian & Hamiltonian, Connectivity, Trees) visualized, or a live-QA
-report flags one of them specifically.
+Closed via `/plan-design-review` + `/autoplan` (plan:
+`docs/designs/2026-09-08-graph-theory-simulation-figure-mode.md`, see
+CLAUDE.md's "Graph-theory content: a `graph` figure mode" section for the
+full writeup). The entry above proposed a brand-new `InteractiveKind`
+(`graph_walk`) — research into `SimulationSpec` found it already supports
+multiple mutually-exclusive figure modes (`parametric`, `linear_map`), so
+a discrete graph is architecturally the same shape (a figure whose state
+changes per beat) and became a third mode instead. This is CHEAPER than a
+new kind: it inherits the whole beat/trap/why/promotion/CI machinery for
+free, rather than duplicating it in a parallel system.
 
-None of the 3 existing kinds fit honestly: `manipulable` has no notion of
-a graph, `guided_walkthrough` has no visual, and `simulation`'s
-`parametric`/`linear_map` modes are built for continuous curves and 2×2
-matrix transforms — a graph traversal (walk an Euler circuit, grow a
-spanning tree edge by edge, flood-fill a connected component) is discrete,
-not continuous, and forcing it into `parametric` risks exactly the
-"fictional steps" failure the research in the design doc warns about.
+**Shipped:** `GraphSceneSpec` (`nodes[]`/`edges[]`/`directed?`) +
+`Beat.graph_highlight` (`nodes[]`/`edges[]`/`labels[]`, roles
+`current`/`confirmed`/`rejected`/`trap` reusing the app's existing
+look-here/confirmed/wrong color vocabulary — never a new hue) in
+`types.ts`; a `GraphScene` sub-component in `Simulation.tsx` (halo-labeled
+circles + `ArrowGlyph` for directed edges, reusing every existing
+primitive verbatim); a `simulation (graph)` census bucket in
+`lint-interactive-specs.ts`. No new validator "exercise" pass needed —
+graph mode has no formulas to sample, so the shared parse-time validator
+is the full correctness check.
 
-This needs a real schema decision: a new `InteractiveKind` (e.g.
-`graph_walk` — nodes/edges + a sequence of highlighted-node/edge steps),
-a renderer component, and validator rules (reachability/well-formedness,
-mirroring `validateBranches`' precedent). Bigger than a content pass —
-scope it as its own mini-plan before touching `types.ts`.
+**Content pilot, 2 of 7 concepts (not the whole topic — same "ship the
+mechanism, pilot on the clearest fit" discipline as every other corpus
+pass in this doc):** `shortest-paths` (Dijkstra's full 5-vertex trace —
+settle/relax roles map almost 1:1 onto confirmed/current/labels, trap beat
+is the concept's own published "direct edge ≠ shortest path" GATE Trap)
+and `graph-coloring` (greedy coloring on $C_5$ — the trap beat shows the
+vertex-5-forced-into-conflict moment verbatim from the concept's own
+worked-example). Both verified in a live browser at 375px (this sandbox's
+pre-installed Chromium, via `/demo-login` + a manual beat-by-beat
+screenshot walk) — no label overlap, all role colors render as designed.
 
-**Effort:** M for the schema+renderer, S per concept once it exists.
+**Still open, named honestly:** the other 5 graph-theory concepts
+(`trees` — Kruskal's MST, `euler-hamilton` — $K_4$ degree check +
+Hamiltonian cycle — are equally strong fits with their graphs/sequences
+already fully specified in the plan doc; `graph-basics` — handshaking
+lemma — fits well; `graph-connectivity` needs a real editorial call first,
+since its worked-example reasons from an abstract degree sequence with no
+single fixed labeled graph; `planar-graphs`' $K_4$ face-counting half
+fits, its $K_5$ non-planarity half is a numeric proof with nothing to
+animate). Also open: automatic/force-directed layout (authors hand-place
+`x`/`y` by design, fine at the schema's ≤10-node cap); keyboard-only
+navigation of individual nodes/edges (the same pre-existing gap every
+other `simulation` scene has for its own curve/arrows, inherited not
+introduced).
+
+**Effort:** S per concept for the remaining 5 (schema+renderer+CI already
+shipped) — same subagent-batch pattern as every other content wave in
+this doc, `graph-connectivity`'s editorial decision aside.
 
 ## `ConceptMathViz`: 52 of 53 descriptions still unaudited for the plain-language rule
 

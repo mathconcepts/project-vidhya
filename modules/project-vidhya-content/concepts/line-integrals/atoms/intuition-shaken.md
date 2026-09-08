@@ -19,6 +19,10 @@ variant_of: line-integrals.intuition
 for_stance: shaken
 ---
 
-Take $f(x,y)=x$ along the segment from $(0,0)$ to $(1,0)$, parametrized $x=t,\,y=0,\,t\in[0,1]$, so $ds=dt$. Walking the segment and weighting the height $x$ at each step by the tiny distance moved gives $\int_C f\,ds=\int_0^1t\,dt=\frac12$.
+Reuse the hook's own field, $\mathbf F(x,y)=(-y,x)$: does the work depend on the path, or only the two endpoints?
 
-Now take $\mathbf F=(y,x)$ over the same segment: $\mathbf F\cdot d\mathbf r=y\,dx+x\,dy$, and since $y=0,\,dy=0$ along this path, that is $0$ everywhere on it, so $\int_C\mathbf F\cdot d\mathbf r=0$. Along the different path from $(0,0)$ straight up to $(0,1)$, $x=0$ throughout, so $\mathbf F\cdot d\mathbf r=0$ there too — two different paths, the same zero answer, because $\mathbf F=\nabla(xy)$ is conservative. A field without a potential function would not generally repeat the same number on a different route.
+**Path 1 — straight line**, $(1,0)$ to $(0,1)$: parametrize $\mathbf r(t)=(1-t,\,t)$, $t\in[0,1]$, so $\mathbf r'(t)=(-1,1)$. Then $\mathbf F(\mathbf r(t))=(-t,\,1-t)$, and $\mathbf F\cdot\mathbf r'=(-t)(-1)+(1-t)(1)=t+1-t=1$. Work: $\int_0^1 1\,dt=1$.
+
+**Path 2 — quarter circle**, same two endpoints: parametrize $\mathbf r(t)=(\cos t,\,\sin t)$, $t\in[0,\tfrac\pi2]$ — starting at $(1,0)$, ending at $(0,1)$, like path 1. The dot product is the same $1$ as the hook (true for every $t$, not just a full circle), so the work is $\int_0^{\pi/2}1\,dt=\frac\pi2\approx1.57$.
+
+**Check.** Both paths start at $(1,0)$ and end at $(0,1)$, yet one gives work $1$ and the other $\frac\pi2$. Different numbers for different routes between the same two points — exactly what the hook asked you to predict, confirmed here by arithmetic. That is only possible because this field is not conservative.

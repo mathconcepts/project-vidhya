@@ -19,16 +19,16 @@ variant_of: laplace-applications.intuition
 for_stance: shaken
 ---
 
-Take $y'+2y=6$, $y(0)=0$ — constant coefficients, a constant forcing term: exactly the signal that Laplace is the right tool.
+Take $y'+3y=0$, $y(0)=2$ — the exact system whose decay to $0$ you already watched in the hook. Constant coefficients and a given initial condition: exactly the signal that Laplace is the right tool.
 
-Transform once: $sY(s)+2Y(s)=\dfrac{6}{s}$, so
+Transform once: $sY(s)-2+3Y(s)=0$, so
 
-$$Y(s)=\frac{6}{s(s+2)}$$
+$$Y(s)=\frac{2}{s+3}$$
 
-Before inverting anything, check the steady state with the final-value theorem:
+Before inverting anything, check the steady state with the final-value theorem — a check you run on the un-inverted $Y(s)$ itself, no table lookup needed yet:
 
-$$\lim_{t\to\infty}y(t)=\lim_{s\to0}sY(s)=\lim_{s\to0}\frac{6}{s+2}=3$$
+$$\lim_{t\to\infty}y(t)=\lim_{s\to0}sY(s)=\lim_{s\to0}\frac{2s}{s+3}=0$$
 
-That $3$ is a check you can run on the un-inverted $Y(s)$ — if the $y(t)$ you eventually compute by partial fractions doesn't settle at $3$, the algebra went wrong before you ever inverted anything.
+That $0$ is a promise: if the $y(t)$ you eventually compute by inverting doesn't settle at $0$, the algebra went wrong before you ever inverted anything — and here it does, since $y(t)=2e^{-3t}\to0$ is exactly the curve you already watched fade out.
 
 Hold onto this: $y'$ became $sY(s)-y(0)$, turning the differential equation into algebra, and the final-value theorem checks the answer's destination before you find its full shape.

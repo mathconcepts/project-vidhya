@@ -19,7 +19,7 @@ variant_of: group-theory-basics-intuition
 for_stance: shaken
 ---
 
-Take $(\mathbb{Z}_4,+_4) = \{0,1,2,3\}$ with addition mod $4$. Check closure on one pair: $2+3=5$, and $5\bmod4=1$, still in the set. Check associativity on numbers: $(1+2)+3=3+3=6\equiv2$, and $1+(2+3)=1+5=6\equiv2$ — same answer either order. Check identity: $0+3=3$ and $3+0=3$, so $0$ does nothing. Check inverses one element at a time: $1+3=4\equiv0$, so $3$ undoes $1$; $2+2=4\equiv0$, so $2$ undoes itself. All four properties held — closure, associativity, an identity, and an inverse for every element — and that full list, together, is what makes $(\mathbb{Z}_4,+_4)$ a group.
+The hook's four rotations of a square (turn by 90° zero, one, two, or three times) behave exactly like the numbers $0,1,2,3$ added mod $4$ — "rotate twice more" is just "add 2." So check the same group with plain numbers instead of turns: take $(\mathbb{Z}_4,+_4) = \{0,1,2,3\}$ with addition mod $4$. Check closure on one pair: $2+3=5$, and $5\bmod4=1$, still in the set. Check associativity on numbers: $(1+2)+3=3+3=6\equiv2$, and $1+(2+3)=1+5=6\equiv2$ — same answer either order. Check identity: $0+3=3$ and $3+0=3$, so $0$ does nothing. Check inverses one element at a time: $1+3=4\equiv0$, so $3$ undoes $1$; $2+2=4\equiv0$, so $2$ undoes itself. All four properties held — closure, associativity, an identity, and an inverse for every element — and that full list, together, is what makes $(\mathbb{Z}_4,+_4)$ a group.
 
 Every element of $\mathbb{Z}_4$ is a repeated sum of $1$: $1,\,1+1=2,\,1+1+1=3,\,1+1+1+1=0$. That makes $1$ a generator, and $\mathbb{Z}_4$ a cyclic group.
 

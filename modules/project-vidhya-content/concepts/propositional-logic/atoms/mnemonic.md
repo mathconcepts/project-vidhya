@@ -12,4 +12,4 @@ modality: mnemonic
 
 **For the three rearrangements, remember "Contrapositive is Correct."** Of converse, inverse, and contrapositive, only the one that starts with the same letter as "correct" is guaranteed equivalent to the original. A coincidence of English, not mathematics — but it sticks.
 
-**Sanity-check reflex:** before trusting any tautology claim, test the single row where the antecedent is true and the consequent is false. If that is the only place your formula could go false, you've found the entire failure mode in one line.
+**Sanity-check reflex:** before trusting any tautology claim (a formula someone says is true in every single row), test the single row where the antecedent is true and the consequent is false. If that is the only place your formula could go false, you've found the entire failure mode in one line.

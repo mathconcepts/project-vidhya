@@ -12,4 +12,4 @@ modality: mnemonic
 
 **For partial orders, swap one letter: "RAT"** — **R**eflexive, **A**ntisymmetric, **T**ransitive. Same first and last letters as RST; only the middle one changes, which is the whole story of how the two structures differ.
 
-**Sanity-check reflex:** after finding equivalence classes, add up their sizes. If the total doesn't equal $|S|$, either an element was double-counted (transitivity slipped) or dropped (reflexivity slipped).
+**Sanity-check reflex:** after finding the equivalence classes (the piles the relation sorts everything into), add up their sizes. If the total doesn't equal $|S|$, either an element was double-counted (transitivity slipped) or dropped (reflexivity slipped).

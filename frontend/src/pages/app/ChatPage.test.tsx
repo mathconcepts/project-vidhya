@@ -103,3 +103,112 @@ describe('ChatPage — earlier-visit history stays out of the way', () => {
     expect(screen.getByTestId('earlier-chat-toggle')).toBeInTheDocument();
   });
 });
+
+// Root-caused by /investigate (2026-09-07, live-QA screenshots of the AI
+// Tutor Chat page): assistant replies rendered as raw string interpolation
+// (ChatBubble's plain-text children) instead of through MarkdownAtomRenderer
+// — the same "never wired through the shared KaTeX pipeline" bug class this
+// repo has hit and fixed on every OTHER surface (trap rows, guided_walkthrough
+// prompts, solution_steps panels, practice explanation panels). Also: the
+// backend's SSE 'reasoner'/'atom' events already carry the concept id this
+// answer is about, but the frontend silently dropped both event types.
+function sseReaderFrom(events: Array<Record<string, unknown>>) {
+  const bytes = new TextEncoder().encode(
+    events.map((e) => `data: ${JSON.stringify(e)}\n\n`).join(''),
+  );
+  let sent = false;
+  return {
+    read: vi.fn().mockImplementation(async () => {
+      if (sent) return { done: true, value: undefined };
+      sent = true;
+      return { done: false, value: bytes };
+    }),
+  };
+}
+
+function mockChatFetch(streamEvents: Array<Record<string, unknown>>) {
+  return vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    if (!init?.method) {
+      // GET /api/chat/:sessionId — empty history, so no earlier-visit noise.
+      return Promise.resolve({ ok: true, json: async () => ({ messages: [] }) });
+    }
+    // POST /api/chat — the streamed reply.
+    return Promise.resolve({ ok: true, body: { getReader: () => sseReaderFrom(streamEvents) } });
+  }) as any;
+}
+
+async function sendChatMessage(text: string) {
+  const input = screen.getByPlaceholderText(/ask anything about your exam/i);
+  fireEvent.change(input, { target: { value: text } });
+  fireEvent.click(screen.getByRole('button', { name: /send message/i }));
+}
+
+describe('ChatPage — tutor response rendering', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    vi.restoreAllMocks();
+  });
+
+  it('typesets LaTeX in the assistant reply instead of leaking raw $...$ / \\begin{pmatrix} source', async () => {
+    global.fetch = mockChatFetch([
+      { type: 'chunk', content: 'The matrix is $A = \\begin{pmatrix} 1 & 2 \\\\ 3 & 4 \\end{pmatrix}$.' },
+      { type: 'done' },
+    ]);
+
+    renderChatPage();
+    await sendChatMessage('Explain this matrix');
+
+    await waitFor(() => expect(document.querySelector('.katex')).toBeTruthy());
+    // The VISIBLE rendering must not show raw LaTeX source. KaTeX also emits
+    // a hidden `.katex-mathml` accessibility annotation that legitimately
+    // contains the source (for screen readers) — that's correct KaTeX
+    // output, not the bug; only `.katex-html` (what a sighted student sees)
+    // is checked here.
+    const visible = document.querySelector('.katex-html');
+    expect(visible).toBeTruthy();
+    expect(visible!.textContent).not.toMatch(/\\begin\{pmatrix\}/);
+  });
+
+  it('surfaces the concept a reply is about from the reasoner SSE event (was silently dropped)', async () => {
+    global.fetch = mockChatFetch([
+      { type: 'reasoner', concept: 'matrix-operations', action: 'explain' },
+      { type: 'chunk', content: 'Matrices combine like this.' },
+      { type: 'done' },
+    ]);
+
+    renderChatPage();
+    await sendChatMessage('Explain matrix operations');
+
+    await waitFor(() => expect(screen.getByTestId('chat-concept-label')).toHaveTextContent('Matrix Operations'));
+    expect(screen.getByText('Matrices combine like this.')).toBeInTheDocument();
+  });
+
+  it('surfaces the concept from an atom-served reply the same way', async () => {
+    global.fetch = mockChatFetch([
+      { type: 'atom', concept: 'eigenvalues', atomType: 'hook' },
+      { type: 'chunk', content: 'An eigenvalue tells you the stretch factor.' },
+      { type: 'done' },
+    ]);
+
+    renderChatPage();
+    await sendChatMessage('Explain eigenvalues');
+
+    await waitFor(() => expect(screen.getByTestId('chat-concept-label')).toHaveTextContent('Eigenvalues'));
+  });
+
+  it('renders no concept label when the backend sends none (no fabricated context)', async () => {
+    global.fetch = mockChatFetch([
+      { type: 'chunk', content: 'A general study-strategy answer.' },
+      { type: 'done' },
+    ]);
+
+    renderChatPage();
+    await sendChatMessage('How should I plan my week?');
+
+    await waitFor(() => expect(screen.getByText('A general study-strategy answer.')).toBeInTheDocument());
+    // No concept was sent, so no label should be invented.
+    expect(screen.queryByTestId('chat-concept-label')).not.toBeInTheDocument();
+  });
+});

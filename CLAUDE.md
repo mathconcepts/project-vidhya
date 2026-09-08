@@ -4971,6 +4971,60 @@ files). `tsc --noEmit` clean both sides. `npm run ci` (18 gates) clean —
 in place), `ci:variant-agreement` 610 pairs, `ci:katex-fences` 1723,
 `ci:content-integrity` 1729, `ci:la-walkthrough` 26/26, all unchanged.
 
+### `/investigate` on the AI Tutor Chat page: raw LaTeX, missing ELI5 register, dropped concept id (2026-09-07)
+
+Two live-QA screenshots, one compact report: "eli5 language cid missing,
+formatting issue, no user centricity." Read as four distinct findings and
+root-caused each against the real code (`ChatPage.tsx`,
+`src/api/chat-routes.ts`) before touching anything, per the skill's Iron
+Law — the same discipline every prior `/investigate` pass in this doc
+follows.
+
+**Formatting — confirmed on sight, and the same bug class this repo has
+hit (and fixed) on every other content surface.** `ChatBubble`'s children
+were `msg.content`, a raw string — trap rows, `guided_walkthrough`
+prompts, `solution_steps` panels, and practice explanation panels all had
+this exact defect at some point and were each fixed by routing through
+`MarkdownAtomRenderer` (see this doc's 2026-09-03/09-04/09-06 sections).
+The chat tutor bubble was simply the one surface never migrated. Fixed
+for both the current-visit list and the collapsed earlier-visit list.
+
+**"eli5 language ... missing" — confirmed by reading `buildSystemPrompt()`
+line by line.** `src/content/prompt-registry/resources/modifiers.ts`'s
+`toneRegisterModifier` (the unconditional ELI5/Indian-English directive,
+2026-09-02) is composed into every atom-GENERATION prompt via
+`orchestrator.ts`'s `buildPrompt()` — but the chat tutor's live LLM path
+builds its own, completely separate system prompt in
+`src/api/chat-routes.ts`, which had no register directive of any kind.
+`TONE_REGISTER_BLOCK` is now exported from `modifiers.ts` and imported
+directly into `buildSystemPrompt()` — one shared constant read by both
+surfaces, not a second copy that could drift (the "parallel truths" bug
+class this doc has named before, v4.25.0).
+
+**"cid missing" / "no user centricity" — resolved to a concrete, code-
+confirmed reading, not guessed.** `handleChat()` already sends a
+`type: 'reasoner'` SSE event carrying `concept: reasonerInstructions
+.selected_concept` and a `type: 'atom'` event carrying `concept: atom
+.conceptId` — the concept id the reply is about, computed server-side on
+every turn. `ChatPage.tsx`'s stream-reading loop branched only on
+`'chunk'`/`'error'`; both concept-carrying event types were silently
+dropped. The student had no way to tell what topic an answer was actually
+about — "cid" (concept id) was never rendered, and that absence is the
+concrete form "no user centricity" takes on this page. Fixed: a
+`messageConcepts` map (keyed by message id, populated via the stable
+`assistantMsg.id` closure) now renders a small indigo label — DESIGN-
+SYSTEM.md reserves indigo for exactly "AI, tutor" — above the reply.
+Renders nothing when the backend sends no concept (never fabricated).
+
+**Tests:** 4 new (`ChatPage.test.tsx` — KaTeX renders with no raw LaTeX
+source in the visible `.katex-html`, the concept label appears from both
+`reasoner` and `atom` events, no label is invented when the backend sends
+none), 2 new (`src/api/__tests__/chat-system-prompt.test.ts` — the shared
+register block is present in the chat system prompt, and present exactly
+once). Backend suite 4720 → 4722 (367 files, 1 todo). Frontend suite
+2812 → 2816 (102 files). `tsc --noEmit` clean both sides. `npm run ci`
+(18 gates) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

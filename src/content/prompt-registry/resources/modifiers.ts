@@ -30,7 +30,11 @@ import type { Modifier, PromptResourceBuildArgs } from '../types';
 import { registerPromptResource } from '../registry';
 import { formatHindiGloss, LINEAR_ALGEBRA_HINDI_GLOSSARY } from '../data/hindi-math-glossary';
 
-const TONE_REGISTER_BLOCK = `Register: write for a student who gets anxious about this exam and needs the plainest possible path in. ELI5 the reasoning — explain WHY a step happens, not just that it happens. The first time you use a technical term (e.g. "Hermitian", "eigenbasis", "orthonormal"), gloss it in plain words in the same sentence before using it bare again; never introduce two new terms back to back without grounding the first one. Default to Indian English: familiar Indian-classroom phrasing and idiom (e.g. "sums" for practice problems is fine), not translated-from-American phrasing. Short sentences. No word the student would have to look up.
+// Exported (not just used by toneRegisterModifier.build() below) so the
+// live AI Tutor chat path (src/api/chat-routes.ts) can share the exact same
+// register directive instead of drifting a second copy — see the
+// /investigate fix for "eli5 language missing" on the chat surface.
+export const TONE_REGISTER_BLOCK = `Register: write for a student who gets anxious about this exam and needs the plainest possible path in. ELI5 the reasoning — explain WHY a step happens, not just that it happens. The first time you use a technical term (e.g. "Hermitian", "eigenbasis", "orthonormal"), gloss it in plain words in the same sentence before using it bare again; never introduce two new terms back to back without grounding the first one. Default to Indian English: familiar Indian-classroom phrasing and idiom (e.g. "sums" for practice problems is fine), not translated-from-American phrasing. Short sentences. No word the student would have to look up.
 
 `;
 

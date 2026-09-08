@@ -17,6 +17,7 @@ import { extractErrorDetail } from '@/lib/api-error';
 import { splitChatHistoryByRecency } from '@/lib/chat-session-grouping';
 import { ChatBubble } from '@/components/ui/ChatBubble';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 
 interface ChatMessage {
   id: string;
@@ -31,6 +32,16 @@ const FALLBACK_SUGGESTIONS = [
   'Walk me through a tricky topic step-by-step',
   'Give me 3 practice problems',
 ];
+
+/** "matrix-operations" -> "Matrix Operations" — same title-casing the backend's
+ * buildSystemPrompt() already uses for its own topic list, so the label reads
+ * the same everywhere a concept id becomes student-facing text. */
+function conceptLabel(id: string): string {
+  return id
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 function ThinkingDots() {
   return (
@@ -93,6 +104,11 @@ export default function ChatPage() {
   const [loaded, setLoaded] = useState(false);
   const [attachedImage, setAttachedImage] = useState<{ base64: string; mimeType: string } | null>(null);
   const [nextSteps, setNextSteps] = useState<Record<string, NextStepData>>({});
+  // Concept id an assistant message is about, keyed by message id — surfaced
+  // from the backend's SSE 'reasoner'/'atom' events, which carried this all
+  // along but the frontend never read it (live-QA: "no user centricity" —
+  // a student had no way to tell what topic an answer was actually about).
+  const [messageConcepts, setMessageConcepts] = useState<Record<string, string>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -259,6 +275,12 @@ export default function ChatPage() {
                 }
                 return updated;
               });
+            } else if ((data.type === 'reasoner' || data.type === 'atom') && data.concept) {
+              // The backend resolves which concept this answer is about
+              // (GBrain task-reasoner, or the atom lookup) and always sent
+              // it — the frontend just never listened. assistantMsg.id is
+              // the stable id for THIS turn's reply, captured in closure.
+              setMessageConcepts(prev => ({ ...prev, [assistantMsg.id]: data.concept }));
             }
           } catch { /* skip */ }
         }
@@ -297,7 +319,10 @@ export default function ChatPage() {
     }
   };
 
-  const clearChat = () => setMessages([]);
+  const clearChat = () => {
+    setMessages([]);
+    setMessageConcepts({});
+  };
   const isEmpty = messages.length === 0;
 
   return (
@@ -371,7 +396,11 @@ export default function ChatPage() {
             >
               {earlierMessages.map(msg => (
                 <ChatBubble key={msg.id} from={msg.role === 'user' ? 'student' : 'tutor'}>
-                  {msg.content}
+                  {msg.role === 'assistant' ? (
+                    <MarkdownAtomRenderer content={msg.content} atomId={`chat-${msg.id}`} />
+                  ) : (
+                    msg.content
+                  )}
                 </ChatBubble>
               ))}
             </div>
@@ -448,12 +477,45 @@ export default function ChatPage() {
           </div>
         ) : (
           <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {messages.map((msg, idx) => (
+            {messages.map((msg, idx) => {
+              const isLastStreamingAssistant = msg.role === 'assistant' && isStreaming && idx === messages.length - 1;
+              const concept = msg.role === 'assistant' ? messageConcepts[msg.id] : undefined;
+              return (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <ChatBubble from={msg.role === 'user' ? 'student' : 'tutor'}>
-                  {msg.content || (msg.role === 'assistant' && isStreaming && idx === messages.length - 1
-                    ? <TutorThinkingDots />
-                    : msg.content)}
+                  {/* Concept-id chip (live-QA: "no user centricity" — the
+                      backend always knew which concept an answer was about
+                      via its 'reasoner'/'atom' SSE events; the frontend just
+                      never rendered it). Indigo per DESIGN-SYSTEM.md — AI/
+                      tutor is exactly what indigo is reserved for. */}
+                  {concept && (
+                    <div
+                      data-testid="chat-concept-label"
+                      style={{
+                        fontSize: 'var(--text-caption2)',
+                        fontWeight: 600,
+                        color: 'var(--indigo-ink)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.02em',
+                        marginBottom: 4,
+                      }}
+                    >
+                      {conceptLabel(concept)}
+                    </div>
+                  )}
+                  {msg.content ? (
+                    msg.role === 'assistant' ? (
+                      <MarkdownAtomRenderer
+                        content={msg.content}
+                        atomId={`chat-${msg.id}`}
+                        className="vidhya-atom-body--progressive"
+                      />
+                    ) : (
+                      msg.content
+                    )
+                  ) : (
+                    isLastStreamingAssistant ? <TutorThinkingDots /> : null
+                  )}
                 </ChatBubble>
 
                 {msg.role === 'assistant' && nextSteps[msg.id] && !isStreaming && (
@@ -479,7 +541,8 @@ export default function ChatPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}

@@ -19,8 +19,8 @@ variant_of: surface-integrals.intuition
 for_stance: shaken
 ---
 
-Take the uniform field $\mathbf F=(0,0,3)$ and a flat unit square $S$ lying in the $xy$-plane, $z=0$, with outward normal $\hat n=\hat k$: $\mathbf F\cdot\hat n=3$ everywhere on $S$, and since the field never changes, $\iint_S\mathbf F\cdot\hat n\,dS=3\times(\text{area }1)=3$.
+Take the same net from the hook — area $1\,\text{m}^2$, flow $2\,\text{m/s}$ — but now written as vectors: field $\mathbf F=(0,0,2)$, net lying flat in the $xy$-plane with outward normal $\hat n=\hat k=(0,0,1)$. Then $\mathbf F\cdot\hat n=2$ everywhere on $S$, and since the field never changes, $\iint_S\mathbf F\cdot\hat n\,dS=2\times(\text{area }1)=2$ — matching the $2\,\text{m}^3/\text{s}$ the hook found.
 
-Now tilt the same square so its normal is $\hat n=\frac{1}{\sqrt2}(1,0,1)$ instead: $\mathbf F\cdot\hat n=3/\sqrt2$, smaller than before, even though the field and the square's own area have not changed, only the angle between them has. Push the tilt all the way to $\hat n=(1,0,0)$, perpendicular to $\mathbf F$, and the flux drops to $0$: the field runs entirely along the surface, crossing nothing.
+Now tilt the same net so its normal is $\hat n=\frac{1}{\sqrt2}(1,0,1)$ instead: $\mathbf F\cdot\hat n=2/\sqrt2=\sqrt2\approx1.41$, smaller than before, even though the field and the net's own area have not changed, only the angle between them has. Push the tilt all the way to $\hat n=(1,0,0)$, perpendicular to $\mathbf F$, and the flux drops to $0$: the field runs entirely along the surface, crossing nothing — the same edge-on collapse the hook described, now reached by a dot product instead of a picture.
 
 Flip $\hat n$ to point the other way and the number just found becomes negative — same surface, same field, the opposite bookkeeping convention.

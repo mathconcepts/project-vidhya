@@ -8,7 +8,7 @@ exam_ids: ["*"]
 modality: visual
 ---
 
-Start from a guess: the simplified expression needs one term per minterm — five minterms, five terms. Test it against $F=\Sigma m(1,3,5,6,7)$ on variables $A,B,C$.
+Start from a guess: the simplified expression needs one term per minterm (a minterm is just one row of the truth table where the output is $1$, written as an AND of the inputs) — five minterms, five terms. Test it against $F=\Sigma m(1,3,5,6,7)$ on variables $A,B,C$.
 
 Write out the binary code for each: $1{=}001,3{=}011,5{=}101,6{=}110,7{=}111$. Four of the five ($1,3,5,7$) share $C=1$ — the last bit is $1$ in each. Group those four into a single term: $C$.
 

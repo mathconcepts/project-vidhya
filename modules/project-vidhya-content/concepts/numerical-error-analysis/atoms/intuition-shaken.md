@@ -20,9 +20,9 @@ for_stance: shaken
 
 ## One measurement, two different verdicts
 
-A rod measures $L_a=9.97$ cm against a true length $L_t=10.00$ cm. Absolute error: $E_a=|10.00-9.97|=0.03$. By itself, $0.03$ says nothing about whether that matters.
+A resistor reads $100.0\,\Omega$ on the meter; its true value is $99.7\,\Omega$. Absolute error: $E_a=|100.0-99.7|=0.3$. By itself, $0.3$ says nothing about whether that matters.
 
-Put the same $0.03$ gap on a bolt whose true length is $L_t=0.06$ cm instead: relative error $E_r=0.03/0.06=0.5$, or $50\%$ — nothing like the rod's $E_r=0.03/10.00=0.003$, or $0.3\%$. The absolute gap was identical both times; the relative one is what tells you which error matters.
+Put the same $0.3\,\Omega$ gap on a $1\,\Omega$ resistor instead: relative error $E_r=0.3/1=0.3$, or $30\%$ — nothing like the $100\,\Omega$ resistor's $E_r=0.3/100=0.003$, or $0.3\%$. The absolute gap was identical both times; the relative one is what tells you which error matters.
 
 Errors also arrive from two different places. Rounding $3.14159$ to $3.1416$ loses information because only finitely many digits were kept. Stopping a Taylor series after three terms, or a root-finder after five iterations, loses information because the process itself was cut short. More decimal places fix the first kind and do nothing for the second.
 

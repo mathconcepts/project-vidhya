@@ -19,14 +19,14 @@ variant_of: chain-rule-intuition
 for_stance: shaken
 ---
 
-Take $y=(2x+1)^5$ at $x=1$. Split it into two layers: inner $u=2x+1$, outer $y=u^5$. At $x=1$, $u=3$.
+Take the balloon from the hook: radius $r$ grows at $2$ cm/s, and volume is $V=\frac{4}{3}\pi r^3$. This is two layers stacked on each other: the inner layer is $r$, a hidden function of time $t$ (that's what "grows at $2$ cm/s" means: $r(t)=2t$); the outer layer is $V$, a function of $r$.
 
-Differentiate each layer on its own, using only that layer's own variable. Outer: $\frac{dy}{du}=5u^4$, which at $u=3$ is $5(81)=405$. Inner: $\frac{du}{dx}=2$.
+Differentiate each layer on its own, using only that layer's own variable. Outer: $\dfrac{dV}{dr}=4\pi r^2$ — at $t=1$s, $r=2$, so this is $4\pi(4)=16\pi$. Inner: $\dfrac{dr}{dt}=2$, always, since the radius grows at a constant rate.
 
-Chain them by multiplying the two numbers just found: $\frac{dy}{dx}=405\times2=810$.
+Chain them by multiplying the two numbers just found: $\dfrac{dV}{dt}=16\pi\times2=32\pi\approx100.53$ cm³/s.
 
-Check it without ever introducing $u$: $\frac{d}{dx}(2x+1)^5=5(2x+1)^4\cdot2=5(3)^4\cdot2=810$ — same number, so splitting into layers only changed the bookkeeping, not the answer.
+Check it a different way, at the same instant: $V(t)=\frac{4}{3}\pi(2t)^3$, so $V(1)=\frac43\pi(2)^3=33.51$ cm³ — and differentiating this expression directly with respect to $t$ (still using the chain rule, just not splitting it into named layers) gives the same $32\pi$. Splitting into layers only changed the bookkeeping, not the answer.
 
-Only now does the formula deserve a name: $\dfrac{dy}{dx}=\dfrac{dy}{du}\cdot\dfrac{du}{dx}=f'(g(x))\cdot g'(x)$ — outer's derivative evaluated at the inner, times the inner's own derivative. Three layers, $f(g(h(x)))$, is the same multiplication done once more: peel one more layer, differentiate it on its own, multiply it in.
+Only now does the formula deserve a name: $\dfrac{dV}{dt}=\dfrac{dV}{dr}\cdot\dfrac{dr}{dt}=f'(g(t))\cdot g'(t)$ — outer's derivative evaluated at the inner, times the inner's own derivative. Three layers, $f(g(h(x)))$, is the same multiplication done once more: peel one more layer, differentiate it on its own, multiply it in.
 
 The one idea to hold onto: every layer peeled off on the way in owes one more factor on the way out.

@@ -10,7 +10,7 @@ scaffold_fade: true
 
 # Mean Value Theorems: The Guarantor of a "Middle Speed"
 
-Imagine driving between two cities. You leave at noon and arrive at 6 PM, having covered 300 km. Your average speed was 50 km/h. Did your speedometer hit exactly 50 km/h at some moment during the journey? Yes—not because of luck, but because of a mathematical law called the **Mean Value Theorem**.
+Imagine driving between two cities. You cover 180 km in exactly 2 hours. Your average speed was 90 km/h. Did your speedometer hit exactly 90 km/h at some moment during the journey? Yes—not because of luck, but because of a mathematical law called the **Mean Value Theorem**.
 
 The Mean Value Theorem doesn't tell you *where* or *when*—only that *somewhere*, your instantaneous speed matched your average speed. This is profound: it bridges two very different concepts.
 

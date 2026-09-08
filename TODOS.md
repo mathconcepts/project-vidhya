@@ -1053,40 +1053,56 @@ boilerplate).
 **Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
 `claude/content-strategy-framework-o9afoc`.
 
-## Motion coverage wave: vector-calculus, probability-statistics, transform-theory, numerical-methods
+## Motion coverage wave 1 — CLOSED (vector-calculus, numerical-methods, probability-statistics, complex-variables)
 
-**Trigger:** operator time for the next content wave, or a fresh live-QA
-report on one of these topics.
+Closed 2026-09-08: 5 parallel Claude Sonnet subagent batches authored 19
+new resonance-beat scenes across all 29 concepts in these 4 topics (see
+CLAUDE.md's "Resonance-beat scenes, wave 1" section for the full list and
+CHANGELOG.md's 4.79.0 entry). `analytic-functions`/`complex-integration`/
+`residue-calculus`/`taylor-laurent` — complex-variables' worst-depth-
+coverage gap this entry used to flag — are now covered. Several concepts
+correctly skipped a scene as ill-suited (`counting-principles`,
+`random-variables`, `interpolation`, `hypothesis-testing`) rather than
+force one onto content with no honest continuous trace.
 
-`docs/designs/2026-09-03-motion-and-plain-language-strategy.md` found these
-4 topics are 100% covered by the passive `gif-scene` system but have ZERO
-`simulation`-kind (scrubbable, narrated, signaling) scenes — the
-pedagogically active layer research ties to real effect sizes. Priority
-order (subject-motion fit × gap, full rationale in the doc):
-1. vector-calculus (7 concepts remaining after `line-integrals`, this
-   pass's pilot) — flux/curl/divergence/Green's/Stokes/Gauss are literal
-   motion-through-space; best-suited topic in the curriculum.
-2. numerical-methods (6 concepts) — root-finding, integration, ODE solvers
-   are iterative-convergence processes, the textbook system-paced case.
-3. probability-statistics (9 concepts) — distribution-vs-parameter is a
-   `manipulable`-slider case (also 0/9 there); sampling-distributions'
-   CLT convergence is a classic animated demonstration.
-4. transform-theory (6 concepts) — lower subject-fit (abstract, frequency-
-   domain) but still fully passive-only.
+## Motion coverage wave 2 — closed (2026-09-08)
 
-Same 5-6-concept-per-batch subagent pattern as the common_traps ELI5 pass:
-read the concept's real worked-example numbers (never invent new ones —
-`line-integrals`' pilot reused the exact field/path already verified in
-`hook-shaken.md`), write one honest `narration_steps` sequence per concept,
-respect `MAX_BEAT_TEXT_CHARS=280` and the 8-beat cap, add a `why` line.
+Closed the remaining 5 of 9 non-LA topic families: calculus remainder (12
+of 19 concepts — 7 already had scenes from an earlier pass), all 8
+differential-equations concepts (5 remaining after 3 pre-existing),
+all 6 transform-theory concepts, all 6 discrete-mathematics concepts
+(audited per the topic's own lower-priority guidance), and all 7
+graph-theory concepts (audit-only, correctly no scenes forced — see
+below). Same 6-parallel-Sonnet-batch dispatch pattern as wave 1: each
+batch read its concepts' real `hook.md` worked-example first, verified
+every numeric claim via Python/SymPy (Wolfram MCP disconnected all
+session), authored a resonance scene only where a genuine 2D trace
+existed, and did the same silo/redundancy audit on `intuition.md`/
+`mnemonic.md`/`visual-analogy.md`.
 
-**Also:** complex-variables has the worst DEPTH coverage — 4 of 6 concepts
-(`analytic-functions`, `complex-integration`, `residue-calculus`,
-`taylor-laurent`) have neither `simulation` nor `guided_walkthrough` at
-all. Fixing those is arguably higher-urgency than adding a 2nd/3rd scene
-to an already-covered topic.
+**Result:** 22 new resonance-beat scenes (sequences, series, chain-rule,
+product-quotient-rule, implicit-differentiation, maxima-minima,
+mean-value-theorems, integration-basics, integration-substitution,
+integration-by-parts, ode-bernoulli, laplace-transform, inverse-laplace,
+laplace-applications, fourier-series, fourier-transform,
+recurrence-relations — 17 in calculus/DE/transform-theory/discrete-math),
+plus several correct skips with reasons recorded in CLAUDE.md/commit
+messages (partial-fractions, multiple-integrals, ode-classification,
+ode-exact, pde-basics, z-transform, and 5 of 6 discrete-mathematics
+concepts). Graph-theory's audit found the corpus already clean — zero
+defects, zero scenes forced, confirming the "no honest continuous curve"
+assessment for all 7 concepts (not just the 3 originally flagged as
+needing a new schema kind).
 
-**Effort:** M per 5-6-concept batch, L+ for all 4 topics.
+**Every remaining non-LA GATE-EM concept has now been through this
+audit.** The "New interactive-spec kind needed for graph-theory" entry
+below is still open (a real schema decision, out of scope for a content
+pass) but is no longer blocking any content-quality work — graph-theory's
+prose is confirmed clean without it.
+
+Validated: `npm run ci` (18 gates) clean, backend 4722/4722 (367 files, 1
+todo, unchanged — content-only pass), frontend 2816/2816 (102 files,
+unchanged), `tsc --noEmit` clean both sides.
 
 ## New interactive-spec kind needed for graph-theory's discrete-traversal concepts
 

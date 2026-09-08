@@ -14,6 +14,6 @@ modality: mnemonic
 - **L**inear? Is it $y' + P(x)y = Q(x)$, or one rearrangement away?
 - **E**xact? Rewrite as $M\,dx + N\,dy = 0$ and check $\partial M/\partial y = \partial N/\partial x$.
 
-**Worked micro-example:** $\dfrac{dy}{dx} = \dfrac{x}{y}$. Test S first — it separates immediately: $y\,dy = x\,dx$. Integrate: $\dfrac{y^2}{2} = \dfrac{x^2}{2} + C$, so $y^2 = x^2 + C$. No need to check L or E at all — the cheapest test already worked.
+**Worked micro-example:** $\dfrac{dV}{dt} = -0.5V$ — the draining tank from the hook, starting at $V=5$. Test S first — it separates immediately: $\dfrac{dV}{V} = -0.5\,dt$. Integrate: $\ln V = -0.5t + C$, so $V = Ae^{-0.5t}$. Using $V(0)=5$ gives $A=5$, so $V(t) = 5e^{-0.5t}$. No need to check L or E at all — the cheapest test already worked.
 
-**Sanity-check reflex:** after solving, differentiate your answer once and confirm it reproduces the original equation. Here, $2yy' = 2x \Rightarrow y' = x/y$ — matches, so the answer is trustworthy.
+**Sanity-check reflex:** after solving, differentiate your answer once and confirm it reproduces the original equation. Here, $\dfrac{dV}{dt} = -0.5\cdot 5e^{-0.5t} = -0.5V$ — matches, so the answer is trustworthy.

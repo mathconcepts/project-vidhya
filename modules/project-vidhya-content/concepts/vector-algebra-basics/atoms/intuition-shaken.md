@@ -19,12 +19,12 @@ variant_of: vector-algebra-basics.intuition
 for_stance: shaken
 ---
 
-Take $\vec a=(1,0,0)$ and $\vec b=(0,1,0)$ — arrows along the $x$-axis and $y$-axis.
+Same two forces as the hook: $\vec a=(5,0,0)$ (5 N east) and $\vec b=(2.5,4.33,0)$ (5 N at 60°, split into its east and north parts).
 
-Step one, the dot product: $\vec a\cdot\vec b=(1)(0)+(0)(1)+(0)(0)=0$. Zero means perpendicular — these two arrows are exactly perpendicular, so the number matches the picture.
+Step one, the dot product: $\vec a\cdot\vec b=(5)(2.5)+(0)(4.33)+(0)(0)=12.5$. Not zero, so the forces are not perpendicular — matches the picture, since 60° is not 90°. This number is also just $|\vec a||\vec b|\cos60°=5\times5\times0.5=12.5$, the same law of cosines the hook already used to find the resultant.
 
-Step two, the cross product: $\vec a\times\vec b=(0\cdot0-0\cdot1,\ 0\cdot0-1\cdot0,\ 1\cdot1-0\cdot0)=(0,0,1)$. This new arrow points straight up, perpendicular to both — check with the right-hand rule: fingers from $\vec a$ toward $\vec b$, thumb points up. Its length is $1$, matching the area of the unit square $\vec a,\vec b$ span.
+Step two, the cross product: $\vec a\times\vec b=(0,0,21.65)$ — a new arrow, aimed directly out of the page, perpendicular to both forces. Its length, $21.65$, is the area of the parallelogram the two forces span; check with $|\vec a||\vec b|\sin60°=5\times5\times0.866=21.65$, the same number.
 
-Step three, add a third arrow $\vec c=(0,0,1)$ and compute the triple product: $\vec a\cdot(\vec b\times\vec c)=\vec a\cdot(1,0,0)=1$. Nonzero, so the three arrows are not coplanar — they span a real box, the unit cube.
+Step three: suppose a third force, $\vec c=(0,0,1)$ — 1 N lifting the ring vertically, off the plane the first two forces share. The triple product $\vec a\cdot(\vec b\times\vec c)=21.65$. Nonzero, so the three forces are not coplanar — one of them genuinely leaves the other two's plane, so together they'd pull the ring in a real 3-D way, not flatten it onto one sheet.
 
-Check: dot product zero matched perpendicular; cross product length matched the square's area; triple product matched the cube's volume.
+Check: dot product nonzero matched "not perpendicular"; cross product length matched the parallelogram's area; triple product matched "not lying in one plane."

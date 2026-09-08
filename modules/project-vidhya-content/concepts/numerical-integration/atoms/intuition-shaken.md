@@ -20,10 +20,10 @@ for_stance: shaken
 
 ## One strip, one number, worked by hand first
 
-$\int_0^1\frac{dx}{1+x}$ has a closed form, $\ln2\approx0.6931$, but set that aside. Approximate the area with a single trapezoid, using only $f(0)=1$ and $f(1)=0.5$:
+Same integral as the hook: $\int_0^1 e^{-x^2}\,dx\approx0.7468$, but set that number aside for a moment. Approximate the area with a single trapezoid, using only $f(0)=1$ and $f(1)=e^{-1}\approx0.3679$:
 
-$$T=\frac{1}{2}\bigl(f(0)+f(1)\bigr)=\frac{1}{2}(1+0.5)=0.75$$
+$$T=\frac{1}{2}\bigl(f(0)+f(1)\bigr)=\frac{1}{2}(1+0.3679)=0.6839$$
 
-Already a number: $0.75$ against the true $0.6931$, off by about $8\%$ from one strip.
+Already a number: $0.6839$ against the true $0.7468$, off by about $8\%$ from one strip.
 
 Split $[0,1]$ into more strips and each contributes its own small trapezoid; add them up and the estimate tightens. Simpson's rule sharpens the same idea further by fitting a parabola instead of a straight line to each small group of points, buying far more accuracy for barely more effort.

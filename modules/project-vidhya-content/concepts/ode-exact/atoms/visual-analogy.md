@@ -32,4 +32,4 @@ The exact ODE $M\,dx + N\,dy = 0$ says: **move so that altitude stays constant**
 }
 ```
 
-**Key takeaway.** An exact ODE is nothing more than the instruction "stay on a level set of the hidden potential $F$." The two-step integration procedure is simply the process of *reverse-engineering* that terrain from its gradient $(M, N)$.
+**Key takeaway.** The two-step integration procedure is simply the process of *reverse-engineering* that terrain from its gradient $(M, N)$ — you never guess the altitude, you rebuild it from the slopes it left behind.

@@ -10,6 +10,8 @@ scaffold_fade: 0
 
 # Group Theory — Core Intuition
 
+The hook's four square-rotations obey these same rules abstractly — the table below just states them without pinning them to any one example.
+
 ## What is a Group?
 
 A **group** $(G, *)$ is a set $G$ with a binary operation $*$ satisfying four axioms:
@@ -71,7 +73,7 @@ $\mathbb{Z}_n = \langle 1 \rangle$ under addition mod $n$.
 - Every cyclic group is abelian.
 - Subgroups of a cyclic group are cyclic.
 - $\mathbb{Z}_n$ has exactly one subgroup of order $d$ for each divisor $d$ of $n$.
-- The number of generators of $\mathbb{Z}_n$ = $\phi(n)$ (Euler's totient function).
+- The number of generators of $\mathbb{Z}_n$ = $\phi(n)$ (Euler's totient function — the count of numbers from $1$ to $n$ sharing no common factor with $n$).
 
 ---
 

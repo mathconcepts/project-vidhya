@@ -19,15 +19,15 @@ variant_of: integration-substitution.intuition
 for_stance: shaken
 ---
 
-Look at $\int 3x^2(x^3+1)^4\,dx$. The outer piece is a 5th power wrapped around $x^3+1$; the derivative of $x^3+1$ is $3x^2$ — sitting right there as a separate factor. Name the inner function $u=x^3+1$, then $du=3x^2\,dx$.
+Look at $\int 2x\cos(x^2)\,dx$. The inside of the cosine is $x^2$; the derivative of $x^2$ is $2x$ — sitting right there as a separate factor. Name the inner function $u=x^2$, then $du=2x\,dx$.
 
-Rewrite the whole integral in terms of $u$ only: $\int u^4\,du$.
+Rewrite the whole integral in terms of $u$ only: $\int \cos u\,du$.
 
-Integrate the simple power: $\int u^4\,du=\dfrac{u^5}{5}+C$.
+Integrate the simple trig form: $\int \cos u\,du=\sin u+C$.
 
-Substitute back $u=x^3+1$: $\dfrac{(x^3+1)^5}{5}+C$.
+Substitute back $u=x^2$: $\sin(x^2)+C$.
 
-Check by differentiating: $\dfrac{d}{dx}\left[\dfrac{(x^3+1)^5}{5}\right]=\dfrac{5(x^3+1)^4\cdot3x^2}{5}=3x^2(x^3+1)^4$. Matches.
+Check by differentiating: $\dfrac{d}{dx}\left[\sin(x^2)\right]=\cos(x^2)\cdot2x=2x\cos(x^2)$. Matches.
 
 The recipe, always in this order: name $u$, find $du$, rewrite everything in terms of $u$, integrate, substitute back.
 

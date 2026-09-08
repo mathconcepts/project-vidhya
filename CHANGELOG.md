@@ -4,6 +4,174 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.80.0] — 2026-09-08 — Resonance-beat scenes, wave 2: every remaining GATE-EM topic
+
+No new env vars, no migrations.
+
+Closes the corpus-wide resonance-beat pass wave 1 started. "complete all
+the waves until done" — dispatched as 6 parallel Claude Sonnet subagent
+batches covering the remaining 36 non-Linear-Algebra concepts across 5
+topic families: calculus remainder (12 of 19 concepts), all 8
+differential-equations concepts (5 remaining after wave 0's 3), all 6
+transform-theory concepts, all 6 discrete-mathematics concepts (audited
+per that topic's own lower-priority-for-motion guidance), and all 7
+graph-theory concepts (audit-only — see below).
+
+**22 new predict-observe-explain-trap scenes**, every numeric claim
+verified via SymPy (Wolfram MCP disconnected all session): sequences
+(a_n=(2n+1)/n → 2), series (partial sums 1-(1/2)^n → 1), chain-rule
+(hook's own balloon-volume composition), product-quotient-rule (reuses
+worked-example's x²eˣ), implicit-differentiation (hook's own x²+y²=25
+circle), maxima-minima (the shared f(x)=x³-3x example), mean-value-
+theorems (speed v(t)=130-40t crossing the guaranteed average),
+integration-basics (F(t)=60t, +C ambiguity trap), integration-
+substitution (u=x² in u-space), integration-by-parts (antiderivative
+crossing zero, classic sign-error trap), ode-bernoulli (y'-y=xy²'s
+finite-x blow-up), laplace-transform/inverse-laplace/laplace-
+applications/fourier-series/fourier-transform (each tracing its own
+hook's time-domain signal), and recurrence-relations (the one
+discrete-mathematics concept judged to have a genuine continuous
+closed-form quantity worth tracing).
+
+**Correct skips, with reasons recorded rather than forced:**
+partial-fractions and ode-exact (a static algebraic identity and an
+implicit level curve with no elementary explicit parametrization,
+respectively), multiple-integrals and pde-basics (genuinely
+multi-variable — no honest 1D slice), ode-classification (purely
+categorical, no solution curve), z-transform (a discrete
+sequence/difference-equation concept — plotting it as a smooth curve
+would fabricate continuity it doesn't have, the exact "fictional steps"
+failure mode this repo's own motion-coverage audit warns against), and 5
+of 6 discrete-mathematics concepts (propositional-logic, sets-relations,
+functions-combinatorics, boolean-algebra, group-theory-basics — symbolic
+content with no continuous quantity to trace).
+
+**Graph-theory audited, zero defects found.** All 7 concepts (including
+the 3 previously flagged as needing a new node-highlight-sequence schema
+kind) were confirmed to have no honest continuous curve anywhere in their
+hooks — not just the 3 originally suspected. No scene forced on any of
+them; the intuition/mnemonic/visual-analogy/guided_walkthrough audit
+found the topic's content already clean (no silo defects, no redundant
+paragraphs, no formation-order issues). The schema-kind question for a
+future graph-traversal visualization remains open but is no longer
+blocking any content-quality work.
+
+**Several real silo fixes landed alongside the new scenes**: chain-rule's
+intuition-shaken, ode-first-order's intuition-shaken + mnemonic,
+partial-fractions' intuition + mnemonic, laplace-transform's
+intuition-shaken, laplace-applications' intuition-shaken + mnemonic,
+z-transform's mnemonic, and group-theory-basics' intuition +
+intuition-shaken (bridging its Z4-additive-group example back to hook's
+square-rotation example) — each rewritten to reuse its own concept's
+hook example instead of an invented, disconnected one.
+
+**Concurrency notes.** Learning from wave 1's git-stash race (fixed by
+avoiding stash-based isolation), this pass committed each batch's files
+incrementally as soon as its own completion notification arrived, using
+`git status`/the batch's own file-by-file report to scope exactly which
+paths to stage — never a blanket `git add -A` while sibling batches were
+still writing. One transient cross-batch `check-variant-agreement`
+failure (a repeated 4-gram introduced by two transform-theory files
+mid-edit) resolved itself once that batch finished its own pass.
+
+**Every remaining non-Linear-Algebra GATE-EM concept has now been through
+the resonance-beat + silo/register/redundancy audit** — closing the
+TODOS.md "Motion coverage wave 2" entry and, combined with wave 1 and all
+prior Linear Algebra passes, completing this audit across the entire
+101-concept corpus.
+
+Validated: `npm run ci` (18 gates) clean, backend 4722/4722 (367 files, 1
+todo, unchanged — content-only pass), frontend 2816/2816 (102 files,
+unchanged), `tsc --noEmit` clean both sides.
+
+## [4.79.0] — 2026-09-08 — Resonance-beat scenes, wave 1: vector-calculus, numerical-methods, probability-statistics, complex-variables
+
+No new env vars, no migrations.
+
+"Use sonnet subagents and generate content for all the other topics of
+GATE Engineering Mathematics" — the largest content-generation task yet.
+Measured before dispatching anything: all 101 concepts already have all 11
+base atom types (that gap closed long ago), and a spot-check across 4
+non-LA topics found register/jargon quality already solid on the samples
+checked. The real, previously-documented gap (this doc's 2026-09-03
+"Motion coverage" audit): Linear Algebra alone holds 21 of the platform's
+34 resonance-beat `simulation`-kind scenes; vector-calculus,
+numerical-methods, probability-statistics, and complex-variables — the
+four topics that audit ranked highest-priority — had essentially zero.
+
+**Wave 1 closes that gap for those 4 topics, 29 concepts.** Dispatched as
+5 parallel Claude Sonnet subagent batches (the established pattern from
+every prior LA content pass), each auditing its concepts for: (a) whether
+`hook.md` needs a new predict-observe-explain resonance scene (authored
+only where motion genuinely fits a real, verifiable trace — reusing each
+hook's own established example, never inventing a disconnected one; several
+concepts correctly skipped a scene as ill-suited — `counting-principles`,
+`random-variables`, `interpolation`, `hypothesis-testing`), (b) the same
+intuition/hook "silo" check from the LA pass (closed real instances on
+`vector-fields`, `line-integrals`, `surface-integrals`,
+`vector-algebra-basics`, `interpolation`, `numerical-integration`,
+`numerical-error-analysis`, `regression-correlation`, `hypothesis-testing`),
+(c) `mnemonic`/`visual-analogy` register and redundancy (mostly already
+clean; fixed a genuine factual error in `numerical-error-analysis`'s
+visual-analogy — it had the direction of the absolute-vs-relative-error
+scaling backwards).
+
+New scenes: `analytic-functions` (z² angle-doubling), `complex-integration`
+(pole enclosure), `taylor-laurent` (three annulus Laurent series),
+`residue-calculus` (two residues cancelling to zero), `continuous-distributions`
+(density-vs-probability trap), `joint-distributions` (uncorrelated but
+dependent), `regression-correlation` (least-squares line), `sampling-distributions`
+(CLT narrowing), `numerical-linear-algebra` (Gauss-Seidel convergence),
+`numerical-error-analysis` (relative error vs. scale), `probability-basics`
+(Bayes posterior vs. prior), `discrete-distributions` (Poisson P(X=0) vs.
+rate), `gauss-divergence` (flux ∝ volume), `vector-algebra-basics`
+(half-angle resultant law), `root-finding` (Newton's method), `numerical-integration`
+(trapezoidal error ~4× shrink per doubling), `numerical-ode` (Euler's
+method undershoot), `vector-fields` (flow-line, straight not curved),
+`divergence-curl` (expansion without rotation), `surface-integrals`
+(cosine flux drop-off), `greens-theorem` (circulation = curl × area),
+`stokes-theorem` (any capping surface, reusing greens-theorem's own field).
+`complex-numbers`, `conformal-mapping`, and `line-integrals` already had
+scenes from earlier passes — re-verified (beats ascending, coordinates
+matching), not re-authored.
+
+Every numeric claim independently verified via Python/SymPy — Wolfram MCP
+is disconnected this session, the same fallback every prior content pass
+in this doc used. Fences kept byte-identical across base/shaken/assured
+stance trios via direct string splicing, never `grep -o` or a
+backslash-reprocessing regex substitution (both documented repo failure
+modes).
+
+**A real concurrent-write race surfaced and was resolved without data
+loss.** Committing each batch's work as it landed (rather than waiting for
+all 5) collided with the still-running batches actively rewriting the same
+files — a `git stash` used to isolate one commit's changeset for gate
+verification conflicted on pop against newer content the agents had since
+written. Resolved by diffing every "conflicting" file against the stash:
+all were either byte-identical or a genuinely newer, more-refined edit
+(the running agent's own self-correction, e.g. trimming a repeated-phrase
+violation), so the stash was dropped as superseded rather than force-merged.
+Two subagents independently reported the same class of interference (a
+sibling process briefly reverting their unstaged edits) and recovered from
+their own saved fence text before reporting completion — confirmed correct
+against the final combined diff.
+
+**Tests:** none new — content-only pass. Backend 4722/4722 (367 files, 1
+todo), frontend 2816/2816 (102 files), unchanged from the prior release.
+`tsc --noEmit` clean both sides. `npm run ci` (18 gates) clean —
+`ci:interactive-specs` 490 blocks (+66), `ci:variant-agreement` 610 pairs
+(0 failures), `ci:katex-fences` 1723, `ci:content-integrity` 1729, all
+verified against the full combined 5-batch result, not per-batch in
+isolation.
+
+**Scope, named honestly.** This is wave 1 of 2: it closes the top-4
+priority topics named in the 2026-09-03 motion-coverage audit. The
+remaining 5 topics — calculus (partially covered already, 7/19),
+discrete-mathematics, differential-equations, graph-theory (needs a new
+node-highlight-sequence schema per that same audit, not just more scenes),
+and transform-theory — are the next wave, tracked in TODOS.md with the
+same 5-batch dispatch pattern that worked here.
+
 ## [4.78.0] — 2026-09-07 — AI Tutor Chat: raw LaTeX, missing ELI5 register, dropped concept id
 
 No new env vars, no migrations.

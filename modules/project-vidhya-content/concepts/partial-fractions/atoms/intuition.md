@@ -14,11 +14,11 @@ A **rational function** is a ratio $\dfrac{P(x)}{Q(x)}$ where $P$ and $Q$ are po
 
 ## The Core Idea
 
-Suppose you want to integrate $\displaystyle\int \frac{3x+5}{(x-1)(x+2)}\,dx$. Directly integrating the left side is hard. But if you can rewrite it as:
+Suppose you want to integrate $\displaystyle\int \frac{dx}{x^2-1}$ — the hook's own example. Directly integrating the left side is hard. But rewrite the denominator as $(x-1)(x+1)$ and guess the split has this shape:
 
-$$\frac{3x+5}{(x-1)(x+2)} = \frac{A}{x-1} + \frac{B}{x+2}$$
+$$\frac{1}{(x-1)(x+1)} = \frac{A}{x-1} + \frac{B}{x+1}$$
 
-then you just integrate two simple logarithm forms. Partial fractions turns one hard problem into several easy ones.
+Multiply both sides by $(x-1)(x+1)$: $1=A(x+1)+B(x-1)$. Plug in $x=1$ (kills the $B$ term): $1=2A$, so $A=\tfrac12$. Plug in $x=-1$ (kills the $A$ term): $1=-2B$, so $B=-\tfrac12$ — exactly the split the hook already showed. Now you just integrate two simple logarithm forms. Partial fractions turns one hard problem into several easy ones.
 
 ## Types of Factors in $Q(x)$
 

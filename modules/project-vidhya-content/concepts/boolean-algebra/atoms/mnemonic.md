@@ -12,4 +12,4 @@ modality: mnemonic
 
 **For K-map grouping, remember "powers only, wrap around":** valid group sizes are $1,2,4,8,\dots$ — never $3,5,6,7$ — and the map's edges connect to their opposite edges, so a group can straddle a boundary.
 
-**Sanity-check reflex:** after simplifying, plug in the original minterms and confirm the simplified expression evaluates to $1$ on every one, and to $0$ on at least one minterm just outside the set.
+**Sanity-check reflex:** after simplifying, plug in the original minterms (the input rows the expression is supposed to equal $1$ on) and confirm the simplified expression evaluates to $1$ on every one, and to $0$ on at least one row just outside that set.

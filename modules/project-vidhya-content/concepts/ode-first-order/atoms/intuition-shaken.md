@@ -25,7 +25,7 @@ for_stance: shaken
 
 ## Three types, one small example each
 
-**Separable.** $\dfrac{dy}{dx}=xy$: the right side is $x$ times $y$ — two separate factors. Divide by $y$: $\dfrac{dy}{y}=x\,dx$, then integrate both sides.
+**Separable.** The draining tank from the hook: $\dfrac{dV}{dt}=-0.5V$ — the right side is just a number times $V$, nothing more, so $t$ and $V$ pull apart on their own. Divide by $V$: $\dfrac{dV}{V}=-0.5\,dt$, then integrate both sides to get $V=5e^{-0.5t}$ (using $V=5$ at $t=0$).
 
 **Linear.** $\dfrac{dy}{dx}+2y=e^{-x}$: $y$ and $y'$ each appear to the first power only, and the right side depends on $x$ alone. Multiply by the integrating factor $\mu=e^{2x}$ and the left side collapses to $\dfrac{d}{dx}(\mu y)$.
 

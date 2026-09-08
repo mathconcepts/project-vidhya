@@ -19,13 +19,13 @@ variant_of: integration-by-parts.intuition
 for_stance: shaken
 ---
 
-Take $\int x\cos x\,dx$. Two factors: $x$ (algebraic) and $\cos x$ (trig). Differentiating $x$ gives $1$ — simpler. Differentiating $\cos x$ gives $-\sin x$ — no simpler. So make $x$ the one you differentiate: $u=x$, $dv=\cos x\,dx$, giving $du=dx$, $v=\sin x$.
+Take $\int xe^x\,dx$. Two factors: $x$ (algebraic) and $e^x$ (exponential). Differentiating $x$ gives $1$ — simpler. Differentiating $e^x$ gives $e^x$ back — no simpler, but $e^x$ is just as easy to integrate as it is to differentiate. So make $x$ the one you differentiate: $u=x$, $dv=e^x\,dx$, giving $du=dx$, $v=e^x$.
 
-Plug into $\int u\,dv=uv-\int v\,du$: $\int x\cos x\,dx=x\sin x-\int\sin x\,dx=x\sin x+\cos x+C$.
+Plug into $\int u\,dv=uv-\int v\,du$: $\int xe^x\,dx=xe^x-\int e^x\,dx=xe^x-e^x+C$.
 
-Check by differentiating: $\frac{d}{dx}[x\sin x+\cos x]=\sin x+x\cos x-\sin x=x\cos x$. Matches.
+Check by differentiating: $\frac{d}{dx}[xe^x-e^x]=e^x+xe^x-e^x=xe^x$. Matches.
 
-LIATE names which factor to differentiate, in priority order: log, inverse trig, algebraic, trig, exponential — whichever type appears first in that list becomes $u$. Here $x$ (algebraic) outranks $\cos x$ (trig), the choice that worked above.
+LIATE names which factor to differentiate, in priority order: log, inverse trig, algebraic, trig, exponential — whichever type appears first in that list becomes $u$. Here $x$ (algebraic) outranks $e^x$ (exponential), the choice that worked above.
 
 Some products need this done twice: $\int x^2 e^x\,dx$ lowers the power of $x$ by one each pass, from $x^2$ to $x$ to gone, getting closer to something integrable directly each time.
 

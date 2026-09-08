@@ -16,6 +16,6 @@ modality: mnemonic
 
 Pair it with the delay reflex: $z^{-1}$ is not a new kind of number, it's one sample of delay, full stop.
 
-**Worked micro-example.** $X(z)=\dfrac{z}{z-0.3}$ names $x[n]=(0.3)^n u[n]$ for the causal ROC $|z|>0.3$. The pole sits at $z=0.3$, magnitude $0.3 < 1$ — inside the circle, so the prediction is a decaying sequence before you write a single value: $x[0]=1$, $x[1]=0.3$, $x[2]=0.09$, shrinking toward $0$, exactly as "inside the circle" promised.
+**Worked micro-example.** The concept's own running pole, $z=0.5$: $X(z)=\dfrac{z}{z-0.5}$ names $x[n]=(0.5)^n u[n]$ for the causal ROC $|z|>0.5$ — the same sequence the recurrence $y[n]-0.5y[n-1]=\delta[n]$ produces elsewhere in this lesson. The pole sits at $z=0.5$, magnitude $0.5<1$ — inside the circle, so the prediction is a decaying sequence before you write a single value: $x[0]=1$, $x[1]=0.5$, $x[2]=0.25$, shrinking toward $0$, exactly as "inside the circle" promised.
 
 **Sanity-check reflex:** find the pole's magnitude and compare it to $1$ before labelling anything stable or unstable — and treat a pole sitting exactly on the circle as its own case, not as a rounding error toward one side or the other.

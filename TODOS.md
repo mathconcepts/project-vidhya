@@ -1065,48 +1065,44 @@ correctly skipped a scene as ill-suited (`counting-principles`,
 `random-variables`, `interpolation`, `hypothesis-testing`) rather than
 force one onto content with no honest continuous trace.
 
-## Motion coverage wave 2: calculus, discrete-mathematics, differential-equations, transform-theory, graph-theory
+## Motion coverage wave 2 — closed (2026-09-08)
 
-**Trigger:** operator time for the next content wave, or a fresh live-QA
-report on one of these topics.
+Closed the remaining 5 of 9 non-LA topic families: calculus remainder (12
+of 19 concepts — 7 already had scenes from an earlier pass), all 8
+differential-equations concepts (5 remaining after 3 pre-existing),
+all 6 transform-theory concepts, all 6 discrete-mathematics concepts
+(audited per the topic's own lower-priority guidance), and all 7
+graph-theory concepts (audit-only, correctly no scenes forced — see
+below). Same 6-parallel-Sonnet-batch dispatch pattern as wave 1: each
+batch read its concepts' real `hook.md` worked-example first, verified
+every numeric claim via Python/SymPy (Wolfram MCP disconnected all
+session), authored a resonance scene only where a genuine 2D trace
+existed, and did the same silo/redundancy audit on `intuition.md`/
+`mnemonic.md`/`visual-analogy.md`.
 
-The remaining 5 of 9 non-LA topic families after wave 1 (above) closed
-vector-calculus/numerical-methods/probability-statistics/complex-variables.
-Same 5-6-concept-per-batch Sonnet-subagent dispatch pattern that worked for
-both LA and wave 1: read each concept's real hook.md worked-example first
-(never invent a new disconnected one), verify every numeric claim via
-Python/SymPy (Wolfram MCP disconnected this session), author a resonance
-scene ONLY where a real 2D `(x_expr,y_expr)` trace genuinely helps — skip
-and say why otherwise (wave 1's `interpolation`/`hypothesis-testing`/
-`counting-principles`/`random-variables` are the template for a defensible
-skip), propagate any new/edited fence byte-identically across
-base/shaken/assured via direct Python string splicing (never `grep -o`,
-never a `re.sub` callback with an escape-reprocessing step — both have
-corrupted or deleted fences in this repo before).
+**Result:** 22 new resonance-beat scenes (sequences, series, chain-rule,
+product-quotient-rule, implicit-differentiation, maxima-minima,
+mean-value-theorems, integration-basics, integration-substitution,
+integration-by-parts, ode-bernoulli, laplace-transform, inverse-laplace,
+laplace-applications, fourier-series, fourier-transform,
+recurrence-relations — 17 in calculus/DE/transform-theory/discrete-math),
+plus several correct skips with reasons recorded in CLAUDE.md/commit
+messages (partial-fractions, multiple-integrals, ode-classification,
+ode-exact, pde-basics, z-transform, and 5 of 6 discrete-mathematics
+concepts). Graph-theory's audit found the corpus already clean — zero
+defects, zero scenes forced, confirming the "no honest continuous curve"
+assessment for all 7 concepts (not just the 3 originally flagged as
+needing a new schema kind).
 
-- **calculus** (19 concepts) — already 7/19 covered from an earlier pass;
-  the remaining 12 are the actual gap here.
-- **discrete-mathematics** (6 concepts) — per the 2026-09-03 motion doc,
-  LOWER priority for continuous motion on purpose (discrete/symbolic
-  content risks the "fictional steps" failure mode Betrancourt/Tversky's
-  research warns about); wants segmented `guided_walkthrough` reveal, not
-  animation, as the default treatment.
-- **differential-equations** (8 concepts) — ODE solution curves are a
-  natural fit (a trajectory in the phase plane, or y(t) itself).
-- **transform-theory** (6 concepts) — lower subject-fit (abstract,
-  frequency-domain) but still fully passive-gif-only; lowest priority of
-  the 5.
-- **graph-theory** (7 concepts) — its 3 fully-uncovered concepts
-  (Eulerian & Hamiltonian paths, Connectivity, Trees) need the NEW
-  node-highlight-sequence interactive-spec kind (separate TODOS.md entry
-  below) before scene-authoring can even start there — a schema decision
-  first, not just another batch dispatch. The other 4 graph-theory
-  concepts may fit the existing curve schema and can proceed independently.
+**Every remaining non-LA GATE-EM concept has now been through this
+audit.** The "New interactive-spec kind needed for graph-theory" entry
+below is still open (a real schema decision, out of scope for a content
+pass) but is no longer blocking any content-quality work — graph-theory's
+prose is confirmed clean without it.
 
-**Effort:** M per 5-6-concept batch, L+ for all 5 topics (minus
-graph-theory's schema-gated portion).
-**Deferred from:** motion-and-plain-language-strategy pass, 2026-09-03;
-wave 1 dispatch, 2026-09-08; branch `claude/content-strategy-framework-o9afoc`.
+Validated: `npm run ci` (18 gates) clean, backend 4722/4722 (367 files, 1
+todo, unchanged — content-only pass), frontend 2816/2816 (102 files,
+unchanged), `tsc --noEmit` clean both sides.
 
 ## New interactive-spec kind needed for graph-theory's discrete-traversal concepts
 

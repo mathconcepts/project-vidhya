@@ -5140,6 +5140,117 @@ connectivity, and trees, don't fit the existing `(x_expr,y_expr)` curve
 schema at all, so wave 2 for graph-theory is a schema decision first, not
 just more scene-authoring).
 
+### Resonance-beat scenes, wave 2: every remaining topic (2026-09-08)
+
+"complete all the waves /loop until done" — closes what wave 1 left open.
+Dispatched **6 parallel Claude Sonnet subagent batches in a single
+message**, one per remaining gap: calculus remainder (12 concepts: 7/19
+were already covered), differential-equations remainder (5 concepts: 3/8
+were already covered), transform-theory (all 6), discrete-mathematics
+(all 6, with explicit lower-priority-for-motion instructions per the
+2026-09-03 audit), and graph-theory (all 7, explicitly scoped as
+**audit-only** — no scene-authoring — since none of its concepts have an
+honest continuous curve, not just the 3 originally flagged).
+
+**22 new resonance-beat scenes**, every claim verified via Python/SymPy
+(Wolfram MCP disconnected all session): `sequences` ($a_n=(2n+1)/n\to2$,
+trap on "never equals 2"), `series` (partial sums $1-(1/2)^n\to1$, trap on
+overshoot), `chain-rule` (reuses hook's own balloon-volume $V(t)$),
+`product-quotient-rule` (reuses worked-example's $x^2e^x$),
+`implicit-differentiation` (hook's own $x^2+y^2=25$ circle),
+`maxima-minima` (the shared $f(x)=x^3-3x$ example), `mean-value-theorems`
+(speed $v(t)=130-40t$ crossing the guaranteed average at the interval's
+midpoint — true here only because the position curve is quadratic, named
+explicitly as the trap), `integration-basics` ($F(t)=60t$, a ghost trap on
+the $+C$ ambiguity), `integration-substitution` ($u=x^2$ traced in
+$u$-space, trap on forgetting to substitute back), `integration-by-parts`
+(antiderivative crossing zero at $t=1$, trap on the classic sign error),
+`ode-bernoulli` ($y'-y=xy^2$'s solution $y=1/(1-x)$ blowing up as
+$x\to1$, trap distinguishing this from ordinary exponential growth),
+`laplace-transform`/`inverse-laplace`/`laplace-applications`/
+`fourier-series`/`fourier-transform` (each tracing its own hook's
+time-domain signal — $e^{-2t}$, $\frac12\sin2t$, $2e^{-3t}$, a 3-term
+Fourier partial sum, $e^{-t}u(t)$ — with a trap naming that transform's
+own classic misreading), and `recurrence-relations` (the sole
+discrete-mathematics concept judged to have a genuine continuous
+closed-form — $y=2^t+3^t$ — worth tracing, with a trap explicitly
+addressing the "fictional steps" risk of treating a discrete count as
+continuous).
+
+**Correct skips, reasons recorded rather than forced:** `partial-fractions`
+(a static algebraic identity — no continuously-changing process to
+predict/observe/explain) and `ode-exact` (an implicit level curve with no
+elementary explicit parametrization the schema's safe-formula evaluator
+can express); `multiple-integrals` and `pde-basics` (genuinely
+multi-variable — every honest 1D slice throws away the other variable,
+misrepresenting the concept's own point); `ode-classification` (purely
+categorical, no solution curve exists); `z-transform` (a discrete
+sequence/difference-equation concept — plotting it as a smooth real curve
+would fabricate continuity it doesn't have, the exact "fictional steps"
+failure mode the 2026-09-03 motion audit warns against — `discrete-bars`
+gif-scenes are the right tool there, not `simulation`); and 5 of 6
+discrete-mathematics concepts (`propositional-logic`, `sets-relations`,
+`functions-combinatorics`, `boolean-algebra`, `group-theory-basics` — all
+symbolic content with no continuous quantity, correctly defaulting to the
+topic's own segmented-reveal guidance instead of a forced curve).
+
+**Graph-theory audit: zero defects found, zero scenes forced, across all
+7 concepts — not just the 3 originally flagged.** Every hook.md in this
+topic is a pure narrative tease (a handshake story, a cable-cutting
+story, a pen-tracing riddle, and so on) establishing no literal numeric
+graph a `simulation`-kind scene could honestly trace, confirming the
+"discrete structure, not continuous curve" assessment applies to the
+whole topic, not only the 3 concepts the earlier audit doc singled out.
+The intuition/mnemonic/visual-analogy/guided_walkthrough silo and
+formation-order checks found the topic's existing content already clean
+— several concepts' `intuition-shaken.md`/`mnemonic.md` independently
+landed on the same or an equivalent illustrative graph as their sibling
+files, which is fine (unlike Linear Algebra's pattern, these hooks have
+no numeric example for intuition/mnemonic to be siloed FROM in the first
+place). The "new node-highlight-sequence interactive-spec kind" question
+from the 2026-09-03 audit remains open as a real schema decision, but is
+no longer blocking any content-quality work on this topic.
+
+**Real silo fixes landed alongside the new scenes**, each rewritten to
+reuse its own concept's hook example instead of an invented, disconnected
+one: `chain-rule/intuition-shaken`, `ode-first-order/intuition-shaken` +
+`mnemonic`, `partial-fractions/intuition` + `mnemonic`,
+`laplace-transform/intuition-shaken`, `laplace-applications/intuition-shaken`
++ `mnemonic`, `z-transform/mnemonic`, and `group-theory-basics/intuition`
++ `intuition-shaken` (bridging its $(\mathbb Z_4,+_4)$ example back to
+hook's isomorphic square-rotation example, confirmed via
+`visual-analogy.md`'s own text that the two are the same group).
+
+**Concurrency discipline, applying wave 1's own lesson.** Each of the 6
+batches' files were committed incrementally as its own completion
+notification arrived — never a blanket `git add -A` while sibling batches
+were still writing, and never `git stash` for isolation (the exact
+mechanism that caused wave 1's mid-task file-wipe incident). One
+transient `check-variant-agreement` failure surfaced mid-pass (a repeated
+4-gram, "take the same equation," introduced by two files inside the
+still-in-flight transform-theory batch) and resolved itself once that
+batch's own agent caught and reworded it before reporting done — exactly
+the self-correcting behavior wave 1 also observed, now confirmed on a
+second independent pass.
+
+**Verified as one combined whole after all 6 batches landed:** `npm run
+ci` (18 gates, `ci:interactive-specs` 541 blocks +51, `ci:variant-agreement`
+610 pairs 0 failures, `ci:katex-fences` 1723, `ci:content-integrity`
+1729) clean. `tsc --noEmit` clean both sides. Backend 4722/4722 (367
+files, 1 todo) and frontend 2816/2816 (102 files) unchanged — a
+content-only pass, same as wave 1.
+
+**This closes the resonance-beat + silo/register/redundancy audit for
+every remaining non-Linear-Algebra GATE-EM concept.** Combined with every
+prior Linear Algebra pass and wave 1, all 101 concepts in the corpus have
+now been through this discipline. The TODOS.md "Motion coverage wave 2"
+entry is closed. What remains open and tracked: a genuine schema decision
+for graph-theory's future node-highlight-sequence visualization (not
+content-blocking), and the several longer-standing corpus-wide audits
+this doc has already named as separate, differently-scoped follow-ups
+(the `ConceptMathViz` plain-language pass, the `why`-field rollout beyond
+its pilot concepts, and others).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

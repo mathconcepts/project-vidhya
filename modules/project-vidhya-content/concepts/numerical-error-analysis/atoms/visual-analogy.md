@@ -14,4 +14,4 @@ Picture an old wooden ruler with smudged tick marks — you can read a length to
 {"type": "discrete-bars", "values": [25.0, 25.2], "labels": ["true", "measured"]}
 ```
 
-Two bars, nearly the same height: a true value of $25.0$ and a measurement of $25.2$. The gap looks negligible on this scale — and it is, here, at $0.8\%$ relative error. Shrink both bars to a $0.25$ and $0.252$ scale instead, same absolute gap, and the relative error stays identical only if the ratio holds; change the underlying quantity's size and the same raw gap tells a completely different story.
+Two bars, nearly the same height: a true value of $25.0$ and a measurement of $25.2$. The gap looks negligible on this scale — and it is, here, at $0.8\%$ relative error. Shrink both bars to a $0.25$ and $0.252$ scale instead and the absolute gap shrinks too, down to $0.002$ — but the relative error stays exactly $0.8\%$, because it was never about the raw gap. Change only the size of what's being measured and that same raw $0.2$ gap would tell a completely different story on a much smaller quantity.

@@ -1319,3 +1319,179 @@ describe('Simulation — step counter and 1-1 mapping chip (/design-review, 2026
     expect(screen.queryByText(/Look at the highlighted/)).toBeNull();
   });
 });
+
+describe('graph-mode scene rendering (2026-09-08 plan: a graph figure mode for simulation scenes)', () => {
+  const GRAPH_SPEC: SimulationSpec = {
+    v: 1,
+    kind: 'simulation',
+    title: 'Three towns, two roads',
+    duration_sec: 6,
+    graph: {
+      nodes: [
+        { id: 'A', label: 'A', x: 0, y: 0 },
+        { id: 'B', label: 'B', x: 3, y: 0 },
+        { id: 'C', label: 'C', x: 1.5, y: 2 },
+      ],
+      edges: [
+        { from: 'A', to: 'B', weight: 4 },
+        { from: 'B', to: 'C', weight: 2 },
+      ],
+    },
+    narration_steps: [
+      { at_progress: 0, text: 'Three towns, two roads between them.' },
+      {
+        at_progress: 0.5,
+        text: 'Look at town A and the road to B.',
+        graph_highlight: {
+          nodes: [{ id: 'A', role: 'current' }],
+          edges: [{ from: 'A', to: 'B', role: 'current' }],
+        },
+      },
+      {
+        at_progress: 1,
+        text: 'A is settled; the road to C is the wrong move.',
+        graph_highlight: {
+          nodes: [
+            { id: 'A', role: 'confirmed' },
+            { id: 'C', role: 'trap' },
+          ],
+          edges: [
+            { from: 'A', to: 'B', role: 'confirmed' },
+            { from: 'B', to: 'C', role: 'rejected' },
+          ],
+        },
+      },
+    ],
+  };
+
+  it('renders every node and edge, plus each edge\'s weight label, for a small fixture graph', () => {
+    const { container } = render(<Simulation spec={GRAPH_SPEC} />);
+    const circles = container.querySelectorAll('svg circle');
+    expect(circles.length).toBe(3);
+    // 2 edges, undirected → plain <line> elements (no ArrowGlyph shafts).
+    // `Axes` also draws x/y crosshair <line>s (stroke inherited from its
+    // wrapping <g>, no own stroke-linecap) — filter to edges specifically,
+    // which GraphScene always sets `stroke-linecap="round"` on.
+    const lines = Array.from(container.querySelectorAll('svg line')).filter(
+      (l) => l.getAttribute('stroke-linecap') === 'round',
+    );
+    expect(lines.length).toBe(2);
+    expect(container.textContent).toContain('4');
+    expect(container.textContent).toContain('2');
+    // Node labels themselves render as text too.
+    expect(screen.getAllByText('A').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('B').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('C').length).toBeGreaterThan(0);
+  });
+
+  it('an undirected graph renders zero arrowheads', () => {
+    const { container } = render(<Simulation spec={GRAPH_SPEC} />);
+    expect(container.querySelectorAll('svg polygon').length).toBe(0);
+  });
+
+  it('a directed graph renders an ArrowGlyph arrowhead per edge', () => {
+    const directedSpec: SimulationSpec = {
+      ...GRAPH_SPEC,
+      graph: { ...GRAPH_SPEC.graph!, directed: true },
+    };
+    const { container } = render(<Simulation spec={directedSpec} />);
+    // One polygon (arrowhead) per edge — 2 edges.
+    expect(container.querySelectorAll('svg polygon').length).toBe(2);
+  });
+
+  it('before any graph_highlight beat, nodes/edges render in the default (ink) role', () => {
+    const { container } = render(<Simulation spec={GRAPH_SPEC} />);
+    // Autoplay starts at progress 0 (RAF frozen) — first beat has no graph_highlight.
+    const greenNodes = Array.from(container.querySelectorAll('svg circle')).filter(
+      (c) => c.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(greenNodes.length).toBe(0);
+    const dashedNodes = Array.from(container.querySelectorAll('svg circle')).filter(
+      (c) => c.getAttribute('stroke-dasharray') === '4 4',
+    );
+    expect(dashedNodes.length).toBe(0);
+  });
+
+  it('role: "current" renders ink with a heavier stroke, on both the node and its edge', () => {
+    const { container } = render(<Simulation spec={GRAPH_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 3/));
+
+    const inkNodes = Array.from(container.querySelectorAll('svg circle')).filter(
+      (c) => c.getAttribute('stroke') === 'var(--ink)' && c.getAttribute('stroke-width') === '2.5',
+    );
+    expect(inkNodes.length).toBe(1); // node A only — B and C stay at the default 1.5 stroke width
+    const inkLines = Array.from(container.querySelectorAll('svg line')).filter(
+      (l) => l.getAttribute('stroke') === 'var(--ink)' && l.getAttribute('stroke-width') === '2.5',
+    );
+    expect(inkLines.length).toBe(1); // edge A-B only
+  });
+
+  it('role: "confirmed" renders green; role: "rejected"/"trap" render grey, dashed, and italic', () => {
+    const { container } = render(<Simulation spec={GRAPH_SPEC} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
+
+    // Node A: confirmed.
+    const greenNode = Array.from(container.querySelectorAll('svg circle')).find(
+      (c) => c.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(greenNode).toBeDefined();
+    // Edge A-B: confirmed.
+    const greenLine = Array.from(container.querySelectorAll('svg line')).find(
+      (l) => l.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(greenLine).toBeDefined();
+
+    // Node C: trap — grey, dashed circle, italic label.
+    const trapNode = Array.from(container.querySelectorAll('svg circle')).find(
+      (c) => c.getAttribute('stroke') === 'var(--grey-6)' && c.getAttribute('stroke-dasharray') === '4 4',
+    );
+    expect(trapNode).toBeDefined();
+    const trapLabel = Array.from(container.querySelectorAll('svg text')).find(
+      (t) => t.textContent === 'C' && t.getAttribute('font-style') === 'italic',
+    );
+    expect(trapLabel).toBeDefined();
+
+    // Edge B-C: rejected — grey, dashed line, italic weight label ("2").
+    const rejectedLine = Array.from(container.querySelectorAll('svg line')).find(
+      (l) => l.getAttribute('stroke') === 'var(--grey-6)' && l.getAttribute('stroke-dasharray') === '4 4',
+    );
+    expect(rejectedLine).toBeDefined();
+    const rejectedWeightLabel = Array.from(container.querySelectorAll('svg text')).find(
+      (t) => t.textContent === '2' && t.getAttribute('font-style') === 'italic',
+    );
+    expect(rejectedWeightLabel).toBeDefined();
+  });
+
+  it('a `labels` override on graph_highlight replaces the node\'s own label (e.g. a Dijkstra distance)', () => {
+    const labelSpec: SimulationSpec = {
+      ...GRAPH_SPEC,
+      narration_steps: [
+        { at_progress: 0, text: 'Start.' },
+        {
+          at_progress: 1,
+          text: 'A settles at distance 0.',
+          graph_highlight: { labels: [{ node_id: 'A', text: 'A: 0' }] },
+        },
+      ],
+    };
+    const { container } = render(<Simulation spec={labelSpec} />);
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 2/));
+    expect(container.textContent).toContain('A: 0');
+    // Bare "A" no longer stands alone as a node label once overridden.
+    expect(screen.queryByText('A', { selector: 'text' })).toBeNull();
+  });
+
+  it('the aria-live region announces the active beat\'s text for a graph scene', () => {
+    const { container } = render(<Simulation spec={GRAPH_SPEC} />);
+    const live = container.querySelector('[aria-live="polite"]');
+    expect(live).not.toBeNull();
+    expect(live!.textContent).toContain('Three towns, two roads between them.');
+
+    const group = screen.getByRole('group', { name: 'Scene beats' });
+    fireEvent.click(within(group).getByLabelText(/^Beat 2 of 3/));
+    expect(live!.textContent).toContain('Look at town A and the road to B.');
+  });
+});

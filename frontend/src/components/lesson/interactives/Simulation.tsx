@@ -29,7 +29,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, ChevronRight, AlertTriangle } from 'lucide-react';
-import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type Mat2 } from './types';
+import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type GraphSceneSpec, type Mat2 } from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useEngagementGate } from '@/hooks/useEngagementGate';
@@ -302,6 +302,26 @@ export function linearMapViewBox(matrix: Mat2, ghostMatrix?: Mat2): NonNullable<
   return { x_min: -halfW, x_max: halfW, y_min: -halfH, y_max: halfH };
 }
 
+/**
+ * Fits the canvas to the author's own node coordinates — same technique as
+ * `linearMapViewBox`, sourced from declared node positions instead of a
+ * matrix's image of the unit circle. Authors pick any consistent scale;
+ * this decouples it from screen pixels exactly the way `x_expr`/`y_expr`'s
+ * math-space already is.
+ */
+function graphViewBox(nodes: GraphSceneSpec['nodes']): NonNullable<SimulationSpec['view_box']> {
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  for (const n of nodes) {
+    if (n.x < xMin) xMin = n.x;
+    if (n.x > xMax) xMax = n.x;
+    if (n.y < yMin) yMin = n.y;
+    if (n.y > yMax) yMax = n.y;
+  }
+  const padX = (xMax - xMin) * 0.15 || 1;
+  const padY = (yMax - yMin) * 0.15 || 1;
+  return { x_min: xMin - padX, x_max: xMax + padX, y_min: yMin - padY, y_max: yMax + padY };
+}
+
 /** Corners of the unit square, in matrix-application order (adjacent
  *  corners, so the polygon traces the square's boundary, not a diagonal). */
 const UNIT_SQUARE_CORNERS: Array<[number, number]> = [
@@ -341,22 +361,30 @@ export function stripMarkdownForAria(text: string): string {
 
 export function Simulation({ spec, atomId, servedStance }: Props) {
   const linearMap = spec.linear_map ?? null;
+  const graphSpec = spec.graph ?? null;
   const samples = useMemo(
-    () => (linearMap ? { points: [], error: null } : sampleCurve(spec)),
-    [spec, linearMap],
+    () => (linearMap || graphSpec ? { points: [], error: null } : sampleCurve(spec)),
+    [spec, linearMap, graphSpec],
   );
   // Computed BEFORE viewBox (Reference Highlighting Framework follow-up,
   // /autoplan 2026-09-06) so the ghost's own extent can be folded into the
   // box that's about to be sized — see autoViewBox's/linearMapViewBox's doc
-  // comments for the off-canvas-clipping bug this closes.
-  const ghostPoints = useMemo(() => (linearMap ? null : sampleGhost(spec)), [spec, linearMap]);
+  // comments for the off-canvas-clipping bug this closes. `graph` mode has
+  // no top-level `ghost` (mutually exclusive per the validator) — its wrong
+  // turn is a `graph_highlight` role on the trap beat instead.
+  const ghostPoints = useMemo(
+    () => (linearMap || graphSpec ? null : sampleGhost(spec)),
+    [spec, linearMap, graphSpec],
+  );
   const viewBox = useMemo(
     () =>
       spec.view_box ??
       (linearMap
         ? linearMapViewBox(linearMap.matrix, linearMap.ghost_matrix)
-        : autoViewBox(samples.points, ghostPoints)),
-    [spec.view_box, linearMap, samples.points, ghostPoints],
+        : graphSpec
+          ? graphViewBox(graphSpec.nodes)
+          : autoViewBox(samples.points, ghostPoints)),
+    [spec.view_box, linearMap, graphSpec, samples.points, ghostPoints],
   );
   const projector = useMemo(() => makeProjector(viewBox), [viewBox]);
 
@@ -500,9 +528,15 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   const visiblePoints = samples.points.slice(0, cutoff);
   const head = visiblePoints[visiblePoints.length - 1];
   const activeIdx = hasBeats ? activeBeatIndex(sortedSteps, effectiveProgress) : null;
-  const segments = linearMap
+  const segments = linearMap || graphSpec
     ? []
     : buildTraceSegments(samples.points, projector, sortedSteps, effectiveProgress, activeIdx);
+  // `graph` mode's discrete counterpart to the curve-tracing state above:
+  // whichever beat is active right now supplies the whole highlight state
+  // to draw — no interpolation, the graph simply snaps to each beat's
+  // declared nodes/edges/labels roles (types.ts's graph_highlight doc
+  // comment).
+  const activeGraphHighlight = activeIdx !== null ? sortedSteps[activeIdx]?.graph_highlight ?? null : null;
   const resolvedId = atomId ?? spec.title;
   const showStoryboard = hasBeats && reducedMotion;
   const showLiveBeatUI = hasBeats && !reducedMotion;
@@ -607,7 +641,9 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           className="rounded-md border"
           style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)' }}
           preserveAspectRatio="xMidYMid meet"
-          aria-label={hasBeats ? spec.title : `Animated trace: ${spec.title}`}
+          aria-label={
+            hasBeats ? spec.title : graphSpec ? `Graph diagram: ${spec.title}` : `Animated trace: ${spec.title}`
+          }
         >
           <Axes viewBox={viewBox} projector={projector} />
           {linearMap && (
@@ -622,6 +658,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
               trapRevealed={trapRevealed}
             />
           )}
+          {graphSpec && <GraphScene graph={graphSpec} projector={projector} highlight={activeGraphHighlight} />}
           {trapRevealed && ghostPoints && (
             <path
               d={pathD(ghostPoints, projector)}
@@ -1218,6 +1255,116 @@ function LinearMapScene({
   );
 }
 
+/** Role → stroke/fill color, reusing the app-wide "look here / confirmed /
+ *  wrong" vocabulary verbatim — see types.ts's `graph_highlight` doc
+ *  comment. Never teal/purple/mint/brown (the atom-card eyebrow-label
+ *  exception only) and never indigo (AI/tutor only). */
+const GRAPH_ROLE_COLOR: Record<'default' | 'current' | 'confirmed' | 'rejected' | 'trap', string> = {
+  default: 'var(--ink)',
+  current: 'var(--ink)',
+  confirmed: 'var(--green)',
+  rejected: 'var(--grey-6)',
+  trap: 'var(--grey-6)',
+};
+
+/**
+ * A fixed node/edge diagram whose highlight state changes discretely per
+ * beat (2026-09-08 plan: `graph` figure mode). No layout algorithm — nodes
+ * are drawn exactly where the author placed them (`graphViewBox` just fits
+ * the canvas to their author-chosen coordinate range, same technique as
+ * `linearMapViewBox`). Edges/labels reuse the halo-stroke label technique
+ * and `ArrowGlyph` verbatim from the rest of this file — no new visual
+ * vocabulary, per the plan's design-consistency requirement.
+ */
+function GraphScene({
+  graph,
+  projector,
+  highlight,
+}: {
+  graph: GraphSceneSpec;
+  projector: (x: number, y: number) => [number, number];
+  highlight: Beat['graph_highlight'] | null;
+}) {
+  const nodeById = new Map(graph.nodes.map((n) => [n.id, n]));
+  const nodeRole = new Map<string, 'current' | 'confirmed' | 'trap'>(
+    (highlight?.nodes ?? []).map((n) => [n.id, n.role]),
+  );
+  const nodeLabelOverride = new Map<string, string>(
+    (highlight?.labels ?? []).map((l) => [l.node_id, l.text]),
+  );
+  const edgeKey = (from: string, to: string) => `${from} ${to}`;
+  const edgeRole = new Map<string, 'current' | 'confirmed' | 'rejected' | 'trap'>();
+  for (const e of highlight?.edges ?? []) {
+    edgeRole.set(edgeKey(e.from, e.to), e.role);
+    edgeRole.set(edgeKey(e.to, e.from), e.role);
+  }
+
+  return (
+    <g>
+      {graph.edges.map((edge, i) => {
+        const from = nodeById.get(edge.from);
+        const to = nodeById.get(edge.to);
+        if (!from || !to) return null;
+        const role = edgeRole.get(edgeKey(edge.from, edge.to)) ?? 'default';
+        const stroke = GRAPH_ROLE_COLOR[role];
+        const strokeWidth = role === 'current' || role === 'confirmed' ? 2.5 : 1.5;
+        const dash = role === 'rejected' || role === 'trap' ? '4 4' : undefined;
+        const p1 = projector(from.x, from.y);
+        const p2 = projector(to.x, to.y);
+        const [mx, my] = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2];
+        return (
+          <g key={`edge-${i}`}>
+            {graph.directed ? (
+              <ArrowGlyph from={p1} to={p2} stroke={stroke} strokeWidth={strokeWidth} dash={dash} />
+            ) : (
+              <line x1={p1[0]} y1={p1[1]} x2={p2[0]} y2={p2[1]} stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash} strokeLinecap="round" />
+            )}
+            {edge.weight !== undefined && (
+              <text
+                x={mx} y={my - 8}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize={11} fontWeight={600}
+                fontStyle={role === 'rejected' || role === 'trap' ? 'italic' : undefined}
+                fill={stroke}
+                stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+              >
+                {formatSignificant(edge.weight)}
+              </text>
+            )}
+          </g>
+        );
+      })}
+      {graph.nodes.map((node) => {
+        const role = nodeRole.get(node.id) ?? 'default';
+        const stroke = GRAPH_ROLE_COLOR[role];
+        const [px, py] = projector(node.x, node.y);
+        const r = role === 'current' || role === 'confirmed' ? 12 : 10;
+        const label = nodeLabelOverride.get(node.id) ?? node.label;
+        return (
+          <g key={node.id}>
+            <circle
+              cx={px} cy={py} r={r}
+              fill="var(--surface-fill)"
+              stroke={stroke}
+              strokeWidth={role === 'current' || role === 'confirmed' ? 2.5 : 1.5}
+              strokeDasharray={role === 'trap' ? '4 4' : undefined}
+            />
+            <text
+              x={px} y={py}
+              textAnchor="middle" dominantBaseline="middle"
+              fontSize={11} fontWeight={600} fontStyle={role === 'trap' ? 'italic' : undefined}
+              fill={stroke}
+              stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+            >
+              {label}
+            </text>
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
 /** One arrow: shaft + solid head, all in screen coordinates. */
 function ArrowGlyph({
   from,
@@ -1394,6 +1541,16 @@ function ReducedMotionStoryboard({
           The dashed grey arrows show where the common wrong reading would land.
         </p>
       )}
+      {spec.graph &&
+        sortedSteps.some(
+          (s) =>
+            s.graph_highlight?.edges?.some((e) => e.role === 'rejected' || e.role === 'trap') ||
+            s.graph_highlight?.nodes?.some((n) => n.role === 'trap'),
+        ) && (
+          <p className="text-[15px]" style={{ color: 'var(--text-secondary)' }}>
+            The dashed grey nodes/edges show the common wrong move.
+          </p>
+        )}
     </ol>
   );
 }

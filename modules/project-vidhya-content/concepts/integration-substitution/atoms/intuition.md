@@ -21,7 +21,7 @@ Integration by substitution is the antidote to composite functions. When differe
 4. Integrate (usually simpler now)
 5. Substitute back
 
-**Why it matters for GATE:** Complex integrals often hide beneath a layer of composition. A substitution that unwraps this layer transforms an impossible-looking integral into something elementary. For instance, $\int x(x^2+1)^5 \, dx$ looks formidable until you recognize $u = x^2+1$ and see $du = 2x \, dx$.
+**Why it matters for GATE:** Complex integrals often hide beneath a layer of composition. A substitution that unwraps this layer transforms an impossible-looking integral into something elementary. For instance, $\int 2x\cos(x^2) \, dx$ looks stuck until you recognize $u = x^2$ and see $du = 2x \, dx$ — exactly the factor already sitting outside.
 
 **Trigonometric substitution** extends this: when you face radicals like $\sqrt{1-x^2}$ or $\sqrt{x^2+1}$, a strategic trig substitution (e.g., $x = \sin\theta$) converts the radical into a trig identity, dissolving the complexity.
 

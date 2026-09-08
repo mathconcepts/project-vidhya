@@ -19,7 +19,7 @@ variant_of: mean-value-theorems.intuition
 for_stance: shaken
 ---
 
-Leave at noon, arrive at 4 PM, covering $200$ km. Average speed: $\frac{200}{4}=50$ km/h. Did the speedometer read exactly $50$ at some moment? Yes — not luck, the Mean Value Theorem.
+Drive $180$ km in $2$ hours. Average speed: $\frac{180}{2}=90$ km/h. Did the speedometer read exactly $90$ at some moment? Yes — not luck, the Mean Value Theorem.
 
 Average rate of change over the whole trip is $\frac{f(b)-f(a)}{b-a}$; instantaneous rate at one moment is $f'(x)$. These are different kinds of numbers — one summarizes the whole interval, the other is a single instant — and MVT guarantees that somewhere in between, they agree exactly.
 

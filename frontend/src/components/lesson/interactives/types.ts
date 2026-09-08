@@ -184,6 +184,28 @@ export interface SimulationSpec {
   linear_map?: LinearMapSceneSpec;
   /** Present → the scene renders a fixed node/edge diagram instead of a trace. Mutually exclusive with `linear_map` and the parametric fields above. */
   graph?: GraphSceneSpec;
+  /**
+   * Plain parametric scenes only: small, ALWAYS-visible fixed markers drawn
+   * alongside the traced curve — the parametric-mode counterpart to
+   * `linear_map.eigen[]`'s fixed arrows and `graph.nodes[]`'s fixed nodes,
+   * for the narrative that needs a second, non-traced anchor on screen.
+   *
+   * Root cause (/investigate, live-QA: "u1 info is missing. highlight is
+   * mentioned in text but not visible"): a parametric scene has exactly one
+   * moving thing to draw — the traced point — and `focus_point` can only
+   * highlight THAT point. `gram-schmidt`'s hook narrates "watch $u_1=(1,1)$
+   * stay put while $v_2$ sheds its shadow" every beat, but $u_1$ is a
+   * SEPARATE, fixed vector the trace never visits — there was no field to
+   * draw it at all, so the text referenced a picture the figure never had.
+   *
+   * Rendered ink, halo-labeled (same technique as every other coordinate
+   * label in this file), always on screen for the scene's whole runtime —
+   * not beat-gated like `focus_point`/`focus_eigen`, since a fixed anchor
+   * the narrative refers to throughout needs to be visible throughout, not
+   * flash in and out per beat. Mutually exclusive with `linear_map`/`graph`
+   * (each already owns its own fixed-marker mechanism).
+   */
+  reference_points?: Array<{ id: string; label: string; x: number; y: number }>;
   /** Total duration of one play, in seconds. Default 4. */
   duration_sec?: number;
   /** Display range. Default auto-fit from sampled points. */
@@ -527,6 +549,17 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
     if (typeof raw.t_min !== 'number' || typeof raw.t_max !== 'number' || raw.t_max <= raw.t_min) {
       return { ok: false, reason: 'simulation.t_min/t_max invalid' };
     }
+    if (raw.reference_points !== undefined) {
+      const refFailure = checkReferencePoints(raw.reference_points);
+      if (refFailure) return refFailure;
+    }
+  }
+  if (raw.reference_points !== undefined && (raw.linear_map || raw.graph)) {
+    return {
+      ok: false,
+      reason:
+        'simulation.reference_points is only valid on a plain parametric scene — linear_map has linear_map.eigen[] and graph has graph.nodes[] for a fixed marker instead',
+    };
   }
   if (raw.narration_steps !== undefined) {
     if (!Array.isArray(raw.narration_steps) || raw.narration_steps.length === 0) {
@@ -643,6 +676,45 @@ function checkTrapShape(trap: any, i: number): ParseFailure | null {
         ok: false,
         reason: `simulation.narration_steps[${i}].trap.${field} must be a non-empty string of at most ${MAX_BEAT_TEXT_CHARS} characters`,
       };
+    }
+  }
+  return null;
+}
+
+/** Bounds on `reference_points[]` — a small always-visible marker set; more than a few would clutter a 320×200 canvas the traced curve already occupies. */
+export const MIN_REFERENCE_POINTS = 1;
+export const MAX_REFERENCE_POINTS = 4;
+
+/** Shape checks for `reference_points[]`: unique ids, non-empty labels, numeric coordinates. */
+function checkReferencePoints(points: any): ParseFailure | null {
+  if (
+    !Array.isArray(points) ||
+    points.length < MIN_REFERENCE_POINTS ||
+    points.length > MAX_REFERENCE_POINTS
+  ) {
+    return {
+      ok: false,
+      reason: `simulation.reference_points must be an array of ${MIN_REFERENCE_POINTS}-${MAX_REFERENCE_POINTS} points`,
+    };
+  }
+  const seenIds = new Set<string>();
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    if (!p || typeof p !== 'object' || Array.isArray(p)) {
+      return { ok: false, reason: `simulation.reference_points[${i}] must be an object` };
+    }
+    if (typeof p.id !== 'string' || !p.id) {
+      return { ok: false, reason: `simulation.reference_points[${i}].id required` };
+    }
+    if (seenIds.has(p.id)) {
+      return { ok: false, reason: `simulation.reference_points has a duplicate id: "${p.id}"` };
+    }
+    seenIds.add(p.id);
+    if (typeof p.label !== 'string' || !p.label) {
+      return { ok: false, reason: `simulation.reference_points[${i}].label required` };
+    }
+    if (typeof p.x !== 'number' || typeof p.y !== 'number') {
+      return { ok: false, reason: `simulation.reference_points[${i}].x/y must be numbers` };
     }
   }
   return null;

@@ -79,7 +79,7 @@ export interface ThinkingGapInput {
 }
 
 /** Where the served text came from. Feeds the admin content-maturity view. */
-export type GapSource = 'cache' | 'generated' | 'unavailable';
+export type GapSource = 'cache' | 'generated' | 'fallback' | 'unavailable';
 
 export interface ThinkingGapResult {
   text: string | null;
@@ -105,6 +105,38 @@ function classifyErrorType(userAnswer: string, expectedAnswer: string): string {
     if (Math.abs(ratio - Math.PI) < 0.05 || Math.abs(ratio - 1 / Math.PI) < 0.05) return 'pi_confusion';
   }
   return 'wrong_formula';
+}
+
+/**
+ * A deterministic, content-free fallback insight — no LLM call, no cache.
+ *
+ * Root cause (/investigate, live-QA: "insight not available"): `generateGapText`
+ * returns null whenever `getLlmForRole('chat')` has no provider configured,
+ * which is every deployment in this repo without a chat LLM key set — the
+ * exact "known-unrun" gap CLAUDE.md documents repeatedly. That made "No extra
+ * insight available" show on EVERY wrong answer platform-wide, not on one
+ * PYQ item — so the fix is not per-item content, it's a real explanation the
+ * app can compute from data it already has (the classified error type),
+ * shown until a live LLM key makes the personalised version available.
+ *
+ * Deliberately never written to `thinking_gap_cache` (unlike a real
+ * LLM-generated result) — the admin content-maturity view counts that table
+ * as evidence of personalisation, and this text is neither personalised nor
+ * LLM-authored.
+ */
+export function deterministicGapFallback(errorType: string): string {
+  switch (errorType) {
+    case 'no_attempt':
+      return "No answer was entered, so there's nothing to diagnose yet — work through this one before checking the expected answer.";
+    case 'sign_error':
+      return 'Your answer is the exact negative of the expected one — a sign flipped somewhere in the working. Recheck the sign convention this method uses.';
+    case 'factor_error':
+      return 'Your answer is off from the expected one by a factor of 2 — check for a coefficient that was missed, or doubled, in the setup.';
+    case 'pi_confusion':
+      return 'Your answer differs from the expected one by a factor of π — check whether an angle should have been in radians instead of degrees, or a π factor was dropped or added.';
+    default:
+      return "This doesn't match the expected result for this method — recheck which formula or rule applies here before moving on.";
+  }
 }
 
 function buildMisconceptionHash(misconceptions: string[]): string {
@@ -187,9 +219,15 @@ async function generateGapText(input: ThinkingGapInput): Promise<string | null> 
 /**
  * Get or generate a thinking-gap explanation for a wrong answer.
  *
- * Never throws: a missing database, a missing LLM, or a transient query
- * failure all degrade to `{ text: null, source: 'unavailable' }` so the
- * caller can decide what to show rather than losing the whole request.
+ * Never throws, and never leaves the student with nothing: a missing
+ * database just skips the cache, and a missing or failing LLM degrades to
+ * `deterministicGapFallback()` (`source: 'fallback'`) instead of the old
+ * `{ text: null, source: 'unavailable' }` — which is what "No extra insight
+ * available" on the live site actually meant: no chat LLM provider key
+ * configured, on every wrong answer, not a per-item content gap. The
+ * `'unavailable'` source stays in the `GapSource` union for a caller that
+ * wants to distinguish "we tried and it was empty" in its own tests, but
+ * `getThinkingGap` itself no longer produces it for a real error input.
  */
 export async function getThinkingGap(input: ThinkingGapInput): Promise<ThinkingGapResult> {
   const framing = input.framing ?? DEFAULT_FRAMING;
@@ -216,7 +254,9 @@ export async function getThinkingGap(input: ThinkingGapInput): Promise<ThinkingG
   }
 
   const generated = await generateGapText(input);
-  if (!generated) return { text: null, source: 'unavailable', framing: signature, personalized };
+  if (!generated) {
+    return { text: deterministicGapFallback(errorType), source: 'fallback', framing: signature, personalized: false };
+  }
 
   if (pool) {
     try {

@@ -1366,3 +1366,111 @@ describe('validateSimulation — graph mode', () => {
     expect((result as { reason: string }).reason).toContain('at most ONE trap beat');
   });
 });
+
+describe('validateSimulation — reference_points (/investigate: "u1 info is missing")', () => {
+  const PLAIN_BASE = {
+    v: INTERACTIVE_SPEC_VERSION,
+    kind: 'simulation',
+    title: 'plain curve with a fixed anchor',
+    x_expr: 't',
+    y_expr: 't',
+    t_min: 0,
+    t_max: 1,
+  };
+
+  function parse(spec: unknown) {
+    return parseInteractiveSpec('```interactive-spec\n' + JSON.stringify(spec) + '\n```');
+  }
+
+  it('accepts a plain scene with one reference point', () => {
+    const spec = { ...PLAIN_BASE, reference_points: [{ id: 'u1', label: 'u1', x: 1, y: 1 }] };
+    const result = parse(spec);
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts up to MAX_REFERENCE_POINTS points', () => {
+    const spec = {
+      ...PLAIN_BASE,
+      reference_points: [
+        { id: 'a', label: 'a', x: 0, y: 0 },
+        { id: 'b', label: 'b', x: 1, y: 0 },
+        { id: 'c', label: 'c', x: 0, y: 1 },
+        { id: 'd', label: 'd', x: 1, y: 1 },
+      ],
+    };
+    const result = parse(spec);
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects an empty reference_points array', () => {
+    const result = parse({ ...PLAIN_BASE, reference_points: [] });
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('reference_points must be an array');
+  });
+
+  it('rejects more than MAX_REFERENCE_POINTS points', () => {
+    const spec = {
+      ...PLAIN_BASE,
+      reference_points: Array.from({ length: 5 }, (_, i) => ({ id: `p${i}`, label: `p${i}`, x: i, y: i })),
+    };
+    const result = parse(spec);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('reference_points must be an array');
+  });
+
+  it('rejects a duplicate id, named', () => {
+    const spec = {
+      ...PLAIN_BASE,
+      reference_points: [
+        { id: 'u1', label: 'u1', x: 1, y: 1 },
+        { id: 'u1', label: 'also u1', x: 2, y: 2 },
+      ],
+    };
+    const result = parse(spec);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('duplicate id: "u1"');
+  });
+
+  it('rejects a missing label', () => {
+    const spec = { ...PLAIN_BASE, reference_points: [{ id: 'u1', x: 1, y: 1 }] };
+    const result = parse(spec);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('label required');
+  });
+
+  it('rejects non-numeric coordinates', () => {
+    const spec = { ...PLAIN_BASE, reference_points: [{ id: 'u1', label: 'u1', x: '1', y: 1 }] };
+    const result = parse(spec);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('x/y must be numbers');
+  });
+
+  it('rejects reference_points on a linear_map scene — linear_map.eigen[] is the mechanism there', () => {
+    const spec = {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'simulation',
+      title: 'lm',
+      linear_map: { matrix: [[2, 0], [0, 1]] },
+      reference_points: [{ id: 'u1', label: 'u1', x: 1, y: 1 }],
+    };
+    const result = parse(spec);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('only valid on a plain parametric scene');
+  });
+
+  it('rejects reference_points on a graph scene — graph.nodes[] is the mechanism there', () => {
+    const spec = {
+      v: INTERACTIVE_SPEC_VERSION,
+      kind: 'simulation',
+      title: 'g',
+      graph: {
+        nodes: [{ id: 'A', label: 'A', x: 0, y: 0 }, { id: 'B', label: 'B', x: 1, y: 0 }],
+        edges: [{ from: 'A', to: 'B' }],
+      },
+      reference_points: [{ id: 'u1', label: 'u1', x: 1, y: 1 }],
+    };
+    const result = parse(spec);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('only valid on a plain parametric scene');
+  });
+});

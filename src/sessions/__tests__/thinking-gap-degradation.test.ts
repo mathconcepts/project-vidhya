@@ -8,8 +8,16 @@
  * Nothing surfaced the failure; the student just saw an empty space where the
  * explanation should have been.
  *
- * These tests pin the honest degradation: no database is not an error, and a
- * missing model is reported as unavailable rather than thrown.
+ * These tests pin the honest degradation: no database is not an error.
+ *
+ * Follow-up (/investigate, live-QA: "insight not available"): the SAME "no
+ * LLM provider configured" condition this file already exercises (the
+ * `getLlmForRole` mock below) used to degrade all the way to
+ * `{ text: null, source: 'unavailable' }` — showing "No extra insight
+ * available" on every wrong answer platform-wide, not one item. It now
+ * degrades to `deterministicGapFallback()`'s real, content-free explanation
+ * instead — see thinking-gap-service.ts's updated `getThinkingGap` doc
+ * comment.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
@@ -32,42 +40,42 @@ describe('thinking-gap degradation without a database', () => {
     else process.env.DATABASE_URL = ORIGINAL_DB_URL;
   });
 
-  it('resolves instead of throwing when there is no database and no model', async () => {
+  it('resolves instead of throwing when there is no database and no model, with a real fallback explanation', async () => {
     const { getThinkingGap } = await import('../thinking-gap-service');
     const result = await getThinkingGap({
       concept_id: 'eigenvalues',
-      question: 'Find the eigenvalues of [[2,0],[0,3]].',
-      expected_answer: '2, 3',
-      user_answer: '-2, -3',
+      question: 'Find the dominant eigenvalue of [[3,0],[0,1]].',
+      expected_answer: '3',
+      user_answer: '-3',
     });
-    expect(result.text).toBeNull();
-    expect(result.source).toBe('unavailable');
+    // -3 is the exact negative of 3 — classified as a sign error.
+    expect(result.text).toMatch(/sign flipped/);
+    expect(result.source).toBe('fallback');
   });
 
-  it('reports a cold anonymous session as generic, not as personalised', async () => {
-    // Content maturity has to be honest or the admin hint is worse than none.
+  it('reports the fallback as generic, never personalised, regardless of framing', async () => {
+    // Content maturity has to be honest or the admin hint is worse than none —
+    // a deterministic template is not personalised no matter who asked for it.
     const { getThinkingGap } = await import('../thinking-gap-service');
-    const result = await getThinkingGap({
+    const cold = await getThinkingGap({
       concept_id: 'eigenvalues',
       question: 'q',
       expected_answer: '1',
       user_answer: '2',
     });
-    expect(result.personalized).toBe(false);
-    expect(result.framing).toBe('cold/steady/balanced');
-  });
+    expect(cold.personalized).toBe(false);
+    expect(cold.framing).toBe('cold/steady/balanced');
 
-  it('reports a framed request as personalised even when the text is unavailable', async () => {
-    const { getThinkingGap } = await import('../thinking-gap-service');
-    const result = await getThinkingGap({
+    const framed = await getThinkingGap({
       concept_id: 'eigenvalues',
       question: 'q',
       expected_answer: '1',
       user_answer: '2',
       framing: { band: 'building', stance: 'shaken', mode: 'geometric' },
     });
-    expect(result.personalized).toBe(true);
-    expect(result.framing).toBe('building/shaken/geometric');
+    expect(framed.personalized).toBe(false);
+    expect(framed.framing).toBe('building/shaken/geometric');
+    expect(framed.source).toBe('fallback');
   });
 
   it('attachThinkingGap does not throw without a database', async () => {

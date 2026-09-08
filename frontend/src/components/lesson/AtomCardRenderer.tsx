@@ -25,7 +25,7 @@ import { parseInteractiveSpec, stripAllInteractiveSpecFences, type SimulationSpe
 import { deriveLinearMapWhy } from './interactives/eigen-2x2';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
-  AlertTriangle, Sparkles, Eye, Clock, EyeOff,
+  AlertTriangle, Sparkles, Eye, Clock, EyeOff, Lock,
 } from 'lucide-react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useEngagementGate } from '@/hooks/useEngagementGate';
@@ -487,7 +487,27 @@ function stepHasBoxedAnswer(step: string): boolean {
  * straight to every workable step visible at once, matching every other
  * reduced-motion surface in this file (there is no "moment" to hold back).
  */
-function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
+function WorkedExampleCard({
+  atom,
+  onAllStepsRevealed,
+}: {
+  atom: ContentAtom;
+  /**
+   * /investigate (2026-09-08, live-QA: "show next step is visible at
+   * various levels only the top is enabled... redesign to have a
+   * progressive, graduation user experience"). Root cause: the embedded
+   * `guided_walkthrough`/`manipulable` widget an atom carries in its own
+   * fenced block (rendered by the separate `InteractiveSidecar` sibling
+   * below this card) used to mount fully interactive from first paint,
+   * regardless of how far the student had tapped through THIS card's own
+   * step-by-step reveal — two independent progressions stacked on one
+   * screen, only one of which was gated. Reports whether every workable
+   * step here has been revealed, so the parent can hold the embedded
+   * widget locked until this card's own walkthrough is actually done —
+   * one progression, not two competing ones.
+   */
+  onAllStepsRevealed?: (allRevealed: boolean) => void;
+}) {
   // T19a: strip the fenced interactive-spec block BEFORE splitting on `---`
   // step delimiters. Without this, a spec-carrying worked_example (96/97
   // concepts) renders the raw JSON as literal text inside the last step box,
@@ -519,6 +539,17 @@ function WorkedExampleCard({ atom }: { atom: ContentAtom }) {
   // text, re-arming each time shownCount advances.
   const lastRevealedStep = shownCount > 0 ? steps[shownCount - 1] ?? '' : '';
   const nextStepGateReady = useEngagementGate(lastRevealedStep, shownCount);
+
+  // Notify the parent once every workable step is on screen (a single-step
+  // atom, or reducedMotion, is "revealed" from the first render). Keyed on
+  // the boolean itself, not on shownCount/visibleCount individually, so this
+  // fires exactly on the transitions the parent cares about — armed again
+  // whenever atom.id's own reset (above) drops it back to false.
+  const allStepsRevealed = shownCount >= visibleCount;
+  useEffect(() => {
+    onAllStepsRevealed?.(allStepsRevealed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire on the reveal-complete transition, not on every onAllStepsRevealed identity change
+  }, [allStepsRevealed]);
 
   return (
     <div>
@@ -896,6 +927,11 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
   const [showVisually, setShowVisually] = useState<boolean>(() => {
     try { return localStorage.getItem(VISUAL_PREF_KEY) === '1'; } catch { return false; }
   });
+  // /investigate (2026-09-08): gates the embedded interactive widget
+  // (guided_walkthrough/manipulable) below a worked_example atom's own
+  // step-by-step reveal — see WorkedExampleCard's onAllStepsRevealed doc
+  // comment. Irrelevant (never read) for every other atom_type.
+  const [workedExampleFullyRevealed, setWorkedExampleFullyRevealed] = useState(false);
 
   // T4: intent-ordered default sequence, applied BEFORE show-me-visually
   // below — a stable sort by stage-kind rank, the concept's own catalogue
@@ -1218,7 +1254,7 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
             const stage = promotedSimSpec ? 'above' : deferFigure ? 'below' : presentation.stage;
             const prose =
               current.atom_type === 'worked_example' ? (
-                <WorkedExampleCard atom={current} />
+                <WorkedExampleCard atom={current} onAllStepsRevealed={setWorkedExampleFullyRevealed} />
               ) : current.atom_type === 'common_traps' ? (
                 <CommonTrapsCard atom={current} />
               ) : (
@@ -1282,8 +1318,36 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               nothing when no spec is present. Mirrors the MediaSidecar
               authoring pattern (§4.15). Suppressed when the same simulation
               was already promoted into the figure slot above — rendering it
-              twice would put two copies of the same scene on one card. */}
-          {!promotedSimSpec && <InteractiveSidecar body={current.content} />}
+              twice would put two copies of the same scene on one card.
+
+              /investigate (2026-09-08, live-QA: "show next step is visible
+              at various levels only the top is enabled... redesign to have
+              a progressive, graduation user experience"). Root cause: a
+              worked_example atom's embedded guided_walkthrough/manipulable
+              widget rendered here, fully interactive, from first paint —
+              independent of WorkedExampleCard's own step-by-step reveal
+              directly above it. One card showed two unrelated progressions
+              at once (the outer "Show next step" gate, and an always-open
+              inner widget), reading as broken rather than paced. Held
+              locked (with honest microcopy, not a silently-missing widget)
+              until `workedExampleFullyRevealed` — one progression, in
+              order, matching every other advance-button surface in this
+              app (GuidedWalkthrough, Simulation's beats). `parsedSpec.ok`
+              guards the microcopy itself: only claim something is "locked"
+              when this atom actually carries a spec to unlock. */}
+          {!promotedSimSpec && (
+            current.atom_type === 'worked_example' && parsedSpec.ok && !workedExampleFullyRevealed ? (
+              <p
+                className="flex items-center gap-2"
+                style={{ color: 'var(--text-tertiary)', fontSize: 'var(--text-footnote)', fontStyle: 'italic' }}
+              >
+                <Lock size={14} aria-hidden="true" />
+                Complete the walkthrough above to unlock practice questions.
+              </p>
+            ) : (
+              <InteractiveSidecar body={current.content} />
+            )
+          )}
 
           {/* Recall buttons for retrieval-style atoms. Both were hand-rolled
               with no press feedback; now the shared Button component (`full`

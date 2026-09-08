@@ -2212,3 +2212,74 @@ into a `metadata` JSONB column. `handleGetHistory` already selects
 report asked for.
 **Deferred from:** `/investigate` — AI Tutor Chat raw LaTeX/ELI5/concept-id
 pass, 2026-09-07, branch `claude/content-strategy-framework-o9afoc`.
+
+## `reference_points` (fixed-marker labels on a plain parametric scene) — one concept only
+
+**Trigger:** live-QA `/investigate` (2026-09-08): a gram-schmidt hook beat's
+narration named a fixed anchor vector, `u1=(1,1)`, that the diagram never
+drew — only the moving traced point (v2's shadow-subtraction path) rendered.
+
+**What shipped:** `SimulationSpec.reference_points` — an always-visible
+(not beat-gated) labeled fixed marker for a plain parametric scene, the
+counterpart to `linear_map.eigen[]` and `graph.nodes[]`'s own fixed-marker
+mechanisms. Schema + validation (`checkReferencePoints`,
+`MIN/MAX_REFERENCE_POINTS`) + renderer (halo-labeled ink dot, folded into
+`autoViewBox` so it can never clip off-canvas) all ship generically — every
+future plain-curve scene can use it. Wired onto exactly one concept:
+`gram-schmidt`'s `hook.md`/`-shaken`/`-assured` (`u1=(1,1)`).
+
+**Why not corpus-wide:** the mechanism only helps a scene whose narration
+already names a fixed anchor the moving point is being compared against
+(gram-schmidt's `u1` orthogonality target) — most plain-curve scenes have
+no such anchor at all, so blanket-applying this would mean inventing
+reference points with nothing in the prose to justify them. A real
+corpus-wide audit (read every plain-curve `hook.md`, judge honestly
+whether its narration names a fixed anchor the diagram doesn't show) is
+the same shape as every other "mechanism shipped, pilot on the reported
+concept" pass in this doc — not attempted here.
+
+**Where to start:** the same 5-6-concept parallel-subagent-batch pattern
+used for `focus_eigen`/`focus_point`'s corpus sweeps — read each plain-
+curve `hook.md`/`intuition.md`, check for a narration beat naming a fixed
+value with no corresponding always-visible marker.
+
+**Effort:** M human / M CC (content read + verification per concept, no
+new schema work).
+**Priority:** P3 — cosmetic per-concept fix, not a blocking defect.
+**Deferred from:** `/investigate` — gram-schmidt u1/embedded-widget/
+thinking-gap pass, 2026-09-08, branch `claude/content-strategy-framework-o9afoc`.
+
+## Thinking-gap insight still degrades to a deterministic (non-personalized) fallback with no LLM key
+
+**Trigger:** live-QA `/investigate` (2026-09-08): a Laplace-transform PYQ
+in the "Anytime Studymate" session showed "No extra insight available for
+this one."
+
+**What shipped:** `getThinkingGap()` (`src/sessions/thinking-gap-service.ts`)
+now ALWAYS returns real, readable text — `deterministicGapFallback(errorType)`
+covers `sign_error`/`factor_error`/`pi_confusion`/`no_attempt` with a
+specific, actionable sentence, and a generic-but-real fallback for every
+other error type — instead of returning `text: null` (which the frontend
+rendered as "No extra insight available"). Never written to
+`thinking_gap_cache` (that table is read elsewhere as evidence of real
+LLM-personalized generation; a deterministic string isn't that).
+
+**Why this is still open:** this closes the ONE reported symptom (a blank
+insight) with a real, honest floor — it does NOT restore the actual
+personalized, LLM-generated per-mistake insight the feature is designed to
+produce. That still requires a configured LLM provider key
+(`GEMINI_API_KEY`/`ANTHROPIC_API_KEY`/etc.) for the `'chat'` role, which
+this sandbox environment doesn't have — the same "known-unrun" gap
+documented repeatedly elsewhere in CLAUDE.md (v4.33.0, v4.43.0, and
+others). Whoever configures a live key for the deployed environment should
+verify `getLlmForRole('chat')` actually resolves and thinking-gap insights
+start showing `source: 'generated'` (not `'fallback'`) in practice —
+`GET /api/admin/content-maturity` or a direct DB check on
+`thinking_gap_cache` row counts would confirm it's live.
+
+**Effort:** none (config-only, not a code change) once a provider key
+exists.
+**Priority:** P2 — the fallback closes the visible bug, but personalized
+insight is a real, still-missing capability.
+**Deferred from:** `/investigate` — gram-schmidt u1/embedded-widget/
+thinking-gap pass, 2026-09-08, branch `claude/content-strategy-framework-o9afoc`.

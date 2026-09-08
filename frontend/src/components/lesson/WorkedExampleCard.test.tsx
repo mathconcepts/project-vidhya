@@ -300,6 +300,70 @@ describe('"Show next step" engagement gate (/design-review, 2026-09-06)', () => 
   });
 });
 
+// /investigate (2026-09-08, live-QA: "show next step is visible at various
+// levels only the top is enabled... redesign to have a progressive,
+// graduation user experience"). Root cause: an embedded interactive widget
+// (guided_walkthrough/manipulable, rendered by InteractiveSidecar below this
+// card) used to mount fully interactive from first paint regardless of how
+// far the student had tapped through the card's OWN step reveal — two
+// independent progressions on one screen. Now held locked, with honest
+// microcopy, until every workable step above it has been revealed.
+describe('Embedded interactive widget gated behind the outer step reveal (/investigate, 2026-09-08)', () => {
+  const LOCK_MICROCOPY = 'Complete the walkthrough above to unlock practice questions.';
+
+  it('stays locked — spec hidden, honest microcopy shown — until every step is revealed', () => {
+    const atom = makeAtom({
+      content: [
+        'Step one: setup.',
+        '---',
+        'Step two: solve.',
+        '---',
+        `Step three: verify.\n\n${SPEC_BLOCK}`,
+      ].join('\n'),
+    });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+
+    // Locked on first render — the embedded widget's own title must not
+    // appear, and the locked-state microcopy explains why.
+    expect(screen.queryByText('Walk through it')).toBeNull();
+    expect(screen.getByText(LOCK_MICROCOPY)).toBeInTheDocument();
+
+    revealAllSteps();
+
+    // Unlocked once every workable step has been tapped through.
+    expect(screen.queryByText(LOCK_MICROCOPY)).toBeNull();
+    expect(screen.getByText('Walk through it')).toBeInTheDocument();
+  });
+
+  it('a single-step worked example (nothing to progressively reveal) unlocks immediately', () => {
+    const atom = makeAtom({ content: `The whole thing at once.\n\n${SPEC_BLOCK}` });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    expect(screen.queryByText(LOCK_MICROCOPY)).toBeNull();
+    expect(screen.getByText('Walk through it')).toBeInTheDocument();
+  });
+
+  it('a worked_example with no embedded spec shows neither the widget nor the lock microcopy', () => {
+    const atom = makeAtom({
+      content: ['Step one: setup.', '---', 'Step two: solve, no widget here.'].join('\n'),
+    });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    expect(screen.queryByText(LOCK_MICROCOPY)).toBeNull();
+    revealAllSteps();
+    expect(screen.queryByText(LOCK_MICROCOPY)).toBeNull();
+  });
+
+  it('regression: a non-worked_example atom type never gates its embedded widget', () => {
+    const atom = makeAtom({
+      id: 'determinants.intuition',
+      atom_type: 'intuition',
+      content: `Some intuition prose.\n\n${SPEC_BLOCK}`,
+    });
+    render(<AtomCardRenderer atoms={[atom]} conceptId="determinants" studentId="s1" />);
+    expect(screen.queryByText(LOCK_MICROCOPY)).toBeNull();
+    expect(screen.getByText('Walk through it')).toBeInTheDocument();
+  });
+});
+
 // Regression (/investigate, 2026-09-03). \boxed{} is the standard KaTeX
 // command for a final boxed answer — the step containing it renders through
 // the dedicated settle-flash wrapper instead of the plain per-step fade

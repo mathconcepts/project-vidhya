@@ -21,7 +21,7 @@ for_stance: shaken
 
 ## The setup, with real numbers first
 
-Claim: bulbs last $\mu_0=1000$ hours. A sample of $n=36$ gives $\bar{x}=980$, with known $\sigma=180$. Two competing statements: $H_0:\mu=1000$ (the claim, assumed true until data forces a rejection) and $H_1:\mu\neq1000$ (the challenger).
+Claim: bulbs last $\mu_0=1000$ hours. The same $n=50$ bulbs from the hook give $\bar{x}=980$, with known $\sigma=180$. Two competing statements: $H_0:\mu=1000$ (the claim, assumed true until data forces a rejection) and $H_1:\mu\neq1000$ (the challenger).
 
 ## Two ways to be wrong
 

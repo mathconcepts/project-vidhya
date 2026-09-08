@@ -1053,40 +1053,60 @@ boilerplate).
 **Deferred from:** content teaching-arc framework pass, 2026-09-03, branch
 `claude/content-strategy-framework-o9afoc`.
 
-## Motion coverage wave: vector-calculus, probability-statistics, transform-theory, numerical-methods
+## Motion coverage wave 1 — CLOSED (vector-calculus, numerical-methods, probability-statistics, complex-variables)
+
+Closed 2026-09-08: 5 parallel Claude Sonnet subagent batches authored 19
+new resonance-beat scenes across all 29 concepts in these 4 topics (see
+CLAUDE.md's "Resonance-beat scenes, wave 1" section for the full list and
+CHANGELOG.md's 4.79.0 entry). `analytic-functions`/`complex-integration`/
+`residue-calculus`/`taylor-laurent` — complex-variables' worst-depth-
+coverage gap this entry used to flag — are now covered. Several concepts
+correctly skipped a scene as ill-suited (`counting-principles`,
+`random-variables`, `interpolation`, `hypothesis-testing`) rather than
+force one onto content with no honest continuous trace.
+
+## Motion coverage wave 2: calculus, discrete-mathematics, differential-equations, transform-theory, graph-theory
 
 **Trigger:** operator time for the next content wave, or a fresh live-QA
 report on one of these topics.
 
-`docs/designs/2026-09-03-motion-and-plain-language-strategy.md` found these
-4 topics are 100% covered by the passive `gif-scene` system but have ZERO
-`simulation`-kind (scrubbable, narrated, signaling) scenes — the
-pedagogically active layer research ties to real effect sizes. Priority
-order (subject-motion fit × gap, full rationale in the doc):
-1. vector-calculus (7 concepts remaining after `line-integrals`, this
-   pass's pilot) — flux/curl/divergence/Green's/Stokes/Gauss are literal
-   motion-through-space; best-suited topic in the curriculum.
-2. numerical-methods (6 concepts) — root-finding, integration, ODE solvers
-   are iterative-convergence processes, the textbook system-paced case.
-3. probability-statistics (9 concepts) — distribution-vs-parameter is a
-   `manipulable`-slider case (also 0/9 there); sampling-distributions'
-   CLT convergence is a classic animated demonstration.
-4. transform-theory (6 concepts) — lower subject-fit (abstract, frequency-
-   domain) but still fully passive-only.
+The remaining 5 of 9 non-LA topic families after wave 1 (above) closed
+vector-calculus/numerical-methods/probability-statistics/complex-variables.
+Same 5-6-concept-per-batch Sonnet-subagent dispatch pattern that worked for
+both LA and wave 1: read each concept's real hook.md worked-example first
+(never invent a new disconnected one), verify every numeric claim via
+Python/SymPy (Wolfram MCP disconnected this session), author a resonance
+scene ONLY where a real 2D `(x_expr,y_expr)` trace genuinely helps — skip
+and say why otherwise (wave 1's `interpolation`/`hypothesis-testing`/
+`counting-principles`/`random-variables` are the template for a defensible
+skip), propagate any new/edited fence byte-identically across
+base/shaken/assured via direct Python string splicing (never `grep -o`,
+never a `re.sub` callback with an escape-reprocessing step — both have
+corrupted or deleted fences in this repo before).
 
-Same 5-6-concept-per-batch subagent pattern as the common_traps ELI5 pass:
-read the concept's real worked-example numbers (never invent new ones —
-`line-integrals`' pilot reused the exact field/path already verified in
-`hook-shaken.md`), write one honest `narration_steps` sequence per concept,
-respect `MAX_BEAT_TEXT_CHARS=280` and the 8-beat cap, add a `why` line.
+- **calculus** (19 concepts) — already 7/19 covered from an earlier pass;
+  the remaining 12 are the actual gap here.
+- **discrete-mathematics** (6 concepts) — per the 2026-09-03 motion doc,
+  LOWER priority for continuous motion on purpose (discrete/symbolic
+  content risks the "fictional steps" failure mode Betrancourt/Tversky's
+  research warns about); wants segmented `guided_walkthrough` reveal, not
+  animation, as the default treatment.
+- **differential-equations** (8 concepts) — ODE solution curves are a
+  natural fit (a trajectory in the phase plane, or y(t) itself).
+- **transform-theory** (6 concepts) — lower subject-fit (abstract,
+  frequency-domain) but still fully passive-gif-only; lowest priority of
+  the 5.
+- **graph-theory** (7 concepts) — its 3 fully-uncovered concepts
+  (Eulerian & Hamiltonian paths, Connectivity, Trees) need the NEW
+  node-highlight-sequence interactive-spec kind (separate TODOS.md entry
+  below) before scene-authoring can even start there — a schema decision
+  first, not just another batch dispatch. The other 4 graph-theory
+  concepts may fit the existing curve schema and can proceed independently.
 
-**Also:** complex-variables has the worst DEPTH coverage — 4 of 6 concepts
-(`analytic-functions`, `complex-integration`, `residue-calculus`,
-`taylor-laurent`) have neither `simulation` nor `guided_walkthrough` at
-all. Fixing those is arguably higher-urgency than adding a 2nd/3rd scene
-to an already-covered topic.
-
-**Effort:** M per 5-6-concept batch, L+ for all 4 topics.
+**Effort:** M per 5-6-concept batch, L+ for all 5 topics (minus
+graph-theory's schema-gated portion).
+**Deferred from:** motion-and-plain-language-strategy pass, 2026-09-03;
+wave 1 dispatch, 2026-09-08; branch `claude/content-strategy-framework-o9afoc`.
 
 ## New interactive-spec kind needed for graph-theory's discrete-traversal concepts
 

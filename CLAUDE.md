@@ -5025,6 +5025,121 @@ once). Backend suite 4720 → 4722 (367 files, 1 todo). Frontend suite
 2812 → 2816 (102 files). `tsc --noEmit` clean both sides. `npm run ci`
 (18 gates) clean.
 
+### Resonance-beat scenes, wave 1: vector-calculus, numerical-methods, probability-statistics, complex-variables (2026-09-08)
+
+"Use sonnet subagents and generate content for all the other topics of
+GATE Engineering Mathematics" — read against what was actually measurable,
+not guessed, per this repo's own "measure, don't assume" discipline
+before dispatching anything expensive.
+
+**Scoped by measurement first.** All 101 concepts already have all 11
+base atom types (that gap closed at v4.39.0) — "generate content" could
+not mean filling missing atom types. A spot-check of `limits`,
+`residue-calculus`, `pde-basics`, and `hypothesis-testing`'s mnemonic/
+visual-analogy atoms found register/jargon quality already solid on those
+samples — the LA mnemonic-register defect was NOT assumed to recur
+elsewhere without evidence. The real, already-documented gap is this
+doc's own 2026-09-03 "Motion coverage" audit: Linear Algebra alone holds
+21 of the platform's 34 resonance-beat `simulation`-kind scenes; the
+audit's top-4-priority topics (vector-calculus, numerical-methods,
+probability-statistics, complex-variables) had essentially zero. Wave 1
+closes that gap for those 4 topics — 29 of the 75 non-LA concepts.
+
+**Dispatch: 5 parallel Claude Sonnet subagent batches**, the same
+pattern used for every LA content pass in this doc (5-6 concepts each,
+disjoint files, no shared state). Each batch's brief mirrored the LA
+mnemonic-register/silo/visual-analogy audit exactly, plus a 4th check:
+author a new predict-observe-explain resonance scene on `hook.md` ONLY
+where a real, honestly-traceable 2D curve exists and genuinely helps —
+reusing the hook's own already-established example, never inventing a
+disconnected one. Several concepts correctly SKIPPED a scene rather than
+forcing one onto unsuited content: `counting-principles` (genuinely
+combinatorial, no honest continuous trace), `random-variables` (a fixed,
+non-parametrized PMF with nothing to sweep), `interpolation` (a
+single-shot fit, not a converging process — animating it as convergence
+would misrepresent Runge's-phenomenon-prone behavior), `hypothesis-testing`
+(hook's own example never establishes a σ, so no test-statistic curve
+could be traced without fabricating a number).
+
+**19 new resonance scenes, verified every claim via SymPy** (Wolfram MCP
+disconnected this session — same fallback every prior pass used):
+`analytic-functions` (z² angle-doubling), `complex-integration` (pole
+enclosure), `taylor-laurent` (three annulus Laurent series),
+`residue-calculus` (two residues cancelling to zero), `continuous-distributions`
+(density-vs-probability trap), `joint-distributions` (uncorrelated but
+dependent Y=X²), `regression-correlation` (least-squares line on hook's
+own 3 points), `sampling-distributions` (CLT narrowing vs. population
+spread), `numerical-linear-algebra` (Gauss-Seidel convergence),
+`numerical-error-analysis` (relative error vs. scale — also fixed a real
+factual error in its visual-analogy, which had the absolute-vs-relative
+scaling direction backwards), `probability-basics` (Bayes posterior vs.
+prior), `discrete-distributions` (Poisson P(X=0) vs. rate),
+`gauss-divergence` (flux proportional to volume, not surface area),
+`vector-algebra-basics` (the half-angle resultant-force law),
+`root-finding` (Newton's method converging on a cubic), `numerical-integration`
+(trapezoidal error shrinking ~4× per doubling), `numerical-ode` (Euler's
+method's undershoot growing each step), `vector-fields` (a flow line
+stays straight, doesn't curve back), `divergence-curl` (expansion without
+rotation), `surface-integrals` (cosine, not linear, flux drop-off),
+`greens-theorem` (circulation = curl × enclosed area), `stokes-theorem`
+(reuses greens-theorem's own field, generalizing to "any capping
+surface"). `complex-numbers`, `conformal-mapping`, `line-integrals`
+already had scenes from earlier passes — re-verified (ascending beats,
+coordinates matching), not re-authored. 9 real silo fixes closed along
+the way (`vector-fields`, `line-integrals`, `surface-integrals`,
+`vector-algebra-basics`, `interpolation`, `numerical-integration`,
+`numerical-error-analysis`, `regression-correlation`, `hypothesis-testing`
+— each had invented a disconnected example instead of reusing its own
+hook's numbers).
+
+**A real concurrent-write race surfaced mid-pass and was resolved without
+data loss — worth recording as a pitfall for future parallel-subagent
+content dispatches.** Committing each batch's work as soon as it landed
+(rather than waiting for all 5, to keep the working tree from
+accumulating unreviewed risk) meant later batches were still actively
+writing to their own files while an earlier batch's commit was being
+prepared. A `git stash push --keep-index` used to isolate one commit's
+exact changeset for gate verification then conflicted on `stash pop`
+against content the still-running agents had since rewritten. Resolved
+by diffing every "conflicting" file against the stash directly: every
+one was either byte-identical or a genuinely newer, more-refined edit
+(the running agent's own self-correction — e.g. trimming a
+repeated-4-gram `ci:variant-agreement` violation against a sibling
+concept), so the stash was dropped as fully superseded rather than
+force-merged or blindly trusted. Separately, two of the five subagents
+independently reported a sibling process briefly reverting their own
+unstaged edits mid-task (almost certainly the same stash operation) —
+both detected it via `git status`/`git diff` showing unexpected zero
+diffs, recovered by re-applying their already-verified fence text from
+their own scratch backups, and re-verified before reporting done;
+confirmed correct against the final combined diff before commit. Lesson
+for next time: prefer running the content gates directly against the
+live working tree (they are fast, read-only, and report per-file, so
+failures are trivially attributable to the right batch by concept name)
+over `git stash`-based isolation when other agents may still be writing.
+
+**Verified as one combined whole after all 5 batches landed**, not
+per-batch in isolation: `npm run ci` (18 gates, `ci:interactive-specs`
+490 blocks +66, `ci:variant-agreement` 610 pairs 0 failures,
+`ci:katex-fences` 1723, `ci:content-integrity` 1729) clean against the
+full 5-batch diff. `tsc --noEmit` clean both sides. Backend 4722/4722
+(367 files, 1 todo) and frontend 2816/2816 (102 files) unchanged — a
+content-only pass adds no new test cases of its own, but the frontend's
+1726-assertion `MarkdownAtomRenderer.regression.test.tsx` mounts every
+new/edited atom through real React with no throw.
+
+**Scope, named honestly.** This is wave 1 of 2. It closes the 4
+highest-priority topics named in the 2026-09-03 motion-coverage audit —
+29 of 75 non-LA concepts. Still open, tracked in TODOS.md with the same
+5-batch dispatch pattern as the next wave: calculus (already 7/19 covered
+from an earlier pass, the rest still bare), discrete-mathematics,
+differential-equations, transform-theory, and graph-theory (which that
+same audit flagged as needing a NEW node-highlight-sequence interactive-
+spec kind — its 3 fully-uncovered concepts, Eulerian & Hamiltonian paths,
+connectivity, and trees, don't fit the existing `(x_expr,y_expr)` curve
+schema at all, so wave 2 for graph-theory is a schema decision first, not
+just more scene-authoring).
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -5603,6 +5603,99 @@ path, driven all the way through `doneState` via a real "Got it" click) —
 ci` (18 gates, including `ci:boot` — the real server booting under the
 widened `StudentModel` interface) clean.
 
+### Concept Anchors — what the maths is FOR (2026-09-18)
+
+`/investigate` + `/design-review` on: "the content for e.g. Trace of a
+matrix cannot explain intuitively, connecting theoretical concepts to
+practical application"; and separately, an agenda for effective content
+rendering under four constraints (screen space, attention span, competency,
+ELI5). Both asks shared one cause. Full detail:
+`docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md`.
+
+**Root cause: the pipeline had no slot for it.** `AtomType`
+(`src/content/content-types.ts:167`) has eleven members covering what a
+concept is, how it feels, how to compute it, what goes wrong, how to
+remember it and how the exam asks it — and nothing for "what is this FOR".
+All four per-concept framing registries are exam-framed or unrendered:
+`pain-points.ts` (draft, steers nothing), the atomic catalogue → DPS
+(`gate_examination_intent` + a **module-level** `primary_pain_point`, so all
+26 LA atoms share one string), the CSV `attention_design_hypothesis`
+(prompt-time only), and `ConceptNode.description` (builds an embedding query,
+never rendered). The smoking gun: `ped_property_first` already directs *"End
+with a one-line 'Why it matters in GATE' callout"* — the platform HAS a "why
+it matters" idea and it is scoped to the exam.
+
+Measured: grepping 101 concepts for any real-world signal returned 18, but
+reading the matched lines nearly all are the figure of speech *"in practice"*
+meaning "in computational practice". Genuine bridges: **about two**.
+
+**Why this is NOT a twelfth AtomType.** Measured with the repo's own
+`countTotalReadingLoad` (base atoms, what one student is served): **11 cards
+and 1,752 words — 8.8 minutes — per concept; 176,931 words / 14.7 hours
+corpus-wide.** A twelfth card makes every constraint the ask named worse.
+Card count, not word count, is the binding constraint on a tired student.
+So the anchor is **one sentence, zero new cards**: ≤30 words × 101 = +1.7%
+reading load.
+
+**The mechanism.**
+- `data/registry/concept-anchors/<topic>.yml` — per-concept (never
+  per-module, the trap the catalogue's `primary_pain_point` fell into), one
+  file per topic so parallel authoring never contends.
+- `src/registry/concept-anchors.ts` — loader + `validateAnchor()`, which is
+  the contract as code and is called by BOTH the gate and the codegen so the
+  rules are stated once.
+- `frontend/scripts/generate-concept-anchors.ts` → `frontend/src/generated/
+  concept-anchors.gen.ts` — import-free, same discipline as
+  `intent-slices.gen.ts`. Drift-tested.
+- `AtomCardRenderer.tsx`'s `ConceptAnchorLede` — rendered at **index 0**,
+  deliberately NOT on `atom_type === 'hook'`: the stack is re-ordered under
+  the student (`applyIntentStageOrder`, the error-streak visual switch), so
+  the hook is not reliably first, and being first is the anchor's whole job.
+  17px primary ink closed by a hairline; no accent (green means mastery,
+  indigo means AI/tutor, this is neither).
+- `npm run ci:concept-anchors` — **blocking on coverage as well as
+  contract**, because the failure it exists to stop is silence.
+
+**Contract v1 (locked):** ≤30 words; a concrete named system, never "many
+fields"; carries the bridge, not a name-drop; no notation; **no exam
+framing**; true and direction-precise. An honest `anchor: null` + `reason`
+is allowed and expected; a fabricated application is far worse.
+
+**Coverage: 100 authored + 1 honest null (`integration-substitution` — a
+relabelling step inside someone else's integral), 0 missing, 0 violations.**
+Authored by 6 parallel Sonnet subagent batches owning whole topics.
+
+**Two things worth recording:**
+1. *The gate's own false positive.* `validateAnchor` first matched `/GATE/i`,
+   which rejected `boolean-algebra`'s "fewer physical **logic gates** on the
+   silicon" — exactly the concrete anchor the contract asks for. Now
+   case-sensitive: the exam is caps, the component is not. A test locks it.
+2. *A real content bug in the reported concept.*
+   `trace/atoms/visual-analogy.md` claimed trace answers "how much does this
+   transformation expand or shrink the volume of a tiny box" — that is the
+   **determinant** ($\det A = 18$ for the concept's own matrix,
+   Wolfram-verified; $\operatorname{tr} A = 9$), and its `tr(AB)=tr(BA)`
+   "volume chain" justification was a fabricated mechanism. Its `gif-scene`
+   plotted $\sqrt{5}\,|x|$, unrelated to trace. Rewritten to contrast
+   multiply-the-stretches (determinant, 18) against add-them (trace, 9) — the
+   exact confusion it had been teaching — with a `discrete-bars` scene
+   showing 6, 3 and their sum 9, reusing the hook's own numbers.
+
+**Deliberately not done, named rather than absorbed:** the editorial ceiling
+for `common_traps` (no `ASSURED_PROSE_BUDGET` entry at all; 146 avg, 18 of
+101 over 220, worst 406 — and it is force-injected after three wrong answers,
+i.e. longest exactly when the student is most overloaded); promoting the
+beat-aware `countTotalReadingLoad` to a blocking gate (255 atoms would fail
+at once; worst undercount 9.3x); a corpus sweep of the other ~99
+`visual_analogy` atoms for the error class found in `trace`. Anchors average
+29.0 words against the 30 cap — tighten if live QA shows the lede reads long.
+
+**Tests:** backend 4729 → 4758 (+29: contract rules incl. the logic-gate
+false positive, loader, codegen drift, import-free bundle check). Frontend
+2877 → 2883 (+6: renders on first card only, index-0 not hook-typed, silent
+when unauthored, no accent colour, body-size). `tsc` clean both sides.
+`npm run ci` **19 gates** (was 18) clean.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

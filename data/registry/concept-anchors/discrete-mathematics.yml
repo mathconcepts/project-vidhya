@@ -1,0 +1,22 @@
+# Concept anchors — discrete-mathematics
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=30 words, concrete system, carries the bridge not a name-drop, no
+# notation, no exam framing, true and direction-precise.
+version: 1
+topic: discrete-mathematics
+concepts:
+  boolean-algebra:
+    anchor: "A chip designer simplifies a circuit's boolean expression before fabrication — fewer terms mean fewer physical logic gates on the silicon, which means a cheaper, faster, cooler-running chip."
+  functions-combinatorics:
+    anchor: "A test engineer counts every way 4 requests can be routed to 2 servers with neither left idle, using this counting rule, to make sure that edge case gets tested."
+  group-theory-basics:
+    anchor: "A materials scientist classifies a crystal's structure by which rotations and reflections leave it looking unchanged — the rules those symmetries obey are exactly a group's defining axioms."
+  propositional-logic:
+    anchor: "A firewall rule 'if traffic matches this pattern, block it' is broken only by matching traffic that still gets through; traffic that never matches breaks nothing, whatever happens to it."
+  recurrence-relations:
+    anchor: "A bank's loan-repayment system computes next month's outstanding balance directly from a formula, instead of replaying every past month's interest calculation one step at a time back to day one."
+  sets-relations:
+    anchor: "A database groups customer records into equivalence classes by matching zip code before running a report — the matching rule must behave consistently or some records land in two groups."

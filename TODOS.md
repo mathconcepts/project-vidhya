@@ -2321,3 +2321,76 @@ lesson↔practice cycle) is closed; quizzes/mocks are a less frequent,
 naturally lower-urgency extension.
 **Deferred from:** Competency Compass, 2026-09-08, branch
 `claude/content-strategy-framework-o9afoc`.
+
+---
+
+## `common_traps` needs an editorial prose ceiling
+
+**What:** `common_traps` is the only atom type with no
+`ASSURED_PROSE_BUDGET` entry, no `stances:` guidance block, and no density
+check anywhere. Measured across 101 concepts: **146 words average, 18 of 101
+already exceed 220** (every *other* type's widest ceiling), worst
+`symmetric-matrices` at **406**.
+
+**Why it matters more than the raw numbers suggest:** `pedagogy-engine.ts`
+force-injects a concept's `common_traps` atom to the FRONT of the queue
+after three consecutive wrong answers. So it is the longest thing on the
+page at exactly the moment the student is most overloaded — the inverse of
+what the 2026-09-18 rendering agenda's R3 asks for.
+
+**Why not done in that pass:** setting the ceiling is an editorial decision
+about what a trap atom *should* cost, not a measurement. The measurement is
+in hand; the number is a call for whoever owns content standards.
+
+**Effort:** S CC to add the budget entry + gate; M to bring 18 atoms under it.
+**Priority:** P2 — it degrades the experience precisely when a student is
+struggling.
+**Deferred from:** Concept Anchors + rendering agenda, 2026-09-18.
+
+---
+
+## Promote the beat-aware reading-load count to a blocking gate
+
+**What:** `countProseWords` strips fenced blocks, so a resonance hook's
+`narration_steps[].text` — what the student actually reads while the scene
+plays — is invisible to `ci:variant-agreement`'s prose budget. Worst
+undercount: `ode-bernoulli/hook-shaken.md`, gate sees 27 words, real load
+**252 (9.3x)**. 255 atoms carry beats.
+
+**Where to start:** `countTotalReadingLoad` (`src/content/prose-budget.ts`)
+already exists, is already honest, and is already reported by
+`npm run content:reading-load-report` — the work is choosing a ceiling and
+flipping the gate, not writing the counter.
+
+**Why not done:** turning it on today fails 255 atoms at once. Needs the
+same editorial ceiling call as `common_traps` above; the two should probably
+be decided together.
+
+**Effort:** S CC to flip / M-L to bring the corpus under whatever ceiling is chosen.
+**Priority:** P2.
+**Deferred from:** Concept Anchors + rendering agenda, 2026-09-18.
+
+---
+
+## Sweep the other ~99 `visual_analogy` atoms for trace-class errors
+
+**What:** `trace/atoms/visual-analogy.md` shipped a real mathematical error
+— it described the **determinant** ("how much does this transformation
+expand or shrink the volume of a tiny box") and called it the trace, with a
+fabricated `tr(AB)=tr(BA)` justification and a `gif-scene` plotting an
+unrelated curve. Fixed 2026-09-18.
+
+**Why this is open:** one confirmed instance is not evidence of a pattern,
+but it is not evidence of its absence either — and this atom type is the one
+most likely to harbour the error class, since an *analogy* is exactly where
+a plausible-but-wrong mechanism survives review. The 2026-09-04 audit of
+these files checked positional/deictic language, NOT mathematical claims.
+
+**Where to start:** the same 5-6-concept parallel Sonnet batch pattern used
+for the anchors, with one instruction: verify the analogy's claimed
+mechanism against what the maths actually does, Wolfram/SymPy in hand.
+
+**Effort:** M CC (6 batches).
+**Priority:** P2 — a wrong mechanism taught confidently is worse than a
+missing one.
+**Deferred from:** Concept Anchors + rendering agenda, 2026-09-18.

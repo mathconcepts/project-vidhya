@@ -1,0 +1,22 @@
+# Concept anchors — numerical-methods
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=30 words, concrete system, carries the bridge not a name-drop, no
+# notation, no exam framing, true and direction-precise.
+version: 1
+topic: numerical-methods
+concepts:
+  interpolation:
+    anchor: "An aircraft's flight recorder logs altitude once every few seconds — accident investigators use interpolation to build a smooth curve through those points, estimating where the plane was in between."
+  numerical-error-analysis:
+    anchor: "In 1991, a Patriot missile battery's clock accumulated a tiny rounding error over 100 hours — by then the drift was large enough to miss an incoming Scud missile."
+  numerical-integration:
+    anchor: "A clinical trial estimates a drug's total exposure in the blood by numerically integrating concentration readings taken every few hours — that computed area sets the next trial dose."
+  numerical-linear-algebra:
+    anchor: "Google's original PageRank algorithm ranks billions of web pages by solving one huge system of linear equations — too large for exact elimination, so it refines a guess repeatedly instead."
+  numerical-ode:
+    anchor: "A flight simulator's physics engine has no closed-form formula for a plane's motion under real air and engine forces, so it steps forward in tiny time increments using Runge-Kutta."
+  root-finding:
+    anchor: "A bank's loan calculator finds the interest rate matching your payment by guessing, checking how far off it is, and correcting — since no formula solves for rate directly."

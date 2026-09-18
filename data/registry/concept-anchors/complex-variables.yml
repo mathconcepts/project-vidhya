@@ -1,0 +1,22 @@
+# Concept anchors — complex-variables
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=30 words, concrete system, carries the bridge not a name-drop, no
+# notation, no exam framing, true and direction-precise.
+version: 1
+topic: complex-variables
+concepts:
+  analytic-functions:
+    anchor: "A metal plate's interior temperature is pinned down completely by its edge temperature alone — the exact rigidity analytic functions have, and heat-sink engineers rely on it directly."
+  complex-integration:
+    anchor: "Physicists computing a light-diffraction integral that has no elementary formula deform the path into the complex plane instead; clear of any singularity, it gives the same real answer."
+  complex-numbers:
+    anchor: "Electrical engineers analysing an AC circuit write resistance and reactance together as one complex number, so a circuit mixing resistors, capacitors, and coils reduces to ordinary algebra."
+  conformal-mapping:
+    anchor: "Aircraft designers compute a wing's lift by mapping its odd cross-section onto a plain circle, where the airflow math is easy, then carrying the answer back onto the real wing."
+  residue-calculus:
+    anchor: "Communication engineers computing how much noise power a filter lets through add up the residues trapped inside one loop, multiply by a fixed constant, and read off the exact number."
+  taylor-laurent:
+    anchor: "Digital filter designers checking a system's stability expand it as a Laurent series around each trouble point; which ring that series converges in decides whether the filter can be built."

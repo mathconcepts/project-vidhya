@@ -33,6 +33,7 @@ import {
   ghostArrowDirs,
   formatSignificant,
   beatHighlightKind,
+  highlightNounForSpec,
 } from './Simulation';
 import type { SimulationSpec, Mat2 } from './types';
 
@@ -1088,8 +1089,12 @@ describe('linear-map scene rendering', () => {
 
     // Contrast fix: full-ink fill on an opaque halo, replacing the
     // low-contrast --text-secondary these ×λ/area labels used before.
-    expect(zeroLabel!.getAttribute('fill')).toBe('var(--text-primary)');
-    expect(zeroLabel!.getAttribute('stroke')).toBe('var(--surface-fill)');
+    // green-ink since live-QA 2026-09-18: the reveal label is coloured to
+    // match the arrow it names, so the number and the shape read as one object.
+    expect(zeroLabel!.getAttribute('fill')).toBe('var(--green-ink)');
+    // --surface-card since live-QA 2026-09-18: --surface-fill is 12% opaque,
+    // so the halo never occluded the arrows behind the digits.
+    expect(zeroLabel!.getAttribute('stroke')).toBe('var(--surface-card)');
   });
 });
 
@@ -1314,7 +1319,7 @@ describe('Simulation — step counter and 1-1 mapping chip (/design-review, 2026
     render(<Simulation spec={MAPPING_SPEC} />);
     expect(screen.getByText('Setting up — no highlight yet.')).toBeInTheDocument();
     expect(screen.queryByText(/Look at the highlighted/)).toBeNull();
-    expect(screen.queryByText('This is the payoff — look at the highlighted shape')).toBeNull();
+    expect(screen.queryByText('This is the payoff — look at the green curve')).toBeNull();
   });
 
   it('renders the "focus" mapping chip, in ink, on a focus_point beat', () => {
@@ -1322,11 +1327,11 @@ describe('Simulation — step counter and 1-1 mapping chip (/design-review, 2026
     const group = screen.getByRole('group', { name: 'Scene beats' });
     fireEvent.click(within(group).getByLabelText(/^Beat 2 of 3/));
 
-    const chip = screen.getByText('Look at the highlighted arrow or point');
+    const chip = screen.getByText('Look at the marked point');
     expect(chip).toBeInTheDocument();
     expect(chip.style.color).toBe('var(--text-primary)');
     // The chip stays scoped to this beat — the "payoff" chip text never appears alongside it.
-    expect(screen.queryByText('This is the payoff — look at the highlighted shape')).toBeNull();
+    expect(screen.queryByText('This is the payoff — look at the green curve')).toBeNull();
   });
 
   it('renders the "payoff" mapping chip, in green, on an emphasize beat', () => {
@@ -1334,7 +1339,7 @@ describe('Simulation — step counter and 1-1 mapping chip (/design-review, 2026
     const group = screen.getByRole('group', { name: 'Scene beats' });
     fireEvent.click(within(group).getByLabelText(/^Beat 3 of 3/));
 
-    const chip = screen.getByText('This is the payoff — look at the highlighted shape');
+    const chip = screen.getByText('This is the payoff — look at the green curve');
     expect(chip).toBeInTheDocument();
     expect(chip.style.color).toBe('var(--green-ink)');
   });
@@ -1534,5 +1539,122 @@ describe('graph-mode scene rendering (2026-09-08 plan: a graph figure mode for s
     const group = screen.getByRole('group', { name: 'Scene beats' });
     fireEvent.click(within(group).getByLabelText(/^Beat 2 of 3/));
     expect(live!.textContent).toContain('Look at town A and the road to B.');
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Live-QA (/investigate, 2026-09-18) on the positive-definite-matrices hook.
+// Report verbatim: "Highlighted shape unclear. Where is the highlight. Need
+// better design - use good color for contrasts" and "the glass window scrolls
+// down to cover complete text".
+//
+// Three separate defects sat behind that, all confirmed against the render
+// code before any fix:
+//   1. `×${e.value}` interpolated the RAW float, so production showed
+//      "×3.61803399" — a 10-character digit wall competing with the shape it
+//      labels — even though this file already exports formatSignificant.
+//   2. The 2 green eigen-arrows differed from the 16 ordinary ones by 1px of
+//      stroke width only, and the label's halo used --surface-fill (12%
+//      opaque) so it never occluded what was behind the digits.
+//   3. The chip said "look at the highlighted shape" in EVERY figure mode,
+//      but a linear_map scene highlights ARROWS — it named a noun that was
+//      not on screen.
+// ───────────────────────────────────────────────────────────────────────────
+describe('Simulation — highlight legibility (live-QA 2026-09-18)', () => {
+  const IRRATIONAL_EIGEN: SimulationSpec = {
+    v: 1,
+    kind: 'simulation',
+    title: 'Positive definite: both stretch factors positive',
+    duration_sec: 9,
+    linear_map: {
+      matrix: [[3, 1], [1, 2]],
+      num_vectors: 16,
+      // The real golden-ratio eigenvalues of [[3,1],[1,2]] — the exact pair
+      // that rendered as ×3.61803399 / ×1.38196601 in production.
+      eigen: [
+        { dir: [0.85065081, 0.52573111], value: 3.618033988749895 },
+        { dir: [-0.52573111, 0.85065081], value: 1.381966011250105 },
+      ],
+    },
+    narration_steps: [
+      { at_progress: 0, text: 'Sixteen directions.' },
+      { at_progress: 0.5, text: 'Two refuse to turn.', emphasize: true },
+    ],
+  };
+
+  it('rounds the eigenvalue label instead of dumping the raw float', () => {
+    mockMatchMedia(true); // reduced motion → settled frame, reveal already on
+    const { container } = render(<Simulation spec={IRRATIONAL_EIGEN} />);
+    expect(container.textContent).toContain('×3.62');
+    expect(container.textContent).toContain('×1.38');
+    // The actual production string must not come back.
+    expect(container.textContent).not.toContain('3.61803399');
+    expect(container.textContent).not.toContain('1.38196601');
+  });
+
+  it('gives the reveal label an opaque halo and the green it names, not muddy ink', () => {
+    mockMatchMedia(true);
+    const { container } = render(<Simulation spec={IRRATIONAL_EIGEN} />);
+    const label = [...container.querySelectorAll('svg text')].find((t) =>
+      (t.textContent ?? '').startsWith('×3.62'),
+    );
+    expect(label).toBeTruthy();
+    // --surface-fill is only 12% opaque; a halo drawn in it cannot occlude.
+    expect(label!.getAttribute('stroke')).toBe('var(--surface-card)');
+    expect(label!.getAttribute('stroke')).not.toBe('var(--surface-fill)');
+    expect(label!.getAttribute('fill')).toBe('var(--green-ink)');
+  });
+
+  it('recedes the 16 ordinary arrows once the payoff is revealed, so green reads by contrast', () => {
+    mockMatchMedia(true);
+    const { container } = render(<Simulation spec={IRRATIONAL_EIGEN} />);
+    // ArrowGlyph applies opacity to the wrapping <g>, not the <line>.
+    const dimmed = [...container.querySelectorAll('svg g[opacity]')].filter(
+      (g) => g.getAttribute('opacity') === '0.16',
+    );
+    // The non-eigen arrows are dimmed; the 2 eigen arrows never are.
+    expect(dimmed.length).toBeGreaterThan(0);
+    const green = [...container.querySelectorAll('svg line')].filter(
+      (l) => l.getAttribute('stroke') === 'var(--green)',
+    );
+    expect(green.length).toBeGreaterThan(0);
+    for (const g of green) expect(g.getAttribute('opacity')).not.toBe('0.16');
+  });
+});
+
+describe('highlightNounForSpec — the chip names what actually turned green', () => {
+  it('names arrows for a linear_map scene, not a "shape"', () => {
+    expect(highlightNounForSpec({ linear_map: true, graph: false }, 'payoff')).toBe(
+      'the two green arrows',
+    );
+    expect(highlightNounForSpec({ linear_map: true, graph: false }, 'payoff')).not.toContain('shape');
+  });
+
+  it('names nodes and edges for a graph scene', () => {
+    expect(highlightNounForSpec({ linear_map: false, graph: true }, 'payoff')).toContain('nodes');
+  });
+
+  it('names the curve for a plain parametric scene', () => {
+    expect(highlightNounForSpec({ linear_map: false, graph: false }, 'payoff')).toBe(
+      'the green curve',
+    );
+  });
+
+  it('uses the "look here" noun for a focus beat, and nothing at all when no highlight is active', () => {
+    expect(highlightNounForSpec({ linear_map: true, graph: false }, 'focus')).toBe(
+      'the bolder arrow',
+    );
+    expect(highlightNounForSpec({ linear_map: true, graph: false }, null)).toBe('');
+  });
+});
+
+describe('Simulation — pinned figure cannot swallow the caption (live-QA 2026-09-18)', () => {
+  it('caps the sticky wrapper height so the majority of the viewport stays with the text', () => {
+    const { container } = render(<Simulation spec={BEAT_SPEC} />);
+    const wrapper = container.querySelector('svg')!.parentElement as HTMLElement;
+    expect(wrapper.style.position).toBe('sticky');
+    // Without a cap, figure + beat bar + controls + slider filled a phone
+    // viewport and the caption scrolled under an opaque block.
+    expect(wrapper.style.maxHeight).toBe('42vh');
   });
 });

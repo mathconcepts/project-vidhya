@@ -286,7 +286,12 @@ export const PROVIDERS: ProviderDefinition[] = [
     key_docs_url: 'https://ollama.com/download',
     description: 'Run models locally on your machine. No key needed, but slower.',
     icon: '🏠',
-    default_endpoint: 'http://localhost:11434/v1',
+    // Root, NOT /v1: runtime.ts's ollama dispatcher speaks Ollama's NATIVE
+    // API (`/api/chat`), not its OpenAI-compatibility shim (`/v1/chat/completions`).
+    // With `/v1` here the dispatcher built `http://localhost:11434/v1/api/chat`,
+    // which does not exist. joinProviderUrl cannot rescue this one because
+    // `/api/` is not a version segment there is a duplicate of.
+    default_endpoint: 'http://localhost:11434',
     endpoint_overridable: true,
     requires_key: false,
     models: [

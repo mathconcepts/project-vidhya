@@ -219,6 +219,22 @@ export function beatSegmentFill(sortedSteps: SimulationSpec['narration_steps'], 
  */
 export type BeatHighlightKind = 'payoff' | 'focus' | null;
 
+/**
+ * The noun the 1-1 mapping chip uses, chosen from the figure mode so it names
+ * the thing that actually changed colour. Exported for tests: a chip that
+ * points at the wrong object is worse than no chip, because the student goes
+ * looking for something that isn't there.
+ */
+export function highlightNounForSpec(
+  mode: { linear_map: boolean; graph: boolean },
+  kind: BeatHighlightKind,
+): string {
+  if (kind === null) return '';
+  if (mode.graph) return kind === 'payoff' ? 'the green nodes and edges' : 'the marked node';
+  if (mode.linear_map) return kind === 'payoff' ? 'the two green arrows' : 'the bolder arrow';
+  return kind === 'payoff' ? 'the green curve' : 'the marked point';
+}
+
 export function beatHighlightKind(step: Beat | undefined | null): BeatHighlightKind {
   if (!step) return null;
   if (step.emphasize) return 'payoff';
@@ -564,6 +580,15 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // The 1-1 mapping chip's kind for the active beat — see beatHighlightKind's
   // doc comment above for why `trap` is excluded.
   const activeHighlightKind = activeIdx != null ? beatHighlightKind(sortedSteps[activeIdx]) : null;
+  // The chip must name the object the diagram ACTUALLY turns green, per figure
+  // mode. It previously said "the highlighted shape" for every mode — but a
+  // linear_map scene highlights ARROWS (eigen-directions), so on the concept
+  // the live-QA report came from ("Highlighted shape unclear. Where is the
+  // highlight.") the sentence pointed at a noun that was not on screen.
+  const highlightNoun = highlightNounForSpec(
+    { linear_map: !!linearMap, graph: !!graphSpec },
+    activeHighlightKind,
+  );
   // Engagement gate (/design-review, 2026-09-06 — see useEngagementGate.ts
   // and GuidedWalkthrough.tsx, the other consumer of the app's shared
   // advance-button convention): Continue was tappable the instant a beat
@@ -632,7 +657,24 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
         className="space-y-2"
         style={
           showLiveBeatUI
-            ? { position: 'sticky', top: 0, zIndex: 1, background: 'var(--surface-card)' }
+            ? {
+                position: 'sticky',
+                top: 0,
+                zIndex: 1,
+                background: 'var(--surface-card)',
+                // Bound how much of the screen the pinned figure may occupy.
+                // Live-QA verbatim: "the glass window scrolls down to cover
+                // complete text." Pinning an OPAQUE block (correctly opaque
+                // since the 2026-09-06 fix) at the top of a card means the
+                // caption scrolls underneath it, and on a phone the figure +
+                // beat bar + controls + slider was tall enough to leave almost
+                // no room for the sentence it is illustrating. Capping at 42vh
+                // guarantees the majority of the viewport always belongs to the
+                // text, while keeping the pin's benefit (the diagram stays on
+                // screen while you read about it).
+                maxHeight: '42vh',
+                overflow: 'hidden',
+              }
             : undefined
         }
       >
@@ -846,7 +888,10 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
                   own reserved meanings (DESIGN-SYSTEM.md), not a rainbow. */}
               {activeHighlightKind && (
                 <p
-                  className="text-[11px]"
+                  /* 13px, not 11px: the design system's floor for anything a
+                     student reads is 13px, and this is an instruction, not a
+                     timestamp. */
+                  className="text-[13px]"
                   style={{
                     margin: '0 0 4px',
                     fontWeight: 'var(--weight-semibold)',
@@ -867,7 +912,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
                       flexShrink: 0,
                     }}
                   />
-                  {activeHighlightKind === 'payoff' ? 'This is the payoff — look at the highlighted shape' : 'Look at the highlighted arrow or point'}
+                  {activeHighlightKind === 'payoff' ? `This is the payoff — look at ${highlightNoun}` : `Look at ${highlightNoun}`}
                 </p>
               )}
               <MarkdownAtomRenderer
@@ -1049,6 +1094,26 @@ function LinearMapScene({
     arrows.push({ tip: applyLerpedMat2(lm.matrix, u, s), eigenIdx });
   }
 
+  // The payoff arrows are drawn EXPLICITLY, not left to chance.
+  //
+  // Root cause of live-QA 2026-09-18 ("Highlighted shape unclear. Where is the
+  // highlight."): the loop above only turns an arrow green when a SAMPLED
+  // direction happens to be parallel to an eigenvector. The sampled directions
+  // are multiples of 360/n (22.5° at the default n=16), so this worked only for
+  // matrices whose eigenvectors land on that grid. For positive-definite-
+  // matrices' own hook matrix [[3,1],[1,2]] the eigen-directions are 31.72° and
+  // 121.72° — nearest cross-product 0.16 against a 1e-3 tolerance — so NOTHING
+  // turned green while the chip told the student to look at the highlight.
+  // (The LM_SPEC test fixture hid it: its eigenvectors sit at exactly ±45°,
+  // which ARE sampled.)
+  //
+  // Adding the missing directions guarantees the payoff exists for every
+  // matrix, instead of for the lucky ones.
+  eigen.forEach((e, idx) => {
+    if (arrows.some((a) => a.eigenIdx === idx)) return;
+    arrows.push({ tip: applyLerpedMat2(lm.matrix, e.u, s), eigenIdx: idx });
+  });
+
   // Full-span rails through the origin along each eigen line, clipped to the
   // view box — the "tracks" the stubborn arrows are locked to.
   const rails = eigen.map((e) => {
@@ -1193,7 +1258,13 @@ function LinearMapScene({
             to={projector(a.tip[0], a.tip[1])}
             stroke="var(--ink)"
             strokeWidth={1.5}
-            opacity={0.55}
+            /* Once the payoff is revealed the 16 ordinary directions recede,
+               so the 2 green eigen-arrows read by CONTRAST rather than by the
+               1px of extra width that was the only differentiator before.
+               Live-QA verbatim: "Highlighted shape unclear. Where is the
+               highlight." They are dimmed, never hidden — the starburst is
+               what makes the eigen-directions meaningful. */
+            opacity={eigenRevealed ? 0.16 : 0.55}
           />
         ))}
       {arrows
@@ -1238,10 +1309,20 @@ function LinearMapScene({
               key={`lbl-${i}`}
               x={px + ox} y={py + oy}
               textAnchor="middle" dominantBaseline="middle"
-              fontSize={12} fontWeight={600} fill="var(--text-primary)"
-              stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+              /* 13px, not 12: this is the one number the whole scene exists
+                 to deliver, and 12px sat below the design system's own floor
+                 for anything a student reads. */
+              fontSize={13} fontWeight={700} fill="var(--green-ink)"
+              /* --surface-card, NOT --surface-fill: the fill token is 12%
+                 opaque, so the halo never occluded the arrows behind the
+                 digits and the label read as mud. Same token confusion as the
+                 2026-09-06 sticky-wrapper bug. */
+              stroke="var(--surface-card)" strokeWidth={3.5} paintOrder="stroke"
             >
-              {`×${e.value}`}
+              {/* formatSignificant, not the raw float: production rendered
+                  "×3.61803399" — a 10-character digit wall competing with the
+                  shape it labels. */}
+              {`×${formatSignificant(e.value, 3)}`}
             </text>
           );
         })}

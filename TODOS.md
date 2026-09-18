@@ -4,6 +4,70 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Live-QA #3: the visual and the text do not coexist (2026-09-18)
+
+Report verbatim: "Visual - does not do any kind of justice to the text. It is
+very vague. Reimagine how visual and text can coexist side by side. Need a state
+of the art thought here." The screenshot was positive-definite-matrices'
+`visual_analogy`: a bare ellipse gif-scene above three paragraphs of convex-lens
+analogy, with no correspondence between any part of the picture and any sentence.
+
+NOT a defect — the card renders exactly as authored. This is a layout/authoring
+redesign, which is why it was not folded into the 2026-09-18 bug pass.
+
+**Trigger:** a design pass that can be verified live at 375px.
+
+**What the existing machinery already offers**, before inventing anything:
+`simulation` scenes have `narration_steps` (text keyed to playback), `focus_point`
+/ `focus_eigen` (highlight-while-discussed) and `why`. A `visual_analogy` atom
+carrying a passive `gif-scene` has none of that — it is the one figure kind with
+no text-to-picture binding at all. The cheapest real answer is probably to let
+`visual_analogy` carry a `simulation` scene (promoted into the figure slot the
+way hook/intuition already are) rather than to invent a side-by-side layout;
+"side by side" is also suspect on a 375px phone, where two columns means two
+unreadable columns. That tradeoff is the decision to make, not a foregone
+conclusion.
+
+## Live-QA #4: exam_pattern needs clustering and contrast, not more prose (2026-09-18)
+
+Report verbatim: "exam pattern - good info. But convey them using better design
+aesthetics that resonate the message being conveyed, colors, contrasts,
+highlights, clustering and others."
+
+Confirmed by reading the render: `exam_pattern` atoms get the `--structured`
+list-row stagger and nothing else, so six semantically different blocks (a NAT
+shape, a method preference, two named traps, a precondition, a time budget) all
+render as identical bold-lead paragraphs separated by identical hairlines. The
+information is good; the page gives the eye no way to tell a trap from a time
+budget.
+
+**The constraint that makes this a decision rather than a task:** the obvious fix
+is per-row semantic colour (trap → orange, budget → neutral, method → green),
+and that collides head-on with Vidhya Clarity's two-accent law plus the single
+scoped atom-kind exception documented in CLAUDE.md. Options, none free:
+(a) typographic clustering only — label on its own line, stronger rule between
+groups, no new hue (safest, stays inside the law);
+(b) reuse `common_traps`' already-excepted `--orange` for trap rows ONLY, which
+is defensible since it is the same semantic, but widens an exception;
+(c) amend the law again, as the 2026-09-05 atom-kind pass did deliberately.
+
+Recommend (a) plus (b) for trap rows specifically. Needs a `/design-review` with
+a live 375px check before shipping.
+
+## Live-QA #2 (content half): beat prose is too dense (2026-09-18)
+
+The layout half is fixed (the pinned figure is capped at 42vh so it can no
+longer cover the caption). The other half of the report — "too many details...
+Tooo much of mathematics text, then immediately where marks are lost" — is the
+beat prose itself: on positive-definite-matrices' intuition the caption carries a
+full worked determinant argument, and the trap row lands immediately after it.
+
+This is the corpus-scale density work already measured and parked by the
+2026-09-03 first-principles review: `countTotalReadingLoad` exists and is
+report-only (`npm run content:reading-load-report`) because turning it into a
+gate needs an editorial ceiling nobody has set, and 255 atoms would fail at once.
+Same blocker, same decision owner.
+
 ## `WhyThisHelps` dismiss link squeezes the tip it labels at phone width (2026-09-18)
 
 Found during the live 375px verification pass for the Concept Anchor PR —

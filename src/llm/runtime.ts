@@ -235,6 +235,38 @@ class RuntimeLLMImpl implements RuntimeLLM {
 
 // ─── Provider dispatchers ──────────────────────────────────────────
 
+/**
+ * Joins a provider's configured endpoint with an API path, without doubling a
+ * version segment.
+ *
+ * This exists because of a real outage. Every `default_endpoint` in
+ * provider-registry.ts already carries its version prefix
+ * (`https://api.anthropic.com/v1`, `https://generativelanguage.googleapis.com/v1beta`,
+ * `https://openrouter.ai/api/v1`, ...), and every dispatcher below appended a
+ * second one — producing `https://api.anthropic.com/v1/v1/messages` and
+ * `.../v1beta/v1beta/models/...`. Those 404 with an EMPTY body, so the failure
+ * surfaced to students as a bare "Sorry, I encountered an error" with nothing
+ * in it to diagnose. 7 of 8 registered providers were affected, which means the
+ * runtime LLM layer had never completed a single call with any provider; the
+ * embeddings call site (`embedText`) worked only because it hardcodes its full
+ * URL instead of reading `resolved.endpoint`.
+ *
+ * Accepting BOTH forms is deliberate rather than just fixing the registry:
+ * `endpoint_overridable` providers let a user paste their own base URL, and
+ * people paste it both with and without the trailing version segment.
+ */
+export function joinProviderUrl(endpoint: string, path: string): string {
+  const base = endpoint.replace(/\/+$/, '');
+  const suffix = path.startsWith('/') ? path : `/${path}`;
+  // If the base already ends with the exact version segment the path opens
+  // with, drop the duplicate rather than nesting it.
+  const version = suffix.match(/^\/(v\d+[a-z]*)\//)?.[1];
+  if (version && new RegExp(`/${version}$`).test(base)) {
+    return base + suffix.slice(version.length + 1);
+  }
+  return base + suffix;
+}
+
 const DEFAULT_MAX_TOKENS  = 4096;
 const DEFAULT_TEMPERATURE = 0.7;
 const DEFAULT_TOP_P       = 0.95;
@@ -247,7 +279,7 @@ async function callGemini(
   opts: GenerateOptions,
   stream: boolean,
 ): Promise<string | null> {
-  const url = `${resolved.endpoint}/v1beta/models/${resolved.model_id}:${stream ? 'streamGenerateContent' : 'generateContent'}`;
+  const url = joinProviderUrl(resolved.endpoint, `/v1beta/models/${resolved.model_id}:${stream ? 'streamGenerateContent' : 'generateContent'}`);
   const body = buildGeminiBody(input, opts);
   const response = await fetch(url, {
     method: 'POST',
@@ -271,7 +303,7 @@ async function* streamGemini(
   input: GenerateInput,
   opts: GenerateOptions,
 ): AsyncGenerator<string> {
-  const url = `${resolved.endpoint}/v1beta/models/${resolved.model_id}:streamGenerateContent?alt=sse`;
+  const url = joinProviderUrl(resolved.endpoint, `/v1beta/models/${resolved.model_id}:streamGenerateContent?alt=sse`);
   const body = buildGeminiBody(input, opts);
   const response = await fetch(url, {
     method: 'POST',
@@ -328,7 +360,7 @@ async function callAnthropic(
   opts: GenerateOptions,
   stream: boolean,
 ): Promise<string | null> {
-  const url = `${resolved.endpoint}/v1/messages`;
+  const url = joinProviderUrl(resolved.endpoint, '/v1/messages');
   const body = buildAnthropicBody(resolved.model_id, input, opts, stream);
   const response = await fetch(url, {
     method: 'POST',
@@ -353,7 +385,7 @@ async function* streamAnthropic(
   input: GenerateInput,
   opts: GenerateOptions,
 ): AsyncGenerator<string> {
-  const url = `${resolved.endpoint}/v1/messages`;
+  const url = joinProviderUrl(resolved.endpoint, '/v1/messages');
   const body = buildAnthropicBody(resolved.model_id, input, opts, true);
   const response = await fetch(url, {
     method: 'POST',
@@ -417,7 +449,7 @@ async function callOpenAICompat(
   opts: GenerateOptions,
   stream: boolean,
 ): Promise<string | null> {
-  const url = `${resolved.endpoint}/v1/chat/completions`;
+  const url = joinProviderUrl(resolved.endpoint, '/v1/chat/completions');
   const body = buildOpenAIBody(resolved.model_id, input, opts, stream);
   const auth = resolved.provider.auth;
   const headers: any = { 'Content-Type': 'application/json' };
@@ -439,7 +471,7 @@ async function* streamOpenAICompat(
   input: GenerateInput,
   opts: GenerateOptions,
 ): AsyncGenerator<string> {
-  const url = `${resolved.endpoint}/v1/chat/completions`;
+  const url = joinProviderUrl(resolved.endpoint, '/v1/chat/completions');
   const body = buildOpenAIBody(resolved.model_id, input, opts, true);
   const auth = resolved.provider.auth;
   const headers: any = { 'Content-Type': 'application/json' };
@@ -495,7 +527,7 @@ async function callOllama(
   opts: GenerateOptions,
   stream: boolean,
 ): Promise<string | null> {
-  const url = `${resolved.endpoint}/api/chat`;
+  const url = joinProviderUrl(resolved.endpoint, '/api/chat');
   const body = buildOllamaBody(resolved.model_id, input, opts, stream);
   const response = await fetch(url, {
     method: 'POST',
@@ -515,7 +547,7 @@ async function* streamOllama(
   input: GenerateInput,
   opts: GenerateOptions,
 ): AsyncGenerator<string> {
-  const url = `${resolved.endpoint}/api/chat`;
+  const url = joinProviderUrl(resolved.endpoint, '/api/chat');
   const body = buildOllamaBody(resolved.model_id, input, opts, true);
   const response = await fetch(url, {
     method: 'POST',

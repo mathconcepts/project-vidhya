@@ -5722,6 +5722,99 @@ body-size). `tsc` clean both sides. `npm run ci` **19 gates** (was 18) clean.
 Verified live at 375px on a real browser, before and after the cap change —
 the one box the PR's own test plan had left unchecked.
 
+### `/investigate` on 5 live-QA findings: a platform-wide LLM outage and an invisible highlight (2026-09-18)
+
+Five numbered findings, three root-caused and fixed, two honestly deferred.
+Every fix below was traced to primary evidence before any code changed.
+
+**#5 "anytime tutor not working" — the whole runtime LLM layer had never
+worked.** The student-facing string is a catch-all, so the real error came from
+production's own log:
+
+```
+[chat] Stream error: Gemini stream 404:
+```
+
+Empty body, and locally (no key) the honest "needs an API key" message renders
+instead — so production reached the streaming path and threw. Cause:
+`provider-registry.ts`'s `default_endpoint` values already carry their version
+prefix (`https://api.anthropic.com/v1`,
+`https://generativelanguage.googleapis.com/v1beta`, `https://openrouter.ai/api/v1`,
+...) and every dispatcher in `src/llm/runtime.ts` appended a second one —
+`.../v1beta/v1beta/models/...`, `api.anthropic.com/v1/v1/messages`. **7 of 8
+registered providers were malformed**; Ollama was wrong differently (`/v1` on the
+endpoint while the dispatcher speaks the native `/api/chat`). The one call site
+that worked, `embedText`, is the only one that hardcodes its full URL instead of
+reading `resolved.endpoint`.
+
+So the AI tutor, thinking-gap insights, error classification and the
+personalisation generators had **never completed a call with any provider**. This
+corrects a standing misattribution in this very file: the "known-unrun" notes
+blame a missing provider key. That was true locally; production has a Gemini key,
+resolution succeeded, the boot banner said `RAG + LLM (...)`, and every call
+404'd.
+
+Fixed with `joinProviderUrl(endpoint, path)` — one helper, all 8 call sites.
+It dedupes only an EXACT trailing version match, so it accepts both forms a BYOK
+user might paste, and anchors on the end of the base (groq's `/openai/v1` is not
+mistaken mid-URL). `src/llm/__tests__/provider-url-join.test.ts` (15 tests) pins
+every provider's final URL against its real documented endpoint; the assertions
+were verified to catch all three old-code shapes.
+
+**#1 "Highlighted shape unclear. Where is the highlight." — nothing was
+highlighted.** `LinearMapScene` only turned an arrow green when a SAMPLED
+direction happened to be parallel to an eigenvector, and the samples are
+multiples of `360/num_vectors` (22.5° at the default 16). For
+positive-definite-matrices' own hook matrix `[[3,1],[1,2]]` the eigen-directions
+are 31.72° and 121.72° — nearest cross-product 0.16 against a 1e-3 tolerance —
+so **zero arrows turned green** while the chip told the student to look at the
+highlight. Measured corpus-wide: **33 of 57 committed `linear_map` scenes** had
+at least one eigen-direction with no arrow, and on 4 concepts
+(`quadratic-forms`, `spectral-theorem`, `positive-definite-matrices`,
+`rank-nullity`) it was 2 of 2 — no green at all. `LM_SPEC`, the test fixture,
+hid this for months because its eigenvectors sit at exactly ±45°, which ARE
+sampled. Eigen arrows are now drawn explicitly rather than left to chance.
+
+Four more defects in the same report, all confirmed in the render code:
+`×${e.value}` interpolated the raw float (production showed `×3.61803399`, a
+10-character digit wall) while this file already exported `formatSignificant`;
+the label's halo used `--surface-fill`, which is 12% opaque and so never
+occluded (the same token confusion as the 2026-09-06 sticky-wrapper bug); the
+label was ink rather than the green it names; and the 16 ordinary arrows now
+recede to 0.16 opacity on reveal so the payoff reads by CONTRAST instead of by
+1px of stroke width. The mapping chip was also naming a noun that was not on
+screen — it said "the highlighted shape" in every figure mode — so
+`highlightNounForSpec` now picks the noun from the figure mode (arrows / nodes
+and edges / curve), and the chip moved 11px → 13px, the design system's own floor
+for anything a student reads.
+
+**#2 "the glass window scrolls down to cover complete text" — a consequence of
+my own earlier fix.** The sticky figure (2026-09-05, made correctly opaque
+2026-09-06) pins figure + beat bar + controls + slider at the top of the card, so
+on a phone the caption scrolled underneath an opaque block with almost no room
+left. Capped at `maxHeight: 42vh`, which keeps the pin's benefit while
+guaranteeing the majority of the viewport belongs to the text.
+
+**Deliberately NOT done, named rather than half-delivered:** #3 (reimagine how
+the visual and text coexist side by side) and #4 (exam_pattern clustering,
+colour, contrast) are design redesigns, not defects — #4 in particular wants
+per-row semantic colour inside one card, which collides with the two-accent law
+and the scoped atom-kind exception this file documents, so it needs a real design
+decision rather than a guess. The content half of #2 ("too much mathematics
+text") is corpus-scale density work on beat prose. All three are in TODOS.md.
+
+**Tests:** backend 4759 → 4774 (+15, the provider-URL suite). Frontend 2883 →
+2891 (+8: label rounding, opaque halo, green-by-contrast, the noun helper's four
+branches, the 42vh cap). 4 pre-existing assertions reconciled where my changes
+intentionally moved them (the ×0 label's fill and halo, and two chip-copy
+fixtures — `MAPPING_SPEC` is parametric, so its nouns are curve/point, not
+arrows). `tsc` clean both sides; `npm run ci` 19 gates clean.
+
+**Not verified live:** production is unreachable from this sandbox (egress policy
+blocks the host), so the URL fix is proven by unit tests against each provider's
+documented endpoint, not by a successful live call. The real confirmation is the
+first chat turn after deploy.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

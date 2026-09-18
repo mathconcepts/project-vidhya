@@ -4,55 +4,39 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
-## Live-QA #3: the visual and the text do not coexist (2026-09-18)
+## Live-QA #3 (remaining half): give `visual_analogy` a real text-to-picture binding (2026-09-18)
 
-Report verbatim: "Visual - does not do any kind of justice to the text. It is
-very vague. Reimagine how visual and text can coexist side by side. Need a state
-of the art thought here." The screenshot was positive-definite-matrices'
-`visual_analogy`: a bare ellipse gif-scene above three paragraphs of convex-lens
-analogy, with no correspondence between any part of the picture and any sentence.
+The LAYOUT half shipped 2026-09-18 — see CLAUDE.md. Below 720px the leading
+media figure is now `position: sticky` and the caption scrolls underneath it,
+so the figure and the words that reference it are on screen together on a
+phone (verified live at 375px: figure held at top 0 while the prose moved
+733px). That settles the "coexist side by side" tension this entry originally
+flagged as suspect on a 375px viewport — the answer was persistence, not two
+unreadable columns.
 
-NOT a defect — the card renders exactly as authored. This is a layout/authoring
-redesign, which is why it was not folded into the 2026-09-18 bug pass.
+What is still open is the OTHER half of the same report: "does not do any kind
+of justice to the text... very vague." A `visual_analogy` atom carrying a
+passive `gif-scene` still has no per-sentence binding to its picture, unlike a
+`simulation` scene's `narration_steps` + `focus_point`/`focus_eigen` + `why`.
+The pin puts them side by side; it does not make them refer to each other.
 
-**Trigger:** a design pass that can be verified live at 375px.
+**Trigger:** a content pass with budget to author and verify a scene per
+concept (every numeric claim needs SymPy/Wolfram verification, per this repo's
+standing rule), not a layout change.
 
-**What the existing machinery already offers**, before inventing anything:
-`simulation` scenes have `narration_steps` (text keyed to playback), `focus_point`
-/ `focus_eigen` (highlight-while-discussed) and `why`. A `visual_analogy` atom
-carrying a passive `gif-scene` has none of that — it is the one figure kind with
-no text-to-picture binding at all. The cheapest real answer is probably to let
-`visual_analogy` carry a `simulation` scene (promoted into the figure slot the
-way hook/intuition already are) rather than to invent a side-by-side layout;
-"side by side" is also suspect on a 375px phone, where two columns means two
-unreadable columns. That tradeoff is the decision to make, not a foregone
-conclusion.
+**Shape:** let `visual_analogy` carry a promoted `simulation` scene the way
+hook/intuition already do — the renderer needs no change (figure promotion is
+already atom-type-agnostic; `ATOM_PRESENTATION_MAP`'s `stage: 'above'` already
+applies). This is ~88 concepts of authoring, so it is a wave, not a task.
 
-## Live-QA #4: exam_pattern needs clustering and contrast, not more prose (2026-09-18)
-
-Report verbatim: "exam pattern - good info. But convey them using better design
-aesthetics that resonate the message being conveyed, colors, contrasts,
-highlights, clustering and others."
-
-Confirmed by reading the render: `exam_pattern` atoms get the `--structured`
-list-row stagger and nothing else, so six semantically different blocks (a NAT
-shape, a method preference, two named traps, a precondition, a time budget) all
-render as identical bold-lead paragraphs separated by identical hairlines. The
-information is good; the page gives the eye no way to tell a trap from a time
-budget.
-
-**The constraint that makes this a decision rather than a task:** the obvious fix
-is per-row semantic colour (trap → orange, budget → neutral, method → green),
-and that collides head-on with Vidhya Clarity's two-accent law plus the single
-scoped atom-kind exception documented in CLAUDE.md. Options, none free:
-(a) typographic clustering only — label on its own line, stronger rule between
-groups, no new hue (safest, stays inside the law);
-(b) reuse `common_traps`' already-excepted `--orange` for trap rows ONLY, which
-is defensible since it is the same semantic, but widens an exception;
-(c) amend the law again, as the 2026-09-05 atom-kind pass did deliberately.
-
-Recommend (a) plus (b) for trap rows specifically. Needs a `/design-review` with
-a live 375px check before shipping.
+One local content bug from the same report WAS fixed:
+`positive-definite-matrices/atoms/visual-analogy.md` described its two level-set
+families as "primary color" / "secondary color". The renderer deliberately
+draws them ink `#1d1d1f` vs grey `#8e8e93` — a LIGHTNESS difference chosen so
+the scene stays readable to a colour-blind reader (gif-generator.ts's own
+palette comment) — so the prose was discarding the exact cue the figure was
+built around. Now "the dark curve" / "the lighter grey curve". Measured
+corpus-wide before fixing: 1 file, so this was a one-off, not a pattern.
 
 ## Live-QA #2 (content half): beat prose is too dense (2026-09-18)
 

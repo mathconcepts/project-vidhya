@@ -5815,6 +5815,120 @@ blocks the host), so the URL fix is proven by unit tests against each provider's
 documented endpoint, not by a successful live call. The real confirmation is the
 first chat turn after deploy.
 
+### `/investigate` findings #3 and #4: figure/text coexistence on a phone, and exam_pattern row clustering (2026-09-18)
+
+The two findings the prior pass deferred with named blockers. Both closed as
+code-level fixes derived from data the system already had, so both reach all
+101 concepts with zero content authoring — and both were verified in a real
+375px Chromium, which is where the one genuine defect in my own work surfaced.
+
+**#4 — the clustering was already in the content and the renderer discarded
+it.** Report: "exam pattern — good info. But convey them using better design
+aesthetics that resonate the message being conveyed, colors, contrasts,
+highlights, clustering." Every `exam_pattern` atom is authored as
+`- **lead-in**: detail` rows, and the lead-in already names the KIND of fact.
+Measured across all 101 committed atoms — **436 bold-label rows: 247 name a
+question format (NAT/MCQ/MSQ), 85 a time budget, 36 a trap, 68 plain prose**,
+so 368 of 436 (84%) carry a derivable kind. `--structured` rendered all 436
+identically, so finding the two traps in a six-row list meant reading all six.
+
+`classifyStructuredRow` + `rehypeStructuredRowKinds`
+(`MarkdownAtomRenderer.tsx`) derive the kind and prepend a real `<span>` badge
+— not a `content: attr()` pseudo-element, which screen readers announce
+inconsistently. Order is deliberate: trap beats format, because "The trap GATE
+likes on NAT questions" is a trap row and 6 real committed labels have exactly
+that shape; `^time` is anchored so it claims the 85 "Time budget" rows without
+grabbing any row that merely mentions time; the acronym match is
+case-SENSITIVE, so a lead-in beginning "Natural..." is not read as NAT. An
+unrecognised lead-in returns null and the row renders exactly as today — the
+68 plain rows are untouched rather than given a guessed marker. Opt-in per
+call site: `exam_pattern` only, because every `common_traps` row is a trap by
+definition and badging all of them "Trap" would be noise, not clustering.
+
+**The blocker the prior pass named is genuinely gone, not worked around.** That
+pass deferred #4 because per-row semantic colour collides with Clarity's
+two-accent law. It does not collide, because the marker is a WORD (`Trap` /
+`Time` / `NAT`) — no new hue anywhere. Only the trap chip is tinted, reusing
+`--orange`, the one already-sanctioned warning exception.
+
+**#3 — on a phone the figure and its caption never coexisted at all.** Report:
+"Visual — does not do any kind of justice to the text. It is very vague.
+Reimagine how visual and text can coexist side by side."
+`.vidhya-atom-stage`'s grid + sticky figure lives entirely inside
+`@media (min-width: 720px)`, so on the mobile-first platform the figure led and
+then scrolled completely off-screen while the student read the caption prose
+pointing at it — "the diagram on this card" was a promise the phone layout
+broke. The prior pass's own TODO had flagged that two columns at 375px means
+two unreadable columns; the answer turned out to be persistence, not adjacency.
+Below 720px a leading figure now pins and the prose scrolls underneath it.
+
+Scoped via a new `data-figure` discriminator (`scene` vs `media`) because a
+promoted resonance scene already owns its own sticky pin and 42vh cap inside
+`Simulation.tsx` — wrapping a second sticky context around it would resolve the
+inner pin against the outer one. `--surface-card`, never `--surface-fill`: the
+fill token is 12% opaque and was the exact cause of the 2026-09-06 sticky
+bleed-through bug. The image is capped (34vh) rather than the wrapper clipped,
+so a tall GIF scales instead of losing its top.
+
+**One content bug, measured before being called a pattern.**
+`positive-definite-matrices/atoms/visual-analogy.md` described its two
+level-set families as "primary color" / "secondary color" while the renderer
+deliberately draws them ink `#1d1d1f` vs grey `#8e8e93` — a LIGHTNESS
+difference chosen so the scene reads for a colour-blind student
+(`gif-generator.ts`'s own palette comment). The prose was discarding the exact
+cue the figure was built around. A corpus grep found **1 file**, so this is a
+one-off, not the structural cause of #3.
+
+**The live check caught a defect in my own work, twice.** jsdom applies no
+stylesheet, so the badge colours were only verifiable in a real browser. First
+measurement: the neutral badge resolved to `--text-secondary`
+(`rgba(60,60,67,0.6)`) on the grey fill at **3.5:1** — the same token and the
+same failure the 2026-09-04 pass fixed on the `×λ` labels. 13px at weight 600
+is not WCAG "large text" (that needs 18.66px bold), so 4.5:1 applies. Switched
+to `--text-primary`: **12.30:1**. Second measurement: `--orange` text on
+`--orange-tint` fill was **1.85:1** (same hue, different alpha, almost no
+luminance delta), and `--orange-ink` on it was **4.34:1** — closer, still a
+fail, and shipping 4.34 right after citing the contrast rule would have been
+worse than picking a pairing that clears it. Final shape puts the hue in the
+FILL (non-text content) with primary ink on top: **14.07:1 light / 12.03:1
+dark**, all badges passing in both themes. The trap chip's fill differs from a
+neutral chip by only 1.14:1 in luminance — a hue-only difference — so it also
+carries a 1px `--orange` inset ring, an edge-present-vs-absent channel that
+needs no colour vision; the badge word remains the channel nobody depends on
+sight for.
+
+**Verified live at 375px, not asserted.** `data-figure="media"`,
+`position: sticky`, `top: 0`, genuinely opaque white ground, real seeded GIF at
+173px against the 258px cap, and the pin holding: **figure top stayed at 0
+while the prose scrolled 733px underneath it**. The exam_pattern badge CSS was
+measured against the real stylesheet in the same browser (classified rows
+`display: flex` / `align-items: baseline`, unclassified rows untouched at
+`display: list-item`, badge 13px/600, no horizontal overflow at 375px).
+`align-items: baseline` and not `center` is deliberate — `center` is the exact
+shape of the 2026-09-07 walkthrough-header bug, where a single-line badge
+landed beside the middle line of a four-line wrapped title.
+
+**Honest gap in the live check:** no concept's served atom set includes
+`exam_pattern` on the DB-less local lesson path (the pedagogy engine does not
+select it — pre-existing, and not something to bend for my own convenience), so
+the badges were verified by injecting the renderer's exact emitted markup into
+the live page rather than by reaching the card through the app. The React half
+is covered by 24 jsdom tests; what the browser added was computed CSS.
+
+**Deliberately still open** (TODOS.md): giving `visual_analogy` a real
+per-sentence binding to its picture — a promoted `simulation` scene with
+`narration_steps`/`focus_point`, which is ~88 concepts of authoring with
+per-claim verification, a wave rather than a task. The pin puts figure and text
+side by side; it does not make them refer to each other.
+
+**Tests:** frontend 2891 → 2918 (+27: 24 in a new
+`MarkdownAtomRenderer.rowKinds.test.tsx`, whose label fixtures are REAL
+committed lead-ins rather than tidy synthetic strings, plus 3 `data-figure`
+cases). Backend unchanged at 4774 + 1 todo (371 files) — frontend, CSS and one
+content file only. `tsc` clean both sides; `npm run ci` 19 gates clean; the
+locked `AtomCardRenderer.trapVisualIdentity.test.tsx` passes untouched, so
+`common_traps`' own AlertTriangle is unaffected.
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

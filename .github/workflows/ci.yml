@@ -254,6 +254,16 @@ jobs:
       - name: Intent catalogue + intent profiles validation
         run: npm run ci:intent-catalogue
 
+      # Concept anchors — the one plain sentence per concept saying what the
+      # maths is FOR. Blocking from day one, on coverage as well as contract:
+      # the failure this gate exists to stop is silence. Before it, every
+      # framing surface on a lesson page was exam-framed by construction and
+      # ~99 of 101 concepts carried no real-world bridge at all, with nothing
+      # anywhere to notice. A concept with no entry fails; an honest
+      # `anchor: null` passes only with a recorded `reason`.
+      - name: Concept anchors coverage + contract
+        run: npm run ci:concept-anchors
+
       # The gate that would have caught the boot crash PR #134 shipped, and
       # the one every other signal here missed. src/content/atomic-topic-spec.ts
       # used __dirname in a "type": "module" package, on an unconditional

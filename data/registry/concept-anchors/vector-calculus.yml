@@ -1,0 +1,27 @@
+# Concept anchors — vector-calculus
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: vector-calculus
+concepts:
+  divergence-curl:
+    anchor: "Weather forecasters read a wind field for two signs: air piling up, or air starting to spin."
+  gauss-divergence:
+    anchor: "Engineers find charge hidden inside a sealed surface from its total outward field flow alone."
+  greens-theorem:
+    anchor: "A wing's lift circulation can be measured along its edge, or by summing swirl over its surface."
+  line-integrals:
+    anchor: "Towing a boat along a river whose current shifts needs adding up push felt along the whole path."
+  stokes-theorem:
+    anchor: "A turbine's spin is measured along its blade's rim, or by summing swirl through the disk it sweeps."
+  surface-integrals:
+    anchor: "A solar panel's power output follows the cosine of its tilt angle away from facing the sun."
+  vector-algebra-basics:
+    anchor: "Two cranes pulling one load at different angles combine forces like a parallelogram, not plain sums."
+  vector-fields:
+    anchor: "A weather map attaches speed and direction to every point; walk inland and the wind arrows swing."

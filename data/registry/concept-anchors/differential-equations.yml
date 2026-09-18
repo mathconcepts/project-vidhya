@@ -1,0 +1,27 @@
+# Concept anchors — differential-equations
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: differential-equations
+concepts:
+  ode-bernoulli:
+    anchor: "Growth rising with population squared predicts a 'doomsday' — infinity reached by a finite date."
+  ode-classification:
+    anchor: "Before solving a car suspension's equation, engineers check its order, degree, and linearity first."
+  ode-exact:
+    anchor: "In thermodynamics, an 'exact' energy change depends only on state, like temperature, not the path."
+  ode-first-order:
+    anchor: "Tea cools fastest right after pouring — the rate depends only on the gap to room temperature."
+  ode-higher-order:
+    anchor: "A control system mixes several response modes, but engineers track only the fastest-growing one."
+  ode-second-order-homo:
+    anchor: "A plucked guitar string fades while ringing at pitch — decay shape set by tension and mass alone."
+  ode-second-order-nonhomo:
+    anchor: "Push a swing in rhythm and it climbs higher each cycle — resonance, which bridge engineers avoid."
+  pde-basics:
+    anchor: "An engine block's heat depends on position and time running — engineers place heat sinks using both."

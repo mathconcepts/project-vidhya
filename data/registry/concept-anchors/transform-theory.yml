@@ -1,0 +1,23 @@
+# Concept anchors — transform-theory
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: transform-theory
+concepts:
+  fourier-series:
+    anchor: "Power engineers split a distorted AC wave into harmonics to find which one overheats a transformer."
+  fourier-transform:
+    anchor: "Noise-cancelling headphones find a jet's rumble frequencies, then play them back inverted to cancel."
+  inverse-laplace:
+    anchor: "A car suspension's motion, solved in transformed form, is inverted back to a bounce-vs-time graph."
+  laplace-applications:
+    anchor: "Power engineers fold starting voltage and current into the transform to predict a breaker's surge."
+  laplace-transform:
+    anchor: "Cruise-control engineers turn a car's messy equation into algebra with this transform, then tune it."
+  z-transform:
+    anchor: "A phone's audio chip only sees numbers; the z-transform designs a filter run one sample at a time."

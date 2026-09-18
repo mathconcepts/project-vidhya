@@ -1,0 +1,23 @@
+# Concept anchors — numerical-methods
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: numerical-methods
+concepts:
+  interpolation:
+    anchor: "Crash investigators interpolate sparse flight-recorder altitude readings into a smooth curve."
+  numerical-error-analysis:
+    anchor: "In 1991, a Patriot missile clock's rounding-error drift over 100 hours let a Scud missile through."
+  numerical-integration:
+    anchor: "A clinical trial integrates drug-concentration readings to estimate total exposure, setting dose."
+  numerical-linear-algebra:
+    anchor: "Google's PageRank ranks billions of pages by refining a guess to a system too huge to solve exactly."
+  numerical-ode:
+    anchor: "A flight simulator has no formula for a plane's motion, so it takes tiny steps using Runge-Kutta."
+  root-finding:
+    anchor: "A loan calculator finds your rate by guessing, checking the error, and correcting repeatedly."

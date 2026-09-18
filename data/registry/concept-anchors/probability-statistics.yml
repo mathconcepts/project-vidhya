@@ -1,0 +1,29 @@
+# Concept anchors — probability-statistics
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: probability-statistics
+concepts:
+  continuous-distributions:
+    anchor: "A bolt sorter checks if a bolt's size falls in a range — one exact reading has zero probability."
+  counting-principles:
+    anchor: "An invite-code generator counts all codes, to know how many users it can invite before repeats."
+  discrete-distributions:
+    anchor: "A call center uses the Poisson distribution to predict calls per minute, and staffs accordingly."
+  hypothesis-testing:
+    anchor: "A factory trusts a new bulb design only once the observed gain is too unlikely to be random luck."
+  joint-distributions:
+    anchor: "An insurer studies how age and accident risk move together — the joint pattern reveals hidden risk."
+  probability-basics:
+    anchor: "A doctor uses Bayes' rule to weigh a cancer test's accuracy against how rare the disease is."
+  random-variables:
+    anchor: "A loot-box system sums each reward's chance times its value — the average payout a player earns."
+  regression-correlation:
+    anchor: "A real-estate tool fits price against square footage — showing they move together, not causation."
+  sampling-distributions:
+    anchor: "An election poll's margin of error comes from how a sample average shifts across different samples."

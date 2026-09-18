@@ -23,6 +23,7 @@ import { Simulation } from './interactives/Simulation';
 import { WhyThisHelps } from './interactives/WhyThisHelps';
 import { parseInteractiveSpec, stripAllInteractiveSpecFences, type SimulationSpec } from './interactives/types';
 import { deriveLinearMapWhy } from './interactives/eigen-2x2';
+import { conceptAnchor } from '@/generated/concept-anchors.gen';
 import {
   ChevronLeft, ChevronRight, Lightbulb, BookOpen, Target,
   AlertTriangle, Sparkles, Eye, Clock, EyeOff, Lock,
@@ -837,6 +838,50 @@ export function MediaSidecar({ atom }: { atom: ContentAtom }) {
  * when an atom is mastered or has high cohort error. Surfaces exam emphasis
  * + the canonical trap so the student walks away with one concrete takeaway.
  */
+/**
+ * ConceptAnchorLede — one plain sentence saying what this maths is FOR,
+ * shown once at the very top of the concept's FIRST card, before any
+ * mathematics.
+ *
+ * Why here and not in its own card: card count, not word count, is the
+ * binding constraint on a tired student's attention (11 cards and ~8.8
+ * minutes per concept today). A twelfth card would have made every
+ * constraint the ask named worse. One line costs no card and ~25 words.
+ *
+ * Why the hook specifically: it is the one atom type every concept has, and
+ * it is what a student meets first — which is exactly when a low-confidence
+ * reader decides whether any of this is worth their evening.
+ *
+ * Styling is deliberately plain: 17px (DESIGN-SYSTEM's floor for anything a
+ * student actually reads — this is content, not metadata) in primary ink,
+ * closed by the same hairline separator the rest of the system uses to end a
+ * row. No accent colour: green means mastery and indigo means AI/tutor, and
+ * this is neither.
+ *
+ * Renders nothing when no anchor is authored, including for a concept whose
+ * registry entry is an honest `anchor: null` — "we have nothing true to say
+ * here" should look like silence, never like filler.
+ */
+function ConceptAnchorLede({ conceptId }: { conceptId: string }) {
+  const anchor = conceptAnchor(conceptId);
+  if (!anchor) return null;
+  return (
+    <p
+      data-testid="concept-anchor"
+      style={{
+        margin: '0 0 12px',
+        paddingBottom: 12,
+        borderBottom: '1px solid var(--separator)',
+        fontSize: 'var(--text-body)',
+        lineHeight: 1.45,
+        color: 'var(--text-primary)',
+      }}
+    >
+      {anchor}
+    </p>
+  );
+}
+
 function StrategyCallout({ hint }: { hint: NonNullable<ContentAtom['strategy_hint']> }) {
   const emphasisLabel: Record<NonNullable<typeof hint.exam_emphasis>, string> = {
     skip: 'Not on this exam',
@@ -1220,6 +1265,15 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
               {formatReadingTime(readingSeconds)}
             </span>
           </div>
+
+          {/*
+            Keyed on index 0, not on atom_type === 'hook': the stack gets
+            re-ordered under the student (applyIntentStageOrder, and the
+            error-streak switch that pulls visual atoms to the front), so
+            "the hook" is not reliably the first thing seen. The anchor's
+            whole job is to be the first thing seen.
+          */}
+          {index === 0 && <ConceptAnchorLede conceptId={conceptId} />}
 
           {(() => { const sh = deriveStrategyHint(current); return sh ? <StrategyCallout hint={sh} /> : null; })()}
 

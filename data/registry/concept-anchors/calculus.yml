@@ -1,0 +1,50 @@
+# Concept anchors — calculus
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: calculus
+concepts:
+  chain-rule:
+    anchor: "Cruise control multiplies throttle-to-RPM and RPM-to-speed rates to set its adjustment."
+  continuity:
+    anchor: "Self-driving cars check that a tracked pedestrian's position is continuous, never jumping frames."
+  definite-integrals:
+    anchor: "A smart power meter integrates your power draw all day to bill you; exported power subtracts."
+  derivatives-basic:
+    anchor: "A speedometer shows the derivative of distance: how fast it's changing right now."
+  differentiability:
+    anchor: "A self-driving car's steering path must be differentiable, or the wheel snaps and jolts riders."
+  implicit-differentiation:
+    anchor: "In a sealed gas canister, implicit differentiation finds pressure's rate without solving for it."
+  improper-integrals:
+    anchor: "A bond paying interest forever still has a finite price: improper integrals check that convergence."
+  integration-basics:
+    anchor: "A fitness tracker integrates your calorie-burn rate every second into one daily total."
+  integration-by-parts:
+    anchor: "Finding a bus's average wait time means integrating time against a decaying exponential."
+  integration-substitution:
+    anchor: null
+    reason: "Substitution is an algebraic relabelling move for solving integrals that were set up by other physical reasoning; the honest real-world anchor belongs to whatever produced the integral, not to the relabelling step itself."
+  limits:
+    anchor: "A radar gun clocks instant speed as the averaging window shrinks toward zero."
+  maxima-minima:
+    anchor: "A box designer sets the volume's derivative to zero to find the most-space dimensions."
+  mean-value-theorems:
+    anchor: "Average-speed cameras use the Mean Value Theorem: your speed matched the average at some instant."
+  multiple-integrals:
+    anchor: "A structural engineer sums density across a slab's area to find its total weight."
+  multivariable-calculus:
+    anchor: "A hiking app's steepness reading changes with direction; a partial derivative freezes all but one."
+  partial-fractions:
+    anchor: "Circuit engineers split a solved transform-space signal into fractions to read off real voltage."
+  product-quotient-rule:
+    anchor: "A store's revenue is price times quantity; the product rule tracks both shifting together."
+  sequences:
+    anchor: "A calculator's square-root method generates guesses that crowd closer to the true answer."
+  series:
+    anchor: "A bouncing ball's infinite bounces still travel a finite total distance."

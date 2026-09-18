@@ -10,7 +10,7 @@
  *                   no entry at all is the failure this whole pass exists to
  *                   stop: it is how "no real-world bridge anywhere" went
  *                   unnoticed across 99 of 101 concepts in the first place.
- *   2. CONTRACT   — each authored sentence passes validateAnchor() (word
+ *   2. CONTRACT   — each authored sentence passes validateAnchor() (length
  *                   cap, no notation, no exam framing, no vague filler).
  *                   The rules live in src/registry/concept-anchors.ts and are
  *                   stated once; this script never re-implements them.
@@ -27,7 +27,7 @@ import {
   loadConceptAnchors,
   validateAnchor,
   countAnchorWords,
-  MAX_ANCHOR_WORDS,
+  MAX_ANCHOR_CHARS,
 } from '../src/registry/concept-anchors';
 
 const reportOnly = process.argv.includes('--report-only');
@@ -44,6 +44,8 @@ function main(): void {
 
   let authored = 0;
   let totalWords = 0;
+  let totalChars = 0;
+  let worstChars = 0;
 
   for (const c of ALL_CONCEPTS) {
     const entry = anchors.get(c.id);
@@ -58,6 +60,8 @@ function main(): void {
     }
     authored += 1;
     totalWords += countAnchorWords(entry.anchor);
+    totalChars += entry.anchor.trim().length;
+    worstChars = Math.max(worstChars, entry.anchor.trim().length);
     const problems = validateAnchor(entry.anchor);
     if (problems.length) violations.push({ id: c.id, problems });
   }
@@ -69,7 +73,11 @@ function main(): void {
   console.log(`  honest nulls         ${nulls.length}`);
   console.log(`  no entry at all      ${missing.length}`);
   console.log(
-    `  avg words            ${authored ? (totalWords / authored).toFixed(1) : '—'} (cap ${MAX_ANCHOR_WORDS})`,
+    `  avg characters       ${authored ? (totalChars / authored).toFixed(1) : '—'} (cap ${MAX_ANCHOR_CHARS})`,
+  );
+  console.log(`  longest              ${worstChars} characters`);
+  console.log(
+    `  avg words            ${authored ? (totalWords / authored).toFixed(1) : '—'} (reporting only)`,
   );
   console.log(`  total added load     ${totalWords} words across the corpus`);
 

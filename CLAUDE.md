@@ -5634,8 +5634,8 @@ meaning "in computational practice". Genuine bridges: **about two**.
 and 1,752 words — 8.8 minutes — per concept; 176,931 words / 14.7 hours
 corpus-wide.** A twelfth card makes every constraint the ask named worse.
 Card count, not word count, is the binding constraint on a tired student.
-So the anchor is **one sentence, zero new cards**: ≤30 words × 101 = +1.7%
-reading load.
+So the anchor is **one sentence, zero new cards**: ≤100 characters × 101 ≈
++1.0% reading load.
 
 **The mechanism.**
 - `data/registry/concept-anchors/<topic>.yml` — per-concept (never
@@ -5656,7 +5656,7 @@ reading load.
 - `npm run ci:concept-anchors` — **blocking on coverage as well as
   contract**, because the failure it exists to stop is silence.
 
-**Contract v1 (locked):** ≤30 words; a concrete named system, never "many
+**Contract v1 (locked):** ≤100 characters; a concrete named system, never "many
 fields"; carries the bridge, not a name-drop; no notation; **no exam
 framing**; true and direction-precise. An honest `anchor: null` + `reason`
 is allowed and expected; a fabricated application is far worse.
@@ -5687,14 +5687,40 @@ for `common_traps` (no `ASSURED_PROSE_BUDGET` entry at all; 146 avg, 18 of
 i.e. longest exactly when the student is most overloaded); promoting the
 beat-aware `countTotalReadingLoad` to a blocking gate (255 atoms would fail
 at once; worst undercount 9.3x); a corpus sweep of the other ~99
-`visual_analogy` atoms for the error class found in `trace`. Anchors average
-29.0 words against the 30 cap — tighten if live QA shows the lede reads long.
+`visual_analogy` atoms for the error class found in `trace`.
 
-**Tests:** backend 4729 → 4758 (+29: contract rules incl. the logic-gate
-false positive, loader, codegen drift, import-free bundle check). Frontend
-2877 → 2883 (+6: renders on first card only, index-0 not hook-typed, silent
-when unauthored, no accent colour, body-size). `tsc` clean both sides.
-`npm run ci` **19 gates** (was 18) clean.
+**The cap was corrected against a live 375px check, before merge.** v1 of the
+contract capped *words* at 30. Driven through a real headless Chromium against
+a local boot, every one of the 100 authored anchors rendered at **5-7 lines**
+(25 / 65 / 10; median 178 characters) in the lede's real 261px container — a
+paragraph at the top of every concept, and on `spectral-theorem` it pushed the
+hook's own animation entirely off the first screen. A word cap does not
+constrain the thing this rule exists to constrain: lines do, and characters
+decide lines. The cap is now **100 characters** (`MAX_ANCHOR_CHARS`, ~3 lines),
+all 100 anchors were rewritten to it by 5 parallel Sonnet batches, and the same
+live check now measures **2-4 lines** (88 of 100 at exactly three; the
+worst-case card's animation is back above the fold). §5 of the design doc had
+pre-committed to exactly this — "tighten if live QA shows the lede reads long"
+— so the check fired a decision that was already made, rather than reopening
+one. Each batch reported honestly what compression cost: `spectral-theorem`
+lost its universality claim, `probability-basics` no longer spells out what
+Bayes' rule produces, `complex-integration` states the path-deformation
+technique without its justification. No cut made a claim false or reversed a
+hedge — `trace` still claims only that a *positive* trace forces instability.
+
+A second, pre-existing defect surfaced in the same pass and was **filed, not
+folded in** (different component, unrelated cause): `WhyThisHelps`'s permanent
+"Hide these tips" button is `flex-shrink-0` in a `justify-between` row, so at
+375px the tip text gets 171px of 261px (65%) while a 20px control reserves a
+90px column down the row's full 238px. See TODOS.md.
+
+**Tests:** backend 4729 → 4759 (+30: contract rules incl. the logic-gate false
+positive and a "length cap, not a word cap" case, loader, codegen drift,
+import-free bundle check). Frontend 2877 → 2883 (+6: renders on first card
+only, index-0 not hook-typed, silent when unauthored, no accent colour,
+body-size). `tsc` clean both sides. `npm run ci` **19 gates** (was 18) clean.
+Verified live at 375px on a real browser, before and after the cap change —
+the one box the PR's own test plan had left unchecked.
 
 ## Skill routing
 

@@ -11,11 +11,10 @@ import {
   validateAnchor,
   countAnchorWords,
   loadConceptAnchors,
-  MAX_ANCHOR_WORDS,
+  MAX_ANCHOR_CHARS,
 } from '../concept-anchors';
 
-const OK =
-  'A delivery company can instantly check whether one driver can cover every street without repeating a road.';
+const OK = 'A delivery router checks if one driver can cover every street without repeating a road.';
 
 describe('countAnchorWords', () => {
   it('counts whitespace-separated words', () => {
@@ -27,17 +26,31 @@ describe('countAnchorWords', () => {
   });
 });
 
-describe('validateAnchor — rule 1, word cap', () => {
+/**
+ * The cap is on CHARACTERS because characters decide rendered lines, and lines
+ * are what the screen-space constraint is about. Measured live at 375px: the
+ * lede's container is 261px at 17px/24.65px, so ~30 characters per line. The
+ * first cut of this contract capped words at 30 and every one of the 100
+ * authored anchors came out at 5-7 lines — the exact paragraph-at-the-top the
+ * anchor exists to avoid.
+ */
+describe('validateAnchor — rule 1, character cap', () => {
   it('accepts an anchor at the cap', () => {
-    const atCap = Array.from({ length: MAX_ANCHOR_WORDS }, (_, i) => `w${i}`).join(' ');
+    const atCap = 'x'.repeat(MAX_ANCHOR_CHARS);
     expect(validateAnchor(atCap)).toEqual([]);
   });
 
-  it('rejects one word over the cap, and says the count', () => {
-    const over = Array.from({ length: MAX_ANCHOR_WORDS + 1 }, (_, i) => `w${i}`).join(' ');
+  it('rejects one character over the cap, and says the count', () => {
+    const over = 'x'.repeat(MAX_ANCHOR_CHARS + 1);
     const problems = validateAnchor(over);
     expect(problems).toHaveLength(1);
-    expect(problems[0]).toContain(`${MAX_ANCHOR_WORDS + 1} words`);
+    expect(problems[0]).toContain(`${MAX_ANCHOR_CHARS + 1} characters`);
+  });
+
+  it('is a length cap, not a word cap — many short words are fine', () => {
+    const manyShortWords = Array.from({ length: 24 }, () => 'ab').join(' ');
+    expect(manyShortWords.length).toBeLessThanOrEqual(MAX_ANCHOR_CHARS);
+    expect(validateAnchor(manyShortWords)).toEqual([]);
   });
 });
 
@@ -78,7 +91,7 @@ describe('validateAnchor — rule 5, no exam framing', () => {
   it('ACCEPTS a lowercase logic gate — the component, not the exam', () => {
     expect(
       validateAnchor(
-        "A chip designer simplifies a circuit's boolean expression so fewer physical logic gates sit on the silicon.",
+        "A chip designer cuts a boolean expression so fewer physical logic gates sit on the silicon.",
       ),
     ).toEqual([]);
   });

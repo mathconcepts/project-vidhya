@@ -154,8 +154,21 @@ seconds, and the first thing they currently meet is mathematics. Give the
 concept an **anchor**: one plain sentence, at the top of the first card,
 naming something real the maths does a job inside.
 
-Cost: ≤30 words × 101 concepts = ≤3,030 words = **+1.7%** reading load, and
-**zero new cards**. This is the only budget-positive way to close ask #1.
+Cost: ≤100 characters × 101 concepts ≈ 1,700 words = **+1.0%** reading load,
+and **zero new cards**. This is the only budget-positive way to close ask #1.
+
+**The cap is on characters, and that is a correction this pass made against
+itself.** v1 of the contract capped *words* at 30. Measured live at 375px —
+the lede's real container is 261px at 17px/24.65px, so about 30 characters per
+line — all 100 authored anchors rendered at **5 to 7 lines**: 25 at five, 65 at
+six, 10 at seven. Median 178 characters. That is a paragraph at the top of
+every concept, and on `spectral-theorem` it pushed the hook's own animation
+entirely below the fold. A word cap does not constrain what this rule exists to
+constrain; lines do, and characters are what decide lines. 100 characters is
+about three lines in that container, which is what "one sentence, first" was
+supposed to mean all along. §5 of the first draft of this document pre-committed
+to exactly this ("tighten if live QA shows the lede reads long") — the live
+check fired it.
 
 ### R2 — Never a new card when a line will do
 
@@ -205,9 +218,8 @@ Locked. Future shape changes ship as `v: 2`, never by mutating this.
 version: 1
 concepts:
   trace:
-    anchor: "A positive diagonal sum means a vibrating structure's wobble
-      grows instead of dying out — one glance rules a design out before
-      anyone computes a single frequency."
+    anchor: "A positive diagonal sum means a structure's wobble grows
+      instead of dying out — the design is out."
   ode-classification:
     anchor: null
     reason: "A classification skill, not a thing built into a system —
@@ -216,7 +228,9 @@ concepts:
 
 **Rules every anchor must pass:**
 
-1. **≤ 30 words.** Hard cap, gate-enforced.
+1. **≤ 100 characters.** Hard cap, gate-enforced. Characters rather than words
+   because characters decide rendered lines and lines are the constraint
+   (see R1 above). ~3 lines in the lede's 261px container at 375px.
 2. **Names something concrete** — a bridge, an MRI scanner, a recommender,
    a route planner. Never "engineering", "science", "many fields".
 3. **Carries the bridge, not a name-drop.** "Eigenvalues are used in

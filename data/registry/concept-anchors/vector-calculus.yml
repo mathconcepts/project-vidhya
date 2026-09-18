@@ -3,24 +3,25 @@
 # ONE plain sentence per concept, rendered at the top of the first lesson
 # card before any mathematics. Contract v1 (see
 # docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
-# <=30 words, concrete system, carries the bridge not a name-drop, no
-# notation, no exam framing, true and direction-precise.
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
 version: 1
 topic: vector-calculus
 concepts:
   divergence-curl:
-    anchor: "A weather map's wind field lets forecasters check two things: is air piling up or draining away, and is it starting to spin — two independent warning signs, checked separately."
+    anchor: "Weather forecasters read a wind field for two signs: air piling up, or air starting to spin."
   gauss-divergence:
-    anchor: "An electric field's total outward flow through any sealed surface exactly equals the charge trapped inside — engineers use this to find a hidden charge without tracing the field everywhere."
+    anchor: "Engineers find charge hidden inside a sealed surface from its total outward field flow alone."
   greens-theorem:
-    anchor: "An aircraft wing generates lift because air circulates around it — that circulation is measured either along the wing's edge, or by summing swirl across its surface; both totals agree."
+    anchor: "A wing's lift circulation can be measured along its edge, or by summing swirl over its surface."
   line-integrals:
-    anchor: "Towing a boat along a river whose current shifts direction and strength at every bend needs more than force times distance — add up the push felt along the path."
+    anchor: "Towing a boat along a river whose current shifts needs adding up push felt along the whole path."
   stokes-theorem:
-    anchor: "A wind turbine's spin is measured either along the blade's rim, or by summing the swirl passing through the disk it sweeps — both give exactly the same answer."
+    anchor: "A turbine's spin is measured along its blade's rim, or by summing swirl through the disk it sweeps."
   surface-integrals:
-    anchor: "A solar panel catches the most sunlight facing the sun, less as it tilts — the power gathered follows the cosine of the tilt angle, dropping slowly, then sharply."
+    anchor: "A solar panel's power output follows the cosine of its tilt angle away from facing the sun."
   vector-algebra-basics:
-    anchor: "Two cranes lifting one load from different angles can't add their pulling forces like plain numbers — the combined force follows a parallelogram, smaller than the sum unless pulls align."
+    anchor: "Two cranes pulling one load at different angles combine forces like a parallelogram, not plain sums."
   vector-fields:
-    anchor: "A weather map attaches an arrow — speed and direction together — to every point, unlike a temperature map's plain numbers; walk inland from the coast and the arrows swing."
+    anchor: "A weather map attaches speed and direction to every point; walk inland and the wind arrows swing."

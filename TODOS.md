@@ -4,6 +4,35 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## `WhyThisHelps` dismiss link squeezes the tip it labels at phone width (2026-09-18)
+
+Found during the live 375px verification pass for the Concept Anchor PR —
+pre-existing, unrelated to that change, not fixed there on purpose (different
+component, different root cause, and that PR was already 24 files).
+
+`frontend/src/components/lesson/interactives/WhyThisHelps.tsx` lays the tip
+text and a permanent "Hide these tips" button in one
+`flex items-start justify-between` row, with `flex-shrink-0` on the button.
+Measured live on `/lesson/spectral-theorem` at 375px: the row is 261px, the
+tip text gets **171px (65%)**, and the 78px button plus the 12px gap hold the
+rest. The button is **20px tall against a 238px row** — so roughly 90px x 218px
+of dead column sits beside the tip, and the tip wraps to about 20 characters
+per line where the anchor above it wraps at 30.
+
+The affordance is worth keeping (it is the student-facing off switch for ELI5
+framing, `useEliFraming`); what is wrong is that it holds a full-height column
+for a one-line control.
+
+**Trigger:** any pass touching interactive framing, or a live-QA report naming
+the tip text as cramped.
+
+**Shape of the fix** (not decided here — it is a design call): either move the
+dismiss control below the tip text as its own row, or shrink it to an icon-only
+control with an `aria-label`, or hoist a single global framing toggle into the
+lesson header so it does not repeat beside every widget. The third is the most
+honest — the control is a per-student preference, not a per-widget one — and
+also the largest change.
+
 ## `guided_walkthrough` ELI5/spoon-feeding audit — corpus-wide (2026-09-07)
 
 Live-QA report on the null-space-column-space walkthrough flagged its

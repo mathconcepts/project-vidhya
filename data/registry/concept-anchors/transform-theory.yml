@@ -3,20 +3,21 @@
 # ONE plain sentence per concept, rendered at the top of the first lesson
 # card before any mathematics. Contract v1 (see
 # docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
-# <=30 words, concrete system, carries the bridge not a name-drop, no
-# notation, no exam framing, true and direction-precise.
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
 version: 1
 topic: transform-theory
 concepts:
   fourier-series:
-    anchor: "Power-quality engineers break a distorted, repeating AC waveform into its harmonics to find the exact one overheating a transformer, without ever touching the transformer itself."
+    anchor: "Power engineers split a distorted AC wave into harmonics to find which one overheats a transformer."
   fourier-transform:
-    anchor: "Noise-cancelling headphones work out which frequencies a jet engine's non-repeating rumble is made of, then play exactly those back inverted so the two waveforms cancel in your ear."
+    anchor: "Noise-cancelling headphones find a jet's rumble frequencies, then play them back inverted to cancel."
   inverse-laplace:
-    anchor: "After solving a car suspension's motion equation in transformed form, engineers invert it back to get the actual bounce-versus-time graph they can watch happen on a test rig."
+    anchor: "A car suspension's motion, solved in transformed form, is inverted back to a bounce-vs-time graph."
   laplace-applications:
-    anchor: "Power engineers modelling the instant a circuit breaker switches on fold the exact starting voltage and current into the transform, predicting the surge before the switch is ever thrown."
+    anchor: "Power engineers fold starting voltage and current into the transform to predict a breaker's surge."
   laplace-transform:
-    anchor: "Control engineers designing a car's cruise-control system turn its messy differential equation into simple algebra with this transform, so the response can be tuned before any road test."
+    anchor: "Cruise-control engineers turn a car's messy equation into algebra with this transform, then tune it."
   z-transform:
-    anchor: "A smartphone's audio chip never sees a continuous wave, only a stream of numbers; the z-transform lets engineers design the filter recipe that runs one sample at a time."
+    anchor: "A phone's audio chip only sees numbers; the z-transform designs a filter run one sample at a time."

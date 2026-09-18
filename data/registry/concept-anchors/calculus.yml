@@ -3,47 +3,48 @@
 # ONE plain sentence per concept, rendered at the top of the first lesson
 # card before any mathematics. Contract v1 (see
 # docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
-# <=30 words, concrete system, carries the bridge not a name-drop, no
-# notation, no exam framing, true and direction-precise.
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
 version: 1
 topic: calculus
 concepts:
   chain-rule:
-    anchor: "A cruise control's throttle sets engine RPM, and RPM sets road speed — the system multiplies each link's own rate of change to know how far to adjust the throttle."
+    anchor: "Cruise control multiplies throttle-to-RPM and RPM-to-speed rates to set its adjustment."
   continuity:
-    anchor: "Self-driving cars assume a tracked pedestrian's position never jumps between camera frames; testing that assumption is exactly checking continuity, before any motion-prediction math is trusted."
+    anchor: "Self-driving cars check that a tracked pedestrian's position is continuous, never jumping frames."
   definite-integrals:
-    anchor: "A smart electricity meter integrates your power draw all day to bill you — power exported back to the grid counts negative, subtracting instead of adding to the total."
+    anchor: "A smart power meter integrates your power draw all day to bill you; exported power subtracts."
   derivatives-basic:
-    anchor: "A car's speedometer doesn't show your total distance travelled — it shows the derivative, how fast that distance is changing at this exact instant."
+    anchor: "A speedometer shows the derivative of distance: how fast it's changing right now."
   differentiability:
-    anchor: "A self-driving car's planned path being continuous stops it teleporting, but only being differentiable too stops the steering wheel from snapping to a new angle instantly, jolting the passengers."
+    anchor: "A self-driving car's steering path must be differentiable, or the wheel snaps and jolts riders."
   implicit-differentiation:
-    anchor: "In a sealed gas canister, pressure and volume are tangled in one equation; implicit differentiation finds how fast pressure changes as volume changes, without solving for pressure first."
+    anchor: "In a sealed gas canister, implicit differentiation finds pressure's rate without solving for it."
   improper-integrals:
-    anchor: "A bond paying interest forever still has a finite price today — improper integrals check whether an endless payment stream adds to a finite total, or blows up."
+    anchor: "A bond paying interest forever still has a finite price: improper integrals check that convergence."
   integration-basics:
-    anchor: "A fitness tracker doesn't measure calories burned directly — it measures your burn rate every second and integrates it, adding up all those instants into one final calorie count."
+    anchor: "A fitness tracker integrates your calorie-burn rate every second into one daily total."
   integration-by-parts:
-    anchor: "Working out the average wait for a randomly-arriving bus means integrating time times a decaying exponential — precisely the product integration by parts exists to solve."
+    anchor: "Finding a bus's average wait time means integrating time against a decaying exponential."
   integration-substitution:
     anchor: null
     reason: "Substitution is an algebraic relabelling move for solving integrals that were set up by other physical reasoning; the honest real-world anchor belongs to whatever produced the integral, not to the relabelling step itself."
   limits:
-    anchor: "A radar gun estimates a car's speed at this instant by tracking what the average speed approaches as the measurement window shrinks toward zero, never quite reaching it."
+    anchor: "A radar gun clocks instant speed as the averaging window shrinks toward zero."
   maxima-minima:
-    anchor: "A shipping company designing a box with a fixed amount of cardboard sets the volume's derivative to zero to find the dimensions that pack in the most space."
+    anchor: "A box designer sets the volume's derivative to zero to find the most-space dimensions."
   mean-value-theorems:
-    anchor: "Average-speed cameras clock your entry and exit time on a highway stretch — the Mean Value Theorem guarantees your speed matched that average at some exact instant in between."
+    anchor: "Average-speed cameras use the Mean Value Theorem: your speed matched the average at some instant."
   multiple-integrals:
-    anchor: "A structural engineer finds a slab's total weight by adding density times tiny patches of area across its whole surface — accumulating across two directions at once, not just one."
+    anchor: "A structural engineer sums density across a slab's area to find its total weight."
   multivariable-calculus:
-    anchor: "A hiking app's steepness reading for a hillside changes with the direction you walk — a partial derivative freezes every direction but one to answer just that."
+    anchor: "A hiking app's steepness reading changes with direction; a partial derivative freezes all but one."
   partial-fractions:
-    anchor: "Engineers analyzing a circuit's response solve it in transform space, then break the tangled result into simple fractions to read off the actual voltage signal over time."
+    anchor: "Circuit engineers split a solved transform-space signal into fractions to read off real voltage."
   product-quotient-rule:
-    anchor: "A store's revenue is price times quantity sold, and both shift as a sale is adjusted — the product rule tracks the combined effect, not just multiplying their two rates."
+    anchor: "A store's revenue is price times quantity; the product rule tracks both shifting together."
   sequences:
-    anchor: "A calculator finding a square root repeats one formula, generating a sequence of guesses that crowd closer and closer to the true answer without ever landing on it."
+    anchor: "A calculator's square-root method generates guesses that crowd closer to the true answer."
   series:
-    anchor: "A bouncing ball loses a fixed fraction of height each bounce; it takes infinitely many bounces, yet the total distance travelled adds up to one finite number."
+    anchor: "A bouncing ball's infinite bounces still travel a finite total distance."

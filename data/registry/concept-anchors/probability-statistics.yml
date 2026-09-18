@@ -3,26 +3,27 @@
 # ONE plain sentence per concept, rendered at the top of the first lesson
 # card before any mathematics. Contract v1 (see
 # docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
-# <=30 words, concrete system, carries the bridge not a name-drop, no
-# notation, no exam framing, true and direction-precise.
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
 version: 1
 topic: probability-statistics
 concepts:
   continuous-distributions:
-    anchor: "A factory's bolt-sorting machine never asks the chance a bolt is exactly 10.000 mm — just the chance it falls in range, since one exact reading carries zero probability."
+    anchor: "A bolt sorter checks if a bolt's size falls in a range — one exact reading has zero probability."
   counting-principles:
-    anchor: "A website that hands out 6-character invite codes counts every possible combination first — that count decides exactly how many users it can invite before codes must start repeating."
+    anchor: "An invite-code generator counts all codes, to know how many users it can invite before repeats."
   discrete-distributions:
-    anchor: "A call center's staffing software uses the Poisson distribution to predict how many calls will likely arrive in the next minute, so it schedules just enough operators without wildly overstaffing."
+    anchor: "A call center uses the Poisson distribution to predict calls per minute, and staffs accordingly."
   hypothesis-testing:
-    anchor: "A factory testing a new bulb design computes the chance an observed gap is pure random luck, and only trusts the design once that chance is small enough."
+    anchor: "A factory trusts a new bulb design only once the observed gain is too unlikely to be random luck."
   joint-distributions:
-    anchor: "An insurer pricing a policy studies how a driver's age and accident risk move together, not each alone — the joint pattern can reveal risks that neither factor shows alone."
+    anchor: "An insurer studies how age and accident risk move together — the joint pattern reveals hidden risk."
   probability-basics:
-    anchor: "A doctor doesn't trust a positive cancer-screening result alone — Bayes' rule combines the test's accuracy with how rare the disease is, to work out how likely the diagnosis is."
+    anchor: "A doctor uses Bayes' rule to weigh a cancer test's accuracy against how rare the disease is."
   random-variables:
-    anchor: "A mobile game's loot-box system assigns a fixed chance to each reward, then multiplies chance by value and adds them up — the average a player actually earns per box."
+    anchor: "A loot-box system sums each reward's chance times its value — the average payout a player earns."
   regression-correlation:
-    anchor: "A real-estate tool fits a line through sale prices against square footage to predict a new home's value — the fit shows they move together, not that footage sets price."
+    anchor: "A real-estate tool fits price against square footage — showing they move together, not causation."
   sampling-distributions:
-    anchor: "An election poll surveys a few thousand voters, then reports a margin of error — built from how much a sample average shifts across different few-thousand-voter samples."
+    anchor: "An election poll's margin of error comes from how a sample average shifts across different samples."

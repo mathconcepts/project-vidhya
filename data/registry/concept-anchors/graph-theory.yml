@@ -3,22 +3,23 @@
 # ONE plain sentence per concept, rendered at the top of the first lesson
 # card before any mathematics. Contract v1 (see
 # docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
-# <=30 words, concrete system, carries the bridge not a name-drop, no
-# notation, no exam framing, true and direction-precise.
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
 version: 1
 topic: graph-theory
 concepts:
   euler-hamilton:
-    anchor: "A delivery company can instantly check whether one driver can cover every street without repeating a road, but finding a route touching every address exactly once has no known shortcut."
+    anchor: "A delivery firm checks a no-repeat route instantly; touching every address has no known shortcut."
   graph-basics:
-    anchor: "A social network can instantly sanity-check its own data: the total of everyone's friend-counts must come out even, or some connection was recorded on only one side."
+    anchor: "A social network can sanity-check its data: everyone's friend-counts must sum to an even number."
   graph-coloring:
-    anchor: "A compiler assigns program variables to a limited set of CPU registers by coloring a conflict graph, using fast heuristics since finding the true minimum number of colors is NP-hard."
+    anchor: "A compiler colors a conflict graph to assign CPU registers; exact optimal coloring is NP-hard."
   graph-connectivity:
-    anchor: "A telecom engineer tests a fibre network by asking which single cable, if cut, would split the city into two disconnected halves — that cable gets duplicated first."
+    anchor: "A telecom engineer finds which single cable, if cut, would split the city's fibre network in two."
   planar-graphs:
-    anchor: "A circuit-board designer checks whether every trace between components can be drawn on one copper layer without crossings; if not, the board needs an extra layer or a jumper wire."
+    anchor: "A circuit-board designer checks if every trace fits on one copper layer without crossing another."
   shortest-paths:
-    anchor: "A maps app computes the cheapest route across road-cost estimates by settling the cheapest reachable city first — a method that only works because travel costs are never negative."
+    anchor: "A maps app settles the nearest city first to find cheapest routes; it fails if costs go negative."
   trees:
-    anchor: "A power company wiring new substations lays exactly enough cable to reach every one and no more — one extra link only adds cost, and one fewer strands a substation."
+    anchor: "A power company wires new substations with exactly enough cable to reach each one and no more."

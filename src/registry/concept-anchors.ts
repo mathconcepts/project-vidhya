@@ -35,8 +35,21 @@ import { readFileSync, readdirSync, existsSync } from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
 
-/** Hard cap from the contract (§4 rule 1). Enforced by `validateAnchor`. */
-export const MAX_ANCHOR_WORDS = 30;
+/**
+ * Hard cap from the contract (§4 rule 1). Enforced by `validateAnchor`.
+ *
+ * CHARACTERS, not words, because characters are what decide rendered lines and
+ * lines are what the "lack of space on screen" constraint is actually about.
+ * The first cut of this contract capped words at 30; measured live at 375px
+ * (the lede's real container is 261px wide at 17px/24.65px), all 100 authored
+ * anchors came out at 5-7 lines — a paragraph at the top of every concept,
+ * pushing the hook's own opening below the fold. 100 characters is ~3 lines
+ * in that container, which is what "one sentence, first" was supposed to mean.
+ *
+ * A word cap on top of this would be dead code: 100 characters cannot hold a
+ * paragraph. `countAnchorWords` stays for the gate's reporting only.
+ */
+export const MAX_ANCHOR_CHARS = 100;
 
 export interface ConceptAnchor {
   concept_id: string;
@@ -78,9 +91,10 @@ export function validateAnchor(anchor: string): string[] {
     return ['empty anchor (use `anchor: null` + `reason:` for an honest absence)'];
   }
 
-  const words = countAnchorWords(trimmed);
-  if (words > MAX_ANCHOR_WORDS) {
-    problems.push(`${words} words, cap is ${MAX_ANCHOR_WORDS}`);
+  if (trimmed.length > MAX_ANCHOR_CHARS) {
+    problems.push(
+      `${trimmed.length} characters, cap is ${MAX_ANCHOR_CHARS} (~3 rendered lines at 375px)`,
+    );
   }
 
   // Rule 4 — no mathematical notation. This is the one surface in the whole

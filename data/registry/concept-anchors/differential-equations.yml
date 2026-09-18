@@ -3,24 +3,25 @@
 # ONE plain sentence per concept, rendered at the top of the first lesson
 # card before any mathematics. Contract v1 (see
 # docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
-# <=30 words, concrete system, carries the bridge not a name-drop, no
-# notation, no exam framing, true and direction-precise.
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
 version: 1
 topic: differential-equations
 concepts:
   ode-bernoulli:
-    anchor: "Some population models assume growth rises with the population squared — solving that equation with this substitution predicts a genuine 'doomsday': population reaching infinity by a specific finite date."
+    anchor: "Growth rising with population squared predicts a 'doomsday' — infinity reached by a finite date."
   ode-classification:
-    anchor: "Before an engineer can solve a car suspension's governing equation, they check its order, degree, and linearity first — guess any of the three wrong, and the method fails outright."
+    anchor: "Before solving a car suspension's equation, engineers check its order, degree, and linearity first."
   ode-exact:
-    anchor: "In thermodynamics, checking whether an energy change is 'exact' tells engineers whether a quantity depends only on a system's current state, like temperature, or on the path taken, like heat."
+    anchor: "In thermodynamics, an 'exact' energy change depends only on state, like temperature, not the path."
   ode-first-order:
-    anchor: "A hot cup of tea cools fastest right after pouring and slows as it nears room temperature — the cooling rate depends only on how far it has to fall."
+    anchor: "Tea cools fastest right after pouring — the rate depends only on the gap to room temperature."
   ode-higher-order:
-    anchor: "A control system's output mixes several response modes at once, but engineers track only the fastest-growing one for its long-term behaviour — every slower mode fades to irrelevance regardless."
+    anchor: "A control system mixes several response modes, but engineers track only the fastest-growing one."
   ode-second-order-homo:
-    anchor: "A plucked guitar string fades while still ringing at its pitch — with nothing pushing it after the pluck, that shape is decided by the string's tension and mass alone."
+    anchor: "A plucked guitar string fades while ringing at pitch — decay shape set by tension and mass alone."
   ode-second-order-nonhomo:
-    anchor: "Push a swing in time with its rhythm and it climbs higher every cycle — that's resonance, the effect bridge and machine engineers must design against so vibrations don't grow."
+    anchor: "Push a swing in rhythm and it climbs higher each cycle — resonance, which bridge engineers avoid."
   pde-basics:
-    anchor: "An engine block's temperature depends on where you measure and how long it has run — engineers track position and time together to design heat sinks that cool fast enough."
+    anchor: "An engine block's heat depends on position and time running — engineers place heat sinks using both."

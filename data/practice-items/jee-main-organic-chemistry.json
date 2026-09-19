@@ -1,0 +1,1127 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Chemistry (Organic) practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) for the eight jee-organic-chemistry concepts: organic-basic-principles, hydrocarbons, haloalkanes-haloarenes, alcohols-phenols-ethers, aldehydes-ketones-acids, amines-and-diazonium, biomolecules, polymers. Authored 2026-09-19. No mhchem/\\ce{} used anywhere; chemical formulae are plain LaTeX text inside $...$. Every item is qualitative organic reasoning (mechanism/electronic-effect/named-reaction based), except the handful of genuinely numeric ones (degree-of-unsaturation formula calculations, Huckel 4n+2 pi-electron arithmetic, and a stereoisomer-count derived from an explicit symmetry/equivalence-class check), which were independently verified via python3 before being written down. Qualitative items were reasoned from first-principles organic mechanism/electronic-effect arguments and cross-checked against standard NCERT-level reactivity rules (Markovnikov/anti-Markovnikov, SN1/SN2/E2 substrate-and-condition rules, resonance-based acidity comparisons, named-reaction product identification, and so on) rather than stated as memorised facts alone.",
+  "items": [
+    {
+      "id": "pi-organic-basic-principles-001",
+      "concept_id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the correct IUPAC name of $(\\text{CH}_3)_2\\text{CH}-\\text{CH}_2-\\text{CH}_2-\\text{OH}$?",
+      "options": [
+        "3-methylbutan-1-ol",
+        "2-methylbutan-4-ol",
+        "3-methylbutan-2-ol",
+        "2-methylbutan-1-ol"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3-methylbutan-1-ol",
+      "solution_steps": [
+        "The parent chain is 4 carbons long and carries the –OH group (the principal characteristic group), so it is named as a 'butanol'. IUPAC rule: number the chain so the principal group gets the LOWEST possible locant.",
+        "Numbering from the –OH end: C1 = $\\text{CH}_2\\text{OH}$, C2 = $\\text{CH}_2$, C3 = $\\text{CH}(\\text{CH}_3)$, C4 = $\\text{CH}_3$. The methyl branch sits on C3, and –OH is on C1.",
+        "So the name is 3-methylbutan-1-ol (this is the common compound isoamyl alcohol/isopentyl alcohol).",
+        "'2-methylbutan-4-ol' comes from numbering the chain from the WRONG end, giving –OH the locant 4 instead of the required lowest locant 1 — an invalid IUPAC name. '3-methylbutan-2-ol' misplaces the –OH on C2, describing a genuinely different, isomeric alcohol. '2-methylbutan-1-ol' misplaces the methyl branch on C2 instead of C3, again describing a different real isomer."
+      ],
+      "verification_method": "iupac_lowest_locant_rule_applied_and_cross_checked_against_molecular_structure"
+    },
+    {
+      "id": "pi-organic-basic-principles-002",
+      "concept_id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "2,3-Dibromobutane, $\\text{CH}_3-\\text{CHBr}-\\text{CHBr}-\\text{CH}_3$, has two stereocentres (C2 and C3). How many stereoisomers does it actually have?",
+      "options": [
+        "3",
+        "4",
+        "2",
+        "1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "With 2 stereocentres, the maximum possible number of labelled configurations is $2^2 = 4$: (R,R), (R,S), (S,R), (S,S).",
+        "But this molecule is symmetric end-to-end (the two halves, $\\text{CH}_3-\\text{CHBr}-$, are identical), so reading the SAME physical molecule from the other end swaps the (C2, C3) labels. That means (R,S) and (S,R) are just two different ways of describing the exact same molecule — this is the classic meso compound.",
+        "So the truly distinct physical stereoisomers are: (R,R) and (S,S) — a genuine pair of enantiomers — plus the single meso form (R,S)=(S,R), which is achiral (superimposable on its own mirror image). That is 3 distinct stereoisomers, not 4.",
+        "'4' is the mistake of treating every one of the $2^2$ labelled configurations as a separate physical molecule, forgetting that this specific symmetric substitution pattern creates a meso compound. '2' forgets the meso form exists at all and counts only the enantiomer pair. '1' wrongly assumes the whole molecule is achiral throughout, missing that (R,R) and (S,S) genuinely are distinct, optically active isomers."
+      ],
+      "verification_method": "python3_itertools_symmetry_equivalence_check_confirming_meso_compound"
+    },
+    {
+      "id": "pi-organic-basic-principles-003",
+      "concept_id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the degree of unsaturation of a compound with molecular formula $\\text{C}_6\\text{H}_{10}\\text{O}$?",
+      "options": [
+        "2",
+        "1",
+        "4",
+        "3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "Degree of unsaturation (DoU) counts the double bonds, triple bonds (as 2), and rings in a molecule — oxygen atoms don't change the count at all, since oxygen is divalent just like the two extra bonds a saturated $\\text{CH}_2$ would otherwise use.",
+        "Formula: $\\text{DoU} = \\dfrac{2C+2-H}{2}$ for a compound with only C, H, O. Here $C=6$, $H=10$: $\\text{DoU} = \\dfrac{2(6)+2-10}{2} = \\dfrac{4}{2} = 2$.",
+        "So this formula matches, for example, a cyclic ketone with one ring plus one C=O, or a straight-chain compound with two double bonds/one triple bond plus the oxygen sitting in an ether or alcohol.",
+        "'1' comes from forgetting the '+2' term in the numerator: $(2\\times6-10)/2 = 1$. '4' comes from forgetting to divide the numerator by 2 at all: $2(6)+2-10=4$. '3' comes from misreading the hydrogen count as 8 instead of 10: $(2(6)+2-8)/2=3$."
+      ],
+      "verification_method": "python_degree_of_unsaturation_formula_calculation"
+    },
+    {
+      "id": "pi-organic-basic-principles-004",
+      "concept_id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which of the following carbocations is the most stable?",
+      "options": [
+        "$(\\text{CH}_3)_3\\text{C}^+$ (tert-butyl cation)",
+        "$\\text{CH}_3-\\text{CH}_2^+$ (ethyl cation)",
+        "$\\text{CH}_3^+$ (methyl cation)",
+        "$\\text{CH}_2=\\text{CH}^+$ (vinyl cation)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$(\\text{CH}_3)_3\\text{C}^+$ (tert-butyl cation)",
+      "solution_steps": [
+        "A carbocation is stabilised by nearby C–H (and C–C) bonds donating electron density into the empty p-orbital — this is hyperconjugation — plus the simple +I (electron-donating) inductive effect of alkyl groups.",
+        "tert-Butyl cation has THREE methyl groups attached directly to the positive carbon, giving nine C–H bonds available for hyperconjugation and three alkyl groups' worth of +I donation — by far the most stabilisation of the four.",
+        "Ethyl cation (primary) has only one alkyl group and three hyperconjugating C–H bonds; methyl cation has no adjacent carbon at all, so zero hyperconjugation; vinyl cation is even worse than methyl — its empty orbital is an in-plane sp orbital, orthogonal to the π-system, so it gets no conjugative help from the adjacent double bond at all.",
+        "Picking ethyl or methyl is the mistake of underestimating how much hyperconjugation and inductive donation scale with the number of attached alkyl groups. Picking vinyl is the mistake of assuming an adjacent π-bond automatically stabilises an empty orbital by conjugation — here the geometry (sp hybridisation) actually prevents that overlap, making it the LEAST stable of the four, not a stabilised one."
+      ],
+      "verification_method": "mechanism_reasoned_from_hyperconjugation_and_inductive_effects_and_cross_checked_against_ncert_style_reactivity_order"
+    },
+    {
+      "id": "pi-organic-basic-principles-005",
+      "concept_id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the correct order of INCREASING acidic strength for acetic acid, chloroacetic acid, dichloroacetic acid and trichloroacetic acid?",
+      "options": [
+        "$\\text{CH}_3\\text{COOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{Cl}_3\\text{CCOOH}$",
+        "$\\text{Cl}_3\\text{CCOOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{ClCH}_2\\text{COOH} < \\text{CH}_3\\text{COOH}$",
+        "$\\text{CH}_3\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_3\\text{CCOOH}$",
+        "$\\text{ClCH}_2\\text{COOH} < \\text{CH}_3\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{Cl}_3\\text{CCOOH}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{CH}_3\\text{COOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{Cl}_3\\text{CCOOH}$",
+      "solution_steps": [
+        "Chlorine is electronegative and pulls electron density toward itself through the sigma bonds (the −I, inductive, effect). This extra electron withdrawal stabilises the negative charge on the conjugate-base carboxylate ion, making the parent acid stronger.",
+        "Each additional Cl atom adds more −I withdrawal, so acidity should rise steadily as Cl atoms are added: unsubstituted acetic acid is weakest, and trichloroacetic acid (three −I-withdrawing chlorines all pulling on the same carbon) is strongest.",
+        "That gives $\\text{CH}_3\\text{COOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{Cl}_3\\text{CCOOH}$ — acidity increases monotonically with the number of chlorine atoms.",
+        "The exact reverse order is the mistake of treating the electron-withdrawing chlorines as if they were ring-DEACTIVATING groups that also weaken acid strength (deactivating toward electrophilic aromatic substitution is a completely different idea from acid strength). Swapping chloroacetic and dichloroacetic acid is simply a miscount of how many Cl atoms sit on each acid. Placing chloroacetic acid ahead of plain acetic acid in the wrong direction forgets that even ONE electronegative substituent already raises acidity above the unsubstituted parent acid."
+      ],
+      "verification_method": "mechanism_reasoned_from_inductive_effect_and_cross_checked_against_ncert_style_acidity_order"
+    },
+    {
+      "id": "pi-organic-basic-principles-006",
+      "concept_id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "But-1-ene ($\\text{CH}_2=\\text{CH}-\\text{CH}_2-\\text{CH}_3$), but-2-ene ($\\text{CH}_3-\\text{CH}=\\text{CH}-\\text{CH}_3$) and 2-methylbut-2-ene ($(\\text{CH}_3)_2\\text{C}=\\text{CH}-\\text{CH}_3$) are compared by counting the alpha C–H bonds available on carbons directly attached to the double bond (the hyperconjugating hydrogens). What is the correct order of INCREASING alkene stability?",
+      "options": [
+        "but-1-ene < but-2-ene < 2-methylbut-2-ene",
+        "2-methylbut-2-ene < but-2-ene < but-1-ene",
+        "but-1-ene < 2-methylbut-2-ene < but-2-ene",
+        "but-2-ene < but-1-ene < 2-methylbut-2-ene"
+      ],
+      "answer_index": 0,
+      "correct_answer": "but-1-ene < but-2-ene < 2-methylbut-2-ene",
+      "solution_steps": [
+        "In but-1-ene, only one sp2 carbon carries an alkyl group (an ethyl group), and only the CH2 of that ethyl group supplies alpha C–H bonds — 2 alpha hydrogens total.",
+        "In but-2-ene, each sp2 carbon carries one methyl group, each contributing 3 alpha hydrogens — 6 alpha hydrogens total.",
+        "In 2-methylbut-2-ene, one sp2 carbon carries two methyl groups (6 alpha hydrogens) and the other carries one methyl group (3 alpha hydrogens) — 9 alpha hydrogens total, the most hyperconjugative stabilisation of the three, and therefore the most stable alkene.",
+        "So stability increases in the order but-1-ene (2H) < but-2-ene (6H) < 2-methylbut-2-ene (9H). The exact reverse order is the mistake of assuming a LESS substituted, 'less crowded' alkene must be more stable by borrowing steric-strain reasoning that doesn't apply here. The other two wrong orders come from miscounting the alpha hydrogens on one of the three alkenes."
+      ],
+      "verification_method": "python_alpha_hydrogen_counting_arithmetic_cross_checked_against_hyperconjugation_stability_rule"
+    },
+    {
+      "id": "pi-hydrocarbons-001",
+      "concept_id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Propene ($\\text{CH}_3-\\text{CH}=\\text{CH}_2$) is treated with HBr in the absence of any peroxide. What is the major product?",
+      "options": [
+        "2-bromopropane",
+        "1-bromopropane",
+        "1,2-dibromopropane",
+        "propane (no reaction occurs)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2-bromopropane",
+      "solution_steps": [
+        "HBr adds across the C=C bond by an ionic (electrophilic addition) mechanism: $\\text{H}^+$ attacks first, generating the more stable carbocation.",
+        "Protonating the terminal $=\\text{CH}_2$ carbon puts the positive charge on the middle carbon, giving a SECONDARY carbocation — more stable than the primary carbocation that would form if $\\text{H}^+$ attacked the other carbon.",
+        "$\\text{Br}^-$ then attacks this secondary carbocation, giving 2-bromopropane ($\\text{CH}_3-\\text{CHBr}-\\text{CH}_3$) as the major (Markovnikov) product.",
+        "1-bromopropane is the ANTI-Markovnikov product, which only forms under the peroxide (radical) mechanism — not applicable here since no peroxide is mentioned. 1,2-dibromopropane would need $\\text{Br}_2$ addition, not $\\text{HBr}$. 'No reaction' is wrong because HBr adds readily to alkenes at room temperature without needing a catalyst."
+      ],
+      "verification_method": "mechanism_reasoned_from_carbocation_stability_and_cross_checked_against_markovnikov_rule"
+    },
+    {
+      "id": "pi-hydrocarbons-002",
+      "concept_id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Propene is treated with HBr in the PRESENCE of peroxides. What is the major product, and why does this differ from the peroxide-free reaction?",
+      "options": [
+        "1-bromopropane, because peroxides switch the mechanism to a free-radical chain reaction that puts Br on the less-substituted terminal carbon (the anti-Markovnikov / Kharasch effect)",
+        "2-bromopropane, since peroxides have no effect on the outcome with HBr",
+        "2-bromo-1-propanol, from a mixed radical/ionic pathway",
+        "No reaction occurs, since the peroxide effect only works with HCl and HI, not HBr"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1-bromopropane, because peroxides switch the mechanism to a free-radical chain reaction that puts Br on the less-substituted terminal carbon (the anti-Markovnikov / Kharasch effect)",
+      "solution_steps": [
+        "Peroxides generate Br radicals, which start a radical chain mechanism instead of the usual ionic one. A Br radical adds first to the terminal (less hindered) carbon, generating the more stable SECONDARY radical at the middle carbon.",
+        "This radical then abstracts an H from another HBr molecule, giving 1-bromopropane — Br ends up on the terminal carbon, opposite to where it goes without peroxide.",
+        "This reversal (the Kharasch/peroxide effect) is specific to HBr among the hydrogen halides — the analogous radical chain is not favourable thermodynamically for HCl or HI, so those two still give only the normal Markovnikov product even with peroxides present.",
+        "Saying peroxides have no effect ignores the well-established Kharasch effect. '2-bromo-1-propanol' invents a nonsensical hybrid product with no real mechanistic basis. Claiming the effect is for HCl/HI instead of HBr has the actual textbook fact exactly backwards — the peroxide effect is a well-known HBr-specific exception."
+      ],
+      "verification_method": "mechanism_reasoned_from_radical_stability_and_cross_checked_against_kharasch_peroxide_effect"
+    },
+    {
+      "id": "pi-hydrocarbons-003",
+      "concept_id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "2-Methylbut-2-ene, $(\\text{CH}_3)_2\\text{C}=\\text{CH}-\\text{CH}_3$, is subjected to ozonolysis followed by a REDUCTIVE work-up ($\\text{Zn}/\\text{H}_2\\text{O}$ or $\\text{Me}_2\\text{S}$). What are the products?",
+      "options": [
+        "acetone and acetaldehyde",
+        "acetic acid and acetone",
+        "propanone and propanal",
+        "formaldehyde and butan-2-one"
+      ],
+      "answer_index": 0,
+      "correct_answer": "acetone and acetaldehyde",
+      "solution_steps": [
+        "Ozonolysis cleaves the C=C bond completely, turning each doubly-bonded carbon into its own C=O group.",
+        "One sp2 carbon, $(\\text{CH}_3)_2\\text{C}=$, carries no H and becomes $(\\text{CH}_3)_2\\text{C}=\\text{O}$, i.e. acetone. The other sp2 carbon, $=\\text{CH}-\\text{CH}_3$, carries one H and becomes $\\text{CH}_3-\\text{CHO}$, i.e. acetaldehyde.",
+        "Atom count check: the original alkene is $\\text{C}_5\\text{H}_{10}$; acetone ($\\text{C}_3\\text{H}_6\\text{O}$) plus acetaldehyde ($\\text{C}_2\\text{H}_4\\text{O}$) together account for all 5 carbons and all 10 hydrogens of the starting alkene, with the two new oxygens supplied by the ozone/work-up step — confirming the cleavage pattern.",
+        "'Acetic acid and acetone' would be the result of an OXIDATIVE work-up ($\\text{H}_2\\text{O}_2$) instead, which pushes the aldehyde fragment on to a carboxylic acid — the question specifies a reductive work-up, so the aldehyde stops at acetaldehyde. 'Propanone and propanal' and 'formaldehyde and butan-2-one' both come from miscounting which carbons of '2-methylbut-2-ene' actually carry the double bond."
+      ],
+      "verification_method": "python_atom_balance_check_for_reductive_ozonolysis_cleavage"
+    },
+    {
+      "id": "pi-hydrocarbons-004",
+      "concept_id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Hückel's rule requires a planar, fully conjugated ring with $(4n+2)$ π electrons for aromaticity. Which of the following IS aromatic?",
+      "options": [
+        "Tropylium cation, $\\text{C}_7\\text{H}_7^+$ (6 π electrons, $n=1$)",
+        "Cyclopentadienyl cation, $\\text{C}_5\\text{H}_5^+$ (4 π electrons)",
+        "Cycloheptatrienyl radical, $\\text{C}_7\\text{H}_7^\\bullet$ (7 π electrons)",
+        "Cyclooctatetraene, $\\text{C}_8\\text{H}_8$ (8 π electrons)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Tropylium cation, $\\text{C}_7\\text{H}_7^+$ (6 π electrons, $n=1$)",
+      "solution_steps": [
+        "Tropylium cation forms when cycloheptatriene loses a hydride ion. This leaves 7 carbons in a fully conjugated, planar ring sharing 6 delocalised π electrons (the three original C=C double bonds' worth), even though the ring itself has an odd number of carbons and carries a positive charge.",
+        "$4n+2=6$ when $n=1$, so tropylium cation satisfies Hückel's rule exactly and is aromatic — Hückel's rule is about the ELECTRON COUNT, not whether the ring size is even or odd.",
+        "Cyclopentadienyl CATION has only 4 π electrons ($4n$ with $n=1$, not $4n+2$) — it is antiaromatic, the classic trap of confusing it with the aromatic cyclopentadienyl ANION (which has 6 π electrons after gaining an extra electron pair).",
+        "Cycloheptatrienyl radical has 7 π electrons (an odd number, matching neither $4n$ nor $4n+2$ cleanly) — non-aromatic, easily confused with tropylium cation since it's the same carbon skeleton but a different electron count (neutral radical vs. cation). Cyclooctatetraene has 8 π electrons ($4n$ with $n=2$) and is additionally non-planar (tub-shaped), so it fails on two counts, not aromatic."
+      ],
+      "verification_method": "python_huckel_4n_plus_2_pi_electron_count_arithmetic"
+    },
+    {
+      "id": "pi-hydrocarbons-005",
+      "concept_id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Toluene ($\\text{C}_6\\text{H}_5-\\text{CH}_3$) undergoes nitration with $\\text{HNO}_3/\\text{H}_2\\text{SO}_4$. What is the major product, and why?",
+      "options": [
+        "predominantly a mixture of ortho- and para-nitrotoluene, because the methyl group is ring-activating and ortho,para-directing (via hyperconjugation/+I donation)",
+        "predominantly meta-nitrotoluene",
+        "no reaction occurs, since the methyl group deactivates the ring toward electrophilic attack",
+        "trinitrotoluene forms directly in a single nitration step"
+      ],
+      "answer_index": 0,
+      "correct_answer": "predominantly a mixture of ortho- and para-nitrotoluene, because the methyl group is ring-activating and ortho,para-directing (via hyperconjugation/+I donation)",
+      "solution_steps": [
+        "The methyl group donates electron density into the ring (through hyperconjugation and a mild +I inductive effect), which activates the ring toward electrophilic attack and specifically stabilises the arenium-ion intermediate best when attack occurs ortho or para to it.",
+        "So nitration gives predominantly a mixture of ortho- and para-nitrotoluene (with para often the major single isomer for steric reasons), not meta.",
+        "Meta-directors are electron-WITHDRAWING groups (like $-\\text{NO}_2$ or $-\\text{COOH}$), the opposite of an alkyl group — picking meta confuses alkyl substituents with those.",
+        "Claiming 'no reaction, methyl deactivates' has the electronic effect of an alkyl group exactly backwards — alkyl groups activate the ring, they don't deactivate it. Claiming TNT forms in one step conflates the famous final product (made industrially by repeated, forcing nitrations) with the immediate, single-step, kinetic product of one mild nitration."
+      ],
+      "verification_method": "mechanism_reasoned_from_hyperconjugative_electron_donation_and_cross_checked_against_ncert_style_directing_effects"
+    },
+    {
+      "id": "pi-hydrocarbons-006",
+      "concept_id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the degree of unsaturation of a hydrocarbon with molecular formula $\\text{C}_5\\text{H}_8$, and what single structural feature could fully account for it in an open-chain (non-cyclic) compound?",
+      "options": [
+        "2, accounted for by a single carbon–carbon triple bond (as in pent-1-yne)",
+        "1, accounted for by a single carbon–carbon double bond",
+        "3, accounted for by a triple bond plus a ring",
+        "0, since C5H8 is a fully saturated formula"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2, accounted for by a single carbon–carbon triple bond (as in pent-1-yne)",
+      "solution_steps": [
+        "For a hydrocarbon $\\text{C}_c\\text{H}_h$, $\\text{DoU} = \\dfrac{2c+2-h}{2}$. Here $c=5, h=8$: $\\text{DoU} = \\dfrac{2(5)+2-8}{2} = \\dfrac{4}{2} = 2$.",
+        "A saturated open-chain $\\text{C}_5$ alkane would be $\\text{C}_5\\text{H}_{12}$ (pentane). $\\text{C}_5\\text{H}_8$ has 4 fewer hydrogens, i.e. 2 degrees of unsaturation — exactly what a single carbon–carbon TRIPLE bond accounts for on its own (a triple bond counts as 2 degrees), as in pent-1-yne, $\\text{HC}\\equiv\\text{C}-\\text{CH}_2-\\text{CH}_2-\\text{CH}_3$.",
+        "'1' is the mistake of counting a triple bond as only 1 degree of unsaturation, the way a double bond is counted, instead of 2. '3' wrongly adds an extra degree on top of the correct value, as if a ring were also required. '0' incorrectly treats $\\text{C}_5\\text{H}_8$ as if it matched the saturated alkane formula $\\text{C}_n\\text{H}_{2n+2}$, when it is actually 4 hydrogens short of that."
+      ],
+      "verification_method": "python_degree_of_unsaturation_formula_calculation"
+    },
+    {
+      "id": "pi-haloalkanes-haloarenes-001",
+      "concept_id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "tert-Butyl bromide, $(\\text{CH}_3)_3\\text{C}-\\text{Br}$, is treated with dilute aqueous NaOH at room temperature. Which mechanism dominates, and why?",
+      "options": [
+        "$S_N1$ — the tertiary substrate readily forms a stable, hyperconjugatively-stabilised carbocation, and the weak-nucleophile/polar-protic conditions favour this two-step ionisation pathway",
+        "$S_N2$ — the small $\\text{OH}^-$ nucleophile can still attack the carbon from the back side despite the crowding from three methyl groups",
+        "$E2$ — the base removes a $\\beta$-hydrogen in one concerted step to give the alkene as the major product",
+        "No reaction occurs, because tertiary halides are generally unreactive toward nucleophiles"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$S_N1$ — the tertiary substrate readily forms a stable, hyperconjugatively-stabilised carbocation, and the weak-nucleophile/polar-protic conditions favour this two-step ionisation pathway",
+      "solution_steps": [
+        "A tertiary carbon is far too sterically crowded for a nucleophile to approach from directly behind the leaving group, so $S_N2$ is essentially shut down here.",
+        "Instead, the C–Br bond ionises first, forming a tertiary carbocation that is well stabilised by hyperconjugation and the +I effect of three methyl groups. In a polar protic solvent (water) with a comparatively dilute, weakly nucleophilic base, this two-step $S_N1$ pathway to tert-butanol dominates.",
+        "$E2$ needs a genuinely strong (often bulky) base and usually heat to remove a $\\beta$-hydrogen in one concerted step; dilute aqueous NaOH under mild conditions favours substitution over elimination for this substrate, so $E2$ is only a minor side pathway here, not the major one.",
+        "Claiming $S_N2$ dominates ignores just how much steric bulk blocks backside attack on a tertiary carbon. Claiming 'no reaction' has it backwards — tertiary halides are actually MORE reactive via $S_N1$ than primary halides are, precisely because they form a stable carbocation so easily."
+      ],
+      "verification_method": "mechanism_reasoned_from_carbocation_stability_and_steric_hindrance_and_cross_checked_against_ncert_style_sn1_sn2_e2_rules"
+    },
+    {
+      "id": "pi-haloalkanes-haloarenes-002",
+      "concept_id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "1-Bromobutane reacts with $\\text{NaCN}$ dissolved in DMF (a polar aprotic solvent). Which mechanism operates?",
+      "options": [
+        "$S_N2$ — the primary, unhindered carbon allows straightforward backside attack by the strong $\\text{CN}^-$ nucleophile",
+        "$S_N1$ — a stable primary carbocation forms first",
+        "$E2$ — the base removes a $\\beta$-hydrogen to give an alkene as the major product",
+        "$E1$ — a carbocation forms first, followed by loss of a proton"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$S_N2$ — the primary, unhindered carbon allows straightforward backside attack by the strong $\\text{CN}^-$ nucleophile",
+      "solution_steps": [
+        "1-Bromobutane is a PRIMARY halide with essentially no steric hindrance around the carbon bearing the leaving group, so a nucleophile can attack cleanly from the back side.",
+        "$\\text{CN}^-$ is a strong, small nucleophile, and DMF (polar aprotic) does not tie it up the way a protic solvent would — both conditions strongly favour $S_N2$.",
+        "$S_N1$ and $E1$ both require a carbocation intermediate first, but primary carbocations are far too unstable to form under normal conditions — these mechanisms essentially never operate on primary substrates. $E2$ would need a strong, bulky, non-nucleophilic base with heating to favour elimination; here $\\text{CN}^-$ is acting as a good nucleophile under mild conditions, so substitution dominates over elimination."
+      ],
+      "verification_method": "mechanism_reasoned_from_steric_accessibility_and_cross_checked_against_ncert_style_sn1_sn2_rules"
+    },
+    {
+      "id": "pi-haloalkanes-haloarenes-003",
+      "concept_id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "2-Bromo-2-methylbutane is heated with alcoholic KOH. Which alkene forms as the MAJOR product?",
+      "options": [
+        "2-methylbut-2-ene (the more substituted alkene, per Zaitsev's rule)",
+        "2-methylbut-1-ene (the less substituted alkene, the Hofmann product)",
+        "an ether, via substitution rather than elimination",
+        "tert-butyl bromide"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2-methylbut-2-ene (the more substituted alkene, per Zaitsev's rule)",
+      "solution_steps": [
+        "Alcoholic KOH is a strong base and these are forcing (heated) conditions on a tertiary halide — elimination ($E2$) dominates heavily over substitution here.",
+        "$E2$ with a small, strong base like $\\text{OH}^-$ follows Zaitsev's rule: the more substituted, more stable alkene is the major product. Removing a $\\beta$-hydrogen toward the more substituted side gives 2-methylbut-2-ene.",
+        "The less-substituted 'Hofmann product' (2-methylbut-1-ene) becomes major only with a BULKY base (like potassium tert-butoxide) that can't easily reach a more hindered $\\beta$-hydrogen — that's not the base used here.",
+        "An ether via substitution is wrong because a strong base + heat on a tertiary halide overwhelmingly favours elimination, not substitution. 'tert-Butyl bromide' isn't even a sensible product here — it's a different starting material altogether, not something this reaction could form."
+      ],
+      "verification_method": "mechanism_reasoned_from_zaitsev_rule_and_cross_checked_against_ncert_style_elimination_conditions"
+    },
+    {
+      "id": "pi-haloalkanes-haloarenes-004",
+      "concept_id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Chlorobenzene resists nucleophilic substitution under ordinary conditions, unlike an alkyl chloride. What is the correct electronic reason?",
+      "options": [
+        "A lone pair on Cl conjugates into the aromatic ring, giving the C–Cl bond partial double-bond character that makes it far harder to break than an ordinary alkyl C–Cl bond",
+        "Chlorine's high electronegativity makes the whole ring too electron-poor for any nucleophile to approach",
+        "Aryl halides are simply insoluble in water, so no reaction can occur",
+        "The carbon bearing Cl is $sp^3$ hybridised, which prevents backside attack"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A lone pair on Cl conjugates into the aromatic ring, giving the C–Cl bond partial double-bond character that makes it far harder to break than an ordinary alkyl C–Cl bond",
+      "solution_steps": [
+        "Resonance structures can be drawn where the chlorine's lone pair delocalises into the ring, putting a partial positive charge on Cl and partial negative charge in the ring, with a corresponding partial double-bond character on the C–Cl bond itself.",
+        "This partial double-bond character shortens and strengthens the C–Cl bond compared to a normal single bond in an alkyl halide, making ionisation ($S_N1$-type) very unfavourable; the carbon is also $sp^2$ and shielded by the ring, blocking backside ($S_N2$-type) attack too.",
+        "Saying the ring becomes 'too electron-poor' mixes up inductive withdrawal with the resonance DONATION that is actually the dominant, ring-activating effect here — resonance makes the ortho/para positions more electron-rich, not less. Solubility in water has nothing to do with the mechanistic reason for low reactivity. The carbon bearing Cl in chlorobenzene is $sp^2$, not $sp^3$ — that's a common mix-up between aryl and alkyl halides."
+      ],
+      "verification_method": "mechanism_reasoned_from_resonance_delocalisation_and_cross_checked_against_ncert_style_aryl_halide_reactivity"
+    },
+    {
+      "id": "pi-haloalkanes-haloarenes-005",
+      "concept_id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A small amount of water accidentally gets into a flask containing the Grignard reagent $\\text{CH}_3\\text{CH}_2\\text{MgBr}$ before it can react with its intended electrophile. What happens?",
+      "options": [
+        "The Grignard reagent is destroyed instantly: it is protonated to ethane ($\\text{CH}_3\\text{CH}_3$) and $\\text{Mg(OH)Br}$",
+        "Nothing happens — Grignard reagents tolerate small amounts of moisture just fine",
+        "Water acts as the intended electrophile, cleanly forming ethanol, $\\text{CH}_3\\text{CH}_2\\text{OH}$",
+        "It reacts with water the same slow way it reacts with $\\text{CO}_2$, forming a carboxylic acid"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The Grignard reagent is destroyed instantly: it is protonated to ethane ($\\text{CH}_3\\text{CH}_3$) and $\\text{Mg(OH)Br}$",
+      "solution_steps": [
+        "Grignard reagents behave like a carbanion equivalent — extremely basic and reactive toward ANY source of a slightly acidic proton, including water and alcohols.",
+        "Water instantly protonates the carbon, converting the ethyl group into ethane gas and leaving $\\text{Mg(OH)Br}$ behind — this is why Grignard reagents must be prepared and handled under strictly anhydrous conditions.",
+        "Claiming water is tolerated flatly contradicts why anhydrous glassware and solvents are always emphasised for this reagent. Claiming ethanol forms cleanly mistakes this simple, fast proton transfer for the deliberate, slower nucleophilic ADDITION to a carbonyl electrophile like $\\text{CO}_2$ that actually builds a new carbon–carbon (or carbon–oxygen) bond — water has no carbon for the Grignard's carbon to bond to, so no new C–C or C–O bond forms this way."
+      ],
+      "verification_method": "mechanism_reasoned_from_bronsted_acid_base_proton_transfer_and_cross_checked_against_ncert_style_grignard_reactivity"
+    },
+    {
+      "id": "pi-haloalkanes-haloarenes-006",
+      "concept_id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For reaction with a given nucleophile under comparable conditions, what is the correct order of $S_N2$ reactivity among methyl, primary, secondary and tertiary alkyl halides?",
+      "options": [
+        "methyl > primary > secondary > tertiary",
+        "tertiary > secondary > primary > methyl",
+        "secondary > tertiary > primary > methyl",
+        "all four react at essentially the same rate, since the leaving group is identical in each case"
+      ],
+      "answer_index": 0,
+      "correct_answer": "methyl > primary > secondary > tertiary",
+      "solution_steps": [
+        "$S_N2$ requires the nucleophile to attack directly from the side opposite the leaving group (backside attack), so the reaction rate is very sensitive to how crowded that carbon is.",
+        "Going from methyl to primary to secondary to tertiary steadily adds more bulky alkyl groups around the reacting carbon, progressively blocking that backside approach — so $S_N2$ reactivity steadily DECREASES in that order: methyl > primary > secondary > tertiary.",
+        "'tertiary > secondary > primary > methyl' is actually the correct order for the $S_N1$ mechanism (where a more substituted carbocation is more stable) — this is the classic mistake of swapping the two mechanisms' opposite reactivity trends.",
+        "'secondary > tertiary > primary > methyl' matches neither real trend and is simply jumbled. Claiming all four react at the same rate ignores that steric bulk around the reacting carbon is exactly what controls $S_N2$ rate — the identity of the leaving group being the same doesn't make the substrates equally accessible."
+      ],
+      "verification_method": "mechanism_reasoned_from_steric_hindrance_to_backside_attack_and_cross_checked_against_ncert_style_sn1_sn2_reactivity_trends"
+    },
+    {
+      "id": "pi-alcohols-phenols-ethers-001",
+      "concept_id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Phenol is considerably more acidic than cyclohexanol, even though both have an –OH group attached to a six-membered ring carbon skeleton. What is the correct reason?",
+      "options": [
+        "The phenoxide ion formed after phenol loses a proton is stabilised by resonance delocalisation of the negative charge into the aromatic ring; the cyclohexoxide ion from cyclohexanol has no such delocalisation available",
+        "Phenol has a higher molecular weight, so it dissociates more easily",
+        "The aromatic ring in phenol inductively donates electron density into the O–H bond, weakening it",
+        "Cyclohexanol's non-planar ring geometry makes it harder for the molecule to lose a proton"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The phenoxide ion formed after phenol loses a proton is stabilised by resonance delocalisation of the negative charge into the aromatic ring; the cyclohexoxide ion from cyclohexanol has no such delocalisation available",
+      "solution_steps": [
+        "When phenol loses its proton, the resulting phenoxide ion's negative charge on oxygen can delocalise into the aromatic ring through resonance (drawing structures with the negative charge moved to the ortho and para ring carbons).",
+        "This resonance stabilisation lowers the energy of the phenoxide ion relative to un-ionised phenol, making the proton easier to lose — i.e. phenol is a stronger acid.",
+        "Cyclohexanol's conjugate base, the cyclohexoxide ion, is just an ordinary localised alkoxide with no ring system to delocalise the negative charge into, so it gets none of this extra stabilisation.",
+        "Molecular weight has no bearing on acid strength. The aromatic ring is actually electron-WITHDRAWING by induction (the $sp^2$ ring carbon is more electronegative than an $sp^3$ one) rather than donating density INTO the O–H bond to weaken it — and in any case, it is the resonance stabilisation of the resulting ANION, not any effect on the neutral O–H bond itself, that is the real reason phenol is more acidic. Ring geometry/planarity is irrelevant to how easily a simple O–H proton is removed."
+      ],
+      "verification_method": "mechanism_reasoned_from_resonance_delocalisation_and_cross_checked_against_ncert_style_phenol_acidity"
+    },
+    {
+      "id": "pi-alcohols-phenols-ethers-002",
+      "concept_id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "p-Nitrophenol is more acidic than plain phenol. What is the correct reason?",
+      "options": [
+        "The nitro group's resonance ($-M$) effect further delocalises and stabilises the negative charge of the phenoxide ion onto the nitro group's own oxygens, in addition to its inductive ($-I$) withdrawal",
+        "The bulky nitro group sterically blocks the O–H bond, making it easier for the proton to fall off",
+        "The two compounds are actually equally acidic, since both have exactly one phenolic –OH group",
+        "p-Nitrophenol is more acidic simply because nitrogen is more electronegative than carbon"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The nitro group's resonance ($-M$) effect further delocalises and stabilises the negative charge of the phenoxide ion onto the nitro group's own oxygens, in addition to its inductive ($-I$) withdrawal",
+      "solution_steps": [
+        "From the para position, the nitro group's resonance structures allow the phenoxide's negative charge to be pushed all the way onto the nitro group's oxygen atoms, spreading the charge over an even larger region than plain phenoxide can manage.",
+        "This extra resonance stabilisation, on top of the nitro group's ordinary inductive electron withdrawal, lowers the phenoxide ion's energy further still, making p-nitrophenol a noticeably stronger acid than phenol.",
+        "Steric blocking has nothing to do with how easily an O–H proton ionises — sterics don't 'push protons off'. Claiming the two are equally acidic ignores that ring substituents change how well the resulting anion is stabilised, which is exactly what determines relative acid strength here. The correct explanation is about extended CONJUGATION/resonance through the ring and into the nitro group, not a simple comparison of the electronegativities of isolated N and C atoms."
+      ],
+      "verification_method": "mechanism_reasoned_from_extended_resonance_delocalisation_and_cross_checked_against_ncert_style_substituted_phenol_acidity"
+    },
+    {
+      "id": "pi-alcohols-phenols-ethers-003",
+      "concept_id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which combination gives the best yield of an ether via the Williamson ether synthesis?",
+      "options": [
+        "A primary alkyl halide with a sodium alkoxide ($\\text{RONa}$), via $S_N2$ attack of the alkoxide on the alkyl halide",
+        "A tertiary alkyl halide with a sodium alkoxide, since more substituted halides generally react faster",
+        "Two different alcohols simply heated together, with no other reagent",
+        "An alkyl halide with water as the nucleophile"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A primary alkyl halide with a sodium alkoxide ($\\text{RONa}$), via $S_N2$ attack of the alkoxide on the alkyl halide",
+      "solution_steps": [
+        "The Williamson synthesis is an $S_N2$ reaction: an alkoxide ion attacks an alkyl halide from the back side, displacing the halide and forming the new C–O bond of the ether.",
+        "$S_N2$ needs an UNHINDERED carbon, so a primary alkyl halide (paired with the alkoxide, a strong, small nucleophile/base) gives the cleanest, highest-yielding result.",
+        "A tertiary alkyl halide with a strong, small base like an alkoxide overwhelmingly undergoes $E2$ elimination instead, giving mostly alkene rather than the desired ether — this is the classic mistake of assuming 'more substituted reacts faster' without noticing the mechanism has switched.",
+        "Simply heating two alcohols together, with no acid catalyst or activating step, does not cleanly form an ether — direct alkoxide-plus-alkyl-halide is the standard, reliable method taught for this reason. Using water as the nucleophile on an alkyl halide just gives hydrolysis to an alcohol, not an ether at all."
+      ],
+      "verification_method": "mechanism_reasoned_from_sn2_steric_requirements_and_cross_checked_against_ncert_style_williamson_synthesis_conditions"
+    },
+    {
+      "id": "pi-alcohols-phenols-ethers-004",
+      "concept_id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Phenol is treated with $\\text{CHCl}_3$ and aqueous NaOH (Reimer–Tiemann conditions). What is the major product?",
+      "options": [
+        "salicylaldehyde (2-hydroxybenzaldehyde), via electrophilic attack of a dichlorocarbene intermediate ortho to the –OH group",
+        "benzaldehyde, with the –OH group lost during the reaction",
+        "salicylic acid (2-hydroxybenzoic acid), directly",
+        "chlorobenzene, via simple electrophilic chlorination of the ring"
+      ],
+      "answer_index": 0,
+      "correct_answer": "salicylaldehyde (2-hydroxybenzaldehyde), via electrophilic attack of a dichlorocarbene intermediate ortho to the –OH group",
+      "solution_steps": [
+        "$\\text{CHCl}_3$ under strongly basic conditions generates the reactive electrophile dichlorocarbene, $:\\text{CCl}_2$.",
+        "This electrophile attacks the electron-rich phenoxide ring, preferentially ortho to the activating –O(–) group, and after hydrolysis this installs a new –CHO group on the ring, giving 2-hydroxybenzaldehyde (salicylaldehyde). The –OH group itself directs the reaction and stays on the ring throughout.",
+        "Salicylic acid is the product of the DIFFERENT named reaction, Kolbe's reaction (phenoxide + $\\text{CO}_2$), not this one — a common mix-up between the two phenol-specific named reactions. Simple ring chlorination is not what this reagent combination does at all — CHCl3/NaOH's job here is to generate the carbene that installs an aldehyde group, not to chlorinate the ring directly."
+      ],
+      "verification_method": "mechanism_reasoned_from_dichlorocarbene_electrophilic_attack_and_cross_checked_against_ncert_style_reimer_tiemann_reaction"
+    },
+    {
+      "id": "pi-alcohols-phenols-ethers-005",
+      "concept_id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Sodium phenoxide is treated with $\\text{CO}_2$ under pressure and heat, followed by acidification (Kolbe's reaction). What is the major product?",
+      "options": [
+        "salicylic acid (2-hydroxybenzoic acid), from electrophilic attack of $\text{CO}_2$ mainly at the ortho position",
+        "benzoic acid, since $\text{CO}_2$ simply replaces the –OH group",
+        "salicylaldehyde",
+        "no new product forms, because the phenoxide ion is unreactive toward $\text{CO}_2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "salicylic acid (2-hydroxybenzoic acid), from electrophilic attack of $\text{CO}_2$ mainly at the ortho position",
+      "solution_steps": [
+        "The phenoxide ion is far more electron-rich at the ring than neutral phenol, because the negatively charged oxygen strongly donates electron density into the ring by resonance — this makes the ring quite nucleophilic and reactive toward the electrophilic carbon of $\\text{CO}_2$.",
+        "$\\text{CO}_2$ attacks mainly at the position ortho to the O(–) group (favoured by the geometry of a six-membered cyclic transition state), and acidic work-up gives salicylic acid, 2-hydroxybenzoic acid.",
+        "The –OH (as phenoxide during the reaction) group is retained throughout, not replaced — claiming $\\text{CO}_2$ replaces it is wrong. Salicylaldehyde is the product of the DIFFERENT named reaction (Reimer–Tiemann, using $\\text{CHCl}_3$), a common mix-up between the two named phenol reactions. Claiming no reaction occurs contradicts the whole basis of why phenoxide is used here in the first place — it is specifically the phenoxide's increased reactivity, not a lack of it, that drives this reaction."
+      ],
+      "verification_method": "mechanism_reasoned_from_phenoxide_nucleophilicity_and_cross_checked_against_ncert_style_kolbe_reaction"
+    },
+    {
+      "id": "pi-alcohols-phenols-ethers-006",
+      "concept_id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Anisole, $\\text{C}_6\\text{H}_5-\\text{O}-\\text{CH}_3$, is heated with excess concentrated HI. What are the major products?",
+      "options": [
+        "Phenol and $\\text{CH}_3\\text{I}$ — iodide attacks the methyl carbon by $S_N2$, since breaking the aryl–oxygen bond would require an unstable aryl cation that cannot form",
+        "Iodobenzene and $\\text{CH}_3\\text{OH}$ — the aryl–oxygen bond breaks instead of the alkyl–oxygen bond",
+        "$\\text{C}_6\\text{H}_5\\text{I}$ and $\\text{CH}_3\\text{I}$, cleaving both C–O bonds of the ether",
+        "no reaction, since aromatic ethers are always completely inert to acids"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Phenol and $\\text{CH}_3\\text{I}$ — iodide attacks the methyl carbon by $S_N2$, since breaking the aryl–oxygen bond would require an unstable aryl cation that cannot form",
+      "solution_steps": [
+        "Ether cleavage by HI proceeds through protonation of the ether oxygen, followed by iodide attacking one of the two carbons attached to that oxygen.",
+        "Iodide can readily attack the methyl carbon by a clean $S_N2$ pathway, since that carbon is small and unhindered — this breaks the alkyl–oxygen bond, releasing $\\text{CH}_3\\text{I}$ and leaving phenol behind (the aryl–oxygen bond is untouched).",
+        "Attacking the aryl carbon instead would require either an $S_N2$-type backside attack on an $sp^2$ ring carbon (geometrically blocked by the ring) or an $S_N1$-type ionisation to an aryl cation (extremely unstable, essentially never forms) — so the aryl–oxygen bond effectively resists cleavage. Claiming both C–O bonds break, or that the aryl side breaks instead, both get this selectivity backwards. Claiming 'no reaction' is also wrong — anisole IS cleaved by hot concentrated HI/HBr, just selectively on the alkyl side."
+      ],
+      "verification_method": "mechanism_reasoned_from_sn2_feasibility_versus_aryl_cation_instability_and_cross_checked_against_ncert_style_ether_cleavage_rules"
+    },
+    {
+      "id": "pi-aldehydes-ketones-acids-001",
+      "concept_id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Benzaldehyde ($\\text{C}_6\\text{H}_5\\text{CHO}$) is treated with concentrated NaOH. What happens, and why?",
+      "options": [
+        "It undergoes the Cannizzaro reaction, disproportionating to sodium benzoate and benzyl alcohol, because it has no alpha-hydrogen and so cannot form an aldol pathway",
+        "It undergoes an aldol condensation, since all aldehydes react with base this way",
+        "It is oxidised cleanly to benzoic acid alone by NaOH acting as an oxidising agent",
+        "No reaction occurs, since benzaldehyde is unreactive toward bases"
+      ],
+      "answer_index": 0,
+      "correct_answer": "It undergoes the Cannizzaro reaction, disproportionating to sodium benzoate and benzyl alcohol, because it has no alpha-hydrogen and so cannot form an aldol pathway",
+      "solution_steps": [
+        "Benzaldehyde's carbonyl carbon is attached to the aromatic ring on one side and an H on the other — there is no alpha-CARBON bearing hydrogens for the base to remove, so the aldol pathway (which needs an enolate) is completely unavailable.",
+        "With no aldol route open, concentrated hydroxide instead attacks the carbonyl directly, and the resulting intermediate transfers a hydride to a second molecule of benzaldehyde — one molecule is reduced (to benzyl alcohol) while the other is oxidised (to benzoate) in this disproportionation, the Cannizzaro reaction.",
+        "Claiming an aldol condensation forgets that aldol reactions specifically require an alpha-hydrogen, which benzaldehyde does not have. NaOH is a base, not an oxidising agent, so it cannot oxidise the aldehyde on its own in a simple one-direction reaction — the actual Cannizzaro pathway is a disproportionation (half reduced, half oxidised), not a pure oxidation to only the acid. Claiming no reaction is wrong — this is exactly the reaction benzaldehyde is well known to undergo with strong base, precisely because it CANNOT do aldol."
+      ],
+      "verification_method": "mechanism_reasoned_from_absence_of_alpha_hydrogen_and_cross_checked_against_ncert_style_cannizzaro_reaction"
+    },
+    {
+      "id": "pi-aldehydes-ketones-acids-002",
+      "concept_id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Acetaldehyde ($\\text{CH}_3\\text{CHO}$) is treated with dilute NaOH. What happens, and why is the outcome different from benzaldehyde under the same kind of conditions?",
+      "options": [
+        "3-Hydroxybutanal forms first (aldol addition), dehydrating on heating to give crotonaldehyde (but-2-enal) — this pathway is open because acetaldehyde has alpha-hydrogens the base can remove to form a nucleophilic enolate",
+        "It undergoes a Cannizzaro reaction instead, giving ethanol and sodium acetate",
+        "No reaction occurs with dilute base — only concentrated base reacts with aldehydes",
+        "It forms acetic acid directly via a Cannizzaro-type self-oxidation"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3-Hydroxybutanal forms first (aldol addition), dehydrating on heating to give crotonaldehyde (but-2-enal) — this pathway is open because acetaldehyde has alpha-hydrogens the base can remove to form a nucleophilic enolate",
+      "solution_steps": [
+        "Unlike benzaldehyde, acetaldehyde's carbonyl carbon is attached to a $\\text{CH}_3$ group, which does carry alpha-hydrogens.",
+        "Dilute base can remove one of these alpha-hydrogens to form a nucleophilic enolate, which then attacks the carbonyl carbon of a second acetaldehyde molecule — this aldol ADDITION first gives 3-hydroxybutanal, which loses water on heating to give the conjugated aldol CONDENSATION product, crotonaldehyde.",
+        "Cannizzaro is specifically the pathway available ONLY when there is no alpha-hydrogen at all (as in benzaldehyde) — since acetaldehyde does have alpha-hydrogens, the aldol pathway dominates instead, which is exactly the discriminator this pair of reactions tests.",
+        "Claiming no reaction with dilute base is wrong — even dilute base is enough to remove an alpha-hydrogen and trigger aldol chemistry. Claiming a Cannizzaro-type self-oxidation to acetic acid repeats the same mistake of applying the no-alpha-hydrogen pathway to a molecule that actually has alpha-hydrogens available."
+      ],
+      "verification_method": "mechanism_reasoned_from_presence_of_alpha_hydrogen_and_cross_checked_against_ncert_style_aldol_reaction"
+    },
+    {
+      "id": "pi-aldehydes-ketones-acids-003",
+      "concept_id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Rank formaldehyde, acetaldehyde and acetone in order of DECREASING reactivity toward nucleophilic addition at the carbonyl carbon.",
+      "options": [
+        "formaldehyde > acetaldehyde > acetone",
+        "acetone > acetaldehyde > formaldehyde",
+        "acetaldehyde > formaldehyde > acetone",
+        "all three are equally reactive, since they share the same carbonyl functional group"
+      ],
+      "answer_index": 0,
+      "correct_answer": "formaldehyde > acetaldehyde > acetone",
+      "solution_steps": [
+        "Alkyl groups attached to the carbonyl carbon do two things that slow nucleophilic addition: they physically crowd the approaching nucleophile (a steric effect), and they push extra electron density onto the carbonyl carbon (an electron-donating effect), both making that carbon a less willing target.",
+        "Formaldehyde has no alkyl groups on its carbonyl carbon (just two H's), acetaldehyde has one (a methyl group), and acetone has two (two methyl groups) — so reactivity decreases steadily as more alkyl groups are added: formaldehyde > acetaldehyde > acetone.",
+        "The exact reverse order is the mistake of assuming 'more substituted = more reactive', borrowing reasoning that applies to carbocation STABILITY (where more alkyl groups help) rather than to nucleophilic ADDITION reactivity (where more alkyl groups hinder). Swapping the top two ignores that even a single extra methyl group already measurably slows the reaction. Claiming they're all equally reactive ignores the real, well-documented effect that alkyl substitution has on this class of reaction."
+      ],
+      "verification_method": "mechanism_reasoned_from_steric_and_electronic_effects_and_cross_checked_against_ncert_style_carbonyl_reactivity_order"
+    },
+    {
+      "id": "pi-aldehydes-ketones-acids-004",
+      "concept_id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which of the following gives a positive Tollens' test (a silver mirror)?",
+      "options": [
+        "Acetaldehyde, $\\text{CH}_3\\text{CHO}$",
+        "Acetone, $\\text{CH}_3\\text{COCH}_3$",
+        "Diethyl ether",
+        "Benzene"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Acetaldehyde, $\\text{CH}_3\\text{CHO}$",
+      "solution_steps": [
+        "Tollens' reagent ($\\text{Ag(NH}_3)_2^+$) is a mild oxidising agent. It oxidises the aldehyde group to a carboxylate, while $\\text{Ag}^+$ is reduced to metallic silver, which deposits as the characteristic mirror.",
+        "Acetaldehyde has exactly this oxidisable aldehyde C–H, so it gives a positive test.",
+        "Acetone, a ketone, has no hydrogen directly on the carbonyl carbon for this kind of oxidation to remove — ketones are Tollens-negative, a classic distinguishing test between aldehydes and ketones. Diethyl ether has no carbonyl group at all, and benzene has no reactive functional group of this kind either, so neither reacts."
+      ],
+      "verification_method": "mechanism_reasoned_from_carbonyl_carbon_hydrogen_availability_and_cross_checked_against_ncert_style_tollens_test"
+    },
+    {
+      "id": "pi-aldehydes-ketones-acids-005",
+      "concept_id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the correct order of INCREASING acidic strength for acetic acid, monochloroacetic acid, dichloroacetic acid and trichloroacetic acid?",
+      "options": [
+        "$\\text{CH}_3\\text{COOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{Cl}_3\\text{CCOOH}$",
+        "$\\text{Cl}_3\\text{CCOOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{ClCH}_2\\text{COOH} < \\text{CH}_3\\text{COOH}$",
+        "$\\text{CH}_3\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_3\\text{CCOOH}$",
+        "$\\text{Cl}_3\\text{CCOOH} < \\text{CH}_3\\text{COOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_2\\text{CHCOOH}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{CH}_3\\text{COOH} < \\text{ClCH}_2\\text{COOH} < \\text{Cl}_2\\text{CHCOOH} < \\text{Cl}_3\\text{CCOOH}$",
+      "solution_steps": [
+        "Each chlorine atom withdraws electron density inductively (the $-I$ effect), which stabilises the negative charge on the resulting carboxylate ion, making the acid stronger.",
+        "Since this effect is additive, acidity climbs steadily as more chlorines are added to the alpha carbon: acetic acid (no Cl) is weakest, and trichloroacetic acid (three $-I$-withdrawing chlorines) is strongest.",
+        "The exact reverse order treats the electron-withdrawing chlorines as if they weakened the acid, the opposite of the true effect. Swapping mono- and dichloroacetic acid is a simple miscount of Cl atoms. The jumbled order places trichloroacetic acid — the strongest of the four — at the WEAK end entirely, contradicting the additive inductive-effect reasoning."
+      ],
+      "verification_method": "mechanism_reasoned_from_inductive_effect_and_cross_checked_against_ncert_style_carboxylic_acid_acidity_order"
+    },
+    {
+      "id": "pi-aldehydes-ketones-acids-006",
+      "concept_id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A ketone is easily decomposed by strong acid but is stable to hot alkali. Its $\\text{C=O}$ group needs to be fully reduced to $\\text{CH}_2$. Which reagent should be used?",
+      "options": [
+        "$\\text{NH}_2\\text{NH}_2/\\text{KOH}$, heat (Wolff–Kishner reduction)",
+        "$\\text{Zn(Hg)}/\\text{conc. HCl}$ (Clemmensen reduction)",
+        "$\\text{LiAlH}_4$",
+        "$\\text{NaBH}_4$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{NH}_2\\text{NH}_2/\\text{KOH}$, heat (Wolff–Kishner reduction)",
+      "solution_steps": [
+        "Full reduction of a ketone's $\\text{C=O}$ all the way to $\\text{CH}_2$ (removing the oxygen entirely, not just adding hydrogen to it) needs either the Clemmensen method (strongly acidic) or the Wolff–Kishner method (strongly basic, via a hydrazone intermediate that loses $\\text{N}_2$).",
+        "Since this substrate specifically cannot tolerate strong acid but IS stable to hot alkali, the basic Wolff–Kishner conditions ($\\text{NH}_2\\text{NH}_2/\\text{KOH}$, heat) are the appropriate choice.",
+        "Clemmensen reduction ($\\text{Zn(Hg)}/\\text{HCl}$) would be the right tool for a BASE-sensitive substrate instead — using it here exposes this acid-sensitive substrate to exactly the strong acid it cannot tolerate. $\\text{LiAlH}_4$ and $\\text{NaBH}_4$ only reduce $\\text{C=O}$ to a secondary alcohol ($-\\text{CH-OH}$); neither removes the oxygen entirely to reach $\\text{CH}_2$, a common conflation of ordinary carbonyl reduction with this specific full deoxygenation."
+      ],
+      "verification_method": "mechanism_reasoned_from_substrate_acid_base_sensitivity_and_cross_checked_against_ncert_style_clemmensen_wolff_kishner_selection"
+    },
+    {
+      "id": "pi-amines-and-diazonium-001",
+      "concept_id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the correct order of basicity of ammonia, methylamine, dimethylamine and trimethylamine in AQUEOUS SOLUTION?",
+      "options": [
+        "$(\\text{CH}_3)_2\\text{NH} > \\text{CH}_3\\text{NH}_2 > (\\text{CH}_3)_3\\text{N} > \\text{NH}_3$",
+        "$(\\text{CH}_3)_3\\text{N} > (\\text{CH}_3)_2\\text{NH} > \\text{CH}_3\\text{NH}_2 > \\text{NH}_3$",
+        "$\\text{NH}_3 > \\text{CH}_3\\text{NH}_2 > (\\text{CH}_3)_2\\text{NH} > (\\text{CH}_3)_3\\text{N}$",
+        "All four are equally basic, since each has one lone pair of electrons on nitrogen available for protonation"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$(\\text{CH}_3)_2\\text{NH} > \\text{CH}_3\\text{NH}_2 > (\\text{CH}_3)_3\\text{N} > \\text{NH}_3$",
+      "solution_steps": [
+        "In water, basicity depends on BOTH how much the alkyl groups donate electron density (+I effect, raising basicity) AND how well the resulting protonated ammonium ion is stabilised by hydrogen-bonding to water (solvation).",
+        "Trimethylamine donates the most electron density but its ammonium ion is the bulkiest and most poorly solvated of the three methylamines; dimethylamine balances electron donation and solvation best, coming out on top in water, followed by methylamine, then trimethylamine, with plain ammonia weakest of all.",
+        "$(\\text{CH}_3)_3\\text{N} > (\\text{CH}_3)_2\\text{NH} > \\text{CH}_3\\text{NH}_2 > \\text{NH}_3$ is actually the correct order in the GAS PHASE, where there is no solvent to complicate things and pure inductive electron donation wins outright — but the question specifically asks about AQUEOUS solution, where solvation effects flip trimethylamine down below the other two.",
+        "The exact reverse order wrongly assumes alkyl substitution always REDUCES basicity, when +I donation from alkyl groups actually raises it (up to a point). Claiming all four are equally basic ignores that both the electron-donating and solvation effects clearly differ across these four compounds."
+      ],
+      "verification_method": "mechanism_reasoned_from_inductive_donation_and_solvation_effects_and_cross_checked_against_ncert_style_aqueous_amine_basicity_order"
+    },
+    {
+      "id": "pi-amines-and-diazonium-002",
+      "concept_id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which amine gives a positive carbylamine test (a foul-smelling isocyanide) with $\\text{CHCl}_3$/alcoholic KOH?",
+      "options": [
+        "Aniline, $\\text{C}_6\\text{H}_5\\text{NH}_2$ (a primary amine)",
+        "N-Methylaniline (a secondary amine)",
+        "Triethylamine (a tertiary amine)",
+        "Acetamide, $\\text{CH}_3\\text{CONH}_2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Aniline, $\\text{C}_6\\text{H}_5\\text{NH}_2$ (a primary amine)",
+      "solution_steps": [
+        "The carbylamine test converts a primary amine's $-\\text{NH}_2$ group into an isocyanide, $-\\text{NC}$, via reaction with dichlorocarbene generated from $\\text{CHCl}_3$/KOH — this transformation specifically needs TWO N–H bonds on the starting nitrogen.",
+        "Aniline, a primary amine, has exactly that $-\\text{NH}_2$ group and gives a strongly positive (and very unpleasant-smelling) test.",
+        "N-Methylaniline (secondary, only one N–H) and triethylamine (tertiary, no N–H at all) cannot form the required isocyanide intermediate, so both give a negative test — this is precisely why the carbylamine test is used to identify primary amines specifically. Acetamide's nitrogen belongs to an amide group, not a free amine, and amides do not undergo this test at all."
+      ],
+      "verification_method": "mechanism_reasoned_from_dichlorocarbene_isocyanide_formation_and_cross_checked_against_ncert_style_carbylamine_test"
+    },
+    {
+      "id": "pi-amines-and-diazonium-003",
+      "concept_id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In the Hinsberg test, a primary amine is treated with benzenesulfonyl chloride. The resulting sulfonamide product...",
+      "options": [
+        "dissolves in aqueous NaOH, because the remaining N–H (made acidic by the adjacent sulfonyl group) can be deprotonated to give a soluble sodium salt",
+        "is insoluble in NaOH, because it has no acidic hydrogen left",
+        "does not form at all, since primary amines do not react with sulfonyl chlorides",
+        "precipitates out of solution regardless of pH, since sulfonamides are always insoluble"
+      ],
+      "answer_index": 0,
+      "correct_answer": "dissolves in aqueous NaOH, because the remaining N–H (made acidic by the adjacent sulfonyl group) can be deprotonated to give a soluble sodium salt",
+      "solution_steps": [
+        "A primary amine reacting with benzenesulfonyl chloride still has ONE N–H left on the resulting sulfonamide, and the strongly electron-withdrawing sulfonyl group makes that remaining N–H unusually acidic.",
+        "This acidic N–H is readily removed by aqueous NaOH, giving a soluble sodium salt of the sulfonamide — this solubility-in-base behaviour is exactly the diagnostic clue used to identify a primary amine in the Hinsberg test.",
+        "'Insoluble in NaOH, no acidic hydrogen left' describes the SECONDARY amine's sulfonamide product instead (which has no N–H remaining after both hydrogens are used up forming the sulfonamide linkage) — a classic mix-up of the primary and secondary outcomes. Claiming no reaction occurs is wrong; primary (and secondary) amines DO react readily with sulfonyl chloride — only tertiary amines fail to form a stable sulfonamide, since they have no N–H left to begin with. Claiming the product always precipitates regardless of pH ignores that its solubility in base specifically is the whole point of the test."
+      ],
+      "verification_method": "mechanism_reasoned_from_acidic_nh_availability_and_cross_checked_against_ncert_style_hinsberg_test"
+    },
+    {
+      "id": "pi-amines-and-diazonium-004",
+      "concept_id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Aniline is converted to benzenediazonium chloride using $\\text{NaNO}_2/\\text{HCl}$. What temperature must be maintained during this reaction, and why?",
+      "options": [
+        "0–5 °C, because the diazonium salt is thermally unstable and decomposes at higher temperatures",
+        "Room temperature, since diazonium salts are perfectly stable once formed",
+        "Above 100 °C, to drive the diazotisation to completion",
+        "Temperature does not matter for this particular reaction"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0–5 °C, because the diazonium salt is thermally unstable and decomposes at higher temperatures",
+      "solution_steps": [
+        "Diazotisation must be carried out cold, typically 0–5 °C, because the diazonium salt product is thermally unstable.",
+        "Above roughly 5 °C, the diazonium salt readily decomposes, releasing nitrogen gas and, in water, forming phenol — so keeping the mixture cold is essential to actually isolate the diazonium salt for further use.",
+        "Claiming diazonium salts are stable at room temperature (or that heating helps) directly contradicts this well-known instability, which is emphasised specifically because it is easy to accidentally destroy the product by letting the temperature rise. Claiming temperature 'doesn't matter' ignores that this is one of the most consistently tested procedural details of the reaction."
+      ],
+      "verification_method": "mechanism_reasoned_from_diazonium_salt_thermal_instability_and_cross_checked_against_ncert_style_diazotisation_procedure"
+    },
+    {
+      "id": "pi-amines-and-diazonium-005",
+      "concept_id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Benzenediazonium chloride is treated with $\\text{CuCN}$ (a Sandmeyer reaction). What is the product, and what does this achieve that direct electrophilic aromatic substitution on benzene could not?",
+      "options": [
+        "Benzonitrile, $\\text{C}_6\\text{H}_5\\text{CN}$ — the diazonium route installs a $-\\text{CN}$ group directly on the ring, something ordinary electrophilic aromatic substitution simply cannot do",
+        "Aniline, unchanged, since CuCN does not react with diazonium salts",
+        "Phenol, via hydrolysis of the diazonium salt",
+        "Benzamide, $\\text{C}_6\\text{H}_5\\text{CONH}_2$, since the nitrile hydrolyses immediately under these conditions"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Benzonitrile, $\\text{C}_6\\text{H}_5\\text{CN}$ — the diazonium route installs a $-\\text{CN}$ group directly on the ring, something ordinary electrophilic aromatic substitution simply cannot do",
+      "solution_steps": [
+        "CuCN reacts with the diazonium salt via a radical-type (Sandmeyer) mechanism, replacing the $-\\text{N}_2^+$ group with $-\\text{CN}$, giving benzonitrile.",
+        "This is valuable precisely because there is no direct electrophilic aromatic substitution that can install a $-\\text{CN}$ (or halide) group onto an unactivated benzene ring — the diazonium route is the standard way chemists get these groups onto an aromatic ring at all.",
+        "Claiming CuCN doesn't react ignores the well-known Sandmeyer transformation. Phenol is the product of simply warming the diazonium salt in WATER, a different reaction from treatment with CuCN — a mix-up between two different named diazonium-salt reactions. Claiming the nitrile hydrolyses to an amide 'immediately' under these conditions is wrong; that would need a separate, deliberate hydrolysis step afterward, not something automatic during the Sandmeyer reaction itself."
+      ],
+      "verification_method": "mechanism_reasoned_from_sandmeyer_radical_substitution_and_cross_checked_against_ncert_style_diazonium_salt_reactions"
+    },
+    {
+      "id": "pi-amines-and-diazonium-006",
+      "concept_id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Why is the Gabriel phthalimide synthesis preferred over simply heating an alkyl halide with excess ammonia when a chemist needs a PURE primary amine?",
+      "options": [
+        "Direct ammonolysis over-alkylates: the primary amine product is itself nucleophilic and keeps reacting further, giving a mixture of primary, secondary, tertiary amines and even a quaternary ammonium salt, whereas the phthalimide route blocks further alkylation until a final hydrolysis step releases only the primary amine",
+        "Because ammonia does not react with alkyl halides at all",
+        "Because the Gabriel synthesis works equally well on aryl halides, unlike direct ammonolysis",
+        "Because the Gabriel synthesis produces exclusively tertiary amines, which are more synthetically useful"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Direct ammonolysis over-alkylates: the primary amine product is itself nucleophilic and keeps reacting further, giving a mixture of primary, secondary, tertiary amines and even a quaternary ammonium salt, whereas the phthalimide route blocks further alkylation until a final hydrolysis step releases only the primary amine",
+      "solution_steps": [
+        "When ammonia reacts with an alkyl halide, the resulting primary amine is itself a nucleophile, so it can go on to react with more alkyl halide, forming a secondary amine, then a tertiary amine, and even a quaternary ammonium salt — a messy mixture that's hard to separate cleanly.",
+        "The phthalimide anion, by contrast, only has ONE useful nucleophilic nitrogen site that reacts with the alkyl halide once, and the resulting N-alkylphthalimide cannot react further the same way — a final hydrolysis (or hydrazinolysis) step then cleanly releases just the pure primary amine.",
+        "Claiming ammonia doesn't react with alkyl halides at all contradicts the very problem (over-alkylation) that motivates using the Gabriel method in the first place — ammonia clearly DOES react, just too many times. The phthalimide anion is, like ammonia, a comparatively poor nucleophile for the required $S_N2$ step on an aryl halide, so the Gabriel method fails on ARYL halides for essentially the same reason ordinary $S_N2$ does — it does not work equally well there. The whole point of the method is to make pure PRIMARY amines, not tertiary ones."
+      ],
+      "verification_method": "mechanism_reasoned_from_over_alkylation_versus_controlled_single_substitution_and_cross_checked_against_ncert_style_gabriel_synthesis"
+    },
+    {
+      "id": "pi-biomolecules-001",
+      "concept_id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Glucose and fructose are both hexoses (6-carbon sugars) sharing the same molecular formula, $\\text{C}_6\\text{H}_{12}\\text{O}_6$. What is the key structural difference between them?",
+      "options": [
+        "Glucose has an aldehyde group at C1 (an aldohexose); fructose has a ketone group at C2 (a ketohexose)",
+        "Glucose is a pentose and fructose is a hexose",
+        "Fructose contains one more oxygen atom than glucose",
+        "Glucose is a disaccharide while fructose is a monosaccharide"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Glucose has an aldehyde group at C1 (an aldohexose); fructose has a ketone group at C2 (a ketohexose)",
+      "solution_steps": [
+        "Both are hexoses (6-carbon sugars) with the identical molecular formula $\\text{C}_6\\text{H}_{12}\\text{O}_6$ — they are constitutional isomers of each other, differing only in WHERE the carbonyl group sits.",
+        "Glucose carries its carbonyl as an aldehyde at carbon 1 (an aldohexose); fructose carries its carbonyl as a ketone at carbon 2 (a ketohexose).",
+        "Calling glucose a pentose contradicts the question's own statement that both are hexoses. Claiming fructose has an extra oxygen contradicts the shared molecular formula given directly in the question. Both glucose and fructose are monosaccharides on their own — it is sucrose, formed by joining the two together, that is the disaccharide."
+      ],
+      "verification_method": "structural_classification_reasoned_from_carbonyl_position_and_cross_checked_against_ncert_style_carbohydrate_definitions"
+    },
+    {
+      "id": "pi-biomolecules-002",
+      "concept_id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Sucrose does not give a positive Fehling's or Tollens' test, unlike maltose or lactose. Why not?",
+      "options": [
+        "In sucrose, the glycosidic bond forms between the anomeric carbons of BOTH glucose (C1) and fructose (C2), so neither unit has a free anomeric –OH left to open into the reactive aldehyde/ketone form needed for reduction",
+        "Sucrose contains no carbonyl-derived carbon atoms at all",
+        "Sucrose is simply too large a molecule for Fehling's reagent to react with",
+        "Maltose and lactose also give a negative test; only free monosaccharides reduce Fehling's solution"
+      ],
+      "answer_index": 0,
+      "correct_answer": "In sucrose, the glycosidic bond forms between the anomeric carbons of BOTH glucose (C1) and fructose (C2), so neither unit has a free anomeric –OH left to open into the reactive aldehyde/ketone form needed for reduction",
+      "solution_steps": [
+        "A sugar shows 'reducing' behaviour only when it has a free anomeric carbon that can open up into its reactive open-chain aldehyde or ketone form, which is what actually gets oxidised by Fehling's/Tollens' reagent.",
+        "In sucrose, the bond linking glucose and fructose specifically joins BOTH of their anomeric carbons (glucose's C1 to fructose's C2) — so neither ring can open back up, and there is no reducing end left at all.",
+        "Saying sucrose has no carbonyl-derived carbons at all is wrong — both monosaccharide units originally had one; it's specifically that BOTH of those particular carbons are tied up in the glycosidic bond, not that they're absent from the molecule. Molecular size is not the limiting factor — even large reducing polysaccharides like starch retain reducing power at their one free end; it's specifically about whether a free anomeric –OH exists. Maltose and lactose are in fact well-known REDUCING disaccharides, precisely because each has one anomeric carbon still free — claiming they test negative too is simply incorrect."
+      ],
+      "verification_method": "mechanism_reasoned_from_free_anomeric_carbon_availability_and_cross_checked_against_ncert_style_reducing_sugar_definition"
+    },
+    {
+      "id": "pi-biomolecules-003",
+      "concept_id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The peptide bond ($-\\text{CO}-\\text{NH}-$) linking two amino acids is planar and shows restricted rotation. Why?",
+      "options": [
+        "Resonance delocalisation between the nitrogen's lone pair and the carbonyl gives the C–N bond partial double-bond character, restricting rotation about it, unlike an ordinary single bond",
+        "The nitrogen and carbonyl carbon are held rigid by a direct hydrogen bond between them",
+        "Steric clash between the two amino acids' side chains locks the peptide bond in place",
+        "The peptide bond is actually a full, localised C=N double bond, not a resonance hybrid"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Resonance delocalisation between the nitrogen's lone pair and the carbonyl gives the C–N bond partial double-bond character, restricting rotation about it, unlike an ordinary single bond",
+      "solution_steps": [
+        "The nitrogen's lone pair can delocalise into the adjacent carbonyl group by resonance, giving the C–N bond of the amide linkage some double-bond character.",
+        "This partial double-bond character restricts free rotation about the C–N bond and keeps the amide group (the atoms directly around $-\\text{CO}-\\text{NH}-$) planar, unlike an ordinary single bond, which rotates freely.",
+        "There is no direct hydrogen bond BETWEEN the carbonyl carbon and the nitrogen themselves — the rigidity comes from resonance/partial pi-bonding within the amide linkage, not an external hydrogen bond. Side-chain steric clashes influence overall protein FOLDING (tertiary structure) but are not why this specific bond is restricted — even the simplest possible peptide, with minimal side chains, still shows this planarity. The bond is correctly described as a resonance HYBRID with partial double-bond character, not a fully localised C=N double bond."
+      ],
+      "verification_method": "mechanism_reasoned_from_amide_resonance_delocalisation_and_cross_checked_against_ncert_style_peptide_bond_planarity"
+    },
+    {
+      "id": "pi-biomolecules-004",
+      "concept_id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In an $\\alpha$-helix, the hydrogen bonds that hold the coiled shape together form between which groups?",
+      "options": [
+        "The $\\text{C=O}$ of one amino acid's backbone and the $\\text{N-H}$ of a backbone amino acid four residues further along the same chain",
+        "The side chains (R-groups) of two amino acids, no matter how far apart they are in the sequence",
+        "The C=O and N-H groups of the same single amino acid residue",
+        "Two different polypeptide chains running antiparallel to each other"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The $\\text{C=O}$ of one amino acid's backbone and the $\\text{N-H}$ of a backbone amino acid four residues further along the same chain",
+      "solution_steps": [
+        "An $\\alpha$-helix is a single polypeptide chain coiled so that the backbone carbonyl ($\\text{C=O}$) of one residue lines up geometrically with the backbone $\\text{N-H}$ of the residue four positions further along the SAME chain.",
+        "Regularly repeating hydrogen bonds of exactly this i-to-(i+4) pattern are what hold the coil in its characteristic helical shape.",
+        "Side-chain (R-group) interactions stabilise TERTIARY structure (the overall 3D fold), not the defining backbone hydrogen-bonding pattern of the $\\alpha$-helix itself. A single residue's own backbone $\\text{C=O}$ and $\\text{N-H}$ are geometrically far too close to each other to form a productive hydrogen bond this way. Two antiparallel chains hydrogen-bonding to each other describes a $\\beta$-pleated SHEET, a different secondary structure, not an $\\alpha$-helix."
+      ],
+      "verification_method": "structural_reasoning_from_backbone_hydrogen_bond_geometry_and_cross_checked_against_ncert_style_protein_secondary_structure"
+    },
+    {
+      "id": "pi-biomolecules-005",
+      "concept_id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which statement about enzymes is correct?",
+      "options": [
+        "Enzymes are biological catalysts (mostly proteins) that lower a reaction's activation energy without being consumed, and are highly specific for their substrate",
+        "Enzymes are consumed during the reaction they catalyse, just like an ordinary reactant",
+        "Enzymes work equally well on almost any substrate of similar molecular weight",
+        "Enzymes increase a reaction's equilibrium constant, shifting it further toward products"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Enzymes are biological catalysts (mostly proteins) that lower a reaction's activation energy without being consumed, and are highly specific for their substrate",
+      "solution_steps": [
+        "Enzymes speed up biochemical reactions by lowering the activation energy needed to reach the transition state, and — like any true catalyst — are regenerated at the end of the reaction rather than used up.",
+        "They are also highly specific: the active site's shape and chemical environment match only a particular substrate (or a narrow family of substrates), as described by the lock-and-key and induced-fit models.",
+        "Claiming enzymes are consumed contradicts the basic definition of a catalyst. Claiming they work on 'almost any substrate of similar molecular weight' ignores that specificity comes from precise shape/chemical complementarity at the active site, not just size. A catalyst speeds up how FAST equilibrium is reached (equally in the forward and reverse directions) without changing the equilibrium constant or the final equilibrium position itself."
+      ],
+      "verification_method": "conceptual_reasoning_from_catalyst_definition_and_cross_checked_against_ncert_style_enzyme_properties"
+    },
+    {
+      "id": "pi-biomolecules-006",
+      "concept_id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A DNA sample is found to be unusually rich in G–C base pairs compared to A–T pairs. What physical property would you expect it to show, and why?",
+      "options": [
+        "A higher melting temperature, because each G–C pair is held together by 3 hydrogen bonds versus only 2 for each A–T pair, so more thermal energy is needed to separate the two strands",
+        "A lower melting temperature, because G and C are larger bases that clash sterically and destabilise the helix",
+        "No change in melting behaviour, since all base pairs contribute equally regardless of identity",
+        "A lower melting temperature, because G–C pairs use only 2 hydrogen bonds, fewer than A–T's 3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A higher melting temperature, because each G–C pair is held together by 3 hydrogen bonds versus only 2 for each A–T pair, so more thermal energy is needed to separate the two strands",
+      "solution_steps": [
+        "Guanine pairs with cytosine through 3 hydrogen bonds, while adenine pairs with thymine through only 2 — this is a well-established structural fact about DNA base pairing.",
+        "More hydrogen bonds per base pair means more energy is required to pull the two strands apart, so a DNA sample richer in G–C pairs needs a HIGHER temperature to melt (denature) than one richer in A–T pairs.",
+        "Claiming a lower melting temperature due to 'steric clash' invents an effect that isn't the operating factor — the actual, well-documented effect runs the opposite way (more hydrogen bonds, more stability, not less). Claiming no change ignores the established difference in hydrogen-bond count between the two pair types. The last option simply has the hydrogen-bond counts backwards — G–C pairs use 3 hydrogen bonds, and A–T pairs use 2, not the other way around."
+      ],
+      "verification_method": "structural_reasoning_from_hydrogen_bond_count_and_cross_checked_against_ncert_style_dna_base_pairing_facts"
+    },
+    {
+      "id": "pi-polymers-001",
+      "concept_id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Nylon-6,6 forms from hexamethylenediamine and adipic acid, with water released at each new linkage. What TYPE of polymerisation is this, and how does it differ mechanistically from how polythene forms?",
+      "options": [
+        "Condensation (step-growth) polymerisation — small molecules (water) are eliminated at each step; polythene, by contrast, forms by addition (chain-growth) polymerisation of ethylene, with no by-product released",
+        "Addition polymerisation, exactly like polythene, since both are industrially important polymers",
+        "Copolymerisation, simply because two different monomers combine",
+        "Vulcanisation, since a cross-linked network forms"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Condensation (step-growth) polymerisation — small molecules (water) are eliminated at each step; polythene, by contrast, forms by addition (chain-growth) polymerisation of ethylene, with no by-product released",
+      "solution_steps": [
+        "Each new amide bond formed between hexamethylenediamine and adipic acid releases one water molecule — this stepwise elimination of a small molecule at every new bond is the defining feature of condensation (step-growth) polymerisation.",
+        "Polythene, by contrast, forms when ethylene monomers add on to a growing chain one at a time with no small molecule released at all — addition (chain-growth) polymerisation.",
+        "Claiming it is addition polymerisation 'like polythene' ignores this fundamental mechanistic difference — sharing industrial importance doesn't mean sharing a mechanism. Calling it simply 'copolymerisation' is true in the sense that two different monomers are used, but sidesteps the actual question of condensation versus addition mechanism. Vulcanisation refers specifically to sulfur cross-linking of rubber, an unrelated process to nylon's amide-forming step-growth polymerisation."
+      ],
+      "verification_method": "mechanism_reasoned_from_byproduct_release_pattern_and_cross_checked_against_ncert_style_condensation_versus_addition_polymerisation"
+    },
+    {
+      "id": "pi-polymers-002",
+      "concept_id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Buna-S, a synthetic rubber, is a copolymer of which two monomers?",
+      "options": [
+        "1,3-Butadiene and styrene",
+        "1,3-Butadiene and acrylonitrile",
+        "Isoprene and styrene",
+        "Ethylene and propylene"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1,3-Butadiene and styrene",
+      "solution_steps": [
+        "Buna-S ('S' for styrene) is made by copolymerising 1,3-butadiene with styrene, giving a synthetic rubber widely used in tyres.",
+        "'1,3-Butadiene and acrylonitrile' is actually the composition of Buna-N (a different, oil-resistant synthetic rubber) — a common name mix-up between the two 'Buna' rubbers, which differ only in their second monomer. 'Isoprene and styrene' is wrong — isoprene on its own (without a copolymer partner) polymerises to give natural-rubber-like polyisoprene, not Buna-S. 'Ethylene and propylene' describes EPDM/EPM rubber, an entirely different elastomer."
+      ],
+      "verification_method": "factual_identification_cross_checked_against_ncert_style_synthetic_rubber_monomer_list"
+    },
+    {
+      "id": "pi-polymers-003",
+      "concept_id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Natural rubber and gutta-percha are both polymers of isoprene with identical molecular formula, yet natural rubber is elastic while gutta-percha is hard and non-elastic. What is the structural reason?",
+      "options": [
+        "Natural rubber is the cis-1,4-polyisoprene isomer, whose kinked, coiled chains can stretch and spring back; gutta-percha is the trans-1,4-polyisoprene isomer, whose straighter chains pack more rigidly and don't recoil the same way",
+        "Natural rubber has a much higher molecular weight than gutta-percha",
+        "Gutta-percha contains sulfur cross-links, while natural rubber does not",
+        "Natural rubber is a synthetic polymer while gutta-percha is entirely natural"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Natural rubber is the cis-1,4-polyisoprene isomer, whose kinked, coiled chains can stretch and spring back; gutta-percha is the trans-1,4-polyisoprene isomer, whose straighter chains pack more rigidly and don't recoil the same way",
+      "solution_steps": [
+        "Both are polymers of isoprene, differing only in the geometry of the double bonds along the chain: natural rubber's are all CIS, giving the chain a kinked, coiled shape that can stretch out under tension and spring back afterward — the source of its elasticity.",
+        "Gutta-percha's double bonds are TRANS instead, giving a straighter chain that packs more tightly and rigidly, without the same ability to coil and recoil.",
+        "The key taught distinction is this cis/trans geometry, not a difference in molecular weight. Sulfur cross-linking describes VULCANISED rubber (an unrelated, separate comparison to unvulcanised natural rubber) — gutta-percha's rigidity comes from its trans geometry, not from added sulfur. Both natural rubber and gutta-percha are in fact naturally occurring polymers of isoprene — this option misstates a fact given directly in the question itself."
+      ],
+      "verification_method": "structural_reasoning_from_cis_trans_double_bond_geometry_and_cross_checked_against_ncert_style_natural_rubber_gutta_percha_comparison"
+    },
+    {
+      "id": "pi-polymers-004",
+      "concept_id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What does vulcanisation do to raw natural rubber, and by what mechanism?",
+      "options": [
+        "It heats raw rubber with sulfur, forming sulfur cross-links between adjacent polyisoprene chains, making the rubber stronger, more elastic over a wider temperature range, and less tacky",
+        "It removes all the carbon–carbon double bonds from the polyisoprene chains by full hydrogenation",
+        "It dissolves the rubber in an organic solvent purely to purify it",
+        "It converts natural rubber into gutta-percha by isomerising the double bonds from cis to trans"
+      ],
+      "answer_index": 0,
+      "correct_answer": "It heats raw rubber with sulfur, forming sulfur cross-links between adjacent polyisoprene chains, making the rubber stronger, more elastic over a wider temperature range, and less tacky",
+      "solution_steps": [
+        "Vulcanisation is the process of heating raw rubber with sulfur, which forms cross-linking sulfur bridges between neighbouring polyisoprene chains.",
+        "These cross-links tie the chains together, giving vulcanised rubber much better mechanical strength, elasticity retained over a wider temperature range, and reduced surface tackiness compared to raw, unvulcanised rubber.",
+        "Vulcanisation ADDS sulfur cross-links at some of the double bonds — it does not remove or hydrogenate all the double bonds across the whole chain. Dissolving in solvent is a separate purification/processing step, not what vulcanisation itself chemically does. Vulcanisation and the natural-rubber/gutta-percha cis/trans distinction are two entirely separate, unrelated facts — vulcanisation does not isomerise cis double bonds to trans ones."
+      ],
+      "verification_method": "mechanism_reasoned_from_sulfur_cross_linking_and_cross_checked_against_ncert_style_vulcanisation_process"
+    },
+    {
+      "id": "pi-polymers-005",
+      "concept_id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What are the monomers of PVC and Teflon, respectively?",
+      "options": [
+        "Vinyl chloride ($\\text{CH}_2=\\text{CHCl}$) for PVC, and tetrafluoroethylene ($\\text{CF}_2=\\text{CF}_2$) for Teflon",
+        "Vinylidene chloride for PVC, and trifluoroethylene for Teflon",
+        "Ethylene for both, since both are simple addition polymers",
+        "Propylene for PVC, and vinyl chloride for Teflon"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Vinyl chloride ($\\text{CH}_2=\\text{CHCl}$) for PVC, and tetrafluoroethylene ($\\text{CF}_2=\\text{CF}_2$) for Teflon",
+      "solution_steps": [
+        "PVC (polyvinyl chloride) is the addition polymer of vinyl chloride, $\\text{CH}_2=\\text{CHCl}$.",
+        "Teflon (PTFE) is the addition polymer of tetrafluoroethylene, $\\text{CF}_2=\\text{CF}_2$ — the fully fluorinated analogue of ethylene.",
+        "'Vinylidene chloride' and 'trifluoroethylene' are close-sounding but genuinely different, incorrect monomers for these two specific, commercially important polymers. Plain ethylene is the monomer for POLYTHENE, not PVC or Teflon — both of the latter need their own specifically halogenated monomer. 'Propylene for PVC, vinyl chloride for Teflon' both swaps the polymers' real monomers with each other AND with propylene (the actual monomer of polypropylene, an unrelated polymer)."
+      ],
+      "verification_method": "factual_identification_cross_checked_against_ncert_style_commercial_polymer_monomer_list"
+    },
+    {
+      "id": "pi-polymers-006",
+      "concept_id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which of the following is a biodegradable polymer, and what makes it break down naturally where a polymer like polythene does not?",
+      "options": [
+        "PHBV (poly-$\\beta$-hydroxybutyrate-co-$\\beta$-hydroxyvalerate) — a copolymer of two hydroxy-acid monomers linked by ester bonds, which micro-organisms can hydrolyse back into simple building blocks, unlike polythene's inert all-carbon backbone",
+        "Polythene, because it breaks down into carbon dioxide and water within a few weeks",
+        "PVC, because chlorine atoms make it especially reactive to microbial enzymes",
+        "Bakelite, because its cross-linked structure is easily broken down by soil bacteria"
+      ],
+      "answer_index": 0,
+      "correct_answer": "PHBV (poly-$\\beta$-hydroxybutyrate-co-$\\beta$-hydroxyvalerate) — a copolymer of two hydroxy-acid monomers linked by ester bonds, which micro-organisms can hydrolyse back into simple building blocks, unlike polythene's inert all-carbon backbone",
+      "solution_steps": [
+        "PHBV is built from ester linkages between two hydroxy-acid monomers, and ester bonds are readily hydrolysed by micro-organisms back into simple, naturally recyclable building blocks — this is what makes it a genuinely biodegradable polymer.",
+        "Polythene's backbone is a long chain of ordinary, saturated carbon–carbon bonds with nothing for microbial enzymes to easily attack — this is exactly why it is famously NON-biodegradable, persisting in the environment for a very long time, not something that breaks down within weeks.",
+        "PVC is not considered a biodegradable polymer, and its chlorine substituents do not confer biodegradability. Bakelite is a thermosetting, highly cross-linked resin specifically noted for RESISTING breakdown, not for degrading easily in soil."
+      ],
+      "verification_method": "mechanism_reasoned_from_hydrolysable_ester_linkages_and_cross_checked_against_ncert_style_biodegradable_polymer_examples"
+    }
+  ]
+}

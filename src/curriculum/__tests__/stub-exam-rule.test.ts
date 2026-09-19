@@ -75,16 +75,30 @@ describe('exam-loader stub-exam rule — real tracked files (gate-ma.yml, jee-ma
     }
   });
 
-  it('the migrated half is exactly the Mathematics section', () => {
+  it('no section is HALF migrated — each is entirely real or entirely stub', () => {
+    // Was keyed on the single section id `jee-main-mathematics`. v4.86.0
+    // split Mathematics into six sections (sections are what the app renders
+    // as topics, and one bucket of 23 concepts is not a topic list), which
+    // broke the literal id check while leaving the actual rule untouched.
+    //
+    // Restated as the property it was always standing in for: migration
+    // happens a whole section at a time, so a section with SOME real nodes
+    // and SOME stubs means someone migrated half a subject and the topic
+    // would render as studiable while parts of it lead nowhere. This holds
+    // through any future split or rename.
     const exam = loadAllExams(true).get('jee-main')!;
+    let migrated = 0;
+    let stub = 0;
     for (const section of exam.syllabus) {
-      const realCount = section.concept_ids.filter((c) => CONCEPT_MAP.has(c)).length;
-      if (section.id === 'jee-main-mathematics') {
-        expect(realCount).toBe(section.concept_ids.length);
-      } else {
-        expect(realCount, section.id).toBe(0);
-      }
+      const real = section.concept_ids.filter((c) => CONCEPT_MAP.has(c)).length;
+      const all = section.concept_ids.length;
+      expect(real === 0 || real === all, `${section.id}: ${real}/${all} real — half migrated`).toBe(true);
+      if (real === all) migrated++; else stub++;
     }
+    // Both halves still exist: this pack is deliberately part-finished, and
+    // a test that passed when EVERY section was stub would assert nothing.
+    expect(migrated).toBeGreaterThan(0);
+    expect(stub).toBeGreaterThan(0);
   });
 
   it('gate-ma syllabus sections have no stub_concept_ids (all real nodes)', () => {

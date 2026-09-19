@@ -19,11 +19,12 @@ import { computeVerificationReport } from '../report';
 describe('computeVerificationReport', () => {
   it('computes real counts from the committed practice-items bank', () => {
     const report = computeVerificationReport();
-    expect(report.practice_bank.total_items).toBe(505);
-    expect(report.practice_bank.bank_count).toBe(16);
-    // All 505 committed items are hand-authored with a documented method —
-    // per the provenance-grandfather convention (scripts/check-practice-items.ts).
-    expect(report.practice_bank.with_verification_method).toBe(505);
+    expect(report.practice_bank.total_items).toBe(656);
+    expect(report.practice_bank.bank_count).toBe(24);
+    // All 656 committed items (505 GATE-MA + 151 JEE Main) are hand-authored
+    // with a documented method — per the provenance-grandfather convention
+    // (scripts/check-practice-items.ts).
+    expect(report.practice_bank.with_verification_method).toBe(656);
     expect(report.practice_bank.without_verification_method).toBe(0);
     expect(report.headline.hand_verified_coverage_pct).toBe(100);
   });

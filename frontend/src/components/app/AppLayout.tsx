@@ -17,6 +17,7 @@ import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { getDemoPersona } from '@/lib/demoPersona';
 import { isDemoMode } from '@/lib/demoMode';
 import { DemoRoleSwitcher } from '@/components/app/DemoRoleSwitcher';
+import { ExamSwitcher } from '@/components/app/ExamSwitcher';
 import { DemoRailNav } from '@/components/app/DemoRailNav';
 import { WalkthroughBar } from '@/components/app/WalkthroughBar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -278,6 +279,12 @@ export function AppLayout() {
               V
             </div>
           </a>
+
+          {/* Exam switcher — which exam this viewer is looking at. Renders
+              nothing on a single-pack deployment. Placed before the room
+              badge because exam is the wider context: a room sits inside an
+              exam, not the other way round. */}
+          <ExamSwitcher />
 
           {/* Room badge — shows active room, tapping opens /rooms */}
           {persona !== 'loading' && (() => {

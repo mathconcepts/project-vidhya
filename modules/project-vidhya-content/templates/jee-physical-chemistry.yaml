@@ -1,0 +1,229 @@
+# Best-practice authoring templates for JEE Main Physical Chemistry concepts
+# (mole-concept, atomic-structure, chemical-bonding, thermodynamics-chemistry,
+# equilibrium-chemical, equilibrium-ionic, redox-and-electrochemistry,
+# chemical-kinetics, solutions-and-colligative, solid-state).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose — see
+# jee-mechanics.yaml's header for the full rationale (content is being
+# authored concurrently with this template).
+#
+# Audience note: an anxious Indian Class 11-12 student sitting JEE Main.
+# ELI5, short sentences, Indian English, every technical term glossed on
+# first use. No curriculum-bridge audit exists for Chemistry against any
+# state board, so treat this as first-time-depth instruction, not a
+# refresher.
+#
+# Family shape (chemistry_quantitative): intuition sets up what is being
+# counted or conserved, formalism states the rule or theorem, worked_example
+# is a stoichiometry-style numeric problem, practice checks a numeric
+# substitution. This is Physical Chemistry's defining trait and the ONE
+# thing every guidance block below insists on: before any calculation,
+# state explicitly (1) WHAT QUANTITY IS CONSERVED or being tracked (mass,
+# moles, charge, energy, entropy) and (2) the UNIT of every quantity that
+# will appear in the calculation. JEE Main physical chemistry marks are lost
+# overwhelmingly to unit mismatches (mixing litre-atm with joules, mixing
+# molarity with molality, forgetting a negative sign on an exothermic
+# enthalpy) — not to not knowing the rule.
+
+topic_family: jee-physical-chemistry
+
+intuition:
+  scaffold: what-is-conserved
+  guidance: |
+    Open by naming the ONE quantity this concept is really about tracking
+    or conserving (moles of atoms, total charge, Gibbs free energy) in
+    plain words, with one small fully-numbered example, before any general
+    formula appears. Gloss every technical word on first use (e.g. "molar
+    mass" — the mass, in grams, of one mole (6.022 x 10^23 particles) of a
+    substance). ELI5, Indian English throughout, because this reader may be
+    meeting the quantitative side of chemistry for the first time in this
+    depth.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement. Pick one small, fully-numbered example
+      (one given mass, one given concentration) and work the arithmetic by
+      hand, stating the conserved quantity and every unit out loud, before
+      any symbol appears in general form. End on one thing to do next time
+      (e.g. "always write the unit next to every number before you start
+      calculating"), phrased as an action. No praise, no mention of
+      feelings.
+    assured: |
+      Skip the setup — a confident reader already tracks the conserved
+      quantity automatically. Go straight to the one condition that costs
+      marks: a unit silently left in the wrong system (litre-atm instead of
+      joules, molarity instead of molality), or an assumption (ideal
+      solution, standard conditions) a shortcut silently needs. Give a
+      genuine counterexample, not a restatement.
+
+formal_definition:
+  scaffold: rule-with-units
+  guidance: |
+    State the rule or theorem in full symbolic form with display math
+    (Hess's law, the equilibrium constant expression, the Nernst equation),
+    and name the UNIT of every quantity that appears, including which
+    quantities are dimensionless (equilibrium constants, pH) and which are
+    not. Two-sentence prose cap around the display math. Name every symbol
+    once in plain words on first use.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: state-conserved-then-numbers
+  guidance: |
+    Start with a one-line statement of what is conserved or being tracked
+    in this specific problem, and the unit system being used, before any
+    number is substituted. Six steps maximum, each step one action (state
+    what's conserved, write the balanced equation or governing rule,
+    substitute values WITH units, solve, sanity-check the unit and
+    magnitude of the answer). Favour a JEE-flavoured problem shape (a
+    limiting-reagent calculation, a buffer pH from the Henderson equation,
+    a cell EMF via the Nernst equation) over a bare textbook-generic one.
+    Steps separated by `\n---\n` so scaffold-fade can blank trailing steps
+    on revisit. Final line "Answer: ..." with its unit, so :::verify can
+    confirm.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — state what's conserved, write
+      the equation, substitute with units, solve, check, each on its own
+      line. Push every "why does this step work" explanation into the
+      walkthrough's prompts/hints, not onto the page. End with the check
+      run explicitly (does the unit of the final answer match what was
+      asked for), not just claimed.
+    assured: |
+      Lead with the shortcut a first pass doesn't always emphasise — mole
+      ratios read directly off a balanced equation instead of full
+      dimensional analysis, or the approximation that a weak acid's
+      dissociation is small relative to its initial concentration — and
+      state the one condition that must hold for the shortcut to be valid
+      before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level physical chemistry: mixing molarity (moles per litre of
+    solution) with molality (moles per kilogram of solvent) in a colligative
+    property calculation, forgetting the sign convention for an exothermic
+    versus endothermic enthalpy change, dropping the "n" (number of
+    electrons transferred) in a Nernst-equation calculation, or treating Kc
+    and Kp as interchangeable without the RT correction.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with different
+    numbers. Keep the arithmetic small enough to finish in under a minute —
+    round molar masses, simple whole-number mole counts.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the rule, law, or theorem by name (e.g. "Hess's law",
+    "Nernst equation"); back gives the symbolic form and the units it
+    requires. Used by SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: quantitative-setup-picture
+  guidance: |
+    Describe the quantitative setup as a picture in words — a balance
+    scale for stoichiometry, a see-saw for equilibrium shifting under
+    Le Chatelier's principle, a battery driving electrons through an
+    external wire for electrochemistry.
+
+    When the concept has a clean closed-form y=f(x), emit a fenced
+    gif-scene block at the end of the body. Chemical-kinetics rate curves
+    (first-order decay, [A] = [A]0*exp(-k*t)) are a genuine, explicitly
+    strong fit for `function-trace` — the same exponential shape as
+    radioactive decay in physics. Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"1.0*exp(-0.15*x)","x_range":[0,20],"y_range":[0,1],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. OMIT the block for anything that
+    doesn't reduce cleanly to a 2D plot — a crystal lattice's unit cell
+    (solid-state), an orbital shape (atomic-structure), a Lewis structure or
+    VSEPR shape (chemical-bonding) — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question gives masses of two reactants, check for a limiting reagent
+    before assuming either one is fully consumed." JEE Main Paper 1 asks 25
+    questions per subject: 20 MCQs (+4/-1) and 5 compulsory numerical-value
+    questions — do not invent a per-topic weightage beyond that; NTA
+    publishes only the subject-level split.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (molarity vs
+    molality, the sign convention for enthalpy of an exothermic reaction,
+    which direction Le Chatelier's principle shifts equilibrium when a
+    product is removed).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    a mole-concept limiting-reagent calculation feeding into a
+    thermodynamics-chemistry question about the heat released by that same
+    reaction).
+  bloom_floor: 4
+
+hook:
+  scaffold: count-before-formula
+  guidance: |
+    Open on one concrete, fully-numbered situation small enough to check by
+    hand in a few seconds — not a restatement of the textbook definition.
+    Name the JEE-specific twist up front (e.g. "you have exact masses of
+    two reactants, both apparently enough — but is one secretly the
+    limiting reagent?").
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. A chemical-kinetics decay curve is
+    a strong fit here. OMIT the fence entirely for concepts that don't
+    reduce to a 2D parametric/trace scene (a crystal lattice, an orbital
+    shape, a Lewis structure) — never invent a misleading scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-numbered instance, small enough to check by hand
+      right now. No history, no "you'll need this later" framing — the
+      reader is here after getting something wrong, and the useful move is
+      one thing that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      on an edge case (assuming a solution is dilute enough for a
+      colligative approximation to hold, or forgetting the van't Hoff
+      factor for an electrolyte that dissociates).

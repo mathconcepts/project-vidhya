@@ -1,0 +1,240 @@
+# Best-practice authoring templates for JEE Main Inorganic Chemistry
+# concepts (periodic-table-trends, p-block-elements, d-and-f-block,
+# coordination-compounds).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose — see
+# jee-mechanics.yaml's header for the full rationale (content is being
+# authored concurrently with this template).
+#
+# Audience note: an anxious Indian Class 11-12 student sitting JEE Main.
+# ELI5, short sentences, Indian English, every technical term glossed on
+# first use. No curriculum-bridge audit exists for Chemistry against any
+# state board, so treat this as first-time-depth instruction, not a
+# refresher.
+#
+# Family shape (chemistry_structure): intuition is a structure visual,
+# formalism is a periodic-trend visual, worked_example is a worked
+# structure argument, practice checks a trend-or-exception. This topic is
+# largely TREND-AND-EXCEPTION content (ionisation enthalpy rises across a
+# period, atomic radius falls, and so on) rather than numerical calculation
+# or reaction mechanism, and that shape is exactly where JEE Main traps
+# students: the trend alone is not enough to answer a question, because
+# almost every trend in this topic has a named, testable exception. The ONE
+# thing every guidance block below insists on: never state a periodic trend
+# without ALSO naming its most JEE-relevant exception and the structural
+# reason for that exception — a rote list of "increases down the group,
+# decreases across the period" with no reasoning behind it is exactly what
+# this template exists to prevent.
+
+topic_family: jee-inorganic-chemistry
+
+intuition:
+  scaffold: structure-explains-property
+  guidance: |
+    Open by describing the atomic or molecular structure in plain words —
+    how many electron shells, how tightly the nucleus holds the outermost
+    electrons, how the d-orbitals are filled — and connect that structure
+    directly to the property being discussed, before naming the general
+    trend. Gloss every technical word on first use (e.g. "effective nuclear
+    charge" — how strongly the nucleus actually pulls on an outer electron,
+    once the shielding effect of inner electrons is accounted for; it is
+    NOT the same as the atomic number). Name the trend's most important
+    exception in the SAME breath as the trend itself, not as an
+    afterthought.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement. Pick one small, fully-named pair of
+      elements (e.g. compare oxygen and nitrogen's electron gain enthalpy)
+      and reason through the structural cause by hand before any general
+      trend statement appears. End on one thing to do next time (e.g.
+      "always check for a half-filled or fully-filled subshell before
+      trusting the general trend"), phrased as an action. No praise, no
+      mention of feelings.
+    assured: |
+      Skip the setup — a confident reader already knows the general trend.
+      Go straight to the one exception that costs marks: a half-filled or
+      fully-filled subshell's extra stability reversing the expected order,
+      or the anomalous behaviour of the first member of a group (lithium,
+      beryllium) compared to the rest of its group. Give the genuine named
+      exception, not a restatement of the trend.
+
+formal_definition:
+  scaffold: trend-with-exception
+  guidance: |
+    State the periodic trend or bonding rule precisely in words (and in
+    symbolic or tabular form where one exists), and in the SAME entry name
+    its most JEE-relevant exception with the one-line structural reason for
+    it (e.g. "ionisation enthalpy generally rises across a period, BUT
+    nitrogen's is higher than oxygen's because nitrogen's half-filled 2p
+    subshell is extra stable"). Two-sentence prose cap on top of the
+    trend-plus-exception statement. Name every symbol or term once in plain
+    words on first use.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: trend-then-exception-check
+  guidance: |
+    Start with a one-line statement of which trend applies to the given
+    pair or set of elements, then explicitly check whether the JEE-favoured
+    exception to that trend applies before committing to an answer. Six
+    steps maximum, each step one action (state the general trend, identify
+    the elements' electron configurations, check for a half-filled/
+    fully-filled-subshell or other named exception, apply the correct
+    ordering, state the reason, sanity-check against a known reference
+    pair). Favour a JEE-flavoured shape (ranking three or four elements by
+    a property where at least one pair reverses the naive trend) over a
+    bare two-element comparison. Steps separated by `\n---\n` so
+    scaffold-fade can blank trailing steps on revisit. Final line
+    "Answer: ..." so :::verify can confirm.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — state the trend, write the
+      electron configuration, check for the exception, apply the ordering,
+      state the reason, check it, each on its own line. Push every "why
+      does this exception happen" explanation into the walkthrough's
+      prompts/hints, not onto the page. End with the check run explicitly
+      (does the final ordering agree with a known reference pair like N vs
+      O), not just claimed.
+    assured: |
+      Lead with the shortcut a first pass doesn't always emphasise —
+      recognising a half-filled or fully-filled subshell by inspection of
+      the group number, without writing out the full electron
+      configuration — and state the one condition (which group, which
+      period) under which the shortcut reliably applies.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level inorganic chemistry: applying "ionisation enthalpy always
+    rises across a period" without checking the nitrogen-oxygen or
+    beryllium-boron style reversal, treating every member of a group as
+    behaving like the rest of the group (lithium and the first row of
+    d-block elements are frequently the exception, not the rule), or
+    memorising a colour or magnetic-property fact as a rote list without
+    connecting it to the underlying d-electron count.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with a
+    different pair or set of elements. Keep it to one property comparison,
+    not a multi-property ranking, so it finishes in under a minute.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the trend by name (e.g. "electronegativity across a
+    period", "lanthanoid contraction"); back gives the one-line
+    structural reason AND its most important named exception. Used by
+    SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: structure-or-trend-picture
+  guidance: |
+    Describe the atomic or molecular structure as a picture in words
+    (shells getting more crowded, d-orbitals filling up) for structure
+    concepts; describe the trend as a picture of values rising or falling
+    across a row of elements for periodic-table-trends.
+
+    A periodic-trend comparison across a small named set of elements (e.g.
+    ionisation enthalpy for four consecutive elements, showing the
+    exception visually) is a genuine, explicitly strong fit for
+    `discrete-bars` — literal bars at literal element positions, never a
+    smooth curve the safe evaluator cannot express as one formula. Schema:
+
+    ```gif-scene
+    {"type":"discrete-bars","values":[13.6,14.5,13.6,17.4],"labels":["N","O","F","Ne"],"y_label":"Ionisation enthalpy (eV)"}
+    ```
+
+    OMIT the gif-scene block for anything that doesn't reduce cleanly to a
+    discrete-bars comparison or a plottable curve — a crystal-field
+    splitting diagram, an orbital shape, a coordination-compound's
+    geometry — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question asks you to rank ionisation enthalpies across N, O, F, check
+    for the half-filled-subshell reversal at nitrogen before answering."
+    JEE Main Paper 1 asks 25 questions per subject: 20 MCQs (+4/-1) and 5
+    compulsory numerical-value questions — do not invent a per-topic
+    weightage beyond that.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a trend that's easy to mix up (which
+    property rises vs falls down a group versus across a period, or a
+    quick check for the half-filled/fully-filled-subshell exception).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    a periodic-table-trends ranking question feeding into a p-block-elements
+    question about why one of those same elements forms an unusually stable
+    oxide).
+  bloom_floor: 4
+
+hook:
+  scaffold: exception-first
+  guidance: |
+    Open on one concrete, fully-named pair of elements small enough to
+    reason through immediately — not a restatement of the textbook trend
+    statement. Name the JEE-specific twist up front (e.g. "oxygen sits
+    right after nitrogen in the periodic table, so it should be harder to
+    remove an electron from oxygen — so why is nitrogen's ionisation
+    enthalpy actually HIGHER?").
+
+    This is a TREND-AND-EXCEPTION family, not a mechanism or a curve. A
+    small discrete-bars comparison of the concept's own named exception
+    (see visual_analogy) is the strongest fit for a scripted beat sequence
+    in this topic; a smooth 2D parametric/trace scene rarely applies. When
+    a genuine numeric trend across a short, named element sequence exists,
+    emit a fenced interactive-spec block at the end of the body (mirrors
+    the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. OMIT the fence entirely for
+    concepts that don't reduce to a 2D parametric/trace scene (a
+    coordination-compound's geometry, a crystal-field diagram) — never
+    invent a misleading scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-named pair, small enough to reason through right
+      now. No history, no "you'll need this later" framing — the reader is
+      here after getting something wrong, and the useful move is one thing
+      that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      (assuming the general trend holds for every element in a group
+      without checking the first-member or half-filled-subshell
+      exception).

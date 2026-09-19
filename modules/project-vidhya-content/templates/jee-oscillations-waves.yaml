@@ -1,0 +1,216 @@
+# Best-practice authoring templates for JEE Main Oscillations and Waves
+# concepts (oscillations-shm, waves-mechanical).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose — see
+# jee-mechanics.yaml's header for the full rationale.
+#
+# Audience note: an anxious Indian Class 11-12 student sitting JEE Main.
+# ELI5, short sentences, Indian English, every technical term glossed on
+# first use. No curriculum-bridge audit exists for Physics against any state
+# board, so treat this as first-time-depth instruction, not a refresher.
+#
+# Family shape (wave_and_optics): intuition is a geometric/graphical visual,
+# formalism states the governing law, worked_example is a numeric problem,
+# practice checks a sign convention. The one thing this template insists on
+# that no other family's guidance quite captures: draw the phase picture (a
+# displacement-vs-time or displacement-vs-position sketch, with the
+# direction of motion and the sign of velocity/acceleration marked) BEFORE
+# writing the governing differential equation or wave equation, and state
+# the sign convention for phase and direction of propagation explicitly —
+# JEE Main loses marks on exactly this, more than on the algebra of solving
+# the equation itself.
+
+topic_family: jee-oscillations-waves
+
+intuition:
+  scaffold: physical-setup-before-formula
+  guidance: |
+    Open by describing the motion or wave in plain words and a mental
+    picture — a mass on a spring pulled aside and released, a pulse
+    travelling down a rope — before any equation appears. Gloss every
+    technical word on first use (e.g. "phase" — where in its back-and-forth
+    cycle the oscillator currently is, described as an angle). Only once
+    the picture is fixed should the differential equation or wave relation
+    show up.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement. Pick one small, fully-numbered case (one
+      spring, one given amplitude and period) and trace what happens to
+      displacement, velocity and acceleration at a few marked instants, by
+      hand, before any symbol appears in general form. End on one thing to
+      do next time (e.g. "acceleration always points back toward the mean
+      position — check your sign matches that"), phrased as an action. No
+      praise, no mention of feelings.
+    assured: |
+      Skip the setup — a confident reader already pictures the motion. Go
+      straight to the one condition that costs marks: a phase difference
+      silently dropped, a sign flipped between displacement and restoring
+      force, or an assumption (small-angle, no damping) a shortcut
+      silently needs. Give a genuine counterexample, not a restatement.
+
+formal_definition:
+  scaffold: law-with-sign-convention
+  guidance: |
+    State the governing equation in full symbolic form with display math
+    (the SHM differential equation, the wave equation), name the SI unit of
+    every quantity, and state the sign convention for displacement and
+    direction of propagation in the same sentence. Two-sentence prose cap
+    around the display math. Name every symbol once in plain words on first
+    use (e.g. "angular frequency, omega — how fast the phase angle sweeps
+    round, in radians per second, not the same thing as frequency in Hz").
+  bloom_floor: 3
+
+worked_example:
+  scaffold: diagram-then-numbers
+  guidance: |
+    Start with a one-line description of the phase or wave picture (in
+    words: "starts at maximum displacement, so phase is zero" or "two waves
+    meeting exactly out of phase") before any number is substituted. Six
+    steps maximum, each step one action (describe the picture, write the
+    equation of motion or wave relation, substitute values with units,
+    solve, sanity-check the sign or phase of the answer). Favour a
+    JEE-flavoured shape (a spring-mass system on an incline, two waves
+    interfering with a stated path difference, a Doppler-shifted frequency)
+    over a bare plug-in-the-formula problem. Steps separated by `\n---\n`.
+    Final line "Answer: ..." with its unit.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — describe the picture, write the
+      equation, substitute, solve, check, each on its own line. Push every
+      "why" into the walkthrough's prompts/hints. End with the check run
+      explicitly (does the phase or sign of the answer match the picture),
+      not just claimed.
+    assured: |
+      Lead with the shortcut a first pass doesn't always emphasise — energy
+      conservation between kinetic and potential energy in SHM instead of
+      solving the equation of motion directly, or superposition instead of
+      tracking two waves separately — and state the one condition that must
+      hold for the shortcut to apply before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level oscillations and waves: confusing frequency (Hz) with angular
+    frequency (rad/s) and forgetting the factor of 2*pi, taking maximum
+    velocity and maximum acceleration to occur at the same instant (they
+    don't — one is at the mean position, the other at extreme
+    displacement), or getting the sign of the phase difference backwards in
+    a beats or interference problem.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with different
+    numbers. Keep the arithmetic small enough to finish in under a minute —
+    round amplitudes, simple whole-number frequencies.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the relation or law by name (e.g. "time period of a
+    simple pendulum", "condition for constructive interference"); back
+    gives the symbolic form and the one condition it needs. Used by SM-2
+    spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: phase-or-waveform-picture
+  guidance: |
+    Describe the back-and-forth motion of SHM as a picture (a point going
+    round a circle, with its shadow on a line doing the actual oscillating);
+    describe a travelling wave as a shape moving sideways without the
+    medium itself travelling.
+
+    When the concept has a clean closed-form y=f(x) or a genuine 2D
+    parametric path, emit a fenced gif-scene block at the end of the body.
+    SHM's own displacement x(t) = A*sin(omega*t) is a strong fit for
+    `function-trace`; a wave's displacement-vs-position snapshot is too.
+    Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"2*sin(3*x)","x_range":[0,6.28],"y_range":[-3,3],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. OMIT the block for anything that
+    doesn't reduce cleanly to a 2D plot (a standing-wave node/antinode
+    argument that needs two curves shown together is better served by a
+    `line-panels` comparison than a single trace) — never invent a
+    misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question says 'string fixed at both ends', use the standing-wave
+    condition, not the travelling-wave one." JEE Main Paper 1 asks 25
+    questions per subject: 20 MCQs (+4/-1) and 5 compulsory numerical-value
+    questions — do not invent a per-topic weightage beyond that.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (where maximum
+    velocity vs maximum acceleration occurs in SHM, the direction convention
+    for the Doppler effect when source and observer approach vs recede).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    an oscillations-shm energy question feeding into a waves-mechanical
+    question about the speed of a wave on the same spring, stretched).
+  bloom_floor: 4
+
+hook:
+  scaffold: predict-the-motion
+  guidance: |
+    Open on one concrete, fully-numbered situation small enough to picture
+    immediately. Name the JEE-specific twist up front (e.g. "two speakers
+    play the same note, but you hear loud-soft-loud-soft as you walk past —
+    what does that beat pattern tell you about their frequencies?").
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. OMIT the fence entirely for
+    concepts that don't reduce to a 2D parametric/trace scene — never
+    invent a misleading scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-numbered instance, small enough to picture right
+      now. No history, no "you'll need this later" framing — the reader is
+      here after getting something wrong, and the useful move is one thing
+      that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      (assuming small-angle SHM for a pendulum swung too wide, or ignoring
+      damping when a question explicitly mentions resistance).

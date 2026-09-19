@@ -1,0 +1,23 @@
+# Concept anchors — jee-calculus
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: jee-calculus
+concepts:
+  limits-jee:
+    anchor: "A phone's signal formula turns indeterminate exactly at the tower; L'Hopital finds the true reading."
+  continuity-differentiability-jee:
+    anchor: "Chennai Metro's curved track is parametric equations; train speed comes from differentiating them."
+  applications-of-derivatives:
+    anchor: "A farmer fencing land against a river uses derivatives to find the largest area for given fencing."
+  indefinite-integration:
+    anchor: "A cricket ball's velocity function is integrated back to trace its exact position on the pitch."
+  definite-integration:
+    anchor: "A Chennai flyover's steel deck area under its parabolic arch is found by integrating its height."
+  differential-equations-jee:
+    anchor: "A cup of chai's cooling rate is modeled by a differential equation to predict when it's drinkable."

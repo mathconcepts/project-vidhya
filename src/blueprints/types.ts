@@ -180,6 +180,15 @@ export const RATIONALE_CODES = {
   family_statistics: 'Statistics-family template — market-research template-families.yml, signal-in-data sequence',
   family_numerical: 'Numerical-family template — market-research template-families.yml, approximation-under-constraint sequence',
   family_discrete: 'Discrete-family template — market-research template-families.yml, small-puzzle sequence',
+  // Three families beyond the 116-topic GATE-EM corpus, added with the
+  // jee-main pack (that corpus is postgraduate engineering maths and has no
+  // coordinate geometry, school trigonometry or school algebra). Marked as
+  // this repo's own extrapolation in template-families.yml, not a corpus
+  // mapping — the rationale text says so, because these codes are the join
+  // key the lift ledger groups measured outcomes by.
+  family_coordinate_geometry: 'Coordinate-geometry-family template — repo extrapolation beyond the GATE-EM corpus, locus-before-equation sequence',
+  family_trigonometry: 'Trigonometry-family template — repo extrapolation beyond the GATE-EM corpus, unit-circle-before-identity sequence',
+  family_algebra: 'Algebra-family template — repo extrapolation beyond the GATE-EM corpus, small-numeric-case-before-formula sequence',
 } as const;
 
 export type RationaleCode = keyof typeof RATIONALE_CODES;

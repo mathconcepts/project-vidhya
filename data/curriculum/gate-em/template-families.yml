@@ -45,8 +45,8 @@
 # CI failure (check-intent-catalogue.ts B10), not a silent drift.
 #
 # Coverage below maps every concept in the concept graph
-# (src/constants/concept-graph.ts, 101 concepts / 10 topics) onto exactly
-# one of these 14 families — `coverage.topic_defaults` (7 topics whose
+# (src/constants/concept-graph.ts, 124 concepts / 16 topics across the
+# gate-ma and jee-main packs) onto exactly one of these 17 families — `coverage.topic_defaults` (7 topics whose
 # concepts are family-homogeneous) plus `coverage.concept_overrides` (34
 # concepts split across families or belonging to a "cluster" the source
 # table treats specially, e.g. the eigen-decomposition cluster inside
@@ -90,14 +90,17 @@ presentation_vocabulary:
   - argand_or_mapping_visual
   - boundary_compatibility_check
   - boundary_contrast
+  - boundary_or_count_check
   - bounds_or_convergence_check
   - characteristic_equation
   - classification
+  - condition_or_tangency_check
   - conditions
   - data_visual
   - decision_tree
   - definition_or_model
   - dimension_or_invariant_check
+  - domain_or_branch_check
   - equation_classification
   - error_visual
   - formal_condition
@@ -105,10 +108,12 @@ presentation_vocabulary:
   - geometric_intuition
   - geometric_visual
   - graph_or_table
+  - identity_or_transformation
   - independence_or_condition_check
   - independence_or_multiplicity_check
   - initial_or_boundary_check
   - interpretation_or_assumption_check
+  - locus_picture
   - mode_variant
   - operation_rule
   - operator_definition
@@ -121,8 +126,12 @@ presentation_vocabulary:
   - separation_or_series_steps
   - sign_or_units_check
   - small_counterexample
+  - small_numeric_case
   - stability_or_error_check
+  - standard_form
   - step_by_step_solution
+  - structural_rule
+  - unit_circle_visual
   - visual_intuition
   - visual_landscape
   - visual_shape
@@ -132,8 +141,11 @@ presentation_vocabulary:
   - worked_field
   - worked_iteration
   - worked_limit
+  - worked_locus
+  - worked_manipulation
   - worked_matrix
   - worked_probability
+  - worked_solution
   - worked_statistic
   - worked_structure
 
@@ -287,6 +299,52 @@ families:
       - { id: worked_example, atom_kind: worked_example,       presentation: worked_structure }
       - { id: practice,       atom_kind: mcq,                  presentation: property_or_invariant_check }
 
+  # --- Families below extend BEYOND the 116-topic GATE-EM corpus ----------
+  # The fourteen families above are derived from the founder's GATE
+  # Engineering Mathematics content-generation spec. That corpus is a
+  # postgraduate engineering-maths syllabus, so by construction it contains
+  # no coordinate geometry, no school trigonometry and no school-level
+  # algebraic manipulation. When the jee-main pack promoted its 23
+  # Mathematics concepts into the concept graph, three whole subject areas
+  # arrived with no honest family to land in.
+  #
+  # Forcing conic sections into `vector`, or quadratic equations into
+  # `matrix`, would have satisfied the B12 completeness check while
+  # describing a teaching shape those concepts do not have. These three are
+  # this repo's own extrapolation, in the same spirit as the `z-transform`
+  # note further down and labelled as such here: never presented as a
+  # corpus-sourced mapping.
+
+  coordinate_geometry:
+    label: Coordinate Geometry
+    hooks: [locus_before_equation, geometric_condition_made_algebraic]
+    source_sequence: "hook -> locus_picture -> standard_form -> worked_locus -> condition_or_tangency_check -> recall_prompt -> mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: locus_picture }
+      - { id: formalism,      atom_kind: worked_example,       presentation: standard_form }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_locus }
+      - { id: practice,       atom_kind: mcq,                  presentation: condition_or_tangency_check }
+
+  trigonometry:
+    label: Trigonometry
+    hooks: [unit_circle_intuition, angle_before_identity]
+    source_sequence: "hook -> unit_circle_visual -> identity_or_transformation -> worked_solution -> domain_or_branch_check -> recall_prompt -> mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: unit_circle_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: identity_or_transformation }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_solution }
+      - { id: practice,       atom_kind: mcq,                  presentation: domain_or_branch_check }
+
+  algebra:
+    label: Algebra
+    hooks: [small_numeric_case_first, pattern_before_formula]
+    source_sequence: "hook -> small_numeric_case -> structural_rule -> worked_manipulation -> boundary_or_count_check -> recall_prompt -> mode_variant"
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: small_numeric_case }
+      - { id: formalism,      atom_kind: worked_example,       presentation: structural_rule }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_manipulation }
+      - { id: practice,       atom_kind: mcq,                  presentation: boundary_or_count_check }
+
 # ---------------------------------------------------------------------------
 # Coverage — maps every concept-graph concept (src/constants/concept-graph.ts)
 # onto exactly one family above. Resolution order: concept_overrides wins;
@@ -310,6 +368,13 @@ coverage:
     # Vidhya's graph-theory concepts (graph_basics, trees, euler_hamilton,
     # planar_graphs, shortest_paths) on the same "small puzzle" hook.
     graph-theory: discrete
+    # jee-main pack. Three of its six topics are family-homogeneous; the
+    # other three (jee-algebra, jee-calculus, jee-probability-statistics)
+    # genuinely span families and are split concept-by-concept below, the
+    # same treatment `calculus` and `transform-theory` already get.
+    jee-coordinate-geometry: coordinate_geometry
+    jee-trigonometry: trigonometry
+    jee-vectors-3d: vector
     # calculus: NO default — the source splits it across limit / derivative
     #   / integral (and optimization, currently unused); every concept below.
     # transform-theory: NO default — splits across ode (Laplace) / pde
@@ -387,3 +452,37 @@ coverage:
     # extrapolation: nearest kin to Laplace (same mechanical-steps shape —
     # recognize the transform, apply the table, verify), not a corpus claim.
     z-transform: ode
+
+    # --- jee-algebra: full split (no topic default) -------------------------
+    # Sets/relations/functions and counting are the `discrete` family's own
+    # territory (small concrete case, then the structural rule). Matrices and
+    # complex numbers land on the existing families that already own those
+    # shapes. The remaining three are equation- and identity-manipulation,
+    # which is the new `algebra` family above.
+    sets-relations-functions: discrete
+    permutations-combinations: discrete
+    matrices-and-determinants: matrix
+    complex-numbers-algebra: complex
+    quadratic-equations: algebra
+    binomial-theorem: algebra
+    sequences-series: algebra
+
+    # --- jee-calculus: full split (no topic default) ------------------------
+    # Mirrors how the GATE `calculus` topic is split above.
+    # continuity-differentiability-jee is ONE JEE concept where GATE has two
+    # (`continuity: limit`, `differentiability: derivative`). It lands on
+    # `derivative`, not `limit`, because the differentiation machinery (chain
+    # rule, implicit and parametric differentiation) is the larger half of
+    # what JEE actually asks under that unit. Noted rather than silent: a
+    # reader who expected `limit` here should know it was a judgement.
+    limits-jee: limit
+    continuity-differentiability-jee: derivative
+    applications-of-derivatives: derivative
+    indefinite-integration: integral
+    definite-integration: integral
+    differential-equations-jee: ode
+
+    # --- jee-probability-statistics: full split (no topic default) ----------
+    # Same probability/statistics split the GATE topic gets above.
+    probability-jee: probability
+    statistics-jee: statistics

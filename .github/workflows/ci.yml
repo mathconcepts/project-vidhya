@@ -264,6 +264,19 @@ jobs:
       - name: Concept anchors coverage + contract
         run: npm run ci:concept-anchors
 
+      # Topic-string namespacing across exam packs. ConceptNode.id uniqueness
+      # is enforced at boot (buildConceptUniverse throws, naming both files);
+      # ConceptNode.topic had no such protection, and ~20 call sites select
+      # concepts BY TOPIC STRING off the merged universe with no exam filter.
+      # GATE-MA owns `calculus`, `linear-algebra`, `probability-statistics`
+      # and three more names any other Indian engineering-entrance pack would
+      # reach for first, so a second pack declaring `topic: calculus` would
+      # silently merge two exams' concepts into one study plan, one mastery
+      # average and one interleaving pool, with no id collision to reveal it.
+      # This makes the collision impossible instead of scoping twenty sites.
+      - name: Topic strings are namespaced per exam pack
+        run: npm run ci:topic-namespace
+
       # The gate that would have caught the boot crash PR #134 shipped, and
       # the one every other signal here missed. src/content/atomic-topic-spec.ts
       # used __dirname in a "type": "module" package, on an unconditional

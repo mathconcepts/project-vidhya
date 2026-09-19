@@ -78,6 +78,26 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const OUTPUT_PATH = path.join(ROOT, 'src/blueprints/intent-tables.gen.ts');
 export const SOURCE_INTENT_PROFILES = 'data/curriculum/gate-em/intent-profiles.yml';
 export const SOURCE_ATOMIC_CATALOGUE = 'data/curriculum/gate-em/atomic-catalogue.json';
+/**
+ * The TemplateFamilyId union used to be a hardcoded string inside this
+ * generator's output template — a THIRD copy of the family list beside
+ * `TEMPLATE_FAMILIES` in check-intent-catalogue.ts and the `families:` block
+ * in template-families.yml. Adding three families for the jee-main pack made
+ * the drift real: the yml and the checker agreed, the generated union did
+ * not, and `tsc` rejected the freshly generated table against its own
+ * freshly generated type. Derived from the locked array now, so a fourth
+ * family can only ever be added in one place.
+ */
+function familyUnionLines(): string {
+  const PER_LINE = 6;
+  const out: string[] = [];
+  for (let i = 0; i < TEMPLATE_FAMILIES.length; i += PER_LINE) {
+    const chunk = TEMPLATE_FAMILIES.slice(i, i + PER_LINE).map((f) => `'${f}'`);
+    out.push('  | ' + chunk.join(' | '));
+  }
+  return out.join('\n');
+}
+
 export const SOURCE_TEMPLATE_FAMILIES = 'data/curriculum/gate-em/template-families.yml';
 
 // ---------------------------------------------------------------------------
@@ -389,9 +409,7 @@ export type IntentId =
   | 'pyq_targeted_practice';
 
 export type TemplateFamilyId =
-  | 'matrix' | 'eigen' | 'limit' | 'derivative' | 'integral' | 'optimization'
-  | 'vector' | 'ode' | 'pde' | 'complex' | 'probability' | 'statistics'
-  | 'numerical' | 'discrete';
+${familyUnionLines()};
 
 export interface GeneratedStage {
   stage: StageKind;

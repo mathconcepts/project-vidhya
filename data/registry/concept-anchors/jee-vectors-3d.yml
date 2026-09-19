@@ -1,0 +1,15 @@
+# Concept anchors — jee-vectors-3d
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: jee-vectors-3d
+concepts:
+  vectors-jee:
+    anchor: "A mechanic's wrench torque is exactly the cross product of the arm's length and the applied force."
+  three-d-geometry:
+    anchor: "Air traffic control finds the closest approach between two skew flight paths to keep planes apart."

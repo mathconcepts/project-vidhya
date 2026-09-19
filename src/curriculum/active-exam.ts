@@ -77,10 +77,18 @@ export function isExamSidecar(filename: string): boolean {
 }
 
 export interface ExamPackFile {
-  /** `metadata.id` from inside the pack, falling back to the filename stem. */
+  /** `metadata.id` from inside the pack. Never a filename fallback — see below. */
   id: string;
   filename: string;
   path: string;
+  /**
+   * The parsed YAML document.
+   *
+   * Carried here so a caller never re-reads and re-parses the same file (the
+   * concept graph used to, which meant a parse error could surface in two
+   * different places with two different severities).
+   */
+  doc: any;
 }
 
 let _packCache: ExamPackFile[] | null = null;
@@ -90,10 +98,29 @@ let _packCache: ExamPackFile[] | null = null;
  *
  * The id comes from the pack's own `metadata.id` rather than its filename, so
  * this agrees with `exam-loader.loadAllExams()` (which keys its map the same
- * way) even if the two ever disagree on a given file. The filename stem is
- * only a fallback for a pack too malformed to parse — such a file will fail
- * the loader's real validation anyway, and dropping it silently here would
- * hide it from the disk-level view the concept graph needs.
+ * way) even if the two ever disagree on a given file.
+ *
+ * A `.yml` that does not parse, or parses without a `metadata.id`, is NOT an
+ * exam pack and is skipped with a warning. That rule is load-bearing in two
+ * directions and an earlier draft got both wrong by treating any `.yml` as a
+ * candidate with a filename-derived id:
+ *
+ * 1. `concept-graph.ts` builds its universe from this list at MODULE SCOPE, so
+ *    an unparseable file reached a throw that took the whole server down at
+ *    boot — for every exam, not just the broken one. A half-written draft, an
+ *    editor artifact or a bad merge in one pack bricked the deployment, where
+ *    `exam-loader.loadAllExams()` had always logged and continued.
+ * 2. The no-`DEFAULT_EXAM_ID` fallback is alphabetical, so any stray YAML
+ *    sorting before `gate-ma` silently became the "active exam" for the concept
+ *    graph while `exam-loader` — which only ever considered packs that really
+ *    loaded — still reported `gate-ma`. The two layers disagreed about the
+ *    deployment's identity, `SYLLABUS_SECTIONS` came back empty, and every
+ *    section-id navigation path resolved to undefined. It booted and served
+ *    broken navigation behind one `console.warn`.
+ *
+ * Skipping here does not hide a genuinely malformed PACK: `exam-loader.loadOne()`
+ * still reports the parse or metadata error properly for anything that was
+ * meant to be one.
  */
 export function listExamPackFiles(forceReload = false): ExamPackFile[] {
   if (_packCache && !forceReload) return _packCache;
@@ -104,21 +131,36 @@ export function listExamPackFiles(forceReload = false): ExamPackFile[] {
   }
 
   const packs: ExamPackFile[] = [];
-  for (const filename of fs.readdirSync(CURRICULUM_DIR)) {
+  // withFileTypes so a DIRECTORY named `*.yml` is skipped rather than handed to
+  // readFileSync, which would throw EISDIR at boot.
+  for (const entry of fs.readdirSync(CURRICULUM_DIR, { withFileTypes: true })) {
+    if (!entry.isFile()) continue;
+    const filename = entry.name;
     if (!filename.endsWith('.yml') && !filename.endsWith('.yaml')) continue;
     if (isExamSidecar(filename)) continue;
 
     const full = path.join(CURRICULUM_DIR, filename);
-    let id = filename.replace(/\.ya?ml$/, '');
+    let doc: any;
     try {
-      const raw = parseYaml(fs.readFileSync(full, 'utf-8'));
-      const declared = raw?.metadata?.id;
-      if (typeof declared === 'string' && declared.length > 0) id = declared;
-    } catch {
-      // Unparseable: keep the filename-derived id so the file stays visible.
-      // exam-loader.loadOne() is what reports the parse error properly.
+      doc = parseYaml(fs.readFileSync(full, 'utf-8'));
+    } catch (err) {
+      console.warn(
+        `[active-exam] skipping ${filename}: not parseable as YAML ` +
+        `(${(err as Error).message}). If this is meant to be an exam pack, ` +
+        `exam-loader will report the error in full.`,
+      );
+      continue;
     }
-    packs.push({ id, filename, path: full });
+
+    const declared = doc?.metadata?.id;
+    if (typeof declared !== 'string' || declared.length === 0) {
+      console.warn(
+        `[active-exam] skipping ${filename}: no "metadata.id" — not an exam pack.`,
+      );
+      continue;
+    }
+
+    packs.push({ id: declared, filename, path: full, doc });
   }
 
   packs.sort((a, b) => a.id.localeCompare(b.id));

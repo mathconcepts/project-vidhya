@@ -668,12 +668,16 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
                 // since the 2026-09-06 fix) at the top of a card means the
                 // caption scrolls underneath it, and on a phone the figure +
                 // beat bar + controls + slider was tall enough to leave almost
-                // no room for the sentence it is illustrating. Capping at 42vh
-                // guarantees the majority of the viewport always belongs to the
-                // text, while keeping the pin's benefit (the diagram stays on
-                // screen while you read about it).
-                maxHeight: '42vh',
-                overflow: 'hidden',
+                // no room for the sentence it is illustrating. The budget is
+                // still 42vh; it is enforced on the SVG (below) rather than as
+                // `maxHeight` + `overflow: hidden` HERE, which is what the
+                // first cut did. This wrapper closes AFTER the beat bar, the
+                // play/pause/reset buttons and the scrub slider, so clipping it
+                // cut ~46px off the bottom of a 667px-tall phone: the slider and
+                // part of the 44px control row became unreachable, with no
+                // scroll to recover them. globals.css's own mobile-sticky rule
+                // states the principle this violated — cap the image, never
+                // clip the wrapper.
               }
             : undefined
         }
@@ -682,7 +686,16 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
           viewBox={`0 0 ${SVG_W} ${SVG_H}`}
           width="100%"
           className="rounded-md border"
-          style={{ background: 'var(--surface-fill)', borderColor: 'var(--separator)' }}
+          style={{
+            background: 'var(--surface-fill)',
+            borderColor: 'var(--separator)',
+            // The 42vh pinned-figure budget, minus the ~112px the beat bar, the
+            // 44px control row, the slider and their gaps occupy below. The
+            // `max(120px, …)` floor keeps the figure from collapsing to nothing
+            // on a very short viewport, where the calc would go negative.
+            // preserveAspectRatio letterboxes rather than crops.
+            ...(showLiveBeatUI ? { maxHeight: 'max(120px, calc(42vh - 112px))' } : {}),
+          }}
           preserveAspectRatio="xMidYMid meet"
           aria-label={
             hasBeats ? spec.title : graphSpec ? `Graph diagram: ${spec.title}` : `Animated trace: ${spec.title}`
@@ -1263,8 +1276,19 @@ function LinearMapScene({
                1px of extra width that was the only differentiator before.
                Live-QA verbatim: "Highlighted shape unclear. Where is the
                highlight." They are dimmed, never hidden — the starburst is
-               what makes the eigen-directions meaningful. */
-            opacity={eigenRevealed ? 0.16 : 0.55}
+               what makes the eigen-directions meaningful.
+
+               0.35, not the 0.16 this shipped as first. Measured against the
+               real tokens, ink at 0.16 over --surface-fill is 1.37:1 in light
+               mode; 0.35 is 2.10:1 light / 2.83:1 dark. That still does NOT
+               clear WCAG 1.4.11's 3:1 floor for non-text content, and saying so
+               is more useful than implying it does: reaching 3:1 needs ~0.50,
+               which puts these arrows close enough to the green ones to erase
+               the very contrast the reveal is built on. The trade is defensible
+               only because nothing here is carried by these arrows alone — the
+               payoff arrows are full-opacity green, and every beat's meaning is
+               also in the caption, which the aria-live region announces. */
+            opacity={eigenRevealed ? 0.35 : 0.55}
           />
         ))}
       {arrows

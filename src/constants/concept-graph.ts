@@ -52,8 +52,6 @@
  *   - Mastery Vector granularity (Pillar 1)
  */
 
-import fs from 'fs';
-import { parse as parseYaml } from 'yaml';
 import { assertNoPrerequisiteCycles, assertNoGraphCycles } from '../curriculum/prereq-cycles';
 import {
   CURRICULUM_DIR,
@@ -122,12 +120,13 @@ const VALID_FREQUENCIES = new Set(['high', 'medium', 'low', 'rare']);
 function parseConceptNodes(pack: ExamPackFile): ConceptNode[] {
   const yamlPath = pack.path;
 
-  let raw: any;
-  try {
-    raw = parseYaml(fs.readFileSync(yamlPath, 'utf-8'));
-  } catch (err) {
-    throw new Error(`concept-graph.ts: failed to parse ${yamlPath}: ${(err as Error).message}`);
-  }
+  // `pack.doc` is already parsed. This function used to re-read and re-parse
+  // the file and THROW on failure — at module scope, so one unparseable YAML
+  // anywhere in data/curriculum/ took the whole server down at boot. Parseability
+  // is now listExamPackFiles()'s job (it skips a bad file with a warning and
+  // exam-loader still reports the real error), which leaves this function to
+  // validate only the `concepts:` block of a file already known to be a pack.
+  const raw: any = pack.doc;
 
   const list = raw?.concepts;
   if (list === undefined || list === null) return [];
@@ -402,9 +401,9 @@ export interface SyllabusSection {
   concept_ids: string[];
 }
 
-function loadSyllabusFromYaml(yamlPath: string): SyllabusSection[] {
+function loadSyllabusFromPack(pack: ExamPackFile): SyllabusSection[] {
   try {
-    const raw = parseYaml(fs.readFileSync(yamlPath, 'utf-8'));
+    const raw: any = pack.doc;
     const sections = raw?.syllabus;
     if (!Array.isArray(sections)) return [];
     return sections
@@ -431,7 +430,7 @@ function loadSyllabusFromYaml(yamlPath: string): SyllabusSection[] {
  * first, so this stays scoped to the exam the deployment is serving.
  */
 export const SYLLABUS_SECTIONS: SyllabusSection[] =
-  ACTIVE_PACK ? loadSyllabusFromYaml(ACTIVE_PACK.path) : [];
+  ACTIVE_PACK ? loadSyllabusFromPack(ACTIVE_PACK) : [];
 
 /** Map section_id → SyllabusSection for O(1) lookup */
 export const SECTION_MAP: Map<string, SyllabusSection> = new Map(

@@ -160,3 +160,37 @@ describe('a second pack that declares its own concepts', () => {
     );
   });
 });
+
+describe('tripwire: the adaptive engines are not exam-scoped yet', () => {
+  it('fails the moment a second pack declares concepts, because ALL_CONCEPTS is read unfiltered', () => {
+    // This is a TRIPWIRE, not an invariant anyone wants forever.
+    //
+    // Merging every pack's concepts into one universe is correct for the
+    // graph. It is NOT yet correct for the call sites that read ALL_CONCEPTS
+    // as if it were one exam's syllabus, none of which filter by exam:
+    //
+    //   api/readiness-routes.ts   allowedNodes = every concept  -> nextBestAction
+    //                             could hand a GATE student a JEE concept
+    //   api/quiz-routes.ts        same, for the checkpoint quiz pool
+    //   gbrain/fire.ts            encompassing closures built across exams, so
+    //                             FIRe credit propagates over exam boundaries
+    //   notebook/notebook-store.ts coverage denominator becomes every exam's
+    //                             concepts, silently halving reported coverage
+    //   curriculum/guardrails.ts, curriculum/curriculum-repo.ts,
+    //   content/build-content-bundle.ts, syllabus/generator.ts
+    //                             (the last matches by TOPIC STRING, and topic
+    //                             names like `calculus` recur across exams)
+    //
+    // Behaviour is correct today only because exactly one pack declares
+    // concepts. Nothing else holds those call sites correct, so the next
+    // content PR that fills jee-main.yml's `concepts:` block would silently
+    // degrade readiness, quizzes, FIRe and coverage for every existing
+    // student, with no test failing.
+    //
+    // If you are here because this test went red: that is the signal to scope
+    // those reads by exam (conceptsDeclaredByExam, or an explicit exam filter
+    // on the request) BEFORE landing the pack. Then delete this test.
+    const contributing = CONCEPT_GRAPH_SOURCES.filter((s) => s.concept_count > 0);
+    expect(contributing.map((s) => s.exam_id)).toEqual(['gate-ma']);
+  });
+});

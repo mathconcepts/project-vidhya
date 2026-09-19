@@ -8,7 +8,7 @@
  * which is precisely why the graph could not follow DEFAULT_EXAM_ID.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -134,5 +134,52 @@ describe('resolveActiveExamPack', () => {
     const pack = resolveActiveExamPack(true);
     expect(pack?.id).toBe('jee-main');
     expect(pack?.filename).toBe('jee-main.yml');
+  });
+});
+
+describe('a stray file in data/curriculum/ is not an exam pack', () => {
+  // Both cases below used to be boot-fatal or silently identity-changing. The
+  // temp file goes into the REAL data/curriculum/, so cleanup is guaranteed in
+  // afterEach — a leftover would be loaded by every other test in the suite.
+  const STRAY = path.join(CURRICULUM_DIR, 'aaa-stray-test.yml');
+
+  beforeEach(() => {
+    delete process.env.DEFAULT_EXAM_ID;
+    __resetExamPackCache();
+  });
+
+  afterEach(() => {
+    if (fs.existsSync(STRAY)) fs.unlinkSync(STRAY);
+    __resetExamPackCache();
+  });
+
+  it('skips a file that is not parseable as YAML instead of letting it reach a parse throw', () => {
+    // concept-graph.ts builds its universe from this list at module scope, so
+    // an unparseable file that survived to a throw took the whole server down
+    // at boot — for every exam, not just the broken one.
+    fs.writeFileSync(STRAY, 'this: [is\n  broken yaml: :::\n', 'utf-8');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ids = listExamPackFiles(true).map((p) => p.id);
+    expect(ids).not.toContain('aaa-stray-test');
+    expect(ids).toContain('gate-ma');
+    expect(warn).toHaveBeenCalled(); // skipped loudly, never silently
+    warn.mockRestore();
+  });
+
+  it('skips a parseable file with no metadata.id, so it can never win the alphabetical fallback', () => {
+    // The fallback is sorted-first, so anything sorting before `gate-ma` used
+    // to become the concept graph's "active exam" while exam-loader — which
+    // only ever considered packs that really loaded — still said gate-ma.
+    fs.writeFileSync(STRAY, 'notes:\n  - just some scratch\n', 'utf-8');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(listExamPackFiles(true).map((p) => p.id)).not.toContain('aaa-stray-test');
+    expect(resolveActiveExamPack(true)?.id).toBe('gate-ma');
+    warn.mockRestore();
+  });
+
+  it('carries each pack\'s parsed document, so no caller re-reads the file', () => {
+    for (const pack of listExamPackFiles(true)) {
+      expect(pack.doc?.metadata?.id).toBe(pack.id);
+    }
   });
 });

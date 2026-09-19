@@ -171,3 +171,68 @@ describe('MarkdownAtomRenderer — rowKinds rendering', () => {
     expect(screen.getByText('Use Sylvester, not eigenvalues.').tagName).toBe('STRONG');
   });
 });
+
+describe('a badged row that carries more than one block', () => {
+  // 67 of the 101 committed exam_pattern atoms have at least one bolded row
+  // with a second paragraph or a nested list under it. The badged <li> is a
+  // flex row, so left as direct children those extra blocks each became a flex
+  // item on the SAME line — landing beside the lead-in at roughly half width
+  // instead of beneath it. The fix wraps the row's own content in one element.
+  const MULTI_BLOCK = [
+    '- **NAT questions**: the common shape.',
+    '',
+    '  Example: compute the rank, enter an integer.',
+    '',
+    '- **Time budget**: two minutes.',
+    '',
+    '  - sub point one',
+    '  - sub point two',
+    '',
+  ].join('\n');
+
+  it('puts every authored block inside ONE sibling of the badge', () => {
+    render(
+      <MarkdownAtomRenderer atomId="x.exam-pattern" content={MULTI_BLOCK} structured rowKinds />,
+    );
+    const rows = document.querySelectorAll('li[data-row-kind]');
+    expect(rows.length).toBe(2);
+    for (const row of Array.from(rows)) {
+      // Exactly two flex children: the badge, and the body wrapper.
+      expect(row.children.length).toBe(2);
+      expect(row.children[0].classList.contains('vidhya-row-badge')).toBe(true);
+      expect(row.children[1].classList.contains('vidhya-row-body')).toBe(true);
+    }
+  });
+
+  it('keeps the follow-up paragraph and the nested list as row content', () => {
+    render(
+      <MarkdownAtomRenderer atomId="x.exam-pattern" content={MULTI_BLOCK} structured rowKinds />,
+    );
+    const body = document.querySelectorAll('li[data-row-kind] > .vidhya-row-body');
+    expect(body[0].querySelectorAll('p').length).toBe(2);
+    expect(body[1].querySelector('ul')).not.toBeNull();
+  });
+
+  it('does not badge a nested item, or label a row with a nested item\'s lead-in', () => {
+    // The lead-in search stops at a nested list, so an outer row with no bold
+    // of its own cannot inherit a sub-item's badge.
+    const NESTED_ONLY = ['- outer row, no bold here', '', '  - **Trap**: inner bold', ''].join('\n');
+    render(
+      <MarkdownAtomRenderer atomId="x.exam-pattern" content={NESTED_ONLY} structured rowKinds />,
+    );
+    expect(document.querySelectorAll('li[data-row-kind]')).toHaveLength(1);
+    // ...and it is the INNER one, which is the row that actually has the lead-in.
+    const badged = document.querySelector('li[data-row-kind]')!;
+    expect(badged.closest('ul')!.parentElement!.tagName).toBe('LI');
+  });
+
+  it('classifies a lead-in containing inline math without KaTeX source bleeding in', () => {
+    // Row classification runs BEFORE rehype-katex. After it, collectText would
+    // also walk KaTeX's hidden MathML <annotation>, which holds the raw LaTeX.
+    const MATHY = '- **Trap on $\\operatorname{rank}(A)$**: students count rows.\n';
+    render(<MarkdownAtomRenderer atomId="x.exam-pattern" content={MATHY} structured rowKinds />);
+    const badge = document.querySelector('.vidhya-row-badge');
+    expect(badge?.textContent).toBe('Trap');
+    expect(document.querySelector('.katex')).not.toBeNull();
+  });
+});

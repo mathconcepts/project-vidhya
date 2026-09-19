@@ -156,12 +156,20 @@ async function isInteractivesEnabled(repo: CurriculumUnitRepo | null, examPackId
   try {
     const { getExamWithDb } = await import('../curriculum/exam-loader');
     const exam = await getExamWithDb(examPackId);
-    if (exam && (exam as any).capabilities?.interactives_enabled === true) {
-      enabled = true;
+    const declared = (exam as any)?.capabilities?.interactives_enabled;
+    if (typeof declared === 'boolean') {
+      // An explicitly declared value wins, INCLUDING false. The old shape here
+      // only checked `=== true` and fell through to the name allowlist below
+      // for everything else, which was harmless while the loader dropped
+      // `capabilities:` entirely — but now that it parses the block, an
+      // operator editing gate-ma.yml to turn interactives OFF would have had
+      // that edit ignored with no log at all.
+      enabled = declared;
     } else if (examPackId === 'gate-ma' || examPackId === 'jee-main') {
-      // Defensive default for canonical packs even if the YAML didn't
-      // surface the capabilities block. Phase 3 ships interactives
-      // for these two packs by design.
+      // Defensive default for canonical packs that declare NO capabilities
+      // block. Phase 3 ships interactives for these two by design; both now
+      // declare the block themselves, so this is the dead branch it was meant
+      // to be — reachable only if a pack drops its declaration.
       enabled = true;
     }
   } catch {

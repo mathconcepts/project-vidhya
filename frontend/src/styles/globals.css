@@ -257,10 +257,20 @@
     align-items: baseline;
     gap: var(--space-2);
   }
-  .vidhya-atom-body--structured li[data-row-kind] > p {
-    margin: 0;
+  /* ONE flex sibling beside the badge, holding every block the row authored.
+     rehypeStructuredRowKinds wraps the row's own children in this element —
+     see its comment for the 67-of-101 regression that made the wrapper
+     necessary. `min-width: 0` so a long formula scrolls its own container
+     instead of widening the row. */
+  .vidhya-atom-body--structured li[data-row-kind] > .vidhya-row-body {
     flex: 1;
     min-width: 0;
+  }
+  .vidhya-atom-body--structured li[data-row-kind] > .vidhya-row-body > p {
+    margin: 0;
+  }
+  .vidhya-atom-body--structured li[data-row-kind] > .vidhya-row-body > * + * {
+    margin-top: var(--space-2);
   }
   .vidhya-row-badge {
     flex-shrink: 0;
@@ -671,7 +681,12 @@
     z-index: 1;
     background: var(--surface-card);
   }
-  .vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure[data-figure='media'] img {
+  /* Every element kind that can carry the figure's height, not just <img>.
+     Capping only the image left any other figure element unbounded, which is
+     the same "pinned block eats the viewport" problem this rule exists to
+     prevent. The cap is on the CONTENT, never `overflow: hidden` on the
+     wrapper — that crops instead of scaling. */
+  .vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure[data-figure='media'] :is(img, svg, video, canvas) {
     max-height: 34vh;
     width: auto;
     max-width: 100%;

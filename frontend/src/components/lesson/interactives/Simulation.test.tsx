@@ -1609,8 +1609,14 @@ describe('Simulation — highlight legibility (live-QA 2026-09-18)', () => {
     mockMatchMedia(true);
     const { container } = render(<Simulation spec={IRRATIONAL_EIGEN} />);
     // ArrowGlyph applies opacity to the wrapping <g>, not the <line>.
+    // 0.35, not the 0.16 this first shipped as: ink at 0.16 over --surface-fill
+    // measures 1.37:1, and these arrows are argued in the source to be
+    // meaningful, which is the condition WCAG 1.4.11's 3:1 floor applies to.
+    // 0.35 does not reach 3:1 either (that needs ~0.50, which would erase the
+    // reveal's contrast) — it is the honest middle, and the reason is recorded
+    // at the call site rather than implied away.
     const dimmed = [...container.querySelectorAll('svg g[opacity]')].filter(
-      (g) => g.getAttribute('opacity') === '0.16',
+      (g) => g.getAttribute('opacity') === '0.35',
     );
     // The non-eigen arrows are dimmed; the 2 eigen arrows never are.
     expect(dimmed.length).toBeGreaterThan(0);
@@ -1618,7 +1624,7 @@ describe('Simulation — highlight legibility (live-QA 2026-09-18)', () => {
       (l) => l.getAttribute('stroke') === 'var(--green)',
     );
     expect(green.length).toBeGreaterThan(0);
-    for (const g of green) expect(g.getAttribute('opacity')).not.toBe('0.16');
+    for (const g of green) expect(g.getAttribute('opacity')).not.toBe('0.35');
   });
 });
 
@@ -1649,12 +1655,21 @@ describe('highlightNounForSpec — the chip names what actually turned green', (
 });
 
 describe('Simulation — pinned figure cannot swallow the caption (live-QA 2026-09-18)', () => {
-  it('caps the sticky wrapper height so the majority of the viewport stays with the text', () => {
+  it('caps the SVG, and never clips the wrapper the controls live in', () => {
     const { container } = render(<Simulation spec={BEAT_SPEC} />);
-    const wrapper = container.querySelector('svg')!.parentElement as HTMLElement;
+    const svg = container.querySelector('svg')!;
+    const wrapper = svg.parentElement as HTMLElement;
     expect(wrapper.style.position).toBe('sticky');
-    // Without a cap, figure + beat bar + controls + slider filled a phone
-    // viewport and the caption scrolled under an opaque block.
-    expect(wrapper.style.maxHeight).toBe('42vh');
+
+    // The 42vh budget is still enforced — on the SVG, minus the room the beat
+    // bar, the 44px control row and the slider need below it.
+    expect((svg as unknown as HTMLElement).style.maxHeight).toContain('42vh');
+
+    // And NOT on the wrapper. The wrapper closes after the controls, so
+    // `maxHeight` + `overflow: hidden` here cut ~46px off a 667px-tall phone:
+    // the scrub slider and part of the control row became unreachable, with no
+    // scroll to recover them.
+    expect(wrapper.style.maxHeight).toBe('');
+    expect(wrapper.style.overflow).not.toBe('hidden');
   });
 });

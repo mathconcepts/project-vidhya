@@ -276,7 +276,16 @@ export function classifyStructuredRow(label: string): StructuredRowMark | null {
   return null;
 }
 
-/** Depth-first search for the row's first <strong> lead-in. */
+/**
+ * Depth-first search for THIS row's first <strong> lead-in.
+ *
+ * The recursion stops at a nested <ul>/<ol>. Without that stop, an <li> whose
+ * own text carries no bold but whose sub-item does would inherit the
+ * sub-item's badge, and the sub-item would be badged again — one row labelled
+ * by another row's lead-in. No committed atom triggers it today (the 17 files
+ * with nested bullets carry no `**` in the nested items), so this closes it
+ * while it is still latent.
+ */
 function findFirstStrongText(node: any): string | null {
   if (!node || typeof node !== 'object') return null;
   if (node.type === 'element' && node.tagName === 'strong') {
@@ -284,6 +293,7 @@ function findFirstStrongText(node: any): string | null {
   }
   const children = Array.isArray(node.children) ? node.children : [];
   for (const child of children) {
+    if (child?.type === 'element' && (child.tagName === 'ul' || child.tagName === 'ol')) continue;
     const found = findFirstStrongText(child);
     if (found !== null) return found;
   }
@@ -314,6 +324,15 @@ function rehypeStructuredRowKinds() {
       const mark = classifyStructuredRow(label);
       if (!mark) return;
       node.properties = { ...(node.properties ?? {}), 'data-row-kind': mark.kind };
+      // Wrap the row's own content in ONE element beside the badge. The badged
+      // <li> is a flex row, and a loose list item can hold several blocks —
+      // a second paragraph, a nested <ul>. Measured: 67 of the 101 committed
+      // exam_pattern atoms have at least one bolded row carrying a second
+      // block. Left as direct children they each become a flex item on the
+      // same line, so the follow-up paragraph or sub-list landed BESIDE the
+      // lead-in at roughly half width instead of beneath it. jsdom cannot see
+      // this, and the live 375px check that cleared the badges used
+      // hand-written single-paragraph markup.
       node.children = [
         {
           type: 'element',
@@ -321,7 +340,12 @@ function rehypeStructuredRowKinds() {
           properties: { 'data-row-badge': mark.kind, className: ['vidhya-row-badge'] },
           children: [{ type: 'text', value: mark.badge }],
         },
-        ...(Array.isArray(node.children) ? node.children : []),
+        {
+          type: 'element',
+          tagName: 'div',
+          properties: { className: ['vidhya-row-body'] },
+          children: Array.isArray(node.children) ? node.children : [],
+        },
       ];
     });
   };
@@ -418,9 +442,13 @@ export function MarkdownAtomRenderer({ content, atomId, structured = false, rowK
         // Must run BEFORE remark-rehype: it consumes the raw <details> html
         // nodes that remark-rehype would otherwise drop on the floor.
         .use(remarkDetailsTransform)
-        .use(remarkRehype, { allowDangerousHtml: false })
-        .use(rehypeKatex, { strict: 'ignore', throwOnError: false } as any);
+        .use(remarkRehype, { allowDangerousHtml: false });
+      // BEFORE rehype-katex, not after. Row classification reads the row's
+      // bold lead-in as text, and KaTeX's output carries a hidden MathML
+      // <annotation> holding the LaTeX source — so a lead-in containing inline
+      // math would be classified against doubled, mangled text.
       if (rowKinds) processor.use(rehypeStructuredRowKinds);
+      processor.use(rehypeKatex, { strict: 'ignore', throwOnError: false } as any);
       processor.use(rehypeReact, rehypeReactOptions as any);
       const result = processor.processSync(content);
       return result.result as React.ReactNode;

@@ -355,11 +355,21 @@ export function getSyllabus(id: string = DEFAULT_SYLLABUS_ID): GenerationSyllabu
   // with more packs installed.
   const ownConcepts = conceptsDeclaredByExam(id);
   if (ownConcepts.length > 0) {
+    // Still report the pack's own `syllabus:` ids that resolve to nothing. An
+    // earlier draft hardcoded `[]` here on the reasoning that a pack declaring
+    // its own concepts has nothing left to resolve — which is only true once
+    // the migration is FINISHED. A pack part-way through (one concept declared,
+    // sixty-three still referenced by id and not yet written) would otherwise
+    // report zero unresolved, and the two operator-facing gap reports that read
+    // this field — the generation preflight and the Setup Wizard's
+    // `unresolved_count` — would call a 1/64-complete pack done.
+    const unresolved = Array.from(new Set(flattenConceptIds(exam.syllabus)))
+      .filter((cid) => !CONCEPT_MAP.has(cid));
     return {
       id,
       name: exam.metadata.name,
       concepts: ownConcepts,
-      unresolvedConceptIds: [],
+      unresolvedConceptIds: unresolved,
       atomsSubdir: id === DEFAULT_SYLLABUS_ID ? '' : id,
     };
   }
@@ -515,6 +525,11 @@ function dbPackToDefinition(row: ExamPackDbRow): ExamDefinition | null {
     syllabus,
     concept_links: [], // operator packs don't seed concept_links yet — they grow via the unit generator
     stub_concept_ids: [], // operator packs don't declare stubs via YAML — N/A until they seed concept_links
+    // The DB row carries this as its own column, so surface it here too.
+    // Leaving it undefined would make `getExamWithDb(...).capabilities` quietly
+    // mean "YAML packs only" — a trap for the next caller, even though today's
+    // one consumer happens to read the DB repo first.
+    capabilities: { interactives_enabled: row.interactives_enabled === true },
   };
 }
 

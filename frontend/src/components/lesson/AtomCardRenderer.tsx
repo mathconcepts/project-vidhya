@@ -1387,12 +1387,17 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
                   is a promise the layout breaks on a phone. The CSS keyed off
                   this attribute pins it instead.
                 */}
-                <div
-                  className="vidhya-atom-stage__figure"
-                  data-figure={promotedSimSpec ? 'scene' : 'media'}
-                >
-                  {figure}
-                </div>
+                {/* No wrapper at all when there is nothing to put in it — an
+                    empty sticky box with an opaque background is still a
+                    stacking context the layout does not need. */}
+                {figure === null ? null : (
+                  <div
+                    className="vidhya-atom-stage__figure"
+                    data-figure={promotedSimSpec ? 'scene' : 'media'}
+                  >
+                    {figure}
+                  </div>
+                )}
               </div>
             );
           })()}

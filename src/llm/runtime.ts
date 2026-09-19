@@ -254,9 +254,40 @@ class RuntimeLLMImpl implements RuntimeLLM {
  * Accepting BOTH forms is deliberate rather than just fixing the registry:
  * `endpoint_overridable` providers let a user paste their own base URL, and
  * people paste it both with and without the trailing version segment.
+ *
+ * The endpoint is NOT trusted input. `config-resolver.decodeConfigFromHeader`
+ * takes it from a base64 JSON blob in the unauthenticated `x-vidhya-llm-config`
+ * request header, so this function is the one chokepoint every runtime call
+ * flows through and the right place to refuse a hostile base. Plain string
+ * concatenation was not good enough: an endpoint carrying a fragment swallowed
+ * the whole API path (`https://evil.example#` + `/v1/messages` →
+ * `https://evil.example/#/v1/messages`, i.e. a POST to the bare origin still
+ * carrying the caller's key header and prompt body), and one carrying a query
+ * produced a path made of junk. Both now throw instead.
  */
 export function joinProviderUrl(endpoint: string, path: string): string {
-  const base = endpoint.replace(/\/+$/, '');
+  const raw = (endpoint || '').trim();
+  if (!raw) {
+    throw new Error('joinProviderUrl: provider endpoint is empty');
+  }
+  if (raw.includes('?') || raw.includes('#')) {
+    throw new Error(
+      `joinProviderUrl: provider endpoint must be a bare base URL with no query ` +
+      `or fragment (got ${JSON.stringify(raw.slice(0, 120))})`,
+    );
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`joinProviderUrl: provider endpoint is not an absolute URL (got ${JSON.stringify(raw.slice(0, 120))})`);
+  }
+  if (parsed.protocol !== 'https:' && !isLocalhost(parsed.hostname)) {
+    // http is allowed only for a loopback host, which is what a local Ollama is.
+    throw new Error(`joinProviderUrl: provider endpoint must use https (got ${parsed.protocol}//${parsed.hostname})`);
+  }
+
+  const base = raw.replace(/\/+$/, '');
   const suffix = path.startsWith('/') ? path : `/${path}`;
   // If the base already ends with the exact version segment the path opens
   // with, drop the duplicate rather than nesting it.
@@ -265,6 +296,10 @@ export function joinProviderUrl(endpoint: string, path: string): string {
     return base + suffix.slice(version.length + 1);
   }
   return base + suffix;
+}
+
+function isLocalhost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]';
 }
 
 const DEFAULT_MAX_TOKENS  = 4096;
@@ -279,7 +314,7 @@ async function callGemini(
   opts: GenerateOptions,
   stream: boolean,
 ): Promise<string | null> {
-  const url = joinProviderUrl(resolved.endpoint, `/v1beta/models/${resolved.model_id}:${stream ? 'streamGenerateContent' : 'generateContent'}`);
+  const url = joinProviderUrl(resolved.endpoint, `/v1beta/models/${encodeURIComponent(resolved.model_id)}:${stream ? 'streamGenerateContent' : 'generateContent'}`);
   const body = buildGeminiBody(input, opts);
   const response = await fetch(url, {
     method: 'POST',
@@ -303,7 +338,7 @@ async function* streamGemini(
   input: GenerateInput,
   opts: GenerateOptions,
 ): AsyncGenerator<string> {
-  const url = joinProviderUrl(resolved.endpoint, `/v1beta/models/${resolved.model_id}:streamGenerateContent?alt=sse`);
+  const url = joinProviderUrl(resolved.endpoint, `/v1beta/models/${encodeURIComponent(resolved.model_id)}:streamGenerateContent?alt=sse`);
   const body = buildGeminiBody(input, opts);
   const response = await fetch(url, {
     method: 'POST',

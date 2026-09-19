@@ -88,6 +88,16 @@ describe('REGRESSION — GET /api/lesson/:concept_id', () => {
     expect(wrap.payload).toHaveProperty('components');
     // New atoms field also present (additive)
     expect(wrap.payload).toHaveProperty('atoms');
+
+    // The curriculum-bridge field is ALWAYS present and explicitly null when
+    // no board is known — never omitted, so a client can tell "this student
+    // has no bridge" from "this server is too old to send one". This request
+    // carries no student id at all, and `query` here is a plain object rather
+    // than URLSearchParams, which is exactly the shape that 500'd the whole
+    // endpoint when the bridge lookup was first wired in. An optional framing
+    // line must never be able to take a lesson down.
+    expect(wrap.payload).toHaveProperty('curriculum_bridge');
+    expect((wrap.payload as Record<string, unknown>).curriculum_bridge).toBeNull();
     expect(Array.isArray((wrap.payload as any).atoms)).toBe(true);
   });
 

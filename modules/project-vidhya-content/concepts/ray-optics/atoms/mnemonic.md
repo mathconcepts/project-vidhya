@@ -21,13 +21,13 @@ modality: mnemonic
   "title": "Drag the object distance and focal length for a convex lens",
   "why": "Image distance and magnification are read straight off u and f -- drag the sliders and watch real, inverted images turn virtual and upright once the object crosses the focal length.",
   "inputs": [
-    {"id": "u", "label": "Object distance u (cm, negative)", "min": -50, "max": -10, "step": 5, "initial": -30},
+    {"id": "u", "label": "Object distance u (cm, negative)", "min": -53, "max": -11, "step": 6, "initial": -29},
     {"id": "f", "label": "Focal length f (cm, positive for convex)", "min": 10, "max": 30, "step": 5, "initial": 20}
   ],
   "outputs": [
     {"label": "Image distance v (cm) = 1 / (1/f + 1/u)", "formula": "1 / ((1/f) + (1/u))", "digits": 2},
     {"label": "Magnification m = v/u", "formula": "(1 / ((1/f) + (1/u))) / u", "digits": 2}
   ],
-  "caption": "Start at u=-30, f=20 (this concept's worked example): v should read 60 and m should read -2 (real, inverted, magnified). Drag u closer than f -- say u=-15 with f=20 -- and v turns negative: the image has flipped to virtual, on the same side as the object."
+  "caption": "Start at u=-29, f=20 (close to this concept's worked example): v should read about 64 and m about -2.2 -- real, inverted, magnified. Drag u to -17 with f=20 instead: v flips negative and m turns positive -- the image has flipped to virtual, upright, on the same side as the object."
 }
 ```

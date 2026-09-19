@@ -23,6 +23,8 @@ import {
   listExamIds,
   resolveActiveExamId,
 } from '../curriculum/exam-loader';
+import { conceptsDeclaredByExam } from '../constants/concept-graph';
+import { getTopicsForExam } from '../curriculum/topic-adapter';
 import {
   getExamsForConcept,
   summarizeSharedConcept,
@@ -86,16 +88,28 @@ async function handleGetExam(req: ParsedRequest, res: ServerResponse): Promise<v
  * Returns 503 when data/curriculum/ is empty — that surfaces as a clear
  * "no exams loaded" message instead of the original "Failed to build session".
  */
-async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+async function handleActiveExam(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const ids = listExamIds();
   if (ids.length === 0) {
     return sendError(res, 503, 'no exams loaded — check data/curriculum/');
   }
-  // resolveActiveExamId() is the single source of truth for "which exam is
-  // active" — gate-routes/spine-routes/topic-pages/blog-index/topic-detection
+  // resolveActiveExamId() is the single source of truth for the DEPLOYMENT's
+  // exam — gate-routes/spine-routes/topic-pages/blog-index/topic-detection
   // all resolve through the same function so they can't drift from what this
   // endpoint (and therefore Home, via useActiveExam()) reports.
-  const activeId = resolveActiveExamId()!;
+  //
+  // ?exam_id= overrides it for ONE request (v4.86.0). Before this, the
+  // active exam was a deployment constant, so a build carrying two packs
+  // could only ever show one of them and the second was unreachable to
+  // every student-facing surface no matter what was installed.
+  //
+  // Validated against listExamIds() exactly as GET /api/topics already
+  // validates its own ?exam_id=, and an unrecognised value falls back to
+  // the deployment default rather than 404ing: this drives the exam NAME
+  // and the nav on every page, so a stale or hand-typed id should render
+  // the default app, never an empty one.
+  const requested = req.query.get('exam_id')?.trim() || null;
+  const activeId = (requested && ids.includes(requested)) ? requested : resolveActiveExamId()!;
   const exam = getExam(activeId)!;
 
   sendJSON(res, {
@@ -106,10 +120,36 @@ async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promi
     scope: exam.metadata.scope,
     total_marks: exam.metadata.total_marks,
     duration_minutes: exam.metadata.duration_minutes,
-    concept_count: exam.concept_links.length,
-    section_count: exam.syllabus.length,
+    // What a student can actually study in this exam (v4.86.0).
+    //
+    // Was `exam.concept_links.length`, which is a different thing entirely —
+    // gate-ma reported 27 while declaring 101 concepts, and jee-main
+    // reported 0 while declaring 23. Home renders this verbatim as
+    // "N sections · M concepts", so the second number has been wrong on
+    // the one shipped exam for as long as it has been displayed; it simply
+    // looked plausible. A second pack made it read "6 sections · 0
+    // concepts", which is where it became obvious.
+    //
+    // conceptsDeclaredByExam() is the same resolver getSyllabus() uses, so
+    // this number cannot drift from what the app is willing to teach.
+    concept_count: conceptsDeclaredByExam(activeId).length,
+    // Sections a student can REACH, matching the topic list rather than the
+    // raw YAML count: jee-main declares Physics and Chemistry because its
+    // syllabus genuinely is PCM, but both are still all-stub and are
+    // filtered out of the topic view, so counting them here would disagree
+    // with the nav the same payload drives.
+    section_count: getTopicsForExam(activeId).length,
     loaded_count: ids.length,
     all_exam_ids: ids,
+    // Enough for a switcher to render real labels without N round-trips.
+    // `id` + `name` only: everything else about an exam is available from
+    // this same endpoint once it IS the active one.
+    available_exams: ids.map((id) => {
+      const e = getExam(id);
+      return { id, name: e?.metadata?.name ?? id };
+    }),
+    /** The deployment default, so a switcher can mark it and reset to it. */
+    default_exam_id: resolveActiveExamId(),
     starter_prompts: buildStarterPrompts(exam),
   });
 }

@@ -1,0 +1,382 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Mathematics MCQ-only practice items for the differential-calculus opening of the jee-calculus topic (limits-jee, continuity-differentiability-jee, applications-of-derivatives) — Class 11+12 level, not GATE postgraduate level. Authored 2026-09-19. Every answer key was computed by hand and then independently cross-checked via `python3 -c \"import sympy...\"` (sympy.limit for every limit, sympy.diff/solve for every derivative-based item, and explicit one-sided-limit evaluation via sympy.limit(..., '+') for the continuity/differentiability items) before being written down; no item's key was trusted on a single pass. All 18 items are question_type=mcq, marks=4 per this pack's locked JEE Main marking contract (nat/msq are deliberately absent — see jee-main.yml's scoring block).",
+  "items": [
+    {
+      "id": "pi-limits-jee-001",
+      "concept_id": "limits-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the value of lim(x→0) sin(3x)/x.",
+      "options": ["3", "1", "1/3", "0"],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "This is the standard limit lim(θ→0) sin(θ)/θ = 1, but here the angle inside sin is 3x, not x. Write sin(3x)/x = 3 · [sin(3x)/(3x)], so as x→0, sin(3x)/(3x) → 1, and the whole thing → 3·1 = 3.",
+        "Cross-check with sympy: sympy.limit(sin(3*x)/x, x, 0) evaluates to 3, confirming the hand method.",
+        "Option (b) 1 comes from applying the sin(θ)/θ→1 rule directly to sin(3x)/x without adjusting for the '3' inside — a very common slip. Option (c) 1/3 comes from inverting that same adjustment factor. Option (d) 0 comes from wrongly plugging x=0 straight into sin(3x)/x and reading the 0/0 form as simply 0, instead of recognising it as an indeterminate form that needs the standard limit."
+      ],
+      "verification_method": "sympy_limit"
+    },
+    {
+      "id": "pi-limits-jee-002",
+      "concept_id": "limits-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find lim(x→2) (x² − 4)/(x − 2).",
+      "options": ["4", "0", "2", "The limit does not exist"],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Plugging x=2 directly gives 0/0, an indeterminate form — this does NOT mean the limit is 0 or that it doesn't exist, it means we must simplify first.",
+        "Factor the numerator: x² − 4 = (x−2)(x+2). Since x→2 means x is close to but not equal to 2, we can cancel the (x−2) factor: (x−2)(x+2)/(x−2) = x+2 for x≠2. So the limit is lim(x→2)(x+2) = 4.",
+        "Cross-check with sympy: sympy.limit((x**2-4)/(x-2), x, 2) evaluates to 4, matching.",
+        "Option (b) 0 comes from misreading the 0/0 form itself as the answer. Option (c) 2 comes from cancelling incorrectly and forgetting to add the surviving '+2' term. Option (d) treats every 0/0 form as a sign that the limit doesn't exist, when in fact 0/0 just means more work is needed — the limit exists here and equals 4."
+      ],
+      "verification_method": "sympy_limit"
+    },
+    {
+      "id": "pi-limits-jee-003",
+      "concept_id": "limits-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find lim(x→0) (1 − cos x)/x².",
+      "options": ["1/2", "1", "0", "-1/2"],
+      "answer_index": 0,
+      "correct_answer": "1/2",
+      "solution_steps": [
+        "This is 0/0 at x=0, so apply L'Hopital's rule (differentiate the top and bottom separately): the derivative of (1−cos x) is sin x, and the derivative of x² is 2x, giving lim(x→0) sin(x)/(2x).",
+        "This is still 0/0, so apply L'Hopital again: derivative of sin x is cos x, derivative of 2x is 2, giving lim(x→0) cos(x)/2 = cos(0)/2 = 1/2.",
+        "Cross-check with sympy: sympy.limit((1-cos(x))/x**2, x, 0) evaluates to 1/2, matching.",
+        "Option (b) 1 comes from wrongly treating (1−cos x) as approximately equal to x² for small x (it's actually x²/2), dropping the factor of 1/2. Option (c) 0 comes from stopping after the first L'Hopital step (sin x)/(2x) and mistakenly evaluating sin(0)/0 as 0 instead of recognising it's still 0/0 and applying L'Hopital a second time. Option (d) -1/2 comes from a sign slip differentiating (1 − cos x) — mistakenly treating its derivative as -sin x instead of the correct +sin x."
+      ],
+      "verification_method": "sympy_limit_lhopital_twice"
+    },
+    {
+      "id": "pi-limits-jee-004",
+      "concept_id": "limits-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find lim(x→∞) (1 + 3/x)^x.",
+      "options": ["e³", "e", "3e", "e^(1/3)"],
+      "answer_index": 0,
+      "correct_answer": "e³",
+      "solution_steps": [
+        "This is the exponential-limit form (1 + k/x)^x → e^k as x→∞. Here k = 3, so the limit is e³.",
+        "A quick way to see why: take the natural log. ln[(1+3/x)^x] = x·ln(1+3/x) ≈ x·(3/x) = 3 for large x (using ln(1+u) ≈ u for small u), so the log of the expression tends to 3, meaning the expression itself tends to e³.",
+        "Cross-check with sympy: sympy.limit((1+3/x)**x, x, oo) evaluates to exp(3), i.e. e³, matching.",
+        "Option (b) e comes from applying the FAMOUS special case (1+1/x)^x → e without noticing this problem has a '3' in place of the '1'. Option (c) 3e comes from multiplying e by 3 instead of raising it to the power 3 — mixing up 'e times k' with 'e to the power k'. Option (d) e^(1/3) comes from inverting the role of the 3, as if the limit were (1 + 1/(3x))^x instead of (1+3/x)^x."
+      ],
+      "verification_method": "sympy_limit"
+    },
+    {
+      "id": "pi-limits-jee-005",
+      "concept_id": "limits-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find lim(x→0) (eˣ − 1 − x)/x².",
+      "options": ["1/2", "1", "0", "e"],
+      "answer_index": 0,
+      "correct_answer": "1/2",
+      "solution_steps": [
+        "This is 0/0 at x=0. Apply L'Hopital's rule: derivative of the top (eˣ − 1 − x) is eˣ − 1, derivative of the bottom x² is 2x, giving lim(x→0) (eˣ−1)/(2x).",
+        "This is still 0/0, so apply L'Hopital a second time: derivative of (eˣ−1) is eˣ, derivative of 2x is 2, giving lim(x→0) eˣ/2 = e⁰/2 = 1/2.",
+        "Cross-check with sympy: sympy.limit((exp(x)-1-x)/x**2, x, 0) evaluates to 1/2, matching.",
+        "Option (b) 1 comes from using the Taylor series eˣ ≈ 1+x+x²/2+... but forgetting the 1/2 coefficient on the x² term, effectively treating eˣ−1−x as approximately x² instead of x²/2. Option (c) 0 comes from stopping after only the first L'Hopital step, where (eˣ−1)/(2x) at x=0 is still 0/0, and wrongly reading that unresolved 0/0 as 0. Option (d) e is unrelated to differentiating correctly — it comes from evaluating eˣ at x=1 by mistake instead of at x=0."
+      ],
+      "verification_method": "sympy_limit_lhopital_twice"
+    },
+    {
+      "id": "pi-limits-jee-006",
+      "concept_id": "limits-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find lim(x→0⁺) x·ln(x).",
+      "options": ["0", "-∞", "1", "The limit does not exist"],
+      "answer_index": 0,
+      "correct_answer": "0",
+      "solution_steps": [
+        "As x→0⁺, x→0 but ln(x)→−∞, so this is the indeterminate form 0·(−∞). Rewrite it as a fraction so L'Hopital applies: x·ln(x) = ln(x)/(1/x), which is now (−∞)/(∞) as x→0⁺.",
+        "Apply L'Hopital: derivative of ln(x) is 1/x, derivative of 1/x is −1/x². So the limit becomes (1/x)/(−1/x²) = −x, and as x→0⁺, −x → 0.",
+        "Cross-check with sympy: sympy.limit(x*log(x), x, 0, '+') evaluates to 0, matching. Intuitively, x→0 'wins' the race against ln(x)→−∞ because x shrinks faster than ln(x) grows in magnitude.",
+        "Option (b) -∞ comes from assuming ln(x)→−∞ dominates the product outright, ignoring that x itself is shrinking toward 0 and outpaces it. Option (c) 1 is an arbitrary guess with no basis in the algebra. Option (d) treats the 0·(−∞) indeterminate form as automatically meaning 'no limit exists', when in fact indeterminate just means it needs rewriting (as done above) before a definite value — here 0 — can be found."
+      ],
+      "verification_method": "sympy_limit_one_sided_rewritten"
+    },
+    {
+      "id": "pi-continuity-differentiability-jee-001",
+      "concept_id": "continuity-differentiability-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Is f(x) = |x| differentiable at x = 0?",
+      "options": [
+        "No — f is continuous at x = 0, but its left-hand derivative (-1) and right-hand derivative (1) do not match",
+        "Yes — since f is continuous everywhere, it must also be differentiable everywhere",
+        "No — f is not even continuous at x = 0",
+        "Yes — both one-sided derivatives equal 0 at the sharp corner"
+      ],
+      "answer_index": 0,
+      "correct_answer": "No — f is continuous at x = 0, but its left-hand derivative (-1) and right-hand derivative (1) do not match",
+      "solution_steps": [
+        "'Differentiable' (a technical word meaning: has a well-defined slope/derivative) at a point requires the left-hand derivative and the right-hand derivative to be equal there. Compute them separately for f(x)=|x| at x=0.",
+        "Right-hand derivative: for small h>0, [f(h)−f(0)]/h = [h−0]/h = 1. Left-hand derivative: for small h>0, [f(−h)−f(0)]/(−h) = [h−0]/(−h) = −1.",
+        "Cross-check with sympy: sympy.limit(Abs(h)/h, h, 0, '+') gives 1, and sympy.limit(Abs(-h)/(-h), h, 0, '+') gives -1, matching by hand.",
+        "Since 1 ≠ −1, f is NOT differentiable at x=0 (this is the classic 'sharp corner' or 'kink' picture). Option (b) is the single most common misconception in this topic: continuity is a WEAKER condition than differentiability, and being continuous everywhere never guarantees differentiability everywhere — |x| is the textbook counterexample. Option (c) is a factual error: f(x)=|x| IS continuous at x=0 (lim(x→0)|x| = 0 = f(0)); only the derivative fails to exist. Option (d) states a fabricated result — the one-sided derivatives are ±1, not 0."
+      ],
+      "verification_method": "sympy_one_sided_derivative_limits"
+    },
+    {
+      "id": "pi-continuity-differentiability-jee-002",
+      "concept_id": "continuity-differentiability-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let f(x) = x²·sin(1/x) for x ≠ 0, and f(0) = 0. Is f differentiable at x = 0, and if so what is f'(0)?",
+      "options": [
+        "Yes, and f'(0) = 0",
+        "No — f is not even continuous at x = 0, since sin(1/x) oscillates without settling as x→0",
+        "Yes, f is continuous at 0, but it is not differentiable there because sin(1/x) oscillates too wildly",
+        "Yes, and f'(0) = 1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes, and f'(0) = 0",
+      "solution_steps": [
+        "sin(1/x) always stays between −1 and 1 no matter how wildly it oscillates ('bounded'). So x²·sin(1/x) is squeezed between −x² and x², both of which → 0 as x→0. This forces lim(x→0) x²sin(1/x) = 0 = f(0), so f is continuous at 0.",
+        "Now check differentiability directly from the definition: f'(0) = lim(h→0) [f(h)−f(0)]/h = lim(h→0) [h²sin(1/h)]/h = lim(h→0) h·sin(1/h). Since sin(1/h) is bounded and h→0, this product also → 0 by the same squeezing idea.",
+        "Cross-check with sympy: sympy.limit(x**2*sin(1/x), x, 0) evaluates to 0 (confirms continuity), and sympy.limit(h**2*sin(1/h)/h, h, 0) also evaluates to 0 (confirms f'(0)=0). Both match the hand computation.",
+        "Option (b) makes the common mistake of focusing only on sin(1/x)'s wild oscillation and ignoring that it is multiplied by x², which shrinks to 0 fast enough to 'tame' the oscillation — the x² factor is the whole point of this example. Option (c) correctly grants continuity but wrongly assumes oscillation alone blocks differentiability, missing that the SAME squeezing argument that proves continuity also proves the derivative limit exists and equals 0. Option (d) is a numeric slip — there is no step in the correct derivation that produces 1."
+      ],
+      "verification_method": "sympy_squeeze_limit_and_derivative_definition"
+    },
+    {
+      "id": "pi-continuity-differentiability-jee-003",
+      "concept_id": "continuity-differentiability-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let f(x) = x² for x ≤ 1, and f(x) = 2x − 1 for x > 1. Is f continuous and differentiable at x = 1?",
+      "options": [
+        "Both continuous and differentiable at x = 1, since the two pieces agree in value and in slope there",
+        "Continuous but not differentiable, since piecewise functions defined by two different formulas can never have matching derivatives at the join",
+        "Neither continuous nor differentiable at x = 1",
+        "Differentiable but not continuous at x = 1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Both continuous and differentiable at x = 1, since the two pieces agree in value and in slope there",
+      "solution_steps": [
+        "Check continuity first: does the value from the left piece match the value from the right piece at x=1? Left piece: x² at x=1 gives 1. Right piece: 2x−1 at x=1 gives 2(1)−1=1. Both give 1, so f is continuous at x=1.",
+        "Now check differentiability: does the SLOPE (derivative) from the left piece match the slope from the right piece at x=1? Derivative of x² is 2x, which at x=1 gives 2. Derivative of 2x−1 is the constant 2, which at x=1 is also 2. Both slopes equal 2, so f is also differentiable at x=1.",
+        "Cross-check with sympy: sympy.diff(x**2, x).subs(x,1) gives 2, and sympy.diff(2*x-1, x).subs(x,1) also gives 2, matching by hand; and both pieces evaluate to 1 at x=1, matching too.",
+        "Option (b) states a false blanket rule — piecewise functions CAN be differentiable at a join point, precisely when (as here) the two pieces happen to have matching value AND matching slope; this problem was deliberately built with matching slope to test that the rule is 'check, don't assume'. Option (c) skips checking the actual numbers and assumes the worst. Option (d) is logically impossible for any function — a theorem in this exact topic (also tested elsewhere in this bank) says differentiability always implies continuity, so a function can never be differentiable without also being continuous at the same point."
+      ],
+      "verification_method": "sympy_piecewise_value_and_derivative_match"
+    },
+    {
+      "id": "pi-continuity-differentiability-jee-004",
+      "concept_id": "continuity-differentiability-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let f(x) = |x − 2| + |x + 1|. Is f differentiable at x = 2?",
+      "options": [
+        "No — the left-hand derivative at x = 2 is 0 and the right-hand derivative is 2, so they disagree",
+        "Yes — f is a sum of two differentiable functions, so f itself must be differentiable everywhere",
+        "No — f is not continuous at x = 2",
+        "Yes — both one-sided derivatives equal 2 at x = 2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "No — the left-hand derivative at x = 2 is 0 and the right-hand derivative is 2, so they disagree",
+      "solution_steps": [
+        "Near x=2, the term |x+1| is smooth (x+1 stays positive, so it just behaves like x+1 with slope 1), but |x−2| has a sharp corner exactly at x=2, so that's the only place to check carefully.",
+        "Left-hand derivative at x=2: just to the left, x−2 is negative, so |x−2| = −(x−2) with slope −1; combined with |x+1|'s slope of +1, the total left-hand slope is −1+1 = 0. Right-hand derivative: just to the right, x−2 is positive, so |x−2| = x−2 with slope +1; combined with |x+1|'s slope of +1, the total right-hand slope is 1+1 = 2.",
+        "Cross-check with sympy: sympy.limit((Abs(2-h-2)+Abs(2-h+1) - (Abs(0)+Abs(3)))/(-h), h, 0, '+') gives 0 for the left-hand derivative, and the equivalent right-hand computation gives 2, matching by hand.",
+        "Since 0 ≠ 2, f is NOT differentiable at x=2. Option (b) states a false general rule — |x−2| by itself is NOT differentiable at x=2 (same kink as |x| shifted), so a sum involving it is not automatically differentiable just because addition 'usually' preserves differentiability; each absolute-value term must be checked at its own corner point. Option (c) is a factual error — f IS continuous at x=2 (both pieces agree in value there, only the slope disagrees). Option (d) fabricates a matching value that the computation above doesn't produce."
+      ],
+      "verification_method": "sympy_one_sided_derivative_limits"
+    },
+    {
+      "id": "pi-continuity-differentiability-jee-005",
+      "concept_id": "continuity-differentiability-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which of the following statements about continuity and differentiability is correct?",
+      "options": [
+        "If f is differentiable at x = a, then f must be continuous at x = a — but the converse need not hold",
+        "If f is continuous at x = a, then f must be differentiable at x = a",
+        "Continuity and differentiability at a point are always equivalent conditions",
+        "A function can be differentiable at a point without being defined there"
+      ],
+      "answer_index": 0,
+      "correct_answer": "If f is differentiable at x = a, then f must be continuous at x = a — but the converse need not hold",
+      "solution_steps": [
+        "This is a one-directional theorem: differentiability is a STRONGER condition than continuity. If the derivative limit lim(h→0)[f(a+h)−f(a)]/h exists, then f(a+h)−f(a) must → 0 as h→0 (since it equals that limit times h, and h→0), which is exactly the statement that f is continuous at a.",
+        "But the reverse implication fails: f(x)=|x| is continuous at x=0 (checked in item 1 of this concept) yet NOT differentiable there — so continuity does not force differentiability. This single counterexample is enough to rule out options (b) and (c).",
+        "Cross-check: this is the same fact verified numerically in pi-continuity-differentiability-jee-001 above (|x| is continuous but not differentiable at 0) and pi-continuity-differentiability-jee-004 (the corner in |x−2|+|x+1|) — both are live counterexamples to 'continuity implies differentiability'.",
+        "Option (b) is the single most common wrong belief in this topic — it reverses the true direction of the implication. Option (c) overclaims equivalence, which the |x| counterexample rules out. Option (d) is nonsensical: the very definition of a derivative at x=a, lim(h→0)[f(a+h)−f(a)]/h, requires f(a) itself to be defined so it can appear in that formula."
+      ],
+      "verification_method": "sympy_counterexample_cross_reference"
+    },
+    {
+      "id": "pi-continuity-differentiability-jee-006",
+      "concept_id": "continuity-differentiability-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let f(x) = (x² − 1)/(x − 1) for x ≠ 1, and f(1) = 3. Is f continuous at x = 1?",
+      "options": [
+        "No — the limit as x→1 is 2, but f(1) = 3, so they don't match",
+        "Yes — since (x²−1)/(x−1) simplifies to x+1, which is continuous everywhere",
+        "No — the limit does not exist as x→1",
+        "Yes — f(1) is defined, and that alone is sufficient for continuity"
+      ],
+      "answer_index": 0,
+      "correct_answer": "No — the limit as x→1 is 2, but f(1) = 3, so they don't match",
+      "solution_steps": [
+        "Continuity at x=1 needs THREE things to agree: f(1) must be defined, lim(x→1) f(x) must exist, and the two must be EQUAL. Here f(1)=3 is given directly (defined), so check the limit next.",
+        "For x≠1, simplify (x²−1)/(x−1) = (x−1)(x+1)/(x−1) = x+1. So lim(x→1) f(x) = lim(x→1)(x+1) = 2.",
+        "Cross-check with sympy: sympy.limit((x**2-1)/(x-1), x, 1) evaluates to 2, matching. But the GIVEN value f(1)=3, so lim(x→1)f(x)=2 ≠ f(1)=3.",
+        "Because the limit (2) and the function's actual value (3) disagree, f is NOT continuous at x=1 — this is a 'removable discontinuity' (removable because simply redefining f(1)=2 would fix it, but as GIVEN with f(1)=3, it is discontinuous). Option (b) makes the classic mistake of simplifying the formula for x≠1 and then forgetting to check the SEPARATELY given value at the point itself — the simplification only describes the function away from x=1. Option (c) is a factual error: the limit does exist (it equals 2); it just doesn't match f(1). Option (d) confuses 'f(1) is defined' (necessary) with 'f(1) is defined and equals the limit' (the actual requirement for continuity)."
+      ],
+      "verification_method": "sympy_limit_vs_given_value"
+    },
+    {
+      "id": "pi-applications-of-derivatives-001",
+      "concept_id": "applications-of-derivatives",
+      "topic": "jee-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the slope of the tangent to the curve y = x³ − 3x + 2 at x = 2.",
+      "options": ["9", "12", "3", "15"],
+      "answer_index": 0,
+      "correct_answer": "9",
+      "solution_steps": [
+        "The slope of the tangent at a point is the value of the derivative there. Differentiate y=x³−3x+2 term by term: dy/dx = 3x² − 3.",
+        "Plug in x=2: dy/dx = 3(2)² − 3 = 3(4) − 3 = 12 − 3 = 9.",
+        "Cross-check with sympy: sympy.diff(x**3 - 3*x + 2, x) gives 3*x**2 - 3, and substituting x=2 gives 9, matching by hand.",
+        "Option (b) 12 comes from forgetting the '−3' term entirely after differentiating, leaving just 3(2)²=12. Option (c) 3 comes from a power-rule slip — treating the derivative of x³ as 3x instead of the correct 3x² (dropping one power), giving 3(2)−3=3. Option (d) 15 comes from a sign error — flipping the −3 in the derivative to +3, giving 3(2)²+3=15."
+      ],
+      "verification_method": "sympy_diff_and_substitute"
+    },
+    {
+      "id": "pi-applications-of-derivatives-002",
+      "concept_id": "applications-of-derivatives",
+      "topic": "jee-calculus",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For f(x) = x³ − 3x, what type of point is x = 1?",
+      "options": [
+        "A point of local minimum",
+        "A point of local maximum",
+        "Neither a maximum nor a minimum, since f''(1) = 0",
+        "A point of inflection"
+      ],
+      "answer_index": 0,
+      "correct_answer": "A point of local minimum",
+      "solution_steps": [
+        "First find the critical points: f'(x) = 3x² − 3 = 3(x²−1) = 3(x−1)(x+1), which is zero at x=1 and x=−1.",
+        "Use the second-derivative test to classify x=1: f''(x) = 6x, so f''(1) = 6, which is POSITIVE — a positive second derivative at a critical point means the curve is concave up there, i.e. a local MINIMUM.",
+        "Cross-check with sympy: sympy.solve(diff(x**3-3*x,x), x) gives critical points [-1, 1], and sympy.diff(x**3-3*x, x, 2) evaluated at x=1 gives 6 (positive → minimum) and at x=−1 gives −6 (negative → maximum), matching by hand.",
+        "Option (b) swaps the roles of the two critical points — x=−1 is the local maximum (f''(−1)=−6<0), not x=1. Option (c) contains a factual error: f''(1)=6, not 0 — this option describes what would happen only if the second-derivative test itself were inconclusive, which is not the case here. Option (d) mislabels a local extremum as an inflection point; an inflection point is where concavity itself switches sign (which happens at x=0 for this cubic, not at x=1)."
+      ],
+      "verification_method": "sympy_second_derivative_test"
+    },
+    {
+      "id": "pi-applications-of-derivatives-003",
+      "concept_id": "applications-of-derivatives",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "On which interval is f(x) = x³ − 6x² + 9x + 1 decreasing?",
+      "options": ["(1, 3)", "(−∞, 1) ∪ (3, ∞)", "(−∞, 1)", "(3, ∞)"],
+      "answer_index": 0,
+      "correct_answer": "(1, 3)",
+      "solution_steps": [
+        "A function is decreasing exactly where its derivative is negative. Differentiate: f'(x) = 3x² − 12x + 9 = 3(x² − 4x + 3) = 3(x−1)(x−3).",
+        "This factored form is zero at x=1 and x=3, and changes sign there. Test a point in each region: at x=0 (left of 1), f'(0)=3(−1)(−3)=9>0 (increasing). At x=2 (between 1 and 3), f'(2)=3(1)(−1)=−3<0 (decreasing). At x=4 (right of 3), f'(4)=3(3)(1)=9>0 (increasing).",
+        "Cross-check with sympy: sp.factor(sp.diff(x**3-6*x**2+9*x+1, x)) gives 3*(x-3)*(x-1), matching the hand factoring, and the sign pattern from testing points confirms f is decreasing exactly on (1,3).",
+        "Option (b) states exactly the INCREASING interval instead of the decreasing one — a sign-interpretation swap. Option (c) and (d) each capture only one of the two increasing pieces and mislabel it as the (single, connected) decreasing interval — neither is where f' is actually negative."
+      ],
+      "verification_method": "sympy_derivative_sign_analysis"
+    },
+    {
+      "id": "pi-applications-of-derivatives-004",
+      "concept_id": "applications-of-derivatives",
+      "topic": "jee-calculus",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the minimum value of f(x) = x + 4/x for x > 0.",
+      "options": ["4", "2", "0", "-4"],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Differentiate: f'(x) = 1 − 4/x². Set f'(x)=0: 1 = 4/x², so x² = 4, giving x = ±2. Since the problem restricts to x>0, only x=2 is in the allowed domain.",
+        "Confirm it's a minimum (not a maximum) using the second derivative: f''(x) = 8/x³, and f''(2) = 8/8 = 1 > 0, so x=2 is indeed a local minimum. Then evaluate the FUNCTION (not just find the x-value) at that point: f(2) = 2 + 4/2 = 2 + 2 = 4.",
+        "Cross-check with sympy: sympy.solve(diff(x + 4/x, x), x) gives critical points [-2, 2]; filtering to the domain x>0 keeps only x=2, and f(2) evaluates to 4, matching by hand.",
+        "Option (b) 2 is a common slip: it reports the CRITICAL x-VALUE (2) rather than the minimum VALUE OF THE FUNCTION f(2)=4 — finding where the minimum occurs is not the same as finding what the minimum equals. Option (c) 0 comes from wrongly assuming the minimum happens as x→0⁺, but actually f(x)=x+4/x → +∞ as x→0⁺ (the 4/x term blows up), so 0 is nowhere near the true minimum. Option (d) −4 comes from using the OTHER critical point x=−2, which lies outside the given domain x>0 and should be discarded."
+      ],
+      "verification_method": "sympy_optimization_domain_restricted"
+    },
+    {
+      "id": "pi-applications-of-derivatives-005",
+      "concept_id": "applications-of-derivatives",
+      "topic": "jee-calculus",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The radius of a circle increases at a constant rate of 2 cm/s. Find the rate at which the area is increasing when the radius is 5 cm.",
+      "options": ["20π cm²/s", "10π cm²/s", "50π cm²/s", "4π cm²/s"],
+      "answer_index": 0,
+      "correct_answer": "20π cm²/s",
+      "solution_steps": [
+        "This is a related-rates problem (a word meaning: two changing quantities are linked by a formula, and we relate how fast one changes to how fast the other does). Area A = πr². Differentiate both sides with respect to TIME t (using the chain rule, since r itself depends on t): dA/dt = 2πr · (dr/dt).",
+        "We're given dr/dt = 2 cm/s (constant) and asked for dA/dt at the moment r=5 cm. Plug in: dA/dt = 2π(5)(2) = 20π cm²/s.",
+        "Cross-check with sympy: sympy.diff(pi*r**2, r) gives 2*pi*r (this is dA/dr, the r-derivative); multiplying by dr/dt=2 and substituting r=5 gives 2π(5)·2 = 20π, matching by hand.",
+        "Option (b) 10π comes from forgetting to multiply by dr/dt=2 — using just 2πr = 2π(5)=10π and stopping there, as if the radius were static. Option (c) 50π comes from mishandling the power rule on r² — treating d(r²)/dr as r² itself instead of the correct 2r, giving π(25)(2)=50π. Option (d) 4π comes from forgetting to include the radius r=5 in the formula — using only 2π·(dr/dt) = 2π(2) = 4π."
+      ],
+      "verification_method": "sympy_related_rates_chain_rule"
+    },
+    {
+      "id": "pi-applications-of-derivatives-006",
+      "concept_id": "applications-of-derivatives",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using linear approximation (the tangent-line estimate) with f(x) = √x near x = 25, estimate the value of √26.",
+      "options": ["5.1", "5", "5.2", "6"],
+      "answer_index": 0,
+      "correct_answer": "5.1",
+      "solution_steps": [
+        "Linear approximation says: f(a+Δx) ≈ f(a) + f'(a)·Δx, using a nearby point 'a' where the value is easy to compute exactly. Here a=25 (since √25=5 exactly) and Δx=26−25=1.",
+        "f(x)=√x has derivative f'(x) = 1/(2√x). At a=25: f'(25) = 1/(2·5) = 1/10 = 0.1. So the estimate is f(25) + f'(25)·1 = 5 + 0.1(1) = 5.1.",
+        "Cross-check with sympy: sympy.sqrt(25) + sympy.diff(sqrt(x),x).subs(x,25)*1 evaluates to 51/10 = 5.1, matching by hand. The true value √26 ≈ 5.0990, so 5.1 is indeed an accurate approximation (as it should be — linear approximation is only reliable for a SMALL Δx like the 1 used here).",
+        "Option (b) 5 comes from forgetting to add the derivative-correction term entirely — just reporting f(25)=5 with no adjustment for moving to 26. Option (c) 5.2 comes from computing the derivative wrong: using f'(25) = 1/√25 = 1/5 = 0.2 instead of the correct 1/(2√25)=0.1 — forgetting the factor of 2 in the denominator of the power-rule derivative of √x. Option (d) 6 comes from treating the increment Δx=1 as if it should be added directly with no derivative scaling at all, i.e. 5+1=6."
+      ],
+      "verification_method": "sympy_linear_approximation"
+    }
+  ]
+}

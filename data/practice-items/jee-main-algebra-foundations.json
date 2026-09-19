@@ -1,0 +1,462 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Mathematics (Class 11-12 level) MCQ-only practice items for the Algebra foundations cluster: sets/relations/functions, quadratic equations, and complex numbers. All items are +4/-1 MCQ (marks=4) -- this bank deliberately carries no NAT/MSQ items, since JEE Main's numerical-value negative-marking rule is unresolved in this repo (see jee-main.yml's scoring block) and an item of that kind would be refused at grading time. Authored 2026-09-19. Every answer key was first solved by one method (algebraic identity, polar/De Moivre form, or direct solve) and then cross-checked by an independent second method (direct root-finding, numerical substitution, or a small-case sanity check) via python3 -c \"import sympy...\" before being written down; wrong options encode specific, named student mistakes rather than filler numbers.",
+  "items": [
+    {
+      "id": "pi-sets-relations-functions-001",
+      "concept_id": "sets-relations-functions",
+      "topic": "jee-algebra",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a class, 20 students study Mathematics and 15 students study Physics. If 5 students study both subjects, how many students study at least one of the two subjects?",
+      "options": [
+        "30",
+        "40",
+        "25",
+        "5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "30",
+      "solution_steps": [
+        "Use the union formula: |A union B| = |A| + |B| - |A intersection B| = 20 + 15 - 5 = 30.",
+        "Cross-check by splitting into non-overlapping groups: only Maths = 20-5=15, only Physics = 15-5=10, both = 5. Total = 15+10+5 = 30, same answer.",
+        "Option 40 forgot to subtract the 5 students counted twice (just added 20+15). Option 25 subtracted the overlap twice by mistake (20+15-5-5). Option 5 answers a different question -- it is the number who study BOTH, not at least one."
+      ],
+      "verification_method": "sympy_arithmetic_cross_checked"
+    },
+    {
+      "id": "pi-sets-relations-functions-002",
+      "concept_id": "sets-relations-functions",
+      "topic": "jee-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A set has 5 elements. How many proper subsets does it have?",
+      "options": [
+        "31",
+        "32",
+        "16",
+        "30"
+      ],
+      "answer_index": 0,
+      "correct_answer": "31",
+      "solution_steps": [
+        "A set of n elements has 2^n total subsets. Here 2^5 = 32.",
+        "A proper subset is any subset except the set itself, so we remove exactly 1: 32 - 1 = 31.",
+        "Cross-check for a small case: a 2-element set {a,b} has 2^2=4 subsets ({}, {a}, {b}, {a,b}), and 3 of these are proper -- matches 2^2 - 1 = 3.",
+        "Option 32 is the TOTAL number of subsets, forgetting to exclude the set itself. Option 16 wrongly used 2^(5-1) instead of 2^5 - 1. Option 30 wrongly excluded 2 subsets (thinking both the empty set and the full set must be removed twice)."
+      ],
+      "verification_method": "sympy_power_of_two_cross_checked"
+    },
+    {
+      "id": "pi-sets-relations-functions-003",
+      "concept_id": "sets-relations-functions",
+      "topic": "jee-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the domain of f(x) = sqrt(x - 3) + 1/sqrt(7 - x).",
+      "options": [
+        "[3, 7)",
+        "(3, 7)",
+        "[3, 7]",
+        "(3, 7]"
+      ],
+      "answer_index": 0,
+      "correct_answer": "[3, 7)",
+      "solution_steps": [
+        "For sqrt(x-3) to be defined (as a real number) we need x - 3 >= 0, i.e. x >= 3. Since it is only a square root (not in a denominator), x = 3 is ALLOWED.",
+        "For 1/sqrt(7-x) we need 7-x > 0 STRICTLY (it sits under a square root that is also in a denominator, so it can never be zero or negative), giving x < 7.",
+        "Combining x >= 3 and x < 7 gives the domain [3, 7).",
+        "Option (3,7) wrongly excludes x=3 (forgetting a plain square root allows equality). Option [3,7] wrongly includes x=7 (forgetting the denominator cannot be zero). Option (3,7] makes both mistakes at once."
+      ],
+      "verification_method": "sympy_solveset_domain_cross_checked"
+    },
+    {
+      "id": "pi-sets-relations-functions-004",
+      "concept_id": "sets-relations-functions",
+      "topic": "jee-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let f : R -> R be defined by f(x) = x^2. Which of the following correctly describes f?",
+      "options": [
+        "Neither one-one nor onto",
+        "One-one but not onto",
+        "Onto but not one-one",
+        "Both one-one and onto"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Neither one-one nor onto",
+      "solution_steps": [
+        "One-one (injective) means different inputs never give the same output. Here f(-2) = 4 = f(2), so two different inputs give the same output -- f is NOT one-one.",
+        "Onto (surjective) means every real number must be hit as an output. But f(x) = x^2 >= 0 always, so a negative number like -1 is never in the range -- f is NOT onto.",
+        "So f is neither one-one nor onto. Cross-check with the graph: the parabola y=x^2 fails the horizontal line test (not one-one) and never dips below the x-axis (not onto R).",
+        "Option 'one-one but not onto' ignores that f(-2)=f(2). Option 'onto but not one-one' wrongly assumes every real number is reached. Option 'both' wrongly assumes x^2 is a bijection on R."
+      ],
+      "verification_method": "manual_definition_check_cross_checked_with_graph_reasoning"
+    },
+    {
+      "id": "pi-sets-relations-functions-005",
+      "concept_id": "sets-relations-functions",
+      "topic": "jee-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Set A has 3 elements and set B has 4 elements. How many different relations can be defined from A to B?",
+      "options": [
+        "4096",
+        "128",
+        "64",
+        "12"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4096",
+      "solution_steps": [
+        "A relation from A to B is any subset of the Cartesian product A x B. Since |A x B| = |A| x |B| = 3 x 4 = 12, the number of subsets of a 12-element set is 2^12.",
+        "2^12 = 4096.",
+        "Cross-check with a tiny case: if |A|=1, |B|=1, then A x B has 1 pair, so there are 2^1 = 2 relations (the empty relation and the full one) -- matches the formula 2^(m*n).",
+        "Option 128 = 2^7 wrongly added the sizes in the exponent (3+4) instead of multiplying. Option 64 = 4^3 wrongly used the FUNCTIONS formula (n_B^n_A) instead of the relations formula. Option 12 just gave the size of A x B itself, forgetting to count subsets of it."
+      ],
+      "verification_method": "sympy_power_of_two_cross_checked"
+    },
+    {
+      "id": "pi-sets-relations-functions-006",
+      "concept_id": "sets-relations-functions",
+      "topic": "jee-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If f(x) = 2x + 3 and g(x) = x^2, find (f o g)(2), that is f(g(2)).",
+      "options": [
+        "11",
+        "49",
+        "7",
+        "28"
+      ],
+      "answer_index": 0,
+      "correct_answer": "11",
+      "solution_steps": [
+        "Work from the inside out: first compute g(2) = 2^2 = 4.",
+        "Then apply f to that result: f(4) = 2(4) + 3 = 11.",
+        "Cross-check symbolically: (f o g)(x) = f(g(x)) = 2x^2 + 3, so at x=2 this gives 2(4)+3 = 11, matching.",
+        "Option 49 computed (g o f)(2) instead, in the wrong order: f(2)=7, then g(7)=49. Option 7 stopped after computing f(2) and forgot to apply g first. Option 28 multiplied f(2) and g(2) together (7 x 4) instead of composing them."
+      ],
+      "verification_method": "sympy_symbolic_composition_cross_checked"
+    },
+    {
+      "id": "pi-quadratic-equations-001",
+      "concept_id": "quadratic-equations",
+      "topic": "jee-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If alpha and beta are the roots of x^2 - 5x + 6 = 0, find alpha^2 + beta^2.",
+      "options": [
+        "13",
+        "25",
+        "1",
+        "37"
+      ],
+      "answer_index": 0,
+      "correct_answer": "13",
+      "solution_steps": [
+        "For x^2 - 5x + 6 = 0, sum of roots alpha+beta = 5 and product alpha*beta = 6 (from -b/a and c/a).",
+        "Use the identity alpha^2+beta^2 = (alpha+beta)^2 - 2*alpha*beta = 5^2 - 2(6) = 25 - 12 = 13.",
+        "Cross-check by actually solving the equation: x^2-5x+6=0 factors as (x-2)(x-3)=0, so alpha=2, beta=3, and 2^2+3^2 = 4+9 = 13. Matches.",
+        "Option 25 forgot to subtract 2*alpha*beta at all (just squared the sum). Option 1 computed (alpha-beta)^2 = 25-24=1 instead of the sum of squares. Option 37 added 2*alpha*beta instead of subtracting it (25+12=37)."
+      ],
+      "verification_method": "sympy_solve_and_identity_cross_checked"
+    },
+    {
+      "id": "pi-quadratic-equations-002",
+      "concept_id": "quadratic-equations",
+      "topic": "jee-algebra",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the nature of the roots of 2x^2 - 3x + 5 = 0?",
+      "options": [
+        "Complex conjugate (non-real) roots",
+        "Real and equal roots",
+        "Real, distinct and rational roots",
+        "Real and distinct but irrational roots"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Complex conjugate (non-real) roots",
+      "solution_steps": [
+        "The discriminant is D = b^2 - 4ac = (-3)^2 - 4(2)(5) = 9 - 40 = -31.",
+        "Since D < 0, the equation has no real roots -- the two roots are complex conjugates of each other.",
+        "Cross-check: for a real-coefficient quadratic, complex roots ALWAYS come in a conjugate pair, and a negative discriminant is exactly the condition for this, confirming the classification.",
+        "Option 'real and equal' would need D=0, not D=-31. Option 'real, distinct, rational' and 'real, distinct, irrational' both wrongly assume D is positive -- these come from a sign slip while computing 4ac (treating -40 as +40)."
+      ],
+      "verification_method": "sympy_discriminant_cross_checked"
+    },
+    {
+      "id": "pi-quadratic-equations-003",
+      "concept_id": "quadratic-equations",
+      "topic": "jee-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For what value(s) of k does x^2 + kx + 4 = 0 have equal (repeated) roots?",
+      "options": [
+        "k = 4 or k = -4",
+        "k = 2 or k = -2",
+        "k = 4",
+        "k = 16"
+      ],
+      "answer_index": 0,
+      "correct_answer": "k = 4 or k = -4",
+      "solution_steps": [
+        "Equal roots means the discriminant is zero: D = k^2 - 4(1)(4) = k^2 - 16 = 0.",
+        "Solving k^2 = 16 gives k = 4 or k = -4.",
+        "Cross-check with k=4: x^2+4x+4 = (x+2)^2 = 0, a genuine repeated root at x=-2. With k=-4: x^2-4x+4=(x-2)^2=0, repeated root at x=2. Both check out.",
+        "Option k=2 or -2 came from forgetting the factor of 4 in 4ac, solving k^2=4 instead of k^2=16. Option k=4 only lost the negative root. Option k=16 confused the discriminant equation itself with its answer, setting k=4ac directly."
+      ],
+      "verification_method": "sympy_solve_discriminant_cross_checked"
+    },
+    {
+      "id": "pi-quadratic-equations-004",
+      "concept_id": "quadratic-equations",
+      "topic": "jee-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Form the quadratic equation whose roots are 3 + sqrt(2) and 3 - sqrt(2).",
+      "options": [
+        "x^2 - 6x + 7 = 0",
+        "x^2 - 6x + 9 = 0",
+        "x^2 - 6x + 11 = 0",
+        "x^2 - 3x + 7 = 0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x^2 - 6x + 7 = 0",
+      "solution_steps": [
+        "Sum of roots = (3+sqrt2) + (3-sqrt2) = 6. Product of roots = (3+sqrt2)(3-sqrt2) = 3^2 - (sqrt2)^2 = 9 - 2 = 7.",
+        "A quadratic with sum S and product P of roots is x^2 - S*x + P = 0, giving x^2 - 6x + 7 = 0.",
+        "Cross-check with the sympy identity (3+sqrt2)(3-sqrt2): the sqrt2 terms cancel by difference of squares, confirming the product is exactly 9-2=7, not 9.",
+        "Option x^2-6x+9=0 wrongly used product = 3^2 = 9, ignoring the -2 correction from the surd term entirely. Option x^2-6x+11=0 wrongly ADDED instead of subtracted (9+2=11). Option x^2-3x+7=0 used the wrong sum (just wrote 3 instead of adding both roots to get 6)."
+      ],
+      "verification_method": "sympy_simplify_sum_product_cross_checked"
+    },
+    {
+      "id": "pi-quadratic-equations-005",
+      "concept_id": "quadratic-equations",
+      "topic": "jee-algebra",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If alpha and beta are the roots of x^2 - 7x + 12 = 0, find the quadratic equation whose roots are (alpha + 1) and (beta + 1).",
+      "options": [
+        "x^2 - 9x + 20 = 0",
+        "x^2 - 7x + 12 = 0",
+        "x^2 - 9x + 13 = 0",
+        "x^2 - 8x + 20 = 0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x^2 - 9x + 20 = 0",
+      "solution_steps": [
+        "For x^2-7x+12=0, sum alpha+beta=7 and product alpha*beta=12 (roots are actually 3 and 4, but we do not need that).",
+        "New sum = (alpha+1)+(beta+1) = (alpha+beta)+2 = 7+2 = 9. New product = (alpha+1)(beta+1) = alpha*beta + (alpha+beta) + 1 = 12+7+1 = 20.",
+        "So the new equation is x^2 - 9x + 20 = 0.",
+        "Cross-check by solving directly: x^2-7x+12=(x-3)(x-4)=0 gives alpha=3,beta=4. New roots are 4 and 5, whose sum is 9 and product is 20 -- so x^2-9x+20=0. Matches.",
+        "Option x^2-7x+12=0 forgot to shift the roots at all. Option x^2-9x+13=0 used product = alpha*beta+1 = 13, forgetting the extra (alpha+beta) cross term. Option x^2-8x+20=0 got the product right but miscounted the sum shift as +1 instead of +1 for EACH root (used 7+1=8 instead of 7+2=9)."
+      ],
+      "verification_method": "sympy_solve_and_shift_identity_cross_checked"
+    },
+    {
+      "id": "pi-quadratic-equations-006",
+      "concept_id": "quadratic-equations",
+      "topic": "jee-algebra",
+      "difficulty": 0.15,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Solve x^2 - x - 6 = 0.",
+      "options": [
+        "x = 3, x = -2",
+        "x = -3, x = 2",
+        "x = 2, x = 3",
+        "x = 6, x = -1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x = 3, x = -2",
+      "solution_steps": [
+        "We need two numbers that multiply to -6 (the constant term) and add to -1 (the coefficient of x with a sign flip, since sum of roots = -b/a = 1... let's be precise): we need two numbers whose SUM is 1 and PRODUCT is -6, since x^2-x-6=(x-r1)(x-r2) with r1+r2=1, r1*r2=-6.",
+        "3 and -2 satisfy this: 3+(-2)=1 and 3*(-2)=-6. So x^2-x-6=(x-3)(x+2)=0, giving x=3 or x=-2.",
+        "Cross-check by substitution: 3^2-3-6=9-3-6=0. (-2)^2-(-2)-6=4+2-6=0. Both roots check out exactly.",
+        "Option x=-3,x=2 has the signs flipped -- these multiply to -6 but ADD to -1, not +1, so they solve x^2+x-6=0 instead. Option x=2,x=3 multiply to +6, the wrong sign for the constant term. Option x=6,x=-1 multiply to -6 correctly but add to 5, not 1, so they are not a matching factor pair at all."
+      ],
+      "verification_method": "sympy_factor_and_substitute_cross_checked"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-001",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.15,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the modulus |3 + 4i|.",
+      "options": [
+        "5",
+        "7",
+        "25",
+        "-1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5",
+      "solution_steps": [
+        "The modulus of a+bi is sqrt(a^2+b^2). Here a=3, b=4, so |3+4i| = sqrt(3^2+4^2) = sqrt(9+16) = sqrt(25) = 5.",
+        "Cross-check: 3-4-5 is a Pythagorean triple, so a right triangle with legs 3 and 4 has hypotenuse 5 -- exactly matching the modulus (which is a distance from the origin).",
+        "Option 7 wrongly just added 3+4 directly instead of using the square-root-of-sum-of-squares formula. Option 25 correctly computed 3^2+4^2 but forgot to take the square root at the end. Option -1 comes from wrongly subtracting the parts (3-4) instead of using the modulus formula."
+      ],
+      "verification_method": "sympy_abs_cross_checked_pythagorean_triple"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-002",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Simplify (1 + i)^2, where i = sqrt(-1).",
+      "options": [
+        "2i",
+        "2 + 2i",
+        "0",
+        "2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2i",
+      "solution_steps": [
+        "Expand using (a+b)^2 = a^2 + 2ab + b^2 with a=1, b=i: (1+i)^2 = 1^2 + 2(1)(i) + i^2 = 1 + 2i + i^2.",
+        "Since i^2 = -1, this becomes 1 + 2i - 1 = 2i.",
+        "Cross-check using polar form: 1+i has modulus sqrt(2) and angle 45 degrees, so (1+i)^2 has modulus 2 and angle 90 degrees, which is 2(cos90+isin90) = 2(0+i(1)) = 2i. Matches.",
+        "Option 2+2i wrongly used i^2=+1 (kept the sign positive instead of flipping it to -1). Option 0 forgot the middle cross term entirely, computing just 1^2+i^2=1-1=0. Option 2 correctly got 2i but then carelessly dropped the imaginary unit i."
+      ],
+      "verification_method": "sympy_expand_and_polar_cross_checked"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-003",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If z = 2 - 3i, find the value of z times its conjugate (z * z-bar).",
+      "options": [
+        "13",
+        "5",
+        "-5",
+        "4 - 9i"
+      ],
+      "answer_index": 0,
+      "correct_answer": "13",
+      "solution_steps": [
+        "The conjugate of z=2-3i is z-bar=2+3i. Multiplying: z*z-bar = (2-3i)(2+3i) = 2^2 - (3i)^2 = 4 - 9(i^2) = 4-9(-1) = 4+9 = 13.",
+        "This matches the general rule: for any complex number, z*z-bar always equals |z|^2, a real, non-negative number.",
+        "Cross-check: |z| = sqrt(2^2+3^2) = sqrt(13), so |z|^2 = 13 exactly, confirming the direct multiplication.",
+        "Option 5 confused z*z-bar (which is |z|^2) with the modulus |z| itself (which is sqrt(13), close to 3.6, not 5 -- this option likely comes from mixing up this problem with a 3-4-5 style one). Option -5 comes from computing z^2 instead of z*z-bar, i.e. (2-3i)^2=4-12i-9=-5-12i, keeping only the real part. Option 4-9i drops the i^2=-1 substitution, treating (3i)^2 as if it stayed +9i^2 without flattening the sign, and mismanaging the cross terms."
+      ],
+      "verification_method": "sympy_conjugate_multiplication_cross_checked"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-004",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the principal argument of z = -1 + i, in degrees.",
+      "options": [
+        "135",
+        "45",
+        "-45",
+        "225"
+      ],
+      "answer_index": 0,
+      "correct_answer": "135",
+      "solution_steps": [
+        "z=-1+i has real part -1 (negative) and imaginary part 1 (positive), so it lies in the SECOND quadrant.",
+        "The reference angle (ignoring signs) is arctan(1/1) = 45 degrees. In the second quadrant, the principal argument is 180 - 45 = 135 degrees.",
+        "Cross-check with modulus and angle: |z|=sqrt(1+1)=sqrt(2), and sqrt(2)*(cos135+isin135) = sqrt(2)*(-1/sqrt2 + i/sqrt2) = -1+i. Matches z exactly.",
+        "Option 45 just computed the reference angle and forgot to shift it into the correct quadrant. Option -45 used arctan(1/(-1))=-45 directly without any quadrant correction at all. Option 225 shifted into the wrong quadrant (third instead of second), using 180+45 instead of 180-45."
+      ],
+      "verification_method": "sympy_arg_and_polar_reconstruction_cross_checked"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-005",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let omega be a complex cube root of unity (omega is not equal to 1). Find the value of omega^100.",
+      "options": [
+        "omega",
+        "1",
+        "omega^2",
+        "It cannot be simplified without knowing omega explicitly"
+      ],
+      "answer_index": 0,
+      "correct_answer": "omega",
+      "solution_steps": [
+        "Since omega is a cube root of unity, omega^3 = 1, so powers of omega repeat with period 3.",
+        "Divide 100 by 3: 100 = 3(33) + 1, so the remainder is 1. Therefore omega^100 = omega^(3*33) * omega^1 = (omega^3)^33 * omega = 1^33 * omega = omega.",
+        "Cross-check with the actual value omega = exp(2*pi*i/3): computing omega^100 numerically and reducing the exponent modulo 3 both give the same complex number, confirming the periodicity argument.",
+        "Option 1 wrongly assumed 100 is exactly divisible by 3 (as if 100=3*100/3 with no remainder). Option omega^2 used the wrong remainder, as if 100 mod 3 = 2 instead of 1 (an off-by-one slip in the division). The last option ignores that omega^3=1 makes simplification always possible, regardless of not knowing omega's exact numeric value."
+      ],
+      "verification_method": "sympy_modular_exponent_reduction_cross_checked"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-006",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If x and y are real numbers such that (x + iy)(2 - 3i) = 1 - 8i, find x + y.",
+      "options": [
+        "1",
+        "-1",
+        "3",
+        "-2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1",
+      "solution_steps": [
+        "Expand the left side: (x+iy)(2-3i) = 2x - 3xi + 2yi - 3yi^2 = 2x + 3y + (2y-3x)i (using i^2=-1).",
+        "Equate real and imaginary parts with the right side 1-8i: 2x+3y = 1, and 2y-3x = -8.",
+        "Solve the two equations: from the system, x=2 and y=-1 (check: 2(2)+3(-1)=4-3=1 correct; 2(-1)-3(2)=-2-6=-8 correct). So x+y = 2+(-1) = 1.",
+        "Cross-check by direct substitution: (2 + i(-1))(2-3i) = (2-i)(2-3i) = 4-6i-2i+3i^2 = 4-8i-3 = 1-8i. Matches the given equation exactly.",
+        "Option -1 comes from swapping the signs of x and y during the solve (getting x=-2,y=1 instead). Option 3 wrongly computed x+|y| = 2+1=3, ignoring that y is actually negative. Option -2 wrongly computed x*y = 2*(-1) = -2 instead of x+y."
+      ],
+      "verification_method": "sympy_linear_system_solve_and_substitute_cross_checked"
+    },
+    {
+      "id": "pi-complex-numbers-algebra-007",
+      "concept_id": "complex-numbers-algebra",
+      "topic": "jee-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using De Moivre's theorem, evaluate (1 + i)^4.",
+      "options": [
+        "-4",
+        "4",
+        "4i",
+        "-4i"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-4",
+      "solution_steps": [
+        "Write 1+i in polar form: modulus = sqrt(1^2+1^2) = sqrt(2), angle = 45 degrees.",
+        "By De Moivre's theorem, (1+i)^4 has modulus (sqrt(2))^4 = 4 and angle 4*45 = 180 degrees, giving 4(cos180 + i sin180) = 4(-1+0i) = -4.",
+        "Cross-check by direct binomial expansion: (1+i)^2=2i (shown in a related problem), so (1+i)^4 = (2i)^2 = 4i^2 = -4. Matches exactly.",
+        "Option 4 correctly found the modulus part (4) but forgot to carry the 180-degree angle through, effectively treating the angle as if it wrapped back to 0. Option 4i miscalculated the angle as 90 degrees instead of 180 (a slip multiplying 45 by 2 instead of by 4). Option -4i placed the angle at 270 degrees instead of 180, landing in the wrong quadrant of the unit circle."
+      ],
+      "verification_method": "sympy_polar_and_binomial_cross_checked"
+    }
+  ]
+}

@@ -54,9 +54,10 @@ describe('seedPracticeItemsFromDisk — Linear Algebra content floor', () => {
     // + 1 vector-calculus bank (40) + 1 complex-variables bank (30)
     // + 1 numerical-methods bank (30) + 1 transform-theory bank (30)
     // + 1 graph-theory bank (35) + 1 discrete-mathematics bank (30)
-    // = 505. Update this count deliberately if content is added — it is
-    // the floor this test locks, not an incidental number.
-    expect(seeded).toBe(505);
+    // = 505 GATE-MA. Plus 8 JEE Main banks (151 items, v4.86.0) = 656.
+    // Update this count deliberately if content is added — it is the floor
+    // this test locks, not an incidental number.
+    expect(seeded).toBe(656);
   });
 
   it('every one of the 26 canonical linear-algebra concepts has at least one seeded row', async () => {

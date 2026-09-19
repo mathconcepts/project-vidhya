@@ -50,6 +50,7 @@ import {
   normalizeMockExamRow, gradeMockExam, type MockExamQuestionRow, type NormalizedMockQuestion, type MockExamResponse,
 } from '../gbrain/mock-exam-grading';
 import { resolveAssessmentContract } from '../exams/assessment-contract-loader';
+import { contractKeyForStudent } from '../exams/exam-contract-key';
 import { snapshotForCreation, parseContractSnapshot, makeContractGrader } from '../scoring/contract-grading';
 import { recordAttemptFacts, type AttemptFact } from '../gbrain/attempt-facts';
 import { getTopicAccuracy } from '../gbrain/topic-accuracy';
@@ -330,7 +331,10 @@ async function handleGenerate(req: ParsedRequest, res: ServerResponse): Promise<
   // the row. resolveAssessmentContract() never throws (DB-less / no row /
   // malformed row all degrade to the compiled contract with a warn line —
   // see the loader's header), so this never blocks generation.
-  const resolvedContract = await deps.resolveContract();
+  // Keyed to the student's own exam (v4.86.0) — see the same change in
+  // quiz-routes.ts. An unkeyed call always resolved GATE, which silently
+  // mis-marked every non-GATE item in a generated mock.
+  const resolvedContract = await deps.resolveContract(contractKeyForStudent(user.userId));
   const contractSnapshot = snapshotForCreation(resolvedContract);
 
   let saved: MockExamRow;

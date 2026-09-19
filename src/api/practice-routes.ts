@@ -62,12 +62,14 @@ import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { requireRole } from './auth-middleware';
 import {
-  makeDeterministicScorer,
   describeMarking,
   type GateItem,
   type GateItemKind,
   type GateResponse,
 } from '../scoring/deterministic-scorer';
+import { makeContractGrader } from '../scoring/contract-grading';
+import { resolveAssessmentContract } from '../exams/assessment-contract-loader';
+import { contractKeyForConcept } from '../exams/exam-contract-key';
 import type { LearningObjectCatalog } from '../scoring/learning-object-catalog';
 import { getLearningObjectCatalog } from '../scoring/learning-object-catalog-pg';
 import { getStudentModel } from '../gbrain/student-model-pg';
@@ -236,11 +238,42 @@ async function handleAttempt(req: ParsedRequest, res: ServerResponse): Promise<v
   if (typeof responseOrReason === 'string') return sendError(res, 400, responseOrReason);
   const response = responseOrReason;
 
+  // Which exam's marking governs THIS item (v4.86.0).
+  //
+  // Was `makeDeterministicScorer()` — the shared scorer on compiled GATE
+  // defaults, for every item regardless of which exam wrote it. Harmless
+  // while one pack shipped marking numbers; wrong the moment a second did.
+  // A JEE Main MCQ is worth 4 marks, and GATE's contract has no row for a
+  // 4-mark MCQ, so it fell through to `-(4 / 3)`: the student lost 1.33
+  // marks where the real paper deducts 1, silently.
+  //
+  // The key comes from the ITEM's own concept, not the student's
+  // registration: a JEE item is graded under JEE's rules whoever attempts
+  // it. Resolution is cached 60s in the loader, so this is not a per-
+  // attempt database read.
+  const contract = await resolveAssessmentContract(contractKeyForConcept(obj.nodeId));
+  const marking = contract.marking[item.kind];
+  if (!marking) {
+    // Refuse by name rather than fall back to the default scorer. An empty
+    // or partial contract means this build has no published rule for this
+    // question kind on this exam — grading anyway would invent one. The
+    // live instance of this today is JEE Main's numerical-value questions,
+    // whose negative-marking rule is unsettled (see marking-constants.ts).
+    const known = Object.keys(contract.marking).sort().join(', ') || '(none)';
+    return sendError(
+      res,
+      422,
+      `assessment contract '${contract.version}' has no marking for question kind ` +
+      `'${item.kind}'; it defines: ${known}`,
+    );
+  }
+
   // Deterministic grade — validation above guarantees grade() can't throw
   // on shape, but keep the guard: a scorer refusal is a 422, not a 500.
   let grade;
   try {
-    grade = await makeDeterministicScorer().grade(item, response);
+    const grader = makeContractGrader({ version: contract.version, marking: contract.marking });
+    grade = await grader(item, response);
   } catch (err) {
     return sendError(res, 422, `not gradable: ${(err as Error).message}`);
   }

@@ -1,0 +1,503 @@
+{
+  "version": 1,
+  "_comment": "Authored, server-gradable JEE Main Mathematics practice items covering the integral-calculus cluster: indefinite integration, definite integration, and first-order differential equations. JEE Main Mathematics MCQ-only (this repo's marking contract has no nat/msq entry for jee_main pending the NTA numerical-value marking-scheme dispute — see jee-main.yml's own scoring: block), +4/-1 GATE-style MCQ marks used as the platform default. Authored 2026-09-19. Every antiderivative was verified by differentiating the candidate back and confirming it reduces identically to the integrand (via python3 -c \"import sympy\" numeric + symbolic checks); every definite integral was cross-checked against sympy's own exact evaluation; every ODE's proposed general solution was substituted back into the original equation and confirmed to reduce to an identity for an arbitrary constant, and cross-checked against sympy.dsolve. Every distractor was independently checked to NOT satisfy the same identity, so no wrong option is secretly equal to the key.",
+  "items": [
+    {
+      "id": "pi-indefinite-integration-001",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ x cos(x) dx.",
+      "options": [
+        "x sin x + cos x + C",
+        "x sin x - cos x + C",
+        "-x cos x + sin x + C",
+        "x sin x + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x sin x + cos x + C",
+      "solution_steps": [
+        "This is a product of x and cos(x), so use integration by parts: ∫u dv = uv - ∫v du. Take u = x (so du = dx) and dv = cos(x) dx (so v = sin x).",
+        "∫ x cos x dx = x sin x - ∫ sin x dx = x sin x - (-cos x) + C = x sin x + cos x + C.",
+        "Cross-check by differentiating the answer: d/dx(x sin x + cos x) = sin x + x cos x - sin x = x cos x. This matches the original integrand, so the answer is correct.",
+        "Option B (x sin x - cos x + C) comes from forgetting that ∫ sin x dx = -cos x, so the sign flip (minus times minus) got dropped. Option C swaps the roles of sin and cos, as if u and dv were picked backwards. Option D drops the second term entirely, as if the student stopped after the first by-parts step."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-indefinite-integration-002",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ x/(x² + 1) dx.",
+      "options": [
+        "(1/2) ln(x² + 1) + C",
+        "ln(x² + 1) + C",
+        "(1/2) ln x + C",
+        "x²/(2(x² + 1)) + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(1/2) ln(x² + 1) + C",
+      "solution_steps": [
+        "Substitute u = x² + 1, so du = 2x dx, i.e. x dx = du/2. The integral becomes ∫ (1/u)(du/2) = (1/2) ln|u| + C = (1/2) ln(x² + 1) + C (no absolute value is needed since x² + 1 is always positive).",
+        "Cross-check by differentiating: d/dx[(1/2) ln(x² + 1)] = (1/2) · (2x)/(x² + 1) = x/(x² + 1), which matches the integrand exactly.",
+        "Option B is the classic mistake of forgetting the 1/2 that comes from du = 2x dx. Option C wrongly integrates as if the denominator were just x. Option D comes from misapplying the quotient rule in reverse instead of substitution — differentiating it does not give back x/(x²+1)."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-indefinite-integration-003",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ e^(3x) dx.",
+      "options": [
+        "(1/3) e^(3x) + C",
+        "e^(3x) + C",
+        "(1/3) e^x + C",
+        "3 e^(3x) + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(1/3) e^(3x) + C",
+      "solution_steps": [
+        "Substitute u = 3x, du = 3 dx, so dx = du/3. Then ∫ e^u (du/3) = (1/3) e^u + C = (1/3) e^(3x) + C.",
+        "Cross-check by differentiating: d/dx[(1/3) e^(3x)] = (1/3) · 3 e^(3x) = e^(3x), which matches the integrand.",
+        "Option B forgets to divide by 3 (the chain-rule factor) after integrating. Option C drops the 3 inside the exponent entirely. Option D multiplies by 3 instead of dividing — the opposite of the correct step."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-indefinite-integration-004",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ 1/(x² - 4) dx.",
+      "options": [
+        "(1/4) ln|(x - 2)/(x + 2)| + C",
+        "(1/2) ln|(x - 2)/(x + 2)| + C",
+        "(1/4) ln|(x + 2)/(x - 2)| + C",
+        "(1/4) ln|x² - 4| + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(1/4) ln|(x - 2)/(x + 2)| + C",
+      "solution_steps": [
+        "Use partial fractions: 1/(x² - 4) = 1/[(x-2)(x+2)] = (1/4)[1/(x-2) - 1/(x+2)] (verify: (1/4)[(x+2) - (x-2)]/[(x-2)(x+2)] = (1/4)(4)/(x²-4) = 1/(x²-4), correct).",
+        "Integrating term by term: (1/4)[ln|x-2| - ln|x+2|] + C = (1/4) ln|(x-2)/(x+2)| + C. The general formula for ∫dx/(x²-a²) is (1/(2a)) ln|(x-a)/(x+a)| + C, and here a = 2 so 1/(2a) = 1/4, matching.",
+        "Cross-check numerically at x = 5: derivative of (1/4)ln|(x-2)/(x+2)| evaluates to 1/21 ≈ 0.0476, and 1/(5²-4) = 1/21 ≈ 0.0476 — they match.",
+        "Option B uses 1/2 instead of 1/4 (forgetting that 2a = 4, not 2). Option C has the fraction flipped inside the log (a sign error from the partial-fraction split). Option D treats it like a simple ∫f'/f rule ignoring that the numerator is not the derivative of the denominator."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-indefinite-integration-005",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ x√(x² + 1) dx.",
+      "options": [
+        "(1/3)(x² + 1)^(3/2) + C",
+        "(2/3)(x² + 1)^(3/2) + C",
+        "(1/3) x² √(x² + 1) + C",
+        "(x² + 1)^(3/2) + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "(1/3)(x² + 1)^(3/2) + C",
+      "solution_steps": [
+        "Substitute u = x² + 1, du = 2x dx, so x dx = du/2. The integral becomes ∫ √u (du/2) = (1/2) · (2/3) u^(3/2) + C = (1/3) u^(3/2) + C = (1/3)(x² + 1)^(3/2) + C.",
+        "Cross-check by differentiating: d/dx[(1/3)(x²+1)^(3/2)] = (1/3) · (3/2)(x²+1)^(1/2) · 2x = x√(x²+1), which matches the integrand exactly.",
+        "Option B drops the 1/2 factor that comes from du = 2x dx (keeps 2/3 instead of correctly halving it to 1/3). Option C never substitutes at all and just glues x² onto the square root. Option D drops the 1/3 factor entirely."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-indefinite-integration-006",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ tan(x) dx.",
+      "options": [
+        "ln|sec x| + C",
+        "ln|cos x| + C",
+        "-ln|sin x| + C",
+        "tan²(x)/2 + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "ln|sec x| + C",
+      "solution_steps": [
+        "Write tan x = sin x / cos x. Substitute u = cos x, du = -sin x dx, so sin x dx = -du. The integral becomes ∫ (-du)/u = -ln|u| + C = -ln|cos x| + C = ln|sec x| + C (since -ln|cos x| = ln(1/|cos x|) = ln|sec x|).",
+        "Cross-check by differentiating: d/dx[ln(sec x)] = (sec x tan x)/sec x = tan x, which matches the integrand exactly.",
+        "Option B drops the negative sign that came from the substitution du = -sin x dx — it is off by a sign from the correct answer. Option C mixes up tan x with cot x by putting sin x in the log instead of cos x. Option D mistakenly treats tan x as if it were the derivative of tan²x/2 (that derivative is actually tan x sec² x, not tan x)."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-indefinite-integration-007",
+      "concept_id": "indefinite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find ∫ x² eˣ dx.",
+      "options": [
+        "eˣ(x² - 2x + 2) + C",
+        "eˣ(x² - 2x) + C",
+        "eˣ(x² + 2x + 2) + C",
+        "x² eˣ + C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "eˣ(x² - 2x + 2) + C",
+      "solution_steps": [
+        "Integration by parts needs to be applied twice. First: u = x², dv = eˣdx, v = eˣ, giving x²eˣ - ∫2x eˣ dx. Second, on ∫2x eˣ dx: u = 2x, dv = eˣdx, giving 2x eˣ - ∫2eˣ dx = 2x eˣ - 2eˣ.",
+        "Combining: x²eˣ - (2x eˣ - 2eˣ) + C = eˣ(x² - 2x + 2) + C.",
+        "Cross-check by differentiating: d/dx[eˣ(x²-2x+2)] = eˣ(x²-2x+2) + eˣ(2x-2) = eˣ(x²-2x+2+2x-2) = eˣ·x², which matches the integrand.",
+        "Option B stops after the first by-parts step and forgets the final +2 constant term that appears from the second application. Option C has a sign error on the middle term (should be -2x, not +2x). Option D only differentiates once and never applies integration by parts a second time at all."
+      ],
+      "verification_method": "sympy_derivative_check"
+    },
+    {
+      "id": "pi-definite-integration-001",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₁² x² dx.",
+      "options": [
+        "7/3",
+        "1",
+        "3/2",
+        "-7/3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "7/3",
+      "solution_steps": [
+        "The antiderivative of x² is x³/3. By the Fundamental Theorem of Calculus, ∫₁² x² dx = [x³/3] from 1 to 2 = 8/3 - 1/3 = 7/3.",
+        "Cross-check numerically: x³/3 at x=2 is 2.667, at x=1 is 0.333, and 2.667 - 0.333 = 2.333 = 7/3 ✓.",
+        "Option B (1) comes from only evaluating the antiderivative at the upper limit and forgetting to subtract the lower-limit value (8/3 rounded down incorrectly is a red herring — the actual common slip here is using x² instead of x³/3, giving 4 - 1... more precisely, treating the antiderivative as x²/2 gives 4/2-1/2=3/2, which is option C). Option C uses x²/2 instead of the correct x³/3 as the antiderivative. Option D has the correct magnitude but a sign error from swapping the limits (evaluating F(1) - F(2) instead of F(2) - F(1))."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-definite-integration-002",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₀^π sin(x) dx.",
+      "options": [
+        "2",
+        "-2",
+        "1",
+        "0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "The antiderivative of sin x is -cos x. So ∫₀^π sin x dx = [-cos x] from 0 to π = -cos(π) - (-cos(0)) = -(-1) - (-1) = 1 + 1 = 2.",
+        "Cross-check numerically: -cos(π) = 1 and -cos(0) = -1, so 1 - (-1) = 2 ✓. This also matches the geometric picture: the area under one hump of sin x from 0 to π is 2.",
+        "Option B has a sign error: it uses +cos x as the antiderivative instead of -cos x, flipping the final sign. Option C only evaluates -cos(π) = 1 and forgets to subtract the lower-limit value -cos(0) = -1. Option D wrongly assumes sin x behaves like an odd function over [0, π] and that the integral must cancel to zero, but sin x is positive throughout this whole interval."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-definite-integration-003",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.85,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₀^π [x sin x / (1 + cos²x)] dx.",
+      "options": [
+        "π²/4",
+        "π²/2",
+        "π/4",
+        "0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "π²/4",
+      "solution_steps": [
+        "Use the King's Rule property ∫₀^a f(x) dx = ∫₀^a f(a-x) dx with a = π. Replacing x by π - x: sin(π-x) = sin x and cos(π-x) = -cos x, so cos² is unchanged. Calling the original integral I, this gives I = ∫₀^π (π - x) sin x/(1+cos²x) dx = π·J - I, where J = ∫₀^π sin x/(1+cos²x) dx.",
+        "So 2I = π·J. Substituting u = cos x (du = -sin x dx) in J flips the limits from (1, -1) to give J = ∫₋₁¹ du/(1+u²) = [arctan u]₋₁¹ = π/4 - (-π/4) = π/2.",
+        "So 2I = π · (π/2) = π²/2, giving I = π²/4. Numerically, I ≈ 2.4674, and π²/4 ≈ 2.4674 ✓.",
+        "Option B (π²/2) forgets the final division by 2 and reports 2I instead of I. Option C (π/4) drops a factor of π by mis-simplifying at the last step. Option D (0) wrongly assumes the integrand is odd about the midpoint x = π/2 and cancels to zero, but the integrand is actually positive throughout (0, π)."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-definite-integration-004",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₀¹ x eˣ dx.",
+      "options": [
+        "1",
+        "e",
+        "e - 1",
+        "-1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1",
+      "solution_steps": [
+        "Use integration by parts: u = x, dv = eˣ dx, v = eˣ. So ∫ x eˣ dx = x eˣ - ∫ eˣ dx = x eˣ - eˣ = eˣ(x - 1).",
+        "Evaluate from 0 to 1: [eˣ(x-1)] from 0 to 1 = e¹(1-1) - e⁰(0-1) = 0 - (-1) = 1.",
+        "Cross-check numerically: at x=1, e(0)=0; at x=0, 1·(-1)=-1; result 0-(-1)=1 ✓.",
+        "Option B (e) comes from only keeping the first by-parts term x eˣ evaluated at 1 (= e) and forgetting to subtract the second term ∫eˣ dx entirely. Option C (e-1) comes from computing just ∫₀¹ eˣ dx and forgetting the x factor altogether, as if the integral were ∫eˣ dx by itself. Option D (-1) has a sign error from swapping the limits (F(0) - F(1) instead of F(1) - F(0))."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-definite-integration-005",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₋₂² x³ dx.",
+      "options": [
+        "0",
+        "8",
+        "4",
+        "-8"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0",
+      "solution_steps": [
+        "x³ is an odd function (f(-x) = -f(x)), and the interval [-2, 2] is symmetric about 0. The integral of any odd function over a symmetric interval is always 0 — the area on the negative side exactly cancels the area on the positive side.",
+        "Cross-check by direct computation: antiderivative is x⁴/4. At x=2: 16/4=4. At x=-2: 16/4=4. So the integral is 4 - 4 = 0 ✓.",
+        "Option B (8) comes from mistakenly treating x³ like an even function and doubling the one-sided integral ∫₀² x³ dx = 4 (i.e. 2×4=8), when in fact the two halves should cancel, not add. Option C (4) is just the one-sided integral ∫₀² x³ dx, forgetting the interval starts at -2. Option D (-8) is the same doubling mistake as option B but with an extra sign flip."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-definite-integration-006",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₀⁴ √(16 - x²) dx.",
+      "options": [
+        "4π",
+        "8π",
+        "16π",
+        "2π"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4π",
+      "solution_steps": [
+        "√(16 - x²) traces the upper half of the circle x² + y² = 16, which has radius 4. The integral from x = 0 to x = 4 covers exactly one quarter of the full circle's area.",
+        "Area of the full circle = πr² = π(4)² = 16π. One quarter of that is 16π/4 = 4π.",
+        "Cross-check via substitution x = 4 sin θ: ∫₀^(π/2) 4cosθ · 4cosθ dθ = 16∫₀^(π/2) cos²θ dθ = 16 · (π/4) = 4π ✓.",
+        "Option B (8π) forgets to divide by 4 and uses the full circle's area instead of just the quarter. Option C (16π) makes the same mistake plus mixes up radius and diameter. Option D (2π) divides by 8 instead of 4, as if this were one-eighth of the circle rather than one-quarter."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-definite-integration-007",
+      "concept_id": "definite-integration",
+      "topic": "jee-calculus",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate ∫₁³ (4x - 1) dx.",
+      "options": [
+        "14",
+        "15",
+        "13",
+        "-14"
+      ],
+      "answer_index": 0,
+      "correct_answer": "14",
+      "solution_steps": [
+        "The antiderivative of 4x - 1 is 2x² - x. Evaluate at the limits: at x=3, 2(9)-3 = 18-3 = 15. At x=1, 2(1)-1 = 2-1 = 1.",
+        "By the Fundamental Theorem of Calculus, the integral is 15 - 1 = 14.",
+        "Cross-check by splitting: ∫₁³ 4x dx = [2x²]₁³ = 18-2 = 16, and ∫₁³ 1 dx = 2, so 16 - 2 = 14 ✓.",
+        "Option B (15) only evaluates the antiderivative at the upper limit and forgets to subtract the lower-limit value F(1)=1. Option C (13) comes from an arithmetic slip while subtracting. Option D (-14) has a sign error from swapping the limits, computing F(1) - F(3) instead of F(3) - F(1)."
+      ],
+      "verification_method": "sympy_definite_integral_numeric"
+    },
+    {
+      "id": "pi-differential-equations-jee-001",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the order and degree of the differential equation (d²y/dx²)³ + 5(dy/dx)² - 6y = sin x?",
+      "options": [
+        "Order 2, Degree 3",
+        "Order 3, Degree 2",
+        "Order 2, Degree 2",
+        "Order 3, Degree 3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Order 2, Degree 3",
+      "solution_steps": [
+        "The order of a differential equation is the order of the highest derivative present. Here the highest derivative is d²y/dx² (a second derivative), so the order is 2.",
+        "The degree is the power to which the highest-order derivative is raised, once the equation is written as a polynomial in derivatives. Here (d²y/dx²) is raised to the power 3, so the degree is 3.",
+        "Cross-check: order looks at WHICH derivative is highest (here, the 2nd derivative — order 2), while degree looks at the POWER on that highest derivative once it appears polynomially (here, cubed — degree 3). These are two different questions about the same term.",
+        "Option B swaps order and degree — a very common confusion between the two definitions. Option C correctly identifies order 2 but wrongly takes the degree from the (dy/dx)² term instead of the highest-order term. Option D wrongly treats the exponent 3 on d²y/dx² as if it bumped the order up to 3 as well."
+      ],
+      "verification_method": "manual_definition_recheck"
+    },
+    {
+      "id": "pi-differential-equations-jee-002",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If dy/dx = y/x and y(1) = 3, find y(4).",
+      "options": [
+        "12",
+        "3",
+        "6",
+        "4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "12",
+      "solution_steps": [
+        "This is variable separable: dy/y = dx/x. Integrating both sides: ln|y| = ln|x| + C, so y = kx for some constant k.",
+        "Apply the initial condition y(1) = 3: 3 = k(1), so k = 3. The particular solution is y = 3x.",
+        "Then y(4) = 3(4) = 12. Cross-check: differentiating y=3x gives dy/dx=3, and y/x = 3x/x = 3 — these match, confirming the solution satisfies the equation.",
+        "Option B (3) reports the constant k itself instead of using it to compute y(4). Option C (6) comes from misreading the equation as dy/dx = 1, giving the wrong linear solution y = x + 2 and then y(4) = 6. Option D (4) comes from forgetting to apply the initial condition at all and assuming k = 1, giving y = x."
+      ],
+      "verification_method": "sympy_dsolve_and_substitution_check"
+    },
+    {
+      "id": "pi-differential-equations-jee-003",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the general solution of dy/dx + y = eˣ.",
+      "options": [
+        "y = (1/2)eˣ + C e⁻ˣ",
+        "y = eˣ + C e⁻ˣ",
+        "y = (1/2)eˣ + C eˣ",
+        "y = (1/2)x eˣ + C e⁻ˣ"
+      ],
+      "answer_index": 0,
+      "correct_answer": "y = (1/2)eˣ + C e⁻ˣ",
+      "solution_steps": [
+        "This is a linear first-order ODE of the form dy/dx + P(x)y = Q(x) with P(x)=1. The integrating factor is IF = e^(∫1 dx) = eˣ.",
+        "Multiplying through by the integrating factor: d/dx(y eˣ) = eˣ · eˣ = e^(2x). Integrating both sides: y eˣ = (1/2)e^(2x) + C, so y = (1/2)eˣ + C e⁻ˣ.",
+        "Cross-check by substituting back: dy/dx = (1/2)eˣ - Ce⁻ˣ, and dy/dx + y = (1/2)eˣ - Ce⁻ˣ + (1/2)eˣ + Ce⁻ˣ = eˣ, which matches the right-hand side exactly for every value of C.",
+        "Option B drops the 1/2 factor that comes from integrating e^(2x). Substituting it back gives dy/dx + y = 2eˣ, not eˣ, so it fails. Option C has a sign error in the integrating factor's exponent (uses e⁺ˣ in the homogeneous part instead of e⁻ˣ) and also fails to satisfy the equation for a general C. Option D wrongly assumes resonance (as if the right side matched the homogeneous solution) and adds a spurious x eˣ term that does not belong here."
+      ],
+      "verification_method": "sympy_dsolve_and_substitution_check"
+    },
+    {
+      "id": "pi-differential-equations-jee-004",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The family of curves y = A e^(2x) + B e^(-2x) (A, B arbitrary constants) satisfies which differential equation, after eliminating A and B?",
+      "options": [
+        "y'' - 4y = 0",
+        "y'' + 4y = 0",
+        "y'' - 2y = 0",
+        "y' - 4y = 0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "y'' - 4y = 0",
+      "solution_steps": [
+        "Differentiate twice: y' = 2A e^(2x) - 2B e^(-2x), and y'' = 4A e^(2x) + 4B e^(-2x) = 4(A e^(2x) + B e^(-2x)) = 4y.",
+        "So y'' = 4y, i.e. y'' - 4y = 0. This eliminates both arbitrary constants A and B, leaving a differential equation of order 2 (matching the 2 constants in the family, as expected).",
+        "Cross-check symbolically: substituting y = A e^(2x)+B e^(-2x) into y''-4y gives exactly 0 for every A and B, confirming this is the correct eliminated equation.",
+        "Option B has a sign error — plugging the family into y''+4y does not give zero in general (it gives a nonzero multiple of A e^(4x)+B, since squaring the exponent's coefficient 2 to get 4 requires the minus sign, not a plus). Option C mistakenly uses the exponent 2 directly as the coefficient instead of squaring it (2² = 4). Option D stops differentiating too early, using only the first derivative where the second derivative is needed to eliminate both constants."
+      ],
+      "verification_method": "sympy_dsolve_and_substitution_check"
+    },
+    {
+      "id": "pi-differential-equations-jee-005",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Solve dy/dx = (x + y)/x, given y(1) = 0. Find y(e).",
+      "options": [
+        "e",
+        "1",
+        "e²",
+        "2e"
+      ],
+      "answer_index": 0,
+      "correct_answer": "e",
+      "solution_steps": [
+        "This is a homogeneous equation: dy/dx = 1 + y/x. Substitute y = vx, so dy/dx = v + x(dv/dx). The equation becomes v + x(dv/dx) = 1 + v, i.e. x(dv/dx) = 1.",
+        "Separating variables: dv = dx/x, so v = ln|x| + C. Since v = y/x, this gives y = x ln|x| + Cx. Applying y(1) = 0: 0 = 1·ln(1) + C·1 = 0 + C, so C = 0.",
+        "The particular solution is y = x ln x. Then y(e) = e · ln(e) = e · 1 = e.",
+        "Option B (1) forgets to multiply back by x at the end, reporting ln(e) = 1 instead of e·ln(e). Option C (e²) comes from mistakenly doubling the power, as if the solution were y = x² ln x. Option D (2e) comes from forgetting that the initial condition forces C = 0, and instead assuming C = 1, giving y = x ln x + x, so y(e) = e + e = 2e."
+      ],
+      "verification_method": "sympy_dsolve_and_substitution_check"
+    },
+    {
+      "id": "pi-differential-equations-jee-006",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the general solution of dy/dx - (2/x) y = x².",
+      "options": [
+        "y = x³ + C x²",
+        "y = x³/5 + C x⁻²",
+        "y = x³ + C",
+        "y = x³/2 + C x"
+      ],
+      "answer_index": 0,
+      "correct_answer": "y = x³ + C x²",
+      "solution_steps": [
+        "This is linear first order with P(x) = -2/x. The integrating factor is IF = e^(∫ -2/x dx) = e^(-2 ln x) = x⁻².",
+        "Multiplying through: d/dx(y x⁻²) = x² · x⁻² = 1. Integrating both sides: y x⁻² = x + C, so y = x³ + C x².",
+        "Cross-check by substituting back: dy/dx = 3x² + 2Cx, and dy/dx - 2y/x = 3x² + 2Cx - 2(x³+Cx²)/x = 3x² + 2Cx - 2x² - 2Cx = x², which matches the right-hand side for every C.",
+        "Option B comes from a sign error in the integrating factor's exponent (using x² instead of x⁻²), which changes the whole derivation and fails to satisfy the equation. Option C forgets that the constant of integration must be multiplied by x² (it drops the x² entirely when isolating y). Option D miscounts the exponent in the integrating factor (using x⁻¹ instead of x⁻²), which also fails to satisfy the original equation for a general C."
+      ],
+      "verification_method": "sympy_dsolve_and_substitution_check"
+    },
+    {
+      "id": "pi-differential-equations-jee-007",
+      "concept_id": "differential-equations-jee",
+      "topic": "jee-calculus",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Solve dy/dx = e^(x-y), given y(0) = 0. Find y(2).",
+      "options": [
+        "2",
+        "0",
+        "e² - 1",
+        "4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "Rewrite e^(x-y) = eˣ · e⁻ʸ, so the equation separates: eʸ dy = eˣ dx. Integrating both sides: eʸ = eˣ + C.",
+        "Apply the initial condition y(0) = 0: e⁰ = e⁰ + C, i.e. 1 = 1 + C, so C = 0. This gives eʸ = eˣ, i.e. y = x.",
+        "So y(2) = 2. Cross-check: with y = x, dy/dx = 1, and e^(x-y) = e^(x-x) = e⁰ = 1 — these match for every x, confirming the solution.",
+        "Option B (0) wrongly assumes y stays constant at its initial value 0 for all x. Option C (e²-1) comes from misapplying the relation as eʸ - eˣ = C instead of eʸ = eˣ + C, and then evaluating it incorrectly at x=2. Option D (4) comes from confusing the exponent relationship and assuming y = x² instead of y = x, so y(2) = 4."
+      ],
+      "verification_method": "sympy_dsolve_and_substitution_check"
+    }
+  ]
+}

@@ -6324,3 +6324,100 @@ anywhere in their public API and are latent only because JEE declares no
 `VALID_CONCEPT_IDS`, which merging made more PERMISSIVE rather than broken;
 and the ~20 topic-string sites, which the namespace gate protects but does
 not fix.
+
+### Both exams live on one deployment (v4.86.0)
+
+v4.85.0 installed a second curriculum pack. This makes it reachable — and
+fixes the grading bug that would have made reaching it worse than not.
+
+**The marking path only ever knew one exam.** `resolveAssessmentContract()`
+was called with **no key at every site**, so it always resolved GATE, and
+`POST /api/practice/attempt` resolved no contract at all. A JEE Main MCQ is
+4 marks; GATE's contract has no row for a 4-mark MCQ, so it fell through to
+the defensive `-(marks / 3)` fallback — **−1.333 where the real paper
+deducts −1**, silently. Authoring a JEE bank before fixing this would have
+shipped 151 items that graded wrong.
+
+- `src/exams/marking-constants.ts` — the single compiled contract becomes a
+  registry (`COMPILED_CONTRACTS`, `findCompiledContract`). GATE's entry is
+  byte-for-byte unchanged so every derived export still reads its numbers.
+  JEE's is **partial on purpose**: `mcq` only (`{'4': -1}`). No `msq` (JEE
+  Main Maths does not ask it) and no `nat` — the numerical-value
+  negative-marking rule is disputed and `jeemain.nta.nic.in` is unreachable
+  here. **Absence is the enforcement, not a TODO:** a JEE numeric item is
+  refused by name at grading time, which is why the bank is MCQ-only by
+  construction rather than by authoring discipline. A `nat` entry appearing
+  later means someone resolved the rule against a source; a test says so.
+- `src/exams/exam-contract-key.ts` — the ONE pack-id → contract-key map.
+  An explicit table, not a convention: `gate-ma` → exam `gate`, paper
+  `common-em`, which no string transform produces. Practice attempts key on
+  the **item's own concept** via `CONCEPT_DECLARED_BY` (a JEE item is graded
+  under JEE's rules whoever attempts it); quiz and mock sessions key on the
+  student, matching E7's pin-once design. An unmapped pack gets a key
+  nothing covers, so it refuses rather than borrowing another exam's
+  numbers. Known limit, stated not hidden: a student registered for two
+  exams pins ONE contract per session — see TODOS.md.
+
+**151 practice items, 23/23 concepts**, 8 parallel Sonnet batches. Every key
+verified by a second independent method (sympy; brute-force sample-space
+enumeration for probability and combinatorics). All 151 proven gradable
+through the real `FileLearningObjectCatalog` + `gateItemFromPayload` and
+proven to mark +4/−1 through the real JEE contract — not merely
+schema-valid. Bank 505 → **656 items**, 16 → 24 banks.
+
+**Topics.** Syllabus sections are what the app renders as topics, and all 23
+JEE Maths concepts sat in ONE section, so switching to JEE showed a single
+"Mathematics" bucket where GATE gets eight — plus Physics and Chemistry,
+two topics whose every concept is a stub. Split into the six groupings the
+file's own comments already used, section ids equal to the concept `topic`
+strings (gate-ma's convention, so the topic list and the topic-string
+selectors cannot disagree), weights derived structurally from concept
+counts rather than invented percentages NTA does not publish. Per-section
+icons + JEE-specific detection keywords (deliberately NOT copies of GATE's:
+a JEE student asking about "matrices" should land on `jee-algebra`).
+`getTopicsForExam` filters a section whose concepts do not resolve —
+exam-agnostic, keyed on resolution, self-clearing.
+
+**The switcher.** `GET /api/exam/active` takes a validated `?exam_id=` and
+returns `available_exams` + `default_exam_id`; an unrecognised id falls back
+to the default rather than 404ing, because this endpoint drives the exam
+name and nav on every page. The choice is appended **centrally in
+`apiFetch`** (`frontend/src/lib/exam-choice.ts`) — `/api/topics` alone is
+fetched from four pages, and a per-call param is four chances to serve the
+wrong exam's topics; an explicit per-call `exam_id` still wins, and the
+value is URL-encoded so a stored id cannot forge a second param.
+`setActiveExam()` persists then reloads, deliberately: the exam is baked
+into module-scope caches across the app. `ExamSwitcher` reuses the header's
+existing room-badge capsule rather than inventing a second switch
+affordance, uses **no accent colour** (green is mastery, indigo is
+AI/tutor; which exam you browse is neither — a green tick would read as
+"you have achieved this exam"), and renders nothing below two packs.
+**GATE stays the default; JEE is one tap away.**
+
+**Two numbers that were already wrong, found by looking rather than
+testing.** Home renders `{topics.length} sections · {exam.concept_count}
+concepts`, and `concept_count` read `concept_links.length` — **GATE
+reported 27 while declaring 101**, since the line shipped. A second pack
+made it read "6 sections · 0 concepts", which is where it became visible.
+Both now report what a student can reach, via the resolver `getSyllabus()`
+uses. Separately, the chip shortened names by keeping the first two words,
+turning "GATE Engineering Mathematics" into **"GATE Engineering"** — a name
+that reads complete and names the wrong subject. Every structural test
+passed; only the rendered pixels showed it. It now drops just a
+parenthetical and lets CSS ellipsis do the rest, so a shortened name is
+always *visibly* shortened.
+
+**A process note, since it recurred.** `npx tsc --noEmit | head -5; echo $?`
+reports **head's** exit status, not tsc's — it is always 0. Read the exit
+code without the pipe, or via `PIPESTATUS`. Alongside the v4.85.0 dirty-tree
+rule (`git status --porcelain` must be empty before a gate run is cited as
+evidence about a commit), the shape of both mistakes is the same: a check
+that looks like it passed because the thing reporting is not the thing
+being checked.
+
+**Verified:** backend 4898 / 1 todo (377 files), frontend 3329,
+`tsc --noEmit` clean both sides, `npm run ci` green across 21 gates,
+`ci:practice-items` green across 656 items / 24 banks. Driven live in
+headless Chromium at 375px: 44px tap target, menu inside the viewport, no
+horizontal overflow, GATE topics gone and JEE topics present after
+switching, zero console errors.

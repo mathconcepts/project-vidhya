@@ -2623,3 +2623,37 @@ does the scoping.
 **Priority:** P1 — blocks the first real second exam, and the failure mode is
 silent degradation for every existing student.
 **Found by:** adversarial review of PR #173, 2026-09-19.
+
+## Multi-exam follow-ups (opened v4.86.0)
+
+- **JEE Main numerical-value marking rule — still unresolved, and it blocks
+  `nat` items.** `jee-main.yml`'s `scoring:` block records the dispute:
+  secondary sources split between the MCQ's −1 and the older +4/0 with no
+  negative marking, and `jeemain.nta.nic.in` is unreachable from this
+  environment's egress proxy. The JEE compiled contract deliberately carries
+  **no `nat` entry**, so a numeric item is refused by name rather than graded
+  under an invented rule — which is also why the shipped bank is MCQ-only.
+  Closing this means reading the NTA information bulletin and adding the entry
+  with a real `official_source_url`; a test currently asserts the entry is
+  absent, so it fails loudly if someone adds one without doing that.
+- **A session spanning two exams pins one contract.** `contractKeyForStudent`
+  takes the first scoped exam, and a checkpoint quiz or mock for a student
+  registered for two packs can draw items from both, which would then all be
+  marked under one exam's rules. Nothing in the shipped demo reaches it (a
+  viewer is on one exam at a time) but it is real. The fix is per-item keying,
+  what `contractKeyForConcept` already does for practice attempts, and it
+  conflicts with E7's pin-once design — so it is a decision, not a patch.
+- **JEE past-exam questions.** `pyq-bank.json` has 241 questions, 0 mapped to
+  a JEE concept, so `ci:la-walkthrough --topic=jee-*` has no test leg to check
+  and the PYQ-backed surfaces are empty on JEE.
+- **Physics and Chemistry are still stubs** (41 unresolved concept ids).
+  `getTopicsForExam` filters them out of the topic view so they are not two
+  doors onto nothing, and they reappear on their own once their concepts land.
+- **The ~20 topic-string call sites** remain unscoped. `ci:topic-namespace`
+  removes the input that makes them wrong (no topic string is claimed by two
+  packs) but does not make them correct in general — a third pack that
+  namespaces correctly is safe; one that does not is refused by the gate.
+- **Practice-item difficulty is author-assigned, not calibrated.** The 151 JEE
+  items carry hand-set `difficulty` values. `empirical_difficulty` only moves
+  once real attempts land, so the CAT selector's early JEE picks lean on those
+  estimates.

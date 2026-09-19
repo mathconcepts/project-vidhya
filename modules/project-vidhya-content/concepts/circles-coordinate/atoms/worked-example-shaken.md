@@ -13,7 +13,7 @@ for_stance: shaken
 
 Compare to $x^2+y^2+2gx+2fy+c=0$: $g=-1$, $f=-2$, $c=-4$. Centre $(1,2)$, radius $r=\sqrt{1+4+4}=3$.
 
-Check outside: $S_1=49+1-14-4-4=28$. Positive, so $(7,1)$ is outside — two real tangents exist.
+$S_1=49+1-14-4-4=28$. That is greater than $0$, so $(7,1)$ sits outside — two real tangents exist.
 
 Chord of contact, $T=0$ at $(7,1)$: $7x+y-(x+7)-2(y+1)-4=0$.
 

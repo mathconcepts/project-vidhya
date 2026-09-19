@@ -15,6 +15,11 @@ exam_ids: ["*"]
 (D) $40$ m
 (E) $10\sqrt3$ m
 
+<details>
+<summary>Answer</summary>
+
 **Correct answer: (B).**
 
 **Reasoning**: with $h=20\sqrt3$ and $\theta=60°$, $\tan\theta=h/d$ rearranges to $d=h/\tan\theta=h\cot\theta$. Since $\tan60°=\sqrt3$: $d=\dfrac{20\sqrt3}{\sqrt3}=20$ m. Option (C) is the trap for a student who forgets to apply any trig at all and just copies the height as the distance. Option (A) comes from using $\tan30°$ in place of $\tan60°$ ($20\sqrt3/\tan30°=60$). Option (D) comes from using $\sin60°$ instead of $\tan60°$ ($20\sqrt3/\sin60°=40$). Option (E) comes from treating $h$ as the hypotenuse and multiplying by $\cos60°$ instead of dividing by $\tan60°$ ($20\sqrt3\times\cos60°=10\sqrt3$).
+
+</details>

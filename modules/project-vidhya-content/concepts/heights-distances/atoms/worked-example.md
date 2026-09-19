@@ -25,4 +25,6 @@ $$\dfrac{d}{\sqrt3}=(d-20)\sqrt3\implies d=3(d-20)\implies d=3d-60\implies d=30$
 
 Substitute back: $h=\dfrac{30}{\sqrt3}=10\sqrt3\approx17.32$ m.
 
+$$\boxed{h=10\sqrt3\approx17.32\ \text{m}}$$
+
 **Check**: from the near point, $10$ m away, $h=10\tan60°=10\sqrt3$. Matches.

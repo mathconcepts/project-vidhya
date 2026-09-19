@@ -21,4 +21,6 @@ $$P(D)=P(A_1)P(D|A_1)+P(A_2)P(D|A_2)+P(A_3)P(D|A_3)=0.0125+0.014+0.008=0.0345$$
 
 $$P(A_1|D)=\dfrac{0.0125}{0.0345}\approx0.362 \qquad P(A_2|D)=\dfrac{0.014}{0.0345}\approx0.406 \qquad P(A_3|D)=\dfrac{0.008}{0.0345}\approx0.232$$
 
+$$\boxed{P(A_1|D)\approx0.362,\quad P(A_2|D)\approx0.406,\quad P(A_3|D)\approx0.232}$$
+
 **Check**: the three posteriors sum to $1.000$. And the hook's own puzzle resolves here — Machine B, not Machine A, is the single most likely source ($40.6\%$), even though Machine A has the worst defect rate. Machine A only makes a quarter of all output, which pulls its posterior down despite its higher defect rate.

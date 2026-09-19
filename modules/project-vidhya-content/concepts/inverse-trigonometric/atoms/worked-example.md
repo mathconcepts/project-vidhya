@@ -23,6 +23,8 @@ Since $\tan^{-1}$ is an odd function, $\tan^{-1}(-3)=-\tan^{-1}(3)$, so this sim
 
 $$\pi-\tan^{-1}(3)+\tan^{-1}(3)=\pi$$
 
-**Answer**: $\pi$.
+**Answer**:
+
+$$\boxed{\tan^{-1}(1)+\tan^{-1}(2)+\tan^{-1}(3)=\pi}$$
 
 **Check**: numerically, $\tan^{-1}(1)+\tan^{-1}(2)+\tan^{-1}(3)\approx45°+63.43°+71.57°=180°=\pi$ radians. Matches.

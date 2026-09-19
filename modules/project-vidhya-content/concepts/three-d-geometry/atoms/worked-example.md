@@ -33,6 +33,8 @@ This is nonzero, confirming the lines do not meet — they really are skew, not 
 
 **Step 5 — divide by $|\vec n|$** to turn the projection into an actual length:
 
-$$|\vec n|=\sqrt{9+0+9}=3\sqrt2,\qquad d=\frac{|-9|}{3\sqrt2}=\frac{9}{3\sqrt2}=\frac{3}{\sqrt2}=\frac{3\sqrt2}{2}\approx2.12\ \text{units}$$
+$$|\vec n|=\sqrt{9+0+9}=3\sqrt2,\qquad d=\frac{|-9|}{3\sqrt2}=\frac{9}{3\sqrt2}=\frac{3}{\sqrt2}$$
+
+$$\boxed{d=\frac{3\sqrt2}{2}\approx2.12\ \text{units}}$$
 
 Whether you started reading vectors off the vector form or off the Cartesian form, the numbers going into Steps 2 through 5 are identical — that is exactly the fluency this concept is built around.

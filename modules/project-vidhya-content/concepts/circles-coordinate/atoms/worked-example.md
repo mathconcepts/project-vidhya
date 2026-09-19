@@ -17,4 +17,6 @@ exam_ids: ["*"]
 
 **Step 4 — the two extra numbers this setup hands you for free.** Distance from centre $(1,2)$ to $(7,1)$: $d=\sqrt{36+1}=\sqrt{37}$. Tangent length: $\sqrt{d^2-r^2}=\sqrt{37-9}=2\sqrt7$. Chord-of-contact length: $\dfrac{2r\sqrt{S_1}}{d}=\dfrac{2(3)(2\sqrt7)}{\sqrt{37}}=\dfrac{12\sqrt7}{\sqrt{37}}=\dfrac{12\sqrt{259}}{37}\approx5.22$ — matching the direct distance between the two touch points found in Step 3.
 
-**Answer.** Chord of contact: $6x-y-13=0$.
+**Answer.**
+
+$$\boxed{\text{Chord of contact: } 6x-y-13=0}$$

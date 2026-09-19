@@ -25,6 +25,6 @@ $$\vec{AB}\cdot(-1,2,2)=(1)(-1)+(-1)(2)+(2)(2)=-1-2+4=1$$
 
 **Step 5 — divide by $6$**, because the tetrahedron is one-sixth of the parallelepiped, and take the absolute value since a volume is never negative:
 
-$$\text{Volume}=\frac{|1|}{6}=\frac{1}{6}\ \text{cubic units}$$
+$$\boxed{\text{Volume}=\frac{|1|}{6}=\frac{1}{6}\ \text{cubic units}}$$
 
 **Why this is the exam-speed route.** Finding a triangle's area and then a perpendicular height by hand takes several steps and invites arithmetic slips. One $3\times3$ determinant, divided by $6$, gets the same answer in the time it takes to write the matrix down — this is the whole reason scalar triple products earn a place on the exam-speed shortlist.

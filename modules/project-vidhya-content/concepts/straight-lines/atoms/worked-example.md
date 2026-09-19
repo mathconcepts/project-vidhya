@@ -22,4 +22,6 @@ Taking the $-$ sign: $3x+4y-6=-(4x+3y-4) \implies 7x+7y-10=0$.
 
 **Step 5 — check it, don't just trust the rule.** The angle between $L_1$ and $L_2$ works out to $\tan\theta=\left|\dfrac{-3/4-(-4/3)}{1+(-3/4)(-4/3)}\right|=\dfrac{7}{24}$, so $\theta\approx16.26°$. The angle between $L_1$ (slope $-3/4$) and $7x+7y-10=0$ (slope $-1$) comes out to $\approx8.13°$ — exactly half of $16.26°$, which is what an angle bisector of an acute angle must do. The angle between $L_1$ and $x-y+2=0$ (slope $1$) comes out to $\approx81.87°$, half of the obtuse $163.74°$ instead — confirming the rule picked the right one.
 
-**Answer.** Acute bisector: $7x+7y-10=0$.
+**Answer.**
+
+$$\boxed{\text{Acute bisector: } 7x+7y-10=0}$$

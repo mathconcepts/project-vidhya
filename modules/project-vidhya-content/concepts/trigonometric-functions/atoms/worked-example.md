@@ -25,6 +25,8 @@ So $s=-\dfrac12$ or $s=1$, meaning $\sin\theta=-\dfrac12$ or $\sin\theta=1$.
 
 $$\theta=n\pi+(-1)^n\left(-\dfrac{\pi}{6}\right)=n\pi+(-1)^{n+1}\dfrac{\pi}{6}$$
 
-**Full answer**: $\theta=2n\pi+\dfrac{\pi}{2}$ or $\theta=n\pi+(-1)^{n+1}\dfrac{\pi}{6}$, for any integer $n$.
+**Full answer**:
+
+$$\boxed{\theta=2n\pi+\dfrac{\pi}{2}\quad\text{or}\quad\theta=n\pi+(-1)^{n+1}\dfrac{\pi}{6},\ n\in\mathbb{Z}}$$
 
 Check $n=0$ in the second family: $\theta=-\pi/6$, and $\sin(-\pi/6)=-1/2$. Correct. Check $n=1$: $\theta=\pi+\pi/6=7\pi/6$, and $\sin(7\pi/6)=-1/2$. Correct too.

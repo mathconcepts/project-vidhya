@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — The arithmetic, compressed.** $\lambda_{max}=\dfrac{1240}{E_g}=\dfrac{1240}{1.1}\approx1127$ nm.
+**Step 1 — Straight to the division.** $\lambda_{max}=\dfrac{1240}{E_g}=\dfrac{1240}{1.1}\approx1127$ nm.
 
 $$\boxed{\lambda_{max}\approx1127\text{ nm}}$$
 

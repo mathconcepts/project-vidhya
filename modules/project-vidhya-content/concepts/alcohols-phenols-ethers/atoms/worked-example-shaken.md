@@ -26,7 +26,7 @@ scaffold_fade: true
 
 ---
 
-**Step 4 — Test the methyl route for comparison.** If the methyl carbon ionised instead, it would form a methyl cation: zero neighbouring carbons, zero donating $\text{C-H}$ bonds. Far too unstable to form easily.
+**Step 4 — Test the methyl route for comparison.** If the methyl carbon ionised instead, it would form a methyl cation: zero neighbouring carbons, zero donating $\text{C-H}$ bonds. Much too high in energy to appear at any real rate.
 
 ---
 

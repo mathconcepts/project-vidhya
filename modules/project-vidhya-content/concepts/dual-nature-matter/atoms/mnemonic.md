@@ -17,7 +17,7 @@ modality: mnemonic
   "v": 1,
   "kind": "manipulable",
   "title": "Drag work function and wavelength — watch photon energy and stopping potential update",
-  "why": "Photon energy, maximum kinetic energy, and stopping potential are all just arithmetic on work function and wavelength — drag either slider and watch all three rebuild instantly, for any metal, not only the sodium example above.",
+  "why": "Photon energy, kinetic energy, and stopping potential are all just arithmetic on work function and wavelength — drag either slider and watch all three rebuild instantly, for any metal, not just sodium.",
   "inputs": [
     {"id": "phi", "label": "work function φ (eV)", "min": 1, "max": 6, "step": 0.1, "initial": 2.3},
     {"id": "lam", "label": "wavelength λ (nm)", "min": 100, "max": 700, "step": 10, "initial": 400}

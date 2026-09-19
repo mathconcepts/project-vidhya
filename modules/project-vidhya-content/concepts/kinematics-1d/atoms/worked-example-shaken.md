@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Origin, direction, sign — settle these before any equation.** Origin at the ground. Take upward as positive. Then $u=+20$ m/s and $a=-g=-10$ m/s$^2$, since gravity always points down, opposite to our chosen positive direction.
+**Step 1 — Origin, direction, sign — settle these before any equation.** Origin at the ground. Take upward as positive. Then $u=+20$ m/s and $a=-g=-10$ m/s$^2$, since gravity always points down, opposite to whichever way is positive here.
 
 ---
 
@@ -30,7 +30,7 @@ scaffold_fade: true
 
 ---
 
-**Step 5 — Velocity on return.** $v=u+at=20+(-10)(4)$. Compute: $(-10)(4)=-40$. So $v=20-40=-20$ m/s.
+**Step 5 — Velocity on return.** $v=u+at=20+(-10)(4)$. Compute: $(-10)(4)=-40$. So $v=20-40=-20$ m/s, the value carried into the last step below.
 
 ---
 

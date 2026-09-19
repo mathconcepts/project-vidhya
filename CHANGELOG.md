@@ -4,6 +4,191 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.84.0] — 2026-09-19 — Any exam, not just GATE: the concept graph follows `DEFAULT_EXAM_ID`
+
+No new env vars (`DEFAULT_EXAM_ID` already existed and was already declared in
+`render.yaml`), no migrations.
+
+### Changed
+
+- **The concept graph now follows the active exam.** `src/constants/concept-graph.ts`
+  hard-loaded exactly one file, `data/curriculum/gate-ma.yml`. Everything adaptive
+  reads `ALL_CONCEPTS` from it — Elo, FSRS, readiness / `nextBestAction`,
+  prerequisite repair, FIRe credit propagation, quiz-pool assembly, the frontier
+  spine — so a second exam's concepts did not exist to any of them even with a
+  valid pack installed and `DEFAULT_EXAM_ID` pointing at it. The universe is now
+  the **merge** of every installed pack's `concepts:` block. Set
+  `DEFAULT_EXAM_ID=jee-main` and the app genuinely switches; before, the graph
+  stayed GATE's no matter what. Behaviour for an unchanged deployment is
+  identical, verified rather than asserted: 101 concepts, gate-ma generation
+  scope 101, 8 nav sections, active exam `gate-ma`.
+- **Concept ids are global, and declaring one twice is now a hard error naming
+  both files.** Ids were already global in practice — lesson atoms live at
+  `modules/…/concepts/<concept_id>/` and practice items carry a bare `node_id`,
+  neither namespaced by exam. So a shared concept is declared once in whichever
+  pack owns it and referenced by id from any other pack's `syllabus:`, which is
+  already the shape `jee-main.yml` uses. Cross-pack prerequisites resolve.
+- **The no-`DEFAULT_EXAM_ID` fallback is deterministic.** It was "whatever
+  `readdirSync` listed first" — arbitrary, so two machines running identical code
+  could disagree on the active exam. It is sorted-first now.
+- **A deployment pointed at a stub exam says so instead of quietly serving
+  another exam's concepts.** `ACTIVE_EXAM_CONCEPT_COUNT` plus a boot warning
+  surface it. Warned, not thrown: a stub pack is a legitimate state while an
+  exam is being filled in, and hard-failing boot would make that state
+  impossible to work in.
+- `getSyllabus(<exam>)` returns only the concepts that pack declares. It used to
+  hand gate-ma the whole graph — correct while the graph WAS gate-ma's graph,
+  wrong the moment it merges packs, since gate-ma's generation scope would have
+  silently absorbed another exam's concepts.
+
+### Added
+
+- `src/curriculum/active-exam.ts` — the dependency-free layer the concept graph
+  and the exam loader both import (`exam-loader.ts` imports `concept-graph.ts` to
+  validate pack concept ids, so the reverse import was a cycle — which is why the
+  path was hardcoded in the first place). One `pickActiveExamId()` policy, two
+  candidate lists by design: the loader passes packs that actually parsed, the
+  graph passes what it finds on disk before any pack has been validated.
+- `exam_pattern` rows cluster by kind. Every `exam_pattern` atom is authored as
+  `- **lead-in**: detail`, and the lead-in already names the kind of fact.
+  Measured across all 101 committed atoms: 436 bold-label rows — 247 name a
+  question format (NAT/MCQ/MSQ), 85 a time budget, 36 a trap, 68 plain prose. A
+  real `<span>` badge (never a `content: attr()` pseudo-element, which screen
+  readers announce inconsistently) now marks the kind; an unrecognised lead-in
+  renders exactly as before rather than getting a guessed marker. The badge is a
+  WORD, so no new hue enters the palette and Clarity's two-accent law is intact.
+
+### Fixed
+
+- **Every runtime LLM call had been 404ing in production.** `provider-registry.ts`
+  endpoints already carry their version prefix (`…/v1`, `…/v1beta`) and every
+  dispatcher in `src/llm/runtime.ts` appended a second one — 7 of 8 registered
+  providers were malformed, Ollama wrong differently. So the AI tutor,
+  thinking-gap insights, error classification and the personalisation generators
+  had never completed a call with any provider. `joinProviderUrl()` dedupes only
+  an exact trailing version match, so both forms a BYOK user might paste are
+  accepted. This corrects a standing misattribution in the project's own notes,
+  which blamed a missing provider key — true locally, but production has a key,
+  resolution succeeded, and the boot banner claimed an LLM was wired up.
+- **The "look at the highlighted arrow" chip pointed at nothing.** A `linear_map`
+  scene only turned an arrow green when a sampled direction happened to be
+  parallel to an eigenvector, and samples land every 22.5°. Measured: 33 of 57
+  committed `linear_map` scenes had at least one eigen-direction with no arrow,
+  and on 4 concepts there was no green arrow at all. Eigen arrows are drawn
+  explicitly now; the ordinary arrows recede on reveal so the payoff reads by
+  contrast. Also fixed there: a raw float in the `×λ` label (production showed
+  `×3.61803399`), a label halo painted with a 12%-opaque fill token that never
+  occluded anything, and a chip that named "the highlighted shape" in every
+  figure mode regardless of what was on screen.
+- **On a phone the figure and its caption never coexisted.** The lesson card's
+  sticky-figure layout lived entirely inside `@media (min-width: 720px)`, so on
+  the mobile-first platform the figure led and then scrolled off while the reader
+  worked through prose pointing at it. A leading figure now pins below 720px too,
+  scoped so a promoted resonance scene keeps its own pin rather than nesting two.
+- A `positive-definite-matrices` visual described its two level-set families as
+  "primary color" / "secondary color" while the renderer deliberately draws them
+  ink-vs-grey so the scene reads for a colour-blind student — the prose was
+  discarding the exact cue the figure was built around. One file; a corpus grep
+  confirmed it is not a pattern.
+- `loadOne()` silently dropped a pack's `capabilities:` block, so `jee-main.yml`'s
+  declared `interactives_enabled: true` was decorative and the unit orchestrator
+  fell through to a hardcoded name allowlist — no new YAML pack could ever enable
+  interactives.
+- `SnapPage.tsx` posted `exam_id: 'gate-ma'` hardcoded. Student-facing: on any
+  other deployment, a photographed question was analysed against the wrong
+  syllabus, silently.
+- `content-flywheel`, `snapshotter` and `lesson-wire` pinned the exam pack id to
+  GATE regardless of the active exam. Two of those are lift-ledger keys, so a
+  wrong stamp corrupts every lift number computed from them.
+
+**Operator action:** none. `DEFAULT_EXAM_ID` is unset by default and the fallback
+resolves to `gate-ma` exactly as before. Set it only when a second pack is ready
+to serve.
+
+## [4.83.0] — 2026-09-18 — Concept Anchors: one plain sentence per concept saying what the maths is FOR
+
+No new env vars, no migrations. Backfilled: this shipped in PR #172 without a
+version bump or CHANGELOG entry, the same gap that produced the 4.37.0/4.38.0
+backfills. Full writeup: CLAUDE.md's "Concept Anchors" section.
+
+### Added
+
+- Every concept page opens with one sentence naming a concrete system the maths
+  is actually used in. The pipeline had no slot for this: all eleven `AtomType`
+  members cover what a concept is, how it feels, how to compute it, what goes
+  wrong, how to remember it and how the exam asks it — and nothing for what it is
+  for. Grepping 101 concepts for a real-world bridge returned about two.
+- Deliberately **not** a twelfth atom card. Measured with the repo's own
+  `countTotalReadingLoad`: a student is already served 11 cards and 1,752 words
+  (8.8 minutes) per concept. Card count is the binding constraint, so the anchor
+  is one sentence and zero new cards — about +1.0% reading load.
+- `data/registry/concept-anchors/<topic>.yml` (per-concept, never per-module),
+  `src/registry/concept-anchors.ts` with `validateAnchor()` as the contract in
+  code, a codegen'd import-free frontend bundle, and `npm run ci:concept-anchors`
+  — blocking on **coverage** as well as contract, because the failure it exists
+  to stop is silence. 100 authored, 1 honest `null` with a stated reason, 0
+  missing, 0 violations.
+- The contract is locked at ≤100 characters, a concrete named system, no
+  notation, and **no exam framing**. The character cap replaced a 30-word cap
+  after a live 375px check: every anchor rendered at 5-7 lines and on one concept
+  pushed the hook's animation off the first screen. A word cap does not constrain
+  lines; characters do. Re-measured after the rewrite: 2-4 lines, 88 of 100 at
+  exactly three.
+
+### Fixed
+
+- `trace/atoms/visual-analogy.md` claimed the trace answers "how much does this
+  transformation expand or shrink the volume of a tiny box". That is the
+  **determinant** (18 for the concept's own matrix; the trace is 9), and the
+  justification offered for it was a fabricated mechanism. Its animation plotted
+  an unrelated curve. Rewritten to contrast multiply-the-stretches against
+  add-them — the exact confusion it had been teaching.
+- The anchor gate's own first false positive: it matched `/GATE/i` and so
+  rejected "fewer physical **logic gates** on the silicon", which is precisely
+  the concrete anchor the contract asks for. Case-sensitive now — the exam is
+  caps, the component is not.
+
+## [4.82.0] — 2026-09-08 — Competency Compass: readiness that visibly moves, plus three live-QA fixes
+
+No new env vars, no migrations. Backfilled: this shipped in PR #171 without a
+version bump or CHANGELOG entry. Full writeup: CLAUDE.md's "Competency Compass"
+and "`/investigate`: a missing fixed anchor…" sections.
+
+### Added
+
+- **After every graded practice question you now see your skill readiness move**
+  — "Orthogonality skill readiness: 61% → 64%". The number was already being
+  computed on every attempt and thrown away: `StudentModel.update()` mutates the
+  student's Elo rating inside the transaction the attempt endpoint awaits, then
+  returned `void`. It is captured now, translated through the same sigmoid the
+  app's "expected marks" figure already uses, and called *readiness* — never
+  *mastery*, which the Progress page's cumulative Wilson accuracy already owns —
+  so two numbers on screen never read as one measurement disagreeing with itself.
+- The lesson's practice row shows the baseline you are about to move
+  (`GET /api/readiness/expected-score` gained an optional `?node=` scope), and a
+  wrong answer carries that figure into the lesson it sends you to.
+- `null` on every degraded path — DB-less deploy, a deduped retry, no ability
+  data yet. The line simply does not render rather than showing a guessed number.
+
+### Fixed
+
+- A lesson's "Try these next" list rendered as plain text. Those rows carry real,
+  gradable item ids; they are buttons now — the one confirmed dead end in the
+  whole lesson↔practice loop.
+- A hook's narration repeatedly named a fixed reference point the diagram never
+  drew. `reference_points` is the general fix: an always-visible labelled marker
+  for a plain parametric scene, folded into the view box so it can never render
+  clipped outside the SVG.
+- A worked example ran two independent progressions at once — its own
+  step-by-step reveal, and an embedded walkthrough widget that was fully
+  interactive from first paint. The widget now waits, with honest locked-state
+  copy rather than silently rendering nothing.
+- A wrong answer with no provider configured showed "No extra insight available"
+  — a dead end. It now gives a real, specific hint keyed off the error type
+  already computed for every wrong answer. The fallback is deliberately never
+  written to the personalisation cache, since that table is read elsewhere as
+  evidence of genuine per-student generation.
+
 ## [4.81.0] — 2026-09-08 — Graph-theory content: a `graph` figure mode for `simulation` scenes
 
 No new env vars, no migrations.

@@ -6045,6 +6045,12 @@ second exam still needs its own `concepts:` block with real prerequisites, then
 lessons, practice items and mapped past-exam questions at the standard the CI
 gates enforce. That remains the bulk of the work for any new exam.
 
+**Released as `4.84.0`.** Two merged PRs ahead of it had shipped with no
+version bump and no CHANGELOG entry — #171 (Competency Compass + three
+live-QA fixes) and #172 (Concept Anchors) — the same gap that produced the
+`4.37.0`/`4.38.0` backfills. Both were backfilled as `4.82.0`/`4.83.0` in the
+same pass that caught it, so this release is `4.84.0` rather than `4.82.0`.
+
 
 ## Skill routing
 

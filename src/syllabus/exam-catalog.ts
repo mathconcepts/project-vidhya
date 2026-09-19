@@ -192,8 +192,9 @@ export const EXAMS: Record<string, ExamDefinition> = {
   },
 
   /**
-   * JEE Main Mathematics — added when data/curriculum/jee-main.yml promoted
-   * its 23 Mathematics concepts into the concept graph.
+   * JEE Main — added when data/curriculum/jee-main.yml promoted its 23
+   * Mathematics concepts into the concept graph, and widened to all three
+   * subjects when Physics (24) and Chemistry (22) followed.
    *
    * Its `topics` are the pack's own NAMESPACED topic strings, not the
    * GATE-shaped ones the `jee-advanced-math` entry above reuses. That entry
@@ -202,19 +203,31 @@ export const EXAMS: Record<string, ExamDefinition> = {
    * makes `examIdsForTopic` a real exam filter rather than a merge. See
    * src/curriculum/topic-namespace.ts and `npm run ci:topic-namespace`.
    *
-   * `topic_weights` are structural, from the declared concept counts per
-   * topic (7 algebra, 6 calculus, 3 each for coordinate geometry and
-   * trigonometry, 2 each for vectors/3D and probability/statistics), NOT
-   * imported per-topic weightage percentages. Those circulate widely on
-   * aggregator sites with no NTA basis and are not encoded anywhere here.
+   * `topic_weights` are structural, from the declared concept count per
+   * topic over 69, NOT imported per-topic weightage percentages. Those
+   * circulate widely on aggregator sites with no NTA basis and are not
+   * encoded anywhere here. NTA publishes an equal 100/100/100-mark split
+   * across the three subjects, and the per-subject sums below land close to
+   * a third each (0.348 / 0.319 / 0.333) purely because the concept counts
+   * do — the numbers are a count ratio, and calling them a weightage claim
+   * would be reading more into them than they carry.
    */
   'jee-main': {
     id: 'jee-main',
-    name: 'JEE Main — Mathematics',
+    name: 'JEE Main (PCM)',
     authority: 'National Testing Agency (NTA)',
     default_scope: 'mcq-fast',
     allowed_scopes: ['mcq-fast', 'mcq-rigorous'],
     topics: [
+      'jee-mechanics',
+      'jee-thermal-physics',
+      'jee-oscillations-waves',
+      'jee-electromagnetism',
+      'jee-optics',
+      'jee-modern-physics',
+      'jee-physical-chemistry',
+      'jee-organic-chemistry',
+      'jee-inorganic-chemistry',
       'jee-algebra',
       'jee-calculus',
       'jee-coordinate-geometry',
@@ -223,17 +236,29 @@ export const EXAMS: Record<string, ExamDefinition> = {
       'jee-probability-statistics',
     ],
     topic_weights: {
-      'jee-algebra': 0.30,
-      'jee-calculus': 0.26,
-      'jee-coordinate-geometry': 0.13,
-      'jee-trigonometry': 0.13,
-      'jee-vectors-3d': 0.09,
-      'jee-probability-statistics': 0.09,
+      // Physics — 24 of 69 concepts.
+      'jee-mechanics': 0.116,
+      'jee-thermal-physics': 0.029,
+      'jee-oscillations-waves': 0.029,
+      'jee-electromagnetism': 0.101,
+      'jee-optics': 0.029,
+      'jee-modern-physics': 0.044,
+      // Chemistry — 22 of 69.
+      'jee-physical-chemistry': 0.145,
+      'jee-organic-chemistry': 0.116,
+      'jee-inorganic-chemistry': 0.058,
+      // Mathematics — 23 of 69.
+      'jee-algebra': 0.101,
+      'jee-calculus': 0.087,
+      'jee-coordinate-geometry': 0.043,
+      'jee-trigonometry': 0.043,
+      'jee-vectors-3d': 0.029,
+      'jee-probability-statistics': 0.029,
     },
     typical_prep_weeks: 52,
     reference_url: 'https://jeemain.nta.nic.in/',
     official_syllabus_url: 'https://jeemain.nta.nic.in/',
-    description: 'Mathematics section of JEE Main Paper 1 — 20 MCQs plus 5 compulsory numerical-value questions, 100 marks, sat alongside Physics and Chemistry in a 3-hour paper.',
+    description: 'JEE Main Paper 1 — Physics, Chemistry and Mathematics, 25 questions and 100 marks per subject (20 MCQs plus 5 compulsory numerical-value questions), 300 marks in 3 hours.',
   },
 
   'university-math-ug-final': {

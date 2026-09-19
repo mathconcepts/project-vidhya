@@ -34,6 +34,20 @@ track_id: TN-HSE-12-MATH
 board_label: Tamil Nadu HSE (Samacheer Kalvi)
 target_exam: jee-main
 
+# WHICH SUBJECT THIS FILE SPEAKS FOR. This is a Class 12 MATHEMATICS track,
+# and jee-main declares Physics and Chemistry too. Naming the six Mathematics
+# topics keeps the coverage gate honest in both directions: it still refuses a
+# partial Mathematics bridge, and it never asks a maths track to make a claim
+# about coordination compounds. Physics and Chemistry are simply unbridged for
+# this board today — `bridgeFor` returns null and the lesson renders nothing.
+covers_topics:
+  - jee-algebra
+  - jee-calculus
+  - jee-coordinate-geometry
+  - jee-trigonometry
+  - jee-vectors-3d
+  - jee-probability-statistics
+
 concepts:
   # ---- Aligned: TN teaches this well. Do not patronise. -------------------
   limits-jee:

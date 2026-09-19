@@ -45,7 +45,7 @@ function main(): void {
 
   const problems = auditBridges(bridges);
   if (problems.length === 0) {
-    console.log('\n✓ Every bridge covers its exam fully and passes the contract.\n');
+    console.log('\n✓ Every bridge covers every topic it claims and passes the contract.\n');
     process.exit(0);
   }
 

@@ -26,7 +26,7 @@ scaffold_fade: true
 
 ---
 
-**Step 4 — Add both equations together to remove $T$.** $T + (m_2g-T) = m_1a+m_2a$, which simplifies to $m_2g = (m_1+m_2)a$.
+**Step 4 — Add both equations together to remove $T$.** $T + (m_2g-T) = m_1a+m_2a$, which simplifies to $m_2g = (m_1+m_2)a$, ready to isolate $a$ next.
 
 ---
 

@@ -6294,6 +6294,27 @@ discipline as the Wolfram licensing gate in
 what it blocks. **It blocks authoring `nat` practice items for this pack**,
 and any quiz or mock exam that would grade one.
 
+**A process trap this pass fell into, recorded like the `grep -o` one.**
+`npm run ci` and the test suites were run, came back green, and that green
+was reported as validating the commit that had just been pushed. It was
+not: the working tree at that moment carried uncommitted self-corrections
+the authoring batches had applied to disk AFTER their concepts were
+committed, so the validation covered a tree that was strictly AHEAD of the
+pushed commit. CI disagreed, correctly — `4427fd7` was red on four
+interactive-spec blocks (`limits-jee`'s descending `t_min`/`t_max`, and
+`vectors-jee`'s mnemonic slider reaching `a1=0` and taking cos of the angle
+with a zero-length denominator), and the very next commit carried the
+fixes that made the local run green.
+
+The lesson is narrow and mechanical: **`git status --porcelain` must be
+empty before a gate run can be cited as evidence about a commit.** It is
+otherwise evidence about a tree nobody else will ever see, and that is a
+worse failure than a red gate, because it is a green report that is not
+true. This matters specifically when parallel authoring agents are still
+running — they edit on disk after reporting done, which is legitimate (a
+batch cannot evaluate `ci:variant-agreement`'s repeated-phrase rule until
+its whole topic exists) but means the tree moves under a validation run.
+
 **Also still open** (TODOS.md): practice items for all 23 concepts (the atoms
 landed, the graded item bank did not); past-exam questions mapped to JEE
 concepts, so `ci:la-walkthrough --topic=jee-*` has a test leg to check;

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  bridgeForStudent,
   validateBridge,
   loadAllBridges,
   auditBridges,
@@ -131,5 +132,31 @@ describe('bridgeFor', () => {
 
   it('returns null for a concept outside the bridged exam', () => {
     expect(bridgeFor('TN-HSE-12-MATH', 'eigenvalues')).toBeNull();
+  });
+});
+
+describe('bridgeForStudent — honest degradation', () => {
+  // The guarantee that matters is that it never GUESSES what a student's
+  // school taught them. Every path with no real track id must return null,
+  // because the alternative is a lesson telling a CBSE student what the
+  // Tamil Nadu board covered.
+  it('returns null for an anonymous id', () => {
+    expect(bridgeForStudent('anon_abc123', 'three-d-geometry')).toBeNull();
+  });
+
+  it('returns null for a null or empty student id', () => {
+    expect(bridgeForStudent(null, 'three-d-geometry')).toBeNull();
+    expect(bridgeForStudent(undefined, 'three-d-geometry')).toBeNull();
+    expect(bridgeForStudent('', 'three-d-geometry')).toBeNull();
+  });
+
+  it('returns null for a student with no stored profile', () => {
+    expect(bridgeForStudent('no-such-student-at-all', 'three-d-geometry')).toBeNull();
+  });
+
+  it('never throws, whatever it is handed', () => {
+    for (const id of ['', '  ', 'x', 'anon_', '../../etc/passwd']) {
+      expect(() => bridgeForStudent(id, 'three-d-geometry')).not.toThrow();
+    }
   });
 });

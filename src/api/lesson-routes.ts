@@ -31,6 +31,7 @@ import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration
 import { isDeliveryLength } from '../content/delivery-length';
 import { getOrCreateStudentModel, readStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS, resolveConceptOrSection, SECTION_MAP } from '../constants/concept-graph';
+import { bridgeForStudent } from '../registry/curriculum-bridge';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
 import { rankAtomsForLesson } from '../personalization/lesson-wire';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
@@ -592,6 +593,14 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
     const sources = await resolveSources({ concept_id: effective_concept_id });
     const base = composeBase(sources);
 
+    // "Have I seen this before, or is this new?" — one line, resolved from
+    // the student's own school curriculum (their `knowledge_track_id`, which
+    // they chose). null when they never picked a board, picked one with no
+    // authored bridge, or are anonymous: the lesson renders nothing rather
+    // than guessing what their school taught them.
+    const bridge_student_id = req.query?.get('student_id') ?? req.query?.get('session_id') ?? null;
+    const curriculum_bridge = bridgeForStudent(bridge_student_id, effective_concept_id);
+
     // ContentAtom v2: also attempt to load + select atoms. Additive — clients
     // that don't know about atoms[] still see the legacy components[] field.
     let atoms: ContentAtom[] = [];
@@ -672,7 +681,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       }
     }
 
-    sendJSON(res, { ...base, atoms });
+    sendJSON(res, { ...base, atoms, curriculum_bridge });
   } catch (err) {
     sendError(res, 500, (err as Error).message);
   }

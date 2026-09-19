@@ -38,6 +38,7 @@ import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { CONCEPT_MAP, conceptsDeclaredByExam } from '../constants/concept-graph';
 import { KNOWLEDGE_TRACKS } from '../knowledge/tracks';
+import { getProfile } from '../session-planner/exam-profile-store';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const BRIDGES_DIR = path.resolve(HERE, '../../data/registry/curriculum-bridges');
@@ -230,6 +231,38 @@ export function bridgeFor(
   concept_id: string,
 ): ConceptBridge | null {
   return bridgeForTrack(track_id)?.concepts[concept_id] ?? null;
+}
+
+/**
+ * The bridge line for a STUDENT, resolving their knowledge track from their
+ * exam profile.
+ *
+ * `knowledge_track_id` is an optional field on each exam registration and has
+ * been there since `exam-profile-store` was written, long before this
+ * registry — it is the student's own answer to "what are you studying at
+ * school", not anything inferred about them. A student who never answered,
+ * or who answered with a board that has no authored bridge, gets null, and
+ * the lesson renders nothing rather than guessing what their school taught.
+ *
+ * Reads the FIRST registration carrying a track id. A profile can hold up to
+ * five concurrent exams, but a student has one school curriculum, so the
+ * first one that names it is the answer.
+ */
+export function bridgeForStudent(
+  student_id: string | null | undefined,
+  concept_id: string,
+): ConceptBridge | null {
+  if (!student_id || student_id.startsWith('anon_')) return null;
+  let track: string | null = null;
+  try {
+    const profile = getProfile(student_id);
+    for (const reg of profile?.exams ?? []) {
+      if (reg.knowledge_track_id) { track = reg.knowledge_track_id; break; }
+    }
+  } catch {
+    return null;
+  }
+  return bridgeFor(track, concept_id);
 }
 
 export interface BridgeAuditProblem {

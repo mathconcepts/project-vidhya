@@ -4,6 +4,84 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.85.0] — 2026-09-19 — IIT JEE Main for Tamil Nadu board students: the second exam pack goes live
+
+**Operator action** — none. No new ENV vars, no migrations. `DEFAULT_EXAM_ID`
+still selects the active pack and still defaults to `gate-ma`; nothing changes
+for an existing GATE deployment.
+
+### The pack
+
+- `data/curriculum/jee-main.yml`'s 23 Mathematics concept ids promoted out of
+  `stub_concepts:` into a real `concepts:` block with a self-contained
+  prerequisite DAG. Physics and Chemistry stay stubs and `getSyllabus` reports
+  the remaining 41 as unresolved. Graph: 101 → **124 concepts across two
+  declaring packs**.
+- 23 concept anchors, 6 authoring templates, and 23 × 17 atom files
+  (11 base + 6 stance variants), authored by 8 parallel Claude Sonnet subagent
+  batches against one shared brief.
+
+### Exam scoping — the work v4.84.0's tripwire demanded
+
+- **`ci:topic-namespace`** (gate 20). `ConceptNode.id` uniqueness is enforced
+  at boot; `topic` had no such protection, and ~20 call sites select concepts
+  by topic string off the merged graph with no exam filter. GATE-MA owns
+  `calculus`, `linear-algebra`, `probability-statistics` and three more names
+  any Indian engineering-entrance pack reaches for first. JEE uses namespaced
+  topics and the gate refuses a string claimed by two packs — the collision
+  becomes impossible rather than needing twenty fixes. A floor, not a ceiling.
+- **`src/curriculum/student-exam-scope.ts`** — one resolver for the four sites
+  that select by id or by count, where namespacing buys nothing: readiness
+  `allowedNodes`, the checkpoint-quiz frontier, the notebook coverage
+  denominator (which silently halved), and `ConceptGraphCurriculumRepo` (which
+  also stamped `course: 'gate-ma'` onto every node). Degrades explicitly and
+  never empty — an empty scope deadlocks the readiness engine into `diagnose`.
+- Client-supplied concept ids on `/api/readiness/expected-score?node=` and
+  `POST /api/practice/quiz/start` are now checked against the student's own
+  scope, not just for existence.
+- The tripwire test is **replaced, not deleted** — deleting would drop the
+  protection at the moment a third pack becomes possible.
+- `jee-main` added to the exam catalog; without it, its six topics were
+  claimed by no exam, making its Elo/FSRS/attempt rows unreachable.
+
+### Curriculum bridges — `data/registry/curriculum-bridges/`
+
+Every framing registry here was exam-framed. None answered the question a
+state-board student arrives with: *have I seen this before, or is this new?*
+
+- `tn-hse-12-math.yml` covers all 23 concepts — 15 aligned, 6 partial, 2 gaps
+  — each naming the Samacheer Kalvi chapter the claim rests on, each marked
+  `confirmed` or `probable`. Plus three board topics JEE never asks, so that
+  time can be reclaimed once boards end.
+- **`ci:curriculum-bridge`** (gate 21), blocking on coverage as well as
+  contract. The contract refuses alarm framing: a gap is information, and this
+  reader is already sitting two exam seasons eight weeks apart.
+- Served as an additive `curriculum_bridge` field on
+  `GET /api/lesson/:concept_id`, null whenever no board is known.
+- Holds no per-student data. A bridge entry is a claim about a published state
+  syllabus; the only per-student input is the `knowledge_track_id` the student
+  chose, stored since long before this registry.
+
+### Also
+
+- Three new template families (`coordinate_geometry`, `trigonometry`,
+  `algebra`). The locked 14 come from a postgraduate GATE corpus that by
+  construction has no coordinate geometry, school trigonometry or school
+  algebra; filing conics under `vector` would have passed the completeness
+  check while describing a teaching shape they do not have.
+- `generate-intent-tables.ts` had `TemplateFamilyId` hardcoded in its output
+  template — a third copy of the family list. Derived from the locked array
+  now.
+
+### Deliberately not done
+
+JEE Main's five compulsory numerical-value questions: sources split on whether
+they carry the MCQs' −1 or the older +4/0, and the NTA bulletin is unreachable
+from this environment. No `jee_main` MarkingStrategy and no
+`assessment_contracts` row, so nothing grades against a JEE contract and
+nothing is quietly wrong. The dispute is recorded in `jee-main.yml`'s
+`scoring:` block. **It blocks authoring `nat` practice items for this pack.**
+
 ## [4.84.0] — 2026-09-19 — Any exam, not just GATE: the concept graph follows `DEFAULT_EXAM_ID`
 
 No new env vars (`DEFAULT_EXAM_ID` already existed and was already declared in

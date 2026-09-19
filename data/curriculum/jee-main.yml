@@ -445,8 +445,33 @@ stub_concepts:
 # ---------------------------------------------------------------------------
 # Score interpretation
 # ---------------------------------------------------------------------------
+# The MCQ rule below (+4 / -1 / 0) is well corroborated: four independent
+# secondary sources agree, alongside the 100/100/100-mark, 75-question,
+# 25-per-subject Paper 1 structure.
+#
+# WHAT IS NOT SETTLED, and is deliberately not encoded anywhere: whether the
+# five compulsory NUMERICAL VALUE questions per subject carry the same -1 as
+# the MCQs, or the older +4/0 rule with no negative marking. Secondary
+# sources split on it, and jeemain.nta.nic.in is unreachable from this
+# environment's egress proxy, so the primary information bulletin could not
+# settle it. Also circulating with no NTA basis, and likewise not encoded: a
+# claim that Mathematics' weightage rose to 35% in 2026, which contradicts
+# the corroborated equal-marks structure.
+#
+# This block therefore describes MCQ marking only. There is no `jee_main`
+# MarkingStrategy in src/exams/marking-constants.ts and no row in
+# `assessment_contracts` — that table requires an `official_source_url` and a
+# `verified_at`, which is the point. Nothing grades against a JEE contract
+# today, so nothing is currently wrong; a guess would have made it wrong
+# quietly. Same discipline as the Wolfram licensing gate in
+# docs/ops/content-verification-runbook.md §0: ship the gate unfilled and
+# name what it blocks.
+#
+# WHAT IT BLOCKS: authoring `nat` practice items for this pack, and any
+# mock-exam or quiz that grades one. Read the current JEE Main information
+# bulletin PDF at jeemain.nta.nic.in, then add the strategy.
 scoring:
   marks_per_correct: 4
-  marks_per_incorrect: -1
+  marks_per_incorrect: -1      # MCQ (Section A) only — see the note above
   marks_per_unattempted: 0
   pass_mark_estimate: 90  # rough cutoff for NIT eligibility; varies by category/year

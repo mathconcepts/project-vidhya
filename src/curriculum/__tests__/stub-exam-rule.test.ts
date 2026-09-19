@@ -4,6 +4,7 @@
  * hard validation failure — never a warning that scrolls by.
  */
 
+import { CONCEPT_MAP } from '../../constants/concept-graph';
 import { describe, it, expect } from 'vitest';
 import { checkConceptId, loadAllExams } from '../exam-loader';
 
@@ -44,16 +45,45 @@ describe('exam-loader stub-exam rule — real tracked files (gate-ma.yml, jee-ma
     expect(exam.stub_concept_ids).toEqual([]);
   });
 
-  it('jee-main.yml declares all 64 of its concept_ids as stubs (Phase-1 stub exam)', () => {
+  it('jee-main.yml still stubs the 41 concept_ids it has not migrated', () => {
+    // Was `toBe(64)` when jee-main was a fully Phase-1 stub exam. Its 23
+    // Mathematics ids are real concept-graph nodes now; Physics and
+    // Chemistry are not. A number is pinned rather than left loose so that
+    // migrating the next subject is a deliberate edit here too.
     const exam = loadAllExams(true).get('jee-main')!;
-    expect(exam.stub_concept_ids.length).toBe(64);
+    expect(exam.stub_concept_ids.length).toBe(41);
     expect(exam.stub_concept_ids).toContain('kinematics-1d');
+    // A migrated id must be GONE from the stub list, not left in both
+    // places — exam-loader would accept it either way, and a stale stub
+    // entry is how a real node silently keeps reading as unresolved.
+    expect(exam.stub_concept_ids).not.toContain('three-d-geometry');
   });
 
-  it('jee-main syllabus sections carry stub_concept_ids for every concept_id (none are real nodes yet)', () => {
+  it('every jee-main concept_id is EITHER a real node OR a declared stub', () => {
+    // This is the actual rule the two tests here used to stand in for, and
+    // unlike a stub count it holds at every point of a part-finished
+    // migration. exam-loader.loadOne refuses a concept_id that is neither,
+    // so a violation is a hard load failure rather than a warning.
+    const exam = loadAllExams(true).get('jee-main')!;
+    const stubs = new Set(exam.stub_concept_ids);
+    for (const section of exam.syllabus) {
+      for (const cid of section.concept_ids) {
+        const real = CONCEPT_MAP.has(cid);
+        expect(real || stubs.has(cid), `${cid}: neither a real node nor a declared stub`).toBe(true);
+        expect(real && stubs.has(cid), `${cid}: declared BOTH real and stub`).toBe(false);
+      }
+    }
+  });
+
+  it('the migrated half is exactly the Mathematics section', () => {
     const exam = loadAllExams(true).get('jee-main')!;
     for (const section of exam.syllabus) {
-      expect(section.stub_concept_ids?.length).toBe(section.concept_ids.length);
+      const realCount = section.concept_ids.filter((c) => CONCEPT_MAP.has(c)).length;
+      if (section.id === 'jee-main-mathematics') {
+        expect(realCount).toBe(section.concept_ids.length);
+      } else {
+        expect(realCount, section.id).toBe(0);
+      }
     }
   });
 

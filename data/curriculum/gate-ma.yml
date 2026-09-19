@@ -32,6 +32,19 @@ metadata:
 # prerequisite exams assume rather than directly test. Absence of a mapped
 # past-exam question for one of these is expected, not a gap.
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Capability flags (eng-review D5)
+# ---------------------------------------------------------------------------
+# Declared rather than inferred. gate-ma has shipped interactive atom kinds
+# since Phase 3, but this block did not exist, so the only thing switching
+# them on was a hardcoded `examPackId === 'gate-ma' || 'jee-main'` allowlist
+# in curriculum-unit-orchestrator.ts — a pack's capability decided by its
+# name. Stating it here makes the pack self-describing and leaves that
+# allowlist as the dead defensive branch it was meant to be.
+capabilities:
+  interactives_enabled: true
+
 concepts:
   - id: sequences
     topic: calculus

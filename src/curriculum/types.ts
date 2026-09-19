@@ -115,6 +115,25 @@ export interface ExamDefinition {
    * Deduplicated, exam-loader.ts's stub-exam rule (CEO plan §6).
    */
   stub_concept_ids: string[];
+  /**
+   * Per-pack capability flags (eng-review D5), read from the YAML's top-level
+   * `capabilities:` block.
+   *
+   * These were declared in `jee-main.yml` from the day that pack shipped and
+   * the loader never read them, so `curriculum-unit-orchestrator.ts`'s
+   * capability check fell through to a hardcoded
+   * `examPackId === 'gate-ma' || examPackId === 'jee-main'` allowlist every
+   * time. That made the declaration decorative and, worse, meant a NEW YAML
+   * pack had no way to turn interactives on at all — only a DB-backed
+   * operator pack could. Passing the block through makes the YAML mean what
+   * it says.
+   *
+   * Absent block ⇒ undefined ⇒ the orchestrator's existing default (off for
+   * a pack that doesn't ask, per the operator-pack rule).
+   */
+  capabilities?: {
+    interactives_enabled?: boolean;
+  };
 }
 
 // ============================================================================

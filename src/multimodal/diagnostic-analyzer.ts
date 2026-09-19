@@ -26,6 +26,7 @@ import { getLlmForRole } from '../llm/runtime';
 import { ALL_CONCEPTS, CONCEPT_MAP } from '../constants/concept-graph';
 import { verifyProblemWithWolfram } from '../services/wolfram-service';
 import { generateSyllabus } from '../syllabus/generator';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 import { sendSSE } from './sse-stream';
 import type { ExamScope } from '../syllabus/types';
 
@@ -276,7 +277,10 @@ export async function runDiagnosticStream(
   try {
     const syllabus = generateSyllabus(
       {
-        exam_id: req.exam_id || 'gate-ma',
+        // Falls back to the deployment's ACTIVE exam rather than a literal
+        // 'gate-ma' — a request that omits exam_id should be scoped to the
+        // exam this deployment serves, not to whichever one shipped first.
+        exam_id: req.exam_id || resolveActiveExamId() || 'gate-ma',
         scope: req.scope || 'mcq-rigorous',
         daily_minutes: 60,
         max_concepts: Math.min(20, Object.keys(weakConcepts).length * 3 + 5),

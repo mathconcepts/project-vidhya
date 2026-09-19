@@ -2471,3 +2471,60 @@ mechanism against what the maths actually does, Wolfram/SymPy in hand.
 **Priority:** P2 — a wrong mechanism taught confidently is worse than a
 missing one.
 **Deferred from:** Concept Anchors + rendering agenda, 2026-09-18.
+
+---
+
+## Admin surfaces still hardcode a `gate-ma` filter or default
+
+**What:** five operator-facing frontend surfaces pin the exam rather than
+reading `useActiveExam()`:
+
+- `frontend/src/components/admin/RunLauncher.tsx` — `exam_pack_id: 'gate-ma'`
+  default plus a literal `<option value="gate-ma">` as the only choice
+- `frontend/src/pages/app/HoldoutPage.tsx` — `const EXAMS = ['gate-ma',
+  'jee-main']`, a hand-maintained list beside a real loader that already
+  enumerates packs
+- `frontend/src/pages/app/ContentRDPage.tsx` — four calls filtered
+  `{ exam: 'gate-ma' }` plus `defaultExam="gate-ma"`
+- `frontend/src/pages/app/ConceptOrchestratorPage.tsx` — `EXAM_PACK_ID`
+- `frontend/src/api/admin/exam-packs.ts` — a `gate-ma` entry in its fallback list
+
+**Why this is open, not a bug fixed in Step A:** none of it is student-facing.
+An operator on a second-exam deployment sees GATE's runs and experiments, which
+is wrong but visible and self-correcting — unlike the student-facing
+`SnapPage.tsx` case, which analysed a photographed question against the wrong
+syllabus with nothing on screen to say so, and was fixed. Wiring five admin
+pages through `useActiveExam()` is a wider diff than the graph change it would
+have ridden along with.
+
+**Where to start:** `HoldoutPage`'s `EXAMS` array is the cleanest first cut —
+`GET /api/exam/active` already returns `all_exam_ids`, so the hardcoded list
+has a real source to read. `ContentRDPage` is the largest.
+
+**Effort:** S-M CC.
+**Priority:** P2 — blocks an operator running a second exam, not a student.
+**Deferred from:** Step A (multi-exam concept graph), 2026-09-19.
+
+---
+
+## `DEFAULT_SYLLABUS_ID` is still a literal, not the active exam
+
+**What:** `src/curriculum/exam-loader.ts` exports `DEFAULT_SYLLABUS_ID =
+'gate-ma'`, read by `content-generation-job.ts`, `setup-cli.ts` and
+`admin-setup-routes.ts` as the syllabus to generate against when
+`VIDHYA_SYLLABUS` is unset. Step A removed its role in scope resolution (a
+pack now declares its own scope), so it is purely a default now — but it is a
+second "which exam" truth sitting beside `resolveActiveExamId()`, and on a
+deployment with `DEFAULT_EXAM_ID=jee-main` the generation CLI would still
+default to gate-ma.
+
+**Why this is open:** it is also the `atomsSubdir === ''` key — gate-ma's
+content is laid out unprefixed at `modules/…/concepts/<concept_id>/` while
+every other pack is nested under its id. Changing what `DEFAULT_SYLLABUS_ID`
+resolves to therefore moves where generated atoms are written, which is a
+content-layout decision, not a rename. Worth doing deliberately, with the
+layout question answered first.
+
+**Effort:** S CC, once the layout call is made.
+**Priority:** P3 — a CLI default an operator overrides with one env var.
+**Deferred from:** Step A (multi-exam concept graph), 2026-09-19.

@@ -5929,6 +5929,123 @@ content file only. `tsc` clean both sides; `npm run ci` 19 gates clean; the
 locked `AtomCardRenderer.trapVisualIdentity.test.tsx` passes untouched, so
 `common_traps`' own AlertTriangle is unaffected.
 
+### Step A — the concept graph follows the active exam (2026-09-19)
+
+The one change that separated "one exam" from "any exam". `src/constants/
+concept-graph.ts` hard-loaded exactly one file, `data/curriculum/gate-ma.yml`,
+and everything adaptive reads `ALL_CONCEPTS` from it — Elo, FSRS, readiness /
+`nextBestAction`, prerequisite repair, FIRe credit propagation, quiz-pool
+assembly, the frontier spine. So a second exam's concepts did not exist to any
+of them even with a valid pack installed and `DEFAULT_EXAM_ID` pointing at it.
+Measured before touching anything: `jee-main.yml` declares 64 `concept_ids`,
+all 64 of them `stub_concepts`, `concepts:` block empty, `concept_links: 0`.
+
+**The constraint that shaped the design:** `exam-loader.ts` imports
+`concept-graph.ts` (it validates every pack's `concept_ids` against the graph
+in `checkConceptId`), so the graph cannot import the loader back. That cycle is
+why the graph had a hardcoded path in the first place.
+
+**`src/curriculum/active-exam.ts`** is the new dependency-free layer both sides
+import: `CURRICULUM_DIR`, `isExamSidecar` (moved here, exam-loader re-exports
+it), `listExamPackFiles()` (disk scan, id from `metadata.id`),
+`pickActiveExamId()`, `resolveActiveExamPack()`. `pickActiveExamId` is the ONE
+policy implementation; the two layers pass it different candidate lists on
+purpose and the difference is documented at both sites — exam-loader passes
+`listExamIds()` (packs that actually parsed, since a pack failing `loadOne()`
+is on disk but is not a usable exam), concept-graph passes what it finds on
+disk (it is built before any pack has been validated). The fallback when
+`DEFAULT_EXAM_ID` is unset changed from "whatever `readdirSync` listed first"
+to sorted-first: directory order is arbitrary, so two machines running
+identical code could disagree on the active exam.
+
+**The universe is now the MERGE of every pack's `concepts:` block.** Concept
+ids are global, which is already how the rest of the system behaves — lesson
+atoms live at `modules/…/concepts/<concept_id>/` and practice items carry a
+bare `node_id`, neither namespaced by exam. So a concept genuinely shared
+between exams is DECLARED ONCE in whichever pack owns it and REFERENCED by id
+from any other pack's `syllabus:`, which is already the shape `jee-main.yml`
+uses. Declaring the same id twice is a hard error naming both files, because
+two definitions would silently diverge in difficulty/topic/prerequisites by
+load order. Cross-pack prerequisites resolve. `SYLLABUS_SECTIONS` stays
+per-exam — section ids like `linear-algebra` legitimately recur across exams,
+so merging them would make `SECTION_MAP` ambiguous.
+
+**A bug this change would have introduced, caught and fixed in the same pass.**
+`getSyllabus('gate-ma')` returned `ALL_CONCEPTS` — correct while the graph WAS
+gate-ma's graph, wrong the moment it merges packs, since gate-ma's generation
+scope would silently absorb another exam's concepts. New
+`conceptsDeclaredByExam(exam_id)` sources scope per-pack; the rule is now "a
+pack that declares its own `concepts:` block IS its own scope, one that
+declares none falls back to its `syllabus:` intersected with the graph", and
+the `id === DEFAULT_SYLLABUS_ID` special case is gone. gate-ma stays at exactly
+101. The existing test asserted `toBe(ALL_CONCEPTS)` (same array reference) —
+updated to assert the rule, with the whole-graph equality kept as a separate
+test labelled a fact about today's data rather than a rule.
+
+**Honest failure instead of a silent substitution.** With the graph merged, a
+deployment set to a stub exam would boot happily, label itself with that exam's
+name, and teach another exam's concepts underneath. `ACTIVE_EXAM_CONCEPT_COUNT`
+plus a boot warning surface it. Warned, not thrown: a stub pack is a legitimate
+state while an exam is being filled in, and hard-failing boot would make that
+state impossible to work in.
+
+**Audit of the hardcoded `gate-ma` references** (103 backend / 26 frontend at
+the start; 67 of the backend ones are comments). Genuine defects found and
+fixed:
+
+- **`capabilities:` was dropped by the loader entirely.** `jee-main.yml` has
+  declared `interactives_enabled: true` since it shipped and `loadOne()` never
+  read it, so `curriculum-unit-orchestrator.ts`'s check fell through to a
+  hardcoded `examPackId === 'gate-ma' || 'jee-main'` allowlist every time —
+  a pack's capability decided by its name, and no way at all for a new YAML
+  pack to enable interactives. Now passed through (`ExamDefinition.capabilities`,
+  only known flags carried so a typo reads as off), and `gate-ma.yml` declares
+  its own block so the allowlist is the dead defensive branch it was meant to be.
+- **`SnapPage.tsx` posted `exam_id: 'gate-ma'` hardcoded** — student-facing: on
+  any other deployment a student photographs a question and gets it analysed
+  against the wrong syllabus, silently. Now `useActiveExam()`.
+- **Three server-side defaults pinned to GATE regardless of the active exam**:
+  `content-flywheel.ts`'s `exam_pack_id` (the key the effectiveness ledger
+  groups lift by), `snapshotter.ts`'s `defaultExamPackId` (mastery_snapshots
+  are the lift baseline — a snapshot stamped with the wrong exam corrupts every
+  lift number computed from it), and `lesson-wire.ts`'s ranking context. All
+  three now resolve the active exam, keeping the literal only as a final
+  fallback. `diagnostic-analyzer.ts`'s `req.exam_id || 'gate-ma'` likewise.
+- `checkConceptId`'s error and `getSyllabus`'s onboarding docblock both told
+  authors to add concepts to `gate-ma.yml` — the only option when the graph read
+  that one file. Both now say to declare them in the new pack's own block.
+
+**Deliberately NOT changed, and why:** `ConceptNode.gate_frequency` keeps its
+name (it means "how often this exam's papers ask it"; renaming touches ~40 call
+sites for no behaviour change). The admin surfaces that hardcode a `gate-ma`
+filter or default — `RunLauncher`, `HoldoutPage`, `ContentRDPage`,
+`ConceptOrchestratorPage`, `frontend/src/api/admin/exam-packs.ts` — are
+operator tools, not student-facing, and wiring each to `useActiveExam()` is a
+bigger diff than this pass; recorded in TODOS.md. `marketing-samples.ts` and
+`StaticSampleProblem` are literally GATE sample content, which is data, not a
+bug. `gateMcqNegativeMarksFallback` is named for what it is.
+
+**Behaviour today is unchanged, verified rather than asserted:** 101 concepts,
+gate-ma's generation scope 101, 8 nav sections, active exam `gate-ma`. With
+`DEFAULT_EXAM_ID=jee-main` the app now genuinely switches — nav sections become
+JEE's three, the warning fires, and the exam owns 0 concepts — where before the
+graph stayed GATE's no matter what.
+
+**Tests:** backend 4774 → **4801** + 1 todo (371 → 373 files): 15 in
+`active-exam.test.ts` (policy, sidecars, disk scan, module-relative
+`CURRICULUM_DIR`), 10 in `concept-graph-multi-exam.test.ts` (merge, attribution,
+a real temp pack joining the universe, a cross-pack prerequisite, and the
+duplicate-id refusal — the temp pack is written into the real
+`data/curriculum/` and removed in `afterEach`, since a leftover would be loaded
+by every other test), 2 net in `generation-scope.test.ts`. `tsc --noEmit` clean
+both sides. `npm run ci` 19 gates clean including `ci:boot`.
+
+**What this does NOT do:** it unlocks the engine, it does not fill content. A
+second exam still needs its own `concepts:` block with real prerequisites, then
+lessons, practice items and mapped past-exam questions at the standard the CI
+gates enforce. That remains the bulk of the work for any new exam.
+
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

@@ -18,6 +18,7 @@
 import { ServerResponse } from 'http';
 import { getLlmForRole } from '../llm/runtime';
 import { getTopicIdsForExam } from '../curriculum/topic-adapter';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 import { BLOG_CONTENT_TYPES } from '../constants/content-types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
@@ -573,8 +574,12 @@ async function runFlywheel(): Promise<{ generated: number; verified: number; inc
   // are traceable. Default config: gate-ma, BATCH_SIZE atoms, full-tier
   // verification, $1 budget cap (cron-safe). Operator-launched runs use
   // POST /api/admin/runs (Sprint B) which lets these knobs vary.
+  // exam_pack_id follows the deployment's ACTIVE exam rather than a literal
+  // 'gate-ma'. It is the key the effectiveness ledger groups lift by, so
+  // stamping every run with one exam's id on a deployment serving another
+  // would file real results under the wrong exam.
   const run = await createRun({
-    exam_pack_id: 'gate-ma',
+    exam_pack_id: resolveActiveExamId() ?? 'gate-ma',
     hypothesis: 'Daily flywheel — auto-launched by cron',
     config: {
       target: { difficulty_dist: { easy: 30, medium: 50, hard: 20 } },

@@ -78,3 +78,22 @@ docker-compose.override.yaml
 .tmp-agent-scratch/
 scratch_tmp/
 scripts/_tmp*
+
+# gstack payload, materialized by `bash .claude/bootstrap-skills.sh`.
+#
+# The repo tracks exactly ONE thing per gstack skill: a RELATIVE `SKILL.md`
+# symlink into `.claude/skills/gstack/`, which is itself ignored above.
+# gstack 1.87 additionally materializes per-skill support trees (sections/,
+# bin/, scripts/, src/, vendor/, references/, templates/, specialists/,
+# migrations/) and whole new skill directories — 53 entries in this
+# checkout, every one an ABSOLUTE symlink carrying this machine's own path.
+# Committing one would break every other checkout, and would re-land the
+# exact regression the 1.87.4 upgrade already caused once, when it rewrote
+# the tracked SKILL.md symlinks from relative to absolute.
+#
+# They are regenerable from the command above, so they are ignored.
+# Already-tracked files are unaffected: .gitignore never applies to a path
+# git already tracks, so the existing SKILL.md symlinks stay tracked and
+# their changes still show in `git status`. A genuinely new file that DOES
+# belong in version control here needs `git add -f`.
+.claude/skills/

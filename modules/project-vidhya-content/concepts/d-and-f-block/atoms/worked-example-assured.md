@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Name the hidden variable.** $\mu = \sqrt{n(n+2)}$ only works once $n$ is known, and $n$ depends on the ligand's field strength, not on the metal ion alone. The same ion, $Fe^{2+}$ ($3d^6$), gives completely different values of $n$ in a weak-field versus a strong-field octahedral complex.
+**Step 1 — Identify the hidden variable.** $\mu = \sqrt{n(n+2)}$ only works once $n$ is known, and $n$ depends on the ligand's field strength, not on the metal ion alone. The same ion, $Fe^{2+}$ ($3d^6$), gives completely different values of $n$ in a weak-field versus a strong-field octahedral complex.
 
 ---
 

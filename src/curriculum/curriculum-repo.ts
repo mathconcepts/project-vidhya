@@ -53,6 +53,7 @@ import {
   getPrerequisites,
   type ConceptNode,
 } from '../constants/concept-graph';
+import { conceptScopeForStudent, type ConceptScope } from './student-exam-scope';
 import type {
   ConceptId,
   CurriculumNode,
@@ -73,7 +74,14 @@ const FREQUENCY_RELEVANCE: Record<ConceptNode['gate_frequency'], number> = {
   rare: 0.15,
 };
 
-/** The 10 topic slugs this graph is organized under (derived, not hand-typed). */
+/**
+ * Every topic slug in the MERGED graph (derived, not hand-typed).
+ *
+ * Despite the name this is not GATE-scoped and never was — it is derived
+ * from `ALL_CONCEPTS`, so with more than one pack installed it spans them
+ * all. Kept under its original name rather than renamed across call sites;
+ * the per-student scoping that matters happens inside the repo above.
+ */
 export const GATE_TOPIC_IDS: readonly string[] = Array.from(
   new Set(ALL_CONCEPTS.map(c => c.topic)),
 );
@@ -119,22 +127,76 @@ export interface ConceptGraphCurriculumRepoDeps {
    * never throws) rather than requiring every caller to inject one.
    */
   catalog: LearningObjectCatalog;
+
+  /**
+   * The student this repo is answering for, when one is known.
+   *
+   * Absent, the repo covers the whole merged graph — its behaviour before
+   * this parameter existed, and still the right answer for a build script or
+   * an admin diagnostic that has no student. Present, every node it resolves
+   * is scoped to that student's own exam(s) via
+   * `student-exam-scope.ts`, the one resolver the readiness routes, the quiz
+   * pool and the notebook coverage denominator also use.
+   *
+   * With one pack declaring concepts the distinction was invisible. With two
+   * it decides whether a GATE student's readiness engine can see, recommend
+   * and score JEE concepts.
+   */
+  studentId?: string | null;
 }
 
 export class ConceptGraphCurriculumRepo implements CurriculumRepo {
-  constructor(private deps: ConceptGraphCurriculumRepoDeps) {}
+  private scope: ConceptScope | null;
+
+  constructor(private deps: ConceptGraphCurriculumRepoDeps) {
+    this.scope = deps.studentId === undefined ? null : conceptScopeForStudent(deps.studentId);
+  }
+
+  /** The concept ids this repo may resolve; null means the whole graph. */
+  private scopedIds(): Set<string> | null {
+    return this.scope ? new Set(this.scope.conceptIds) : null;
+  }
+
+  /**
+   * The course label written onto every node this repo emits.
+   *
+   * This used to be the hardcoded `GATE_MA_COURSE` regardless of which pack
+   * declared the concept, so a JEE node would have claimed `course:
+   * 'gate-ma'`. Scoped, it names the student's own exam; unscoped it keeps
+   * the old literal, which is correct for the single-pack deployments that
+   * were the only ones that existed when it was written.
+   */
+  private course(): string {
+    return this.scope?.examIds[0] ?? GATE_MA_COURSE;
+  }
 
   async getNode(nodeId: ConceptId): Promise<CurriculumNode | null> {
+    const ids = this.scopedIds();
     const concept = CONCEPT_MAP.get(nodeId);
-    if (concept) return conceptToNode(concept);
-    if (GATE_TOPIC_IDS.includes(nodeId)) return topicToNode(nodeId);
+    if (concept) {
+      if (ids && !ids.has(concept.id)) return null;
+      return { ...conceptToNode(concept), course: this.course() };
+    }
+    if (GATE_TOPIC_IDS.includes(nodeId)) {
+      // A topic belongs to the student when any of its concepts does.
+      if (ids && !ALL_CONCEPTS.some((c) => c.topic === nodeId && ids.has(c.id))) return null;
+      return { ...topicToNode(nodeId), course: this.course() };
+    }
     return null;
   }
 
   async prereqsOf(nodeId: ConceptId): Promise<CurriculumNode[]> {
     // Topic-level nodes carry no prereqs in this graph (topics don't
     // depend on other topics here — only concepts depend on concepts).
-    return getPrerequisites(nodeId).map(conceptToNode);
+    //
+    // A prerequisite outside the student's scope is dropped rather than
+    // returned: cross-pack prerequisites are supported by the graph, but
+    // telling a JEE student to go shore up a GATE postgraduate concept would
+    // be worse than telling them nothing.
+    const ids = this.scopedIds();
+    return getPrerequisites(nodeId)
+      .filter((c) => !ids || ids.has(c.id))
+      .map((c) => ({ ...conceptToNode(c), course: this.course() }));
   }
 
   async objectsForNode(

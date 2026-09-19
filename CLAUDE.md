@@ -6086,3 +6086,241 @@ Key routing rules:
 - Mine/aggregate misconceptions → invoke misconception-miner
 - Generate mock exam / full practice test → invoke mock-exam
 - Weekly student email / progress report → invoke weekly-digest
+
+---
+
+### IIT JEE Main for Tamil Nadu board students — the second exam pack goes live (v4.85.0)
+
+v4.84.0 made the concept graph a MERGE of every installed pack, but
+`jee-main.yml` declared zero concepts, so the merge was a no-op and the
+platform had still only ever run one exam. That release shipped a deliberate
+tripwire — a test asserting exactly one pack declared concepts, with
+instructions to scope the unfiltered `ALL_CONCEPTS` reads BEFORE landing a
+second one. This release is that work plus the pack.
+
+**The pack.** `data/curriculum/jee-main.yml`'s 23 Mathematics ids are
+promoted out of `stub_concepts:` into a real `concepts:` block with a
+self-contained prerequisite DAG (JEE calculus builds on JEE's own algebra,
+not on GATE's postgraduate treatment of the same words). Physics and
+Chemistry stay stubs; `getSyllabus` reports the 41 remaining as unresolved
+rather than calling a part-migrated pack done. Graph: 101 → **124 concepts,
+two declaring packs**.
+
+**The cheap fix that closed the largest risk class.** `ConceptNode.id`
+uniqueness is enforced at boot — `buildConceptUniverse()` throws, naming both
+files. `ConceptNode.topic` had no such protection, and roughly twenty call
+sites select concepts BY TOPIC STRING off the merged universe with no exam
+filter: `getConceptsForTopic` itself, `syllabus/generator.ts`'s plan scope,
+`lesson-routes.ts`'s interleaving candidates, `student-model.ts`'s topic
+mastery averaging, `moat-operations.ts`'s GATE marks-weight table,
+`concept-resolve-routes.ts` (which caches its result at module scope, so the
+first topic queried would poison it across exams). GATE-MA already owns
+`calculus`, `linear-algebra`, `probability-statistics`,
+`differential-equations`, `complex-variables` and `vector-calculus` — the six
+names any other Indian engineering-entrance pack reaches for first. An
+un-namespaced JEE `calculus` would have merged two exams into one study plan,
+one mastery average and one interleaving pool, with **no id collision
+anywhere to reveal it**.
+
+So the JEE pack uses `jee-algebra`, `jee-calculus`,
+`jee-coordinate-geometry`, `jee-trigonometry`, `jee-vectors-3d`,
+`jee-probability-statistics`, and **`npm run ci:topic-namespace`** (gate 20,
+`src/curriculum/topic-namespace.ts` + `scripts/check-topic-namespace.ts`,
+the same logic-in-src/runner-in-scripts split `ci:variant-agreement` uses)
+refuses a topic string claimed by two packs. That makes the collision
+impossible instead of scoping twenty sites. It is a **floor, not a ceiling**:
+it removes the one input that makes those sites wrong, it does not make them
+correct in general, and the per-site work stays in TODOS.md. Its tests drive
+the pure collision finder with SYNTHETIC claims, because the real graph has
+one topic-owner per topic and a test running only the live path could never
+exercise the red branch.
+
+**The four sites namespacing can't help**, because they select by ID or by
+COUNT, now share one resolver (`src/curriculum/student-exam-scope.ts`):
+
+| Site | Was | Exam id came from |
+|---|---|---|
+| `api/readiness-routes.ts` | `allowedNodes` = every concept, so the CAT selector could recommend a JEE concept to a GATE student | `user.userId`; `getProfile` was already imported and already called in the same file |
+| `api/quiz-routes.ts` | same, for the checkpoint-quiz frontier | `studentId` was already parameter 1 of `frontierCandidates` |
+| `notebook/notebook-store.ts` | coverage denominator = `ALL_CONCEPTS.length`, so reported coverage silently halved | `notebook.user_id` |
+| `curriculum/curriculum-repo.ts` | every node the readiness engine sees, **and** a hardcoded `course: 'gate-ma'` a JEE node would have claimed | new optional `studentId` dep; absent, behaviour is exactly as before |
+
+Four independent fixes would have been four copies of one policy, free to
+drift — the bug class this file named in v4.25.0 when four declarations of
+the same model id disagreed. Degradation is explicit and **never empty**
+(registered exams → the active exam → the whole graph, with the `basis`
+reported): an empty `allowedNodes` deadlocks the readiness engine into
+`diagnose` and makes a quiz pool impossible to assemble. Two client-supplied
+concept ids that were previously checked only for existence
+(`?node=` on `/api/readiness/expected-score`, `concept_id` on
+`POST /api/practice/quiz/start`) are now checked against the student's own
+scope — with one pack "unknown id" was the only failure mode; with two, a
+GATE student could name a real JEE concept and have it scored.
+
+**The tripwire said "then delete this test."** It was REPLACED instead:
+deleting would have thrown the protection away at exactly the moment a THIRD
+pack becomes possible. Its successor asserts no topic string is claimed by
+two packs, that the four sites reference the shared resolver (a source grep,
+in the surveillance-invariant style — it catches the reversal no behavioural
+test would, because with today's two packs a GATE student's recommendations
+only visibly go wrong once JEE content is what gets recommended), and that
+the resolver never returns an empty scope.
+
+**Curriculum bridges — the piece that makes this TN content, not generic JEE
+content.** Every framing registry here was exam-framed: `pain-points.ts`, the
+atomic catalogue's `gate_examination_intent`, the attention-design
+hypothesis, `intent-profiles.yml`. Concept anchors (v4.83.0) added the
+real-world "what is this maths FOR". None of them answer the question a
+state-board student actually arrives with, which is **"have I seen this
+before, or is this new?"**
+
+That is not cosmetic for this audience. Researched with sources: a Tamil Nadu
+HSE student sitting JEE Main has board practicals 9–28 February, board theory
+papers 2–26 March, JEE Session 1 on 21–30 January (colliding with pre-board
+revision) and JEE Session 2 starting **2 April — six days after boards end**.
+Re-teaching integration, which TN teaches across two full chapters, is time
+not spent on skew lines, which it never teaches at all.
+
+`data/registry/curriculum-bridges/tn-hse-12-math.yml` records all 23
+concepts: **15 aligned, 6 partial, 2 gaps**, each naming the board chapter
+the claim rests on, each carrying `confidence: confirmed` or `probable` —
+`probable` where the published chapter list could not settle it, recorded
+rather than asserted, because a topic wrongly called "new" wastes this
+reader's scarcest resource. Plus three `surplus_board_topics` this exam never
+asks (Class 12 Discrete Mathematics, the partial-derivatives half of Ch. 8,
+and mathematical induction), so that time can be reclaimed once boards end.
+
+The three documented gaps, from the research:
+
+- **`three-d-geometry`** — TN's only 3D-adjacent chapter is Class 12
+  "Applications of Vector Algebra" and its confirmed content is vector-only.
+  JEE wants the full Cartesian machinery plus fluency switching between the
+  two forms mid-problem: direction cosines and ratios, skew lines and
+  shortest distance, angle between two planes.
+- **`parabola-ellipse-hyperbola`** — TN has **no standalone Class 11 conics
+  chapter at all**, so everything is compressed into one Class 12 chapter
+  where an NCERT student got two years. That chapter covers definitions and
+  standard equations; chord of contact, pole-polar, director and auxiliary
+  circles are not evidenced anywhere in it and are routine JEE question
+  types.
+- **`statistics-jee`** — TN teaches variance and standard deviation in
+  **Class 10** and never returns to it. JEE tests dispersion at Class 11–12
+  depth, two years after the student last saw it.
+
+It holds **no per-student data and never will**. A bridge entry is a claim
+about a PUBLISHED STATE SYLLABUS — identical for every student on that track,
+checkable against the board's own chapter list. The only per-student input is
+which track they picked, stored as `knowledge_track_id` on their exam
+registration since long before this registry (`TN-HSE-12-MATH` was already a
+registered `KnowledgeTrack` naming JEE Main as a target exam). No new column,
+no behavioural signal, nothing inferred.
+
+**`npm run ci:curriculum-bridge`** (gate 21) is blocking on COVERAGE as well
+as contract, like `ci:concept-anchors`: a half-written bridge is worse than
+none, because the concepts it silently omits are exactly the ones nobody
+thought about, and the student sees no line for them —
+indistinguishable from a concept where the board genuinely aligns. The
+contract also refuses **alarm framing** (`behind`, `weak`, `disadvantage`,
+`panic`, …): a gap is information, and this reader is already sitting two
+exam seasons eight weeks apart. Served as an additive `curriculum_bridge`
+field on `GET /api/lesson/:concept_id`; null for anonymous, unregistered, no
+board chosen, or a board with no authored bridge, so the lesson renders
+nothing rather than telling a CBSE student what the TN syllabus covered.
+
+**Three new template families, and why extending a locked list was right.**
+The 14 families in `template-families.yml` come from the founder's GATE
+Engineering Mathematics corpus. That is a POSTGRADUATE engineering-maths
+syllabus, so by construction it contains no coordinate geometry, no school
+trigonometry and no school-level algebraic manipulation — three whole JEE
+subject areas arrived with no honest family to land in. Filing conic sections
+under `vector`, or quadratic equations under `matrix`, would have satisfied
+the B12 completeness check while describing a teaching shape those concepts
+do not have. `coordinate_geometry`, `trigonometry` and `algebra` are appended
+(not interleaved, so the GATE-EM fourteen keep their source order and every
+concept that already resolved stays stable) and labelled as this repo's own
+extrapolation, the same treatment `z-transform` and `graph-theory` already
+get. `jee-algebra`, `jee-calculus` and `jee-probability-statistics` get full
+concept-by-concept splits with no topic default, exactly as `calculus` and
+`transform-theory` already do.
+
+**A fourth parallel truth, closed.** `generate-intent-tables.ts` had the
+`TemplateFamilyId` union hardcoded as a string literal inside its own output
+template — a third copy of the family list beside `TEMPLATE_FAMILIES` in
+`check-intent-catalogue.ts` and the `families:` block in the YAML. Adding
+families made the drift real: the YAML and the checker agreed, the generated
+union did not, and `tsc` rejected the freshly generated table against its own
+freshly generated type. Derived from the locked array now.
+
+**`jee-main` had no entry in the exam catalog**, so its six topics were
+claimed by no exam at all. `src/__tests__/exam-scoping-invariants.test.ts`
+caught it: a concept whose topic no exam lists makes its
+`generated_problems`/attempt/Elo/FSRS rows unreachable to any exam. Added
+with structural `topic_weights` derived from declared concept counts — NOT
+imported per-topic percentages. A widely-repeated claim that Mathematics'
+weightage rose to 35% in 2026 contradicts the corroborated equal-marks
+structure and has no NTA basis; none of it is encoded anywhere.
+
+**Content.** 23 concepts × 17 files (11 base atoms + 6 stance variants),
+authored by 7 parallel Claude Sonnet subagent batches against one shared
+brief, plus 6 topic authoring templates from an eighth. The brief carried the
+TN framing as a design constraint, not a footnote: be brisk on calculus and
+integration because this reader can already do them; teach chord of contact,
+pole-polar and the Cartesian form of a plane from first principles because
+they are genuinely new. `jee-vectors-3d`'s and `jee-coordinate-geometry`'s
+templates actively DISCOURAGE the `gif-scene` fence rather than defaulting to
+it — 3D content and two-curve constructs are things the safe `y=f(x)`
+evaluator cannot express honestly, extending `linear-algebra.yaml`'s own
+"don't invent a misleading scene" exclusion from a minority of concepts to
+most of a subject.
+
+None of the six new templates carries the top-level `stances:` opt-in key.
+That key asserts a topic is FINISHED — every concept carrying a shaken and an
+assured body for all three narrative atom types. Adding it while content was
+still being authored would have made the rollout figure claim something
+false.
+
+**What is deliberately NOT done, and what it blocks.** JEE Main's five
+compulsory NUMERICAL VALUE questions per subject: sources split on whether
+they carry the MCQs' −1 or the older +4/0 with no negative marking, and
+`jeemain.nta.nic.in` is unreachable from this environment's egress proxy, so
+the primary information bulletin could not settle it. `marking-constants.ts`
+is the ONE marking truth in this repo and `assessment_contracts` requires an
+`official_source_url` plus a `verified_at` — that requirement is the point.
+There is no `jee_main` MarkingStrategy and no contract row, so nothing grades
+against a JEE contract and nothing is quietly wrong; the dispute is recorded
+in `jee-main.yml`'s own `scoring:` block where an operator will find it. Same
+discipline as the Wolfram licensing gate in
+`docs/ops/content-verification-runbook.md` §0: ship the gate unfilled, name
+what it blocks. **It blocks authoring `nat` practice items for this pack**,
+and any quiz or mock exam that would grade one.
+
+**A process trap this pass fell into, recorded like the `grep -o` one.**
+`npm run ci` and the test suites were run, came back green, and that green
+was reported as validating the commit that had just been pushed. It was
+not: the working tree at that moment carried uncommitted self-corrections
+the authoring batches had applied to disk AFTER their concepts were
+committed, so the validation covered a tree that was strictly AHEAD of the
+pushed commit. CI disagreed, correctly — `4427fd7` was red on four
+interactive-spec blocks (`limits-jee`'s descending `t_min`/`t_max`, and
+`vectors-jee`'s mnemonic slider reaching `a1=0` and taking cos of the angle
+with a zero-length denominator), and the very next commit carried the
+fixes that made the local run green.
+
+The lesson is narrow and mechanical: **`git status --porcelain` must be
+empty before a gate run can be cited as evidence about a commit.** It is
+otherwise evidence about a tree nobody else will ever see, and that is a
+worse failure than a red gate, because it is a green report that is not
+true. This matters specifically when parallel authoring agents are still
+running — they edit on disk after reporting done, which is legitimate (a
+batch cannot evaluate `ci:variant-agreement`'s repeated-phrase rule until
+its whole topic exists) but means the tree moves under a validation run.
+
+**Also still open** (TODOS.md): practice items for all 23 concepts (the atoms
+landed, the graded item bank did not); past-exam questions mapped to JEE
+concepts, so `ci:la-walkthrough --topic=jee-*` has a test leg to check;
+`gbrain/fire.ts`'s module-scope encompassing closures, which have no exam id
+anywhere in their public API and are latent only because JEE declares no
+`encompasses:` edges yet; `content/build-content-bundle.ts`'s module-scope
+`VALID_CONCEPT_IDS`, which merging made more PERMISSIVE rather than broken;
+and the ~20 topic-string sites, which the namespace gate protects but does
+not fix.

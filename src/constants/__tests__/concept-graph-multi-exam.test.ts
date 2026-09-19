@@ -23,6 +23,7 @@ import {
   conceptsDeclaredByExam,
   ACTIVE_EXAM_CONCEPT_COUNT,
 } from '../concept-graph';
+import { conceptScopeForStudent } from '../../curriculum/student-exam-scope';
 import { CURRICULUM_DIR } from '../../curriculum/active-exam';
 
 describe('merged concept universe', () => {
@@ -44,15 +45,27 @@ describe('merged concept universe', () => {
     expect(CONCEPT_DECLARED_BY.size).toBe(ALL_CONCEPTS.length);
   });
 
-  it('keeps gate-ma at its full 101 — the merge changed nothing today', () => {
+  it('keeps gate-ma at its full 101 while the universe grows around it', () => {
+    // The number that must never silently regress is gate-ma's OWN share.
+    // The universe total moves whenever a pack is added, by design — this
+    // assertion used to read `expect(ALL_CONCEPTS).toHaveLength(101)`, which
+    // was the same statement only while one pack declared concepts.
     expect(conceptsDeclaredByExam('gate-ma')).toHaveLength(101);
-    expect(ALL_CONCEPTS).toHaveLength(101);
+    expect(ALL_CONCEPTS).toHaveLength(124);
   });
 
-  it('reports 0 for a stub pack that declares no concepts of its own', () => {
-    // jee-main references shared ids from its syllabus: and owns none. Zero is
-    // the honest answer, not something to round up to the graph total.
-    expect(conceptsDeclaredByExam('jee-main')).toHaveLength(0);
+  it('reports jee-main\'s own 23 — the Mathematics half it has migrated', () => {
+    // jee-main was a Phase-1 stub owning nothing; its Mathematics concepts
+    // are now real nodes. Physics and Chemistry are still stubs, so this
+    // number is the migrated half and not the pack's whole syllabus.
+    expect(conceptsDeclaredByExam('jee-main')).toHaveLength(23);
+  });
+
+  it('partitions the universe — both packs together account for every concept', () => {
+    const gate = conceptsDeclaredByExam('gate-ma').map((c) => c.id);
+    const jee = conceptsDeclaredByExam('jee-main').map((c) => c.id);
+    expect(gate.length + jee.length).toBe(ALL_CONCEPTS.length);
+    expect(new Set([...gate, ...jee]).size).toBe(ALL_CONCEPTS.length);
   });
 
   it('reports 0 for an exam id that does not exist at all', () => {
@@ -161,36 +174,70 @@ describe('a second pack that declares its own concepts', () => {
   });
 });
 
-describe('tripwire: the adaptive engines are not exam-scoped yet', () => {
-  it('fails the moment a second pack declares concepts, because ALL_CONCEPTS is read unfiltered', () => {
-    // This is a TRIPWIRE, not an invariant anyone wants forever.
-    //
-    // Merging every pack's concepts into one universe is correct for the
-    // graph. It is NOT yet correct for the call sites that read ALL_CONCEPTS
-    // as if it were one exam's syllabus, none of which filter by exam:
-    //
-    //   api/readiness-routes.ts   allowedNodes = every concept  -> nextBestAction
-    //                             could hand a GATE student a JEE concept
-    //   api/quiz-routes.ts        same, for the checkpoint quiz pool
-    //   gbrain/fire.ts            encompassing closures built across exams, so
-    //                             FIRe credit propagates over exam boundaries
-    //   notebook/notebook-store.ts coverage denominator becomes every exam's
-    //                             concepts, silently halving reported coverage
-    //   curriculum/guardrails.ts, curriculum/curriculum-repo.ts,
-    //   content/build-content-bundle.ts, syllabus/generator.ts
-    //                             (the last matches by TOPIC STRING, and topic
-    //                             names like `calculus` recur across exams)
-    //
-    // Behaviour is correct today only because exactly one pack declares
-    // concepts. Nothing else holds those call sites correct, so the next
-    // content PR that fills jee-main.yml's `concepts:` block would silently
-    // degrade readiness, quizzes, FIRe and coverage for every existing
-    // student, with no test failing.
-    //
-    // If you are here because this test went red: that is the signal to scope
-    // those reads by exam (conceptsDeclaredByExam, or an explicit exam filter
-    // on the request) BEFORE landing the pack. Then delete this test.
-    const contributing = CONCEPT_GRAPH_SOURCES.filter((s) => s.concept_count > 0);
-    expect(contributing.map((s) => s.exam_id)).toEqual(['gate-ma']);
+describe('exam scoping: the successor to the one-pack tripwire', () => {
+  // The test that used to live here asserted that exactly one pack declared
+  // concepts, and told whoever turned it red to scope the unfiltered
+  // ALL_CONCEPTS reads BEFORE landing a second pack, then delete it.
+  //
+  // jee-main declaring 23 Mathematics concepts turned it red. The scoping
+  // work it demanded is what these tests now hold in place. Deleting the
+  // tripwire outright would have thrown away the protection at exactly the
+  // moment a THIRD pack becomes possible, so it is replaced rather than
+  // removed — the invariant is different, the job is the same.
+  //
+  // Two mechanisms carry the load, because the broken call sites split into
+  // two kinds:
+  //
+  //   ~20 sites select concepts BY TOPIC STRING. They are made correct by
+  //   namespacing: a topic only one pack claims is already exam-scoped, so
+  //   those sites keep working unmodified. `ci:topic-namespace` enforces it.
+  //
+  //   4 sites select by ID or by COUNT, where namespacing buys nothing.
+  //   They share one resolver, src/curriculum/student-exam-scope.ts.
+
+  it('no topic string is claimed by two packs', () => {
+    const byTopic = new Map<string, Set<string>>();
+    for (const c of ALL_CONCEPTS) {
+      const owner = CONCEPT_DECLARED_BY.get(c.id);
+      if (!owner) continue;
+      const owners = byTopic.get(c.topic) ?? new Set<string>();
+      owners.add(owner);
+      byTopic.set(c.topic, owners);
+    }
+    const collisions = [...byTopic.entries()]
+      .filter(([, owners]) => owners.size > 1)
+      .map(([topic, owners]) => `${topic}: ${[...owners].join(' + ')}`);
+    expect(collisions).toEqual([]);
+  });
+
+  it('the four id-based call sites go through the shared scope resolver', () => {
+    // A source grep, deliberately, in the style of the surveillance
+    // invariants: it catches the reversal (someone putting an unfiltered
+    // ALL_CONCEPTS read back) that no behavioural test would, because with
+    // the current two packs a GATE student's recommendations only go wrong
+    // once JEE content is what gets recommended.
+    const root = path.resolve(__dirname, '../..');
+    const wired = [
+      'api/readiness-routes.ts',
+      'api/quiz-routes.ts',
+      'notebook/notebook-store.ts',
+      'curriculum/curriculum-repo.ts',
+    ];
+    const missing = wired.filter((rel) => {
+      const src = fs.readFileSync(path.join(root, rel), 'utf8');
+      return !src.includes('student-exam-scope');
+    });
+    expect(missing).toEqual([]);
+  });
+
+  it('the shared resolver never hands back an empty scope', () => {
+    // An empty allowedNodes deadlocks the readiness engine into `diagnose`
+    // and makes a quiz pool impossible to assemble, so every degradation
+    // path in conceptScopeForStudent ends wide rather than empty.
+    for (const studentId of [null, undefined, '', 'anon_nobody', 'no-such-student']) {
+      const scope = conceptScopeForStudent(studentId as string | null);
+      expect(scope.conceptIds.length, String(studentId)).toBeGreaterThan(0);
+      expect(['registered', 'active-exam', 'whole-graph']).toContain(scope.basis);
+    }
   });
 });

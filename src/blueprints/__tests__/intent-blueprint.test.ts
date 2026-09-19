@@ -30,6 +30,16 @@ const ALL_INTENTS: IntentId[] = [
   'pyq_targeted_practice',
 ];
 
+// NOTE (jee-main pack activation): these tests used `limits-jee` and
+// `vectors-jee` as stand-ins for "a concept id the graph does not know",
+// which is what they were while jee-main was a Phase-1 stub. They are real
+// graph concepts with a real template family now, so they take the family
+// path rather than the legacy 3-way heuristic. The fixtures below are
+// renamed to ids that are genuinely outside the graph, preserving each
+// test's original intent (the LEGACY fallback still works) rather than
+// re-pointing the assertions at the new behaviour, which would have
+// deleted the coverage.
+
 describe('buildIntentBlueprint', () => {
   it('the four intent_* rationale codes are registered in RATIONALE_CODES', () => {
     for (const code of Object.values(RATIONALE_BY_INTENT)) {
@@ -217,9 +227,9 @@ describe('buildIntentBlueprint', () => {
 });
 
 describe('buildTemplateBlueprint is unchanged by the intent-blueprint addition', () => {
-  it('limits-jee/medium/jee-main output matches the pre-existing shape', () => {
+  it('zz-not-in-graph-limit/medium/jee-main output matches the pre-existing shape', () => {
     const bp = buildTemplateBlueprint({
-      concept_id: 'limits-jee',
+      concept_id: 'zz-not-in-graph-limit',
       exam_pack_id: 'jee-main',
       target_difficulty: 'medium',
       topic_family: 'calculus',
@@ -232,9 +242,9 @@ describe('buildTemplateBlueprint is unchanged by the intent-blueprint addition',
     expect(practice.difficulty_mix).toEqual({ easy: 30, medium: 50, hard: 20 });
   });
 
-  it('vectors-jee/hard/jee-main with requires_pyq_anchor matches the pre-existing shape', () => {
+  it('zz-not-in-graph-vector/hard/jee-main with requires_pyq_anchor matches the pre-existing shape', () => {
     const bp = buildTemplateBlueprint({
-      concept_id: 'vectors-jee',
+      concept_id: 'zz-not-in-graph-vector',
       exam_pack_id: 'jee-main',
       target_difficulty: 'hard',
       topic_family: 'vectors',

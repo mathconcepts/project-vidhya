@@ -1,0 +1,17 @@
+# Concept anchors — jee-coordinate-geometry
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+version: 1
+topic: jee-coordinate-geometry
+concepts:
+  straight-lines:
+    anchor: "A city planner writes a new metro line's equation to find its exact crossing angle with a road."
+  circles-coordinate:
+    anchor: "If a car's brakes fail while rounding a circular curve, it flies off along the tangent line."
+  parabola-ellipse-hyperbola:
+    anchor: "ISRO's launch speed decides if a satellite's path is an ellipse, parabola, or escaping hyperbola."

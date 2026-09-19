@@ -1,0 +1,169 @@
+# Best-practice authoring templates for JEE Main Probability + Statistics
+# concepts (probability-jee, statistics-jee).
+#
+# NO top-level `stances:` opt-in key on this file. See jee-algebra.yaml's
+# header comment for the full reasoning — content for this topic is being
+# authored concurrently by other agents; add the key only once a real audit
+# confirms every concept below carries both stance bodies for all three
+# narrative atom types.
+#
+# Audience note: see data/registry/curriculum-bridges/tn-hse-12-math.yml.
+# probability-jee is `partial` — TN covers probability across two years
+# (Class 11 introduction, Class 12 distributions), but the exam's
+# multi-stage Bayes'-theorem problems (a chain of conditional events, not a
+# single conditioning step) are worth extra, dedicated practice rather than
+# assumed. statistics-jee is a documented `gap` and the most severe one in
+# the whole bridge: TN teaches variance and standard deviation in CLASS 10
+# and never returns to it in Class 11 or 12 — a two-year-old memory by the
+# time this student sits JEE Main. Treat probability-jee as sharpening a
+# recent, partial skill; treat statistics-jee as a full first-principles
+# refresher, not a "recall that..." reminder of something barely touched
+# in two years.
+
+topic_family: jee-probability-statistics
+
+intuition:
+  scaffold: count-or-refresh
+  guidance: |
+    For probability-jee: count one small, literal sample space by hand —
+    list outcomes, count favourable ones — before naming any formula, and
+    when the problem involves MULTIPLE conditioning steps (e.g. "given that
+    X happened, then given that Y also happened..."), walk through each
+    stage of the chain separately rather than jumping to the combined
+    formula. For statistics-jee: treat variance and standard deviation as
+    if genuinely new, because for this reader it effectively is — a Class
+    10 topic revisited after a two-year gap. Restate what these numbers
+    MEAN (how spread out the data is) before writing the formula. ELI5,
+    Indian English, gloss technical terms (e.g. "coefficient of variation"
+    — standard deviation as a fraction of the mean, used to compare spread
+    between two datasets with different scales) on first use.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Count one small, literal sample space by hand, or compute one small
+      dataset's mean and variance step by step, before any formula appears
+      in general form. End on the one number or picture to hold onto — no
+      summary, no reassurance.
+    assured: |
+      For probability-jee: skip the counting and go straight to which
+      conditional is actually being asked for in a multi-stage Bayes'
+      problem — the direction of P(A|B) vs P(B|A) reversed partway through
+      a chain is the single most common way marks are lost here. For
+      statistics-jee: skip straight to comparing two datasets via the
+      coefficient of variation, the case a confident reader is actually
+      tested on.
+
+formal_definition:
+  scaffold: axiom-or-formula
+  guidance: |
+    State Bayes' theorem, total probability, the binomial distribution's
+    PMF, or the variance/standard-deviation formula (for both grouped and
+    ungrouped data) with display math. Two-sentence prose cap. Name every
+    symbol once in plain words.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum. For probability-jee, favour a genuine multi-stage
+    Bayes' problem (three or more events in a chain) over a single-step
+    conditional — the exam-specific extra depth this reader needs. For
+    statistics-jee, work a full mean/variance/standard-deviation
+    computation for grouped data from scratch, showing the frequency table
+    step explicitly, since this reader hasn't touched grouped-data
+    statistics since Class 10. Steps separated by `\n---\n`. Final line
+    "Answer: ..." for :::verify. Include a probability-in-[0,1] check where
+    relevant.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      Identify the event/sample space (or the frequency table) as one
+      separate, visible step before any computation. For a multi-stage
+      Bayes' problem, handle one conditioning stage per step, never two at
+      once. End with the check shown explicitly (probability in [0,1]; or
+      variance is never negative).
+    assured: |
+      Name which conditional or independence assumption the problem
+      actually rests on before computing — skip re-deriving a sample space
+      a confident reader sets up mentally. For statistics, jump straight to
+      the comparison (coefficient of variation) rather than restating both
+      datasets' full workings.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs. For probability-jee: reversing P(A|B) and
+    P(B|A) partway through a multi-stage chain (the prosecutor's fallacy,
+    compounded), forgetting independence, double-counting in the sample
+    space. For statistics-jee: confusing variance with standard deviation
+    (forgetting the square root), using the ungrouped-data formula on
+    grouped data without the frequency weighting.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question in the worked_example's shape, smaller numbers.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the formula (Bayes', variance, standard deviation);
+    back gives it.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: tree-or-table
+  guidance: |
+    A decision tree or 2x2 grid for multi-stage conditional probability; a
+    frequency-table picture for grouped-data statistics, since seeing the
+    table laid out is what makes the grouped-data formula click for a
+    reader who hasn't used one in two years.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem with a one-line "when you see this
+    phrasing, do X" cue — e.g. "when the question chains 'given that... and
+    given that...', write out each conditioning stage as its own line
+    before combining them."
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for an easily-mixed-up rule (e.g. variance is
+    "squared spread", standard deviation is "un-squaring it back to the
+    original units").
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas (e.g. total probability
+    feeding into a Bayes' calculation, or mean deviation compared against
+    standard deviation on the same dataset).
+  bloom_floor: 4
+
+hook:
+  scaffold: surprise-result
+  guidance: |
+    For probability-jee: one small, countable multi-stage scenario with a
+    single surprising-but-checkable number. For statistics-jee: open by
+    naming plainly that this is a Class 10 idea being asked at JEE depth
+    after a long gap, then give one small dataset worked by hand.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One small, countable scenario (or one tiny dataset), worked to a
+      single checkable number — no framing about probability or statistics
+      in general.
+    assured: |
+      State the result that looks wrong until the multi-stage conditioning
+      (or the grouped-data weighting) is made explicit — that reversal is
+      the exam's favourite trap in this topic.

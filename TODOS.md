@@ -4,6 +4,67 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## JEE Main pack: the five things it still needs (2026-09-19)
+
+The pack went live in v4.85.0 — 23 Mathematics concepts, anchors, atoms,
+templates, a TN curriculum bridge, exam scoping. Five gaps remain, listed
+with what each blocks so none of them sit here being vaguely important.
+
+**1. The numerical-value marking rule. Blocks: `nat` practice items.**
+Sources split on whether JEE Main's five compulsory NVQs per subject carry
+the MCQs' −1 or the older +4/0. `jeemain.nta.nic.in` is unreachable from this
+environment's egress proxy, so the primary information bulletin could not
+settle it. There is deliberately no `jee_main` MarkingStrategy in
+`src/exams/marking-constants.ts` and no `assessment_contracts` row, so
+nothing grades against a JEE contract and nothing is quietly wrong. The
+dispute is recorded in `jee-main.yml`'s own `scoring:` block.
+**Trigger:** someone can open the current JEE Main information bulletin PDF.
+Read the marking section, then add the strategy (it must pass
+`marking-strategy-contract.ts`) and a contract row with the real
+`official_source_url` and `verified_at`.
+
+**2. Practice items. Blocks: everything graded.** The atoms landed; the
+graded item bank did not. All 23 concepts have lesson content and zero rows
+in `data/practice-items/`, so `/attempt/:id`, the checkpoint quiz and the
+readiness engine's practice arm have nothing to serve a JEE student.
+**Trigger:** immediately, for mcq/msq. `nat` items wait on item 1.
+Follow the hand-verification discipline the 123 Linear Algebra items used —
+every answer key recomputed by a second method before it ships.
+
+**3. Past-exam questions mapped to JEE concepts.**
+`frontend/public/data/pyq-bank.json` has none, so a JEE concept's
+walkthrough rail has no test leg and `check-la-walkthrough.ts --topic=jee-*`
+cannot report on it. **Trigger:** when real JEE papers are available to map.
+Note `exam_tested: false` exists for concepts real papers assume rather than
+test — use it rather than writing a question and filing it as past-exam
+material.
+
+**4. Physics and Chemistry. Blocks: calling jee-main a complete pack.**
+41 of its 64 concept_ids are still in `stub_concepts:`.
+`src/curriculum/__tests__/stub-exam-rule.test.ts` pins that 41 and asserts
+the migrated half is exactly the Mathematics section, so migrating the next
+subject is a deliberate edit there too. **Trigger:** when someone wants a
+JEE student's Physics or Chemistry to work at all. Same shape as the
+Mathematics migration: promote the ids, namespace the topics, author
+anchors + a bridge column + atoms, extend the exam catalog's `topics`.
+
+**5. The ~20 topic-string call sites. NOT closed, only protected.**
+`ci:topic-namespace` makes a topic-string collision impossible, which
+removes the input that makes those sites wrong. It does not make them
+correct: `getConceptsForTopic`, `syllabus/generator.ts`,
+`lesson-routes.ts`'s interleaving, `student-model.ts`'s topic mastery,
+`moat-operations.ts`'s marks weights and `concept-resolve-routes.ts`'s
+module-scope cache all still read the merged universe unfiltered.
+**Trigger:** the first time two packs need to SHARE a topic string for a
+legitimate reason, or the first time a site needs per-student topic scoping
+for its own sake. Several already have an exam id one frame up
+(`generator.ts` has `req.exam_id` thirteen lines earlier); three do not
+(`gbrain/fire.ts`'s module-scope closures — latent only because JEE
+declares no `encompasses:` edges yet; `content/build-content-bundle.ts`'s
+module-scope `VALID_CONCEPT_IDS`, which merging made more PERMISSIVE rather
+than broken, and which is build-time so `resolveActiveExamId()` would do;
+`gbrain/cross-exam-coverage.ts`, whose name is the joke).
+
 ## Live-QA #3 (remaining half): give `visual_analogy` a real text-to-picture binding (2026-09-18)
 
 The LAYOUT half shipped 2026-09-18 — see CLAUDE.md. Below 720px the leading

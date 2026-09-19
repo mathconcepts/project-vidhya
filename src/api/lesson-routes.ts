@@ -31,6 +31,7 @@ import { modelToLessonSnapshot, deriveConceptHints } from '../gbrain/integration
 import { isDeliveryLength } from '../content/delivery-length';
 import { getOrCreateStudentModel, readStudentModel } from '../gbrain/student-model';
 import { ALL_CONCEPTS, resolveConceptOrSection, SECTION_MAP } from '../constants/concept-graph';
+import { bridgeForStudent } from '../registry/curriculum-bridge';
 import { loadConceptAtoms, loadConceptMeta, ConceptNotFoundError, applyStudentOverrides, applyImprovedSince, applyAbVariants, applyMediaUrls } from '../content/atom-loader';
 import { rankAtomsForLesson } from '../personalization/lesson-wire';
 import { maybeQueueRegenForStudent } from '../content/concept-orchestrator';
@@ -592,6 +593,29 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
     const sources = await resolveSources({ concept_id: effective_concept_id });
     const base = composeBase(sources);
 
+    // "Have I seen this before, or is this new?" — one line, resolved from
+    // the student's own school curriculum (their `knowledge_track_id`, which
+    // they chose). null when they never picked a board, picked one with no
+    // authored bridge, or are anonymous: the lesson renders nothing rather
+    // than guessing what their school taught them.
+    //
+    // Wrapped, and reading `query` defensively, for one reason: an optional
+    // framing line must NEVER be able to take a lesson down. The first cut
+    // of this called `req.query.get(...)` in the outer try and 500'd the
+    // whole endpoint against a caller passing a plain object for `query`
+    // instead of URLSearchParams — which the existing regression test does,
+    // and which the rest of this handler already tolerates because its own
+    // query reads sit inside a swallowing inner try.
+    let curriculum_bridge = null;
+    try {
+      const q = req.query as { get?: (k: string) => string | null } | undefined;
+      const bridgeStudentId =
+        typeof q?.get === 'function' ? (q.get('student_id') ?? q.get('session_id')) : null;
+      curriculum_bridge = bridgeForStudent(bridgeStudentId, effective_concept_id);
+    } catch (err) {
+      console.warn(`[lesson-routes] curriculum bridge lookup failed: ${(err as Error).message}`);
+    }
+
     // ContentAtom v2: also attempt to load + select atoms. Additive — clients
     // that don't know about atoms[] still see the legacy components[] field.
     let atoms: ContentAtom[] = [];
@@ -672,7 +696,7 @@ async function handleGetBase(req: ParsedRequest, res: ServerResponse): Promise<v
       }
     }
 
-    sendJSON(res, { ...base, atoms });
+    sendJSON(res, { ...base, atoms, curriculum_bridge });
   } catch (err) {
     sendError(res, 500, (err as Error).message);
   }

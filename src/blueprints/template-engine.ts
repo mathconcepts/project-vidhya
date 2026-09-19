@@ -105,6 +105,9 @@ const RATIONALE_ID_BY_FAMILY: Record<TemplateFamilyId, string> = {
   statistics: 'family_statistics',
   numerical: 'family_numerical',
   discrete: 'family_discrete',
+  coordinate_geometry: 'family_coordinate_geometry',
+  trigonometry: 'family_trigonometry',
+  algebra: 'family_algebra',
 };
 
 /** The family a concept resolves to, or null when uncovered (legacy fallback applies). */

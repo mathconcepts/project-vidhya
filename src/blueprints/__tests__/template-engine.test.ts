@@ -3,27 +3,37 @@ import { buildTemplateBlueprint, TEMPLATE_VERSION } from '../template-engine';
 import { validateDecisions } from '../validator';
 import { CONCEPT_TEMPLATE_FAMILY, FAMILY_STAGE_SEQUENCES } from '../intent-tables.gen';
 
+// NOTE (jee-main pack activation): these tests used `limits-jee` and
+// `vectors-jee` as stand-ins for "a concept id the graph does not know",
+// which is what they were while jee-main was a Phase-1 stub. They are real
+// graph concepts with a real template family now, so they take the family
+// path rather than the legacy 3-way heuristic. The fixtures below are
+// renamed to ids that are genuinely outside the graph, preserving each
+// test's original intent (the LEGACY fallback still works) rather than
+// re-pointing the assertions at the new behaviour, which would have
+// deleted the coverage.
+
 describe('buildTemplateBlueprint', () => {
   it('produces a structurally-valid blueprint for limits/medium/jee-main', () => {
     const bp = buildTemplateBlueprint({
-      concept_id: 'limits-jee',
+      concept_id: 'zz-not-in-graph-limit',
       exam_pack_id: 'jee-main',
       target_difficulty: 'medium',
     });
     expect(validateDecisions(bp).ok).toBe(true);
-    expect(bp.metadata.concept_id).toBe('limits-jee');
+    expect(bp.metadata.concept_id).toBe('zz-not-in-graph-limit');
     expect(bp.metadata.target_difficulty).toBe('medium');
   });
 
   it('is deterministic for the same input', () => {
-    const a = buildTemplateBlueprint({ concept_id: 'limits-jee', exam_pack_id: 'jee-main', target_difficulty: 'medium' });
-    const b = buildTemplateBlueprint({ concept_id: 'limits-jee', exam_pack_id: 'jee-main', target_difficulty: 'medium' });
+    const a = buildTemplateBlueprint({ concept_id: 'zz-not-in-graph-limit', exam_pack_id: 'jee-main', target_difficulty: 'medium' });
+    const b = buildTemplateBlueprint({ concept_id: 'zz-not-in-graph-limit', exam_pack_id: 'jee-main', target_difficulty: 'medium' });
     expect(a).toEqual(b);
   });
 
   it('uses visual_analogy intuition for geometric topic family', () => {
     const bp = buildTemplateBlueprint({
-      concept_id: 'vectors-jee', exam_pack_id: 'jee-main', target_difficulty: 'medium', topic_family: 'vectors',
+      concept_id: 'zz-not-in-graph-vector', exam_pack_id: 'jee-main', target_difficulty: 'medium', topic_family: 'vectors',
     });
     expect(bp.stages[0].id).toBe('intuition');
     expect(bp.stages[0].atom_kind).toBe('visual_analogy');
@@ -40,14 +50,14 @@ describe('buildTemplateBlueprint', () => {
 
   it('skips discovery stage when difficulty=easy', () => {
     const bp = buildTemplateBlueprint({
-      concept_id: 'limits-jee', exam_pack_id: 'jee-main', target_difficulty: 'easy', topic_family: 'calculus',
+      concept_id: 'zz-not-in-graph-limit', exam_pack_id: 'jee-main', target_difficulty: 'easy', topic_family: 'calculus',
     });
     expect(bp.stages.find((s) => s.id === 'discovery')).toBeUndefined();
   });
 
   it('includes a manipulable discovery stage when difficulty>easy AND family fits', () => {
     const bp = buildTemplateBlueprint({
-      concept_id: 'limits-jee', exam_pack_id: 'jee-main', target_difficulty: 'medium', topic_family: 'calculus',
+      concept_id: 'zz-not-in-graph-limit', exam_pack_id: 'jee-main', target_difficulty: 'medium', topic_family: 'calculus',
     });
     const disc = bp.stages.find((s) => s.id === 'discovery');
     expect(disc).toBeDefined();
@@ -131,9 +141,9 @@ describe('buildTemplateBlueprint — template families (W2.1/E11)', () => {
   });
 
   it('concept ids outside the concept graph still fall through to the legacy 3-way heuristic unchanged', () => {
-    expect(CONCEPT_TEMPLATE_FAMILY['limits-jee']).toBeUndefined();
+    expect(CONCEPT_TEMPLATE_FAMILY['zz-not-in-graph-limit']).toBeUndefined();
     const bp = buildTemplateBlueprint({
-      concept_id: 'limits-jee', exam_pack_id: 'jee-main', target_difficulty: 'medium', topic_family: 'calculus',
+      concept_id: 'zz-not-in-graph-limit', exam_pack_id: 'jee-main', target_difficulty: 'medium', topic_family: 'calculus',
     });
     expect(bp.stages[0].rationale_id).toBe('concept_is_computational');
   });

@@ -134,11 +134,267 @@ syllabus:
       - probability-jee
       - statistics-jee
 
+
+# ---------------------------------------------------------------------------
+# Concepts — JEE Main Mathematics (Paper 1)
+#
+# The 23 Mathematics ids referenced by `syllabus:` above, promoted from
+# `stub_concepts:` into real concept-graph nodes. Physics and Chemistry stay
+# stubs: this pack is being filled subject by subject, and `getSyllabus()`
+# reports the still-unresolved ids honestly rather than calling a partly
+# migrated pack done.
+#
+# TOPIC STRINGS ARE NAMESPACED (`jee-algebra`, not `algebra`) AND THAT IS
+# LOAD-BEARING, not cosmetic. Concept IDS are global and uniqueness is
+# enforced at boot; `topic` had no such protection, and roughly twenty call
+# sites select concepts BY TOPIC STRING off the merged universe with no exam
+# filter (study-plan scope, topic mastery averaging, lesson interleaving,
+# the GATE marks-weight table). GATE-MA already owns `calculus`,
+# `linear-algebra`, `probability-statistics`, `differential-equations`,
+# `complex-variables` and `vector-calculus`. An un-namespaced JEE `calculus`
+# would silently merge two exams into one study plan and one mastery average,
+# with no id collision anywhere to reveal it. `npm run ci:topic-namespace`
+# now refuses a topic string claimed by two packs — see
+# src/curriculum/topic-namespace.ts for the full rationale.
+#
+# PREREQUISITES POINT ONLY AT OTHER JEE CONCEPTS. Cross-pack prerequisites
+# are supported by design (concept-graph.ts's header), but JEE's calculus
+# genuinely builds on JEE's own algebra, not on GATE's postgraduate-level
+# treatment of the same words. Keeping the DAG self-contained also keeps
+# prerequisite repair, FIRe propagation and the frontier spine inside one
+# exam for a student registered for one exam.
+#
+# `gate_frequency` is the ConceptNode field name (kept rather than renamed
+# across ~40 call sites); it means "how often this exam's papers ask it".
+# Values here are structural judgements — a named JEE Main syllabus unit with
+# several named subtopics that appears in every session is `high` — NOT
+# imported percentages. Per-topic JEE weightage numbers circulate widely on
+# SEO aggregator sites with no NTA basis (one widely-repeated claim of a 2026
+# "Mathematics = 35% weightage" change contradicts the corroborated
+# 100/100/100-mark, 75-question structure), so none are encoded here.
+# ---------------------------------------------------------------------------
+concepts:
+  # ---- Algebra -----------------------------------------------------------
+  - id: sets-relations-functions
+    topic: jee-algebra
+    label: Sets, Relations and Functions
+    description: Set operations, types of relations, domain and range, composition and inverse of functions
+    difficulty_base: 0.25
+    gate_frequency: medium
+    prerequisites: []
+
+  - id: quadratic-equations
+    topic: jee-algebra
+    label: Quadratic Equations
+    description: Nature of roots, relation between roots and coefficients, common roots, quadratic inequalities, location of roots in an interval
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+
+  - id: complex-numbers-algebra
+    topic: jee-algebra
+    label: Complex Numbers
+    description: Argand plane, modulus and argument, polar form, cube roots of unity, De Moivre's theorem
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - quadratic-equations
+
+  - id: permutations-combinations
+    topic: jee-algebra
+    label: Permutations and Combinations
+    description: Fundamental counting principle, arrangements with repetition and restriction, selections, grouping and distribution
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+
+  - id: binomial-theorem
+    topic: jee-algebra
+    label: Binomial Theorem
+    description: General and middle terms, greatest coefficient, binomial coefficient identities, applications to divisibility
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - permutations-combinations
+
+  - id: sequences-series
+    topic: jee-algebra
+    label: Sequences and Series
+    description: Arithmetic, geometric and harmonic progressions, means and their inequalities, sum of special series, telescoping
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+
+  - id: matrices-and-determinants
+    topic: jee-algebra
+    label: Matrices and Determinants
+    description: Determinant properties, adjoint and inverse, solving linear systems, consistency conditions, elementary row operations
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+
+  # ---- Trigonometry ------------------------------------------------------
+  - id: trigonometric-functions
+    topic: jee-trigonometry
+    label: Trigonometric Functions and Equations
+    description: Identities, transformations, general solution of trigonometric equations, properties of triangles
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+
+  - id: inverse-trigonometric
+    topic: jee-trigonometry
+    label: Inverse Trigonometric Functions
+    description: Principal value branches, domain and range, identities and the sum and difference formulae with their validity conditions
+    difficulty_base: 0.5
+    gate_frequency: medium
+    prerequisites:
+      - trigonometric-functions
+
+  - id: heights-distances
+    topic: jee-trigonometry
+    label: Heights and Distances
+    description: Angle of elevation and depression, problems in one and two vertical planes
+    difficulty_base: 0.3
+    gate_frequency: low
+    prerequisites:
+      - trigonometric-functions
+
+  # ---- Calculus ----------------------------------------------------------
+  - id: limits-jee
+    topic: jee-calculus
+    label: Limits
+    description: Standard limits, indeterminate forms, L'Hopital's rule, limits involving trigonometric, exponential and logarithmic functions
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+      - sequences-series
+
+  - id: continuity-differentiability-jee
+    topic: jee-calculus
+    label: Continuity and Differentiability
+    description: Continuity at a point and on an interval, differentiability, chain rule, implicit and parametric differentiation, differentiation of inverse functions
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - limits-jee
+
+  - id: applications-of-derivatives
+    topic: jee-calculus
+    label: Applications of Derivatives
+    description: Rate of change, tangents and normals, monotonicity, maxima and minima, Rolle's and Lagrange's mean value theorems
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - continuity-differentiability-jee
+
+  - id: indefinite-integration
+    topic: jee-calculus
+    label: Indefinite Integration
+    description: Standard integrals, substitution, integration by parts, partial fractions, integrals of rational and irrational forms
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - continuity-differentiability-jee
+      - trigonometric-functions
+
+  - id: definite-integration
+    topic: jee-calculus
+    label: Definite Integration and Area
+    description: Fundamental theorem, properties of definite integrals, limit of a sum, area bounded by curves
+    difficulty_base: 0.55
+    gate_frequency: high
+    prerequisites:
+      - indefinite-integration
+
+  - id: differential-equations-jee
+    topic: jee-calculus
+    label: Differential Equations
+    description: Order and degree, variable separable, homogeneous and linear first-order equations, formation of a differential equation
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - indefinite-integration
+
+  # ---- Coordinate Geometry ----------------------------------------------
+  - id: straight-lines
+    topic: jee-coordinate-geometry
+    label: Straight Lines
+    description: Forms of the equation of a line, angle between two lines, family of lines, angle bisectors, pair of straight lines
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - sets-relations-functions
+
+  - id: circles-coordinate
+    topic: jee-coordinate-geometry
+    label: Circles
+    description: General equation, tangent and normal, chord of contact, radical axis, family of circles, orthogonal intersection
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - straight-lines
+
+  - id: parabola-ellipse-hyperbola
+    topic: jee-coordinate-geometry
+    label: Conic Sections
+    description: Standard equations and parametric forms, tangent and normal, chord of contact, pole and polar, director and auxiliary circles
+    difficulty_base: 0.65
+    gate_frequency: high
+    prerequisites:
+      - circles-coordinate
+
+  # ---- Vectors and 3D ----------------------------------------------------
+  - id: vectors-jee
+    topic: jee-vectors-3d
+    label: Vector Algebra
+    description: Dot and cross product, scalar and vector triple products, geometric applications and vector proofs
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - trigonometric-functions
+
+  - id: three-d-geometry
+    topic: jee-vectors-3d
+    label: Three Dimensional Geometry
+    description: Direction cosines and ratios, line and plane in vector and Cartesian form, skew lines and shortest distance, angle between planes, distance of a point from a plane
+    difficulty_base: 0.6
+    gate_frequency: high
+    prerequisites:
+      - vectors-jee
+      - straight-lines
+
+  # ---- Probability and Statistics ----------------------------------------
+  - id: probability-jee
+    topic: jee-probability-statistics
+    label: Probability
+    description: Conditional probability, independence, total probability and Bayes' theorem, binomial distribution
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - permutations-combinations
+
+  - id: statistics-jee
+    topic: jee-probability-statistics
+    label: Statistics
+    description: Mean, median and mode for grouped and ungrouped data, mean deviation, variance, standard deviation, coefficient of variation
+    difficulty_base: 0.35
+    gate_frequency: medium
+    prerequisites:
+      - sequences-series
+
 # ---------------------------------------------------------------------------
 # Stub-exam rule (CEO plan §6 baseline) — every concept_id above is declared
-# here because none of them have a real node in the concept graph yet
-# (src/constants/concept-graph.ts / data/curriculum/gate-ma.yml's concepts:
-# section is GATE-only today). exam-loader.ts refuses to load a concept_id
+# here because they have no real node in the concept graph yet. The 23
+# Mathematics ids were promoted into this pack's own `concepts:` block above
+# and removed from this list; Physics and Chemistry are still stubs.
+# exam-loader.ts refuses to load a concept_id
 # that is neither a real node nor listed here — a Phase-1 stub exam says so
 # explicitly instead of relying on a warning that scrolls by in server logs.
 # Remove an id from this list once it gets a real concept-graph entry.
@@ -148,22 +404,15 @@ stub_concepts:
   - aldehydes-ketones-acids
   - alternating-current
   - amines-and-diazonium
-  - applications-of-derivatives
   - atomic-structure
   - atoms-and-nuclei
-  - binomial-theorem
   - biomolecules
   - capacitance
   - chemical-bonding
   - chemical-kinetics
-  - circles-coordinate
-  - complex-numbers-algebra
-  - continuity-differentiability-jee
   - coordination-compounds
   - current-electricity
   - d-and-f-block
-  - definite-integration
-  - differential-equations-jee
   - dual-nature-matter
   - electromagnetic-induction
   - electrostatics-coulomb
@@ -171,40 +420,24 @@ stub_concepts:
   - equilibrium-ionic
   - gravitation
   - haloalkanes-haloarenes
-  - heights-distances
   - hydrocarbons
-  - indefinite-integration
-  - inverse-trigonometric
   - kinematics-1d
   - kinematics-2d
-  - limits-jee
   - magnetic-effects
-  - matrices-and-determinants
   - mole-concept
   - newtons-laws
   - oscillations-shm
   - p-block-elements
-  - parabola-ellipse-hyperbola
   - periodic-table-trends
-  - permutations-combinations
   - polymers
-  - probability-jee
-  - quadratic-equations
   - ray-optics
   - redox-and-electrochemistry
   - rotational-mechanics
   - semiconductor-electronics
-  - sequences-series
-  - sets-relations-functions
   - solid-state
   - solutions-and-colligative
-  - statistics-jee
-  - straight-lines
   - thermodynamics-chemistry
-  - three-d-geometry
-  - trigonometric-functions
   - units-and-measurements
-  - vectors-jee
   - wave-optics
   - waves-mechanical
   - work-energy-power
@@ -212,8 +445,33 @@ stub_concepts:
 # ---------------------------------------------------------------------------
 # Score interpretation
 # ---------------------------------------------------------------------------
+# The MCQ rule below (+4 / -1 / 0) is well corroborated: four independent
+# secondary sources agree, alongside the 100/100/100-mark, 75-question,
+# 25-per-subject Paper 1 structure.
+#
+# WHAT IS NOT SETTLED, and is deliberately not encoded anywhere: whether the
+# five compulsory NUMERICAL VALUE questions per subject carry the same -1 as
+# the MCQs, or the older +4/0 rule with no negative marking. Secondary
+# sources split on it, and jeemain.nta.nic.in is unreachable from this
+# environment's egress proxy, so the primary information bulletin could not
+# settle it. Also circulating with no NTA basis, and likewise not encoded: a
+# claim that Mathematics' weightage rose to 35% in 2026, which contradicts
+# the corroborated equal-marks structure.
+#
+# This block therefore describes MCQ marking only. There is no `jee_main`
+# MarkingStrategy in src/exams/marking-constants.ts and no row in
+# `assessment_contracts` — that table requires an `official_source_url` and a
+# `verified_at`, which is the point. Nothing grades against a JEE contract
+# today, so nothing is currently wrong; a guess would have made it wrong
+# quietly. Same discipline as the Wolfram licensing gate in
+# docs/ops/content-verification-runbook.md §0: ship the gate unfilled and
+# name what it blocks.
+#
+# WHAT IT BLOCKS: authoring `nat` practice items for this pack, and any
+# mock-exam or quiz that grades one. Read the current JEE Main information
+# bulletin PDF at jeemain.nta.nic.in, then add the strategy.
 scoring:
   marks_per_correct: 4
-  marks_per_incorrect: -1
+  marks_per_incorrect: -1      # MCQ (Section A) only — see the note above
   marks_per_unattempted: 0
   pass_mark_estimate: 90  # rough cutoff for NIT eligibility; varies by category/year

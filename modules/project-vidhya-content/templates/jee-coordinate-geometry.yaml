@@ -1,0 +1,195 @@
+# Best-practice authoring templates for JEE Main Coordinate Geometry
+# concepts (straight-lines, circles-coordinate, parabola-ellipse-hyperbola).
+#
+# NO top-level `stances:` opt-in key on this file. See jee-algebra.yaml's
+# header comment for the full reasoning — content for this topic is being
+# authored concurrently by other agents; add the key only once a real audit
+# confirms every concept below carries both stance bodies for all three
+# narrative atom types.
+#
+# Audience note: see data/registry/curriculum-bridges/tn-hse-12-math.yml.
+# All three concepts here are `partial`, not `aligned` — genuinely the most
+# important distinction of the six new templates. TN's Class 11/12
+# syllabus gives the STANDARD forms (a line's equation, a circle's general
+# equation, the conics' standard equations) but stops there. Chord of
+# contact, pole-polar, family of lines/circles, radical axis, and the
+# director/auxiliary circle are NOT in the TN chapter list and must be
+# taught from first principles, not "recalled." Every guidance string below
+# should explicitly separate "you already have this" (the standard forms,
+# tangent/normal in the basic case) from "this is genuinely new" (the
+# advanced constructions) rather than blurring the two together.
+
+topic_family: jee-coordinate-geometry
+
+intuition:
+  scaffold: locus-before-equation
+  guidance: |
+    Lead with the LOCUS — the geometric condition a point must satisfy — and
+    only then write down the equation that captures it. This is the natural
+    order for a first encounter with a genuinely new construction (chord of
+    contact, radical axis, pole-polar): first say what the object IS
+    geometrically ("the chord of contact is the line joining the two points
+    where tangents from an external point touch the circle"), then derive
+    or state the equation. For pieces the reader already has (basic tangent/
+    normal, standard forms), say so explicitly in one line before moving to
+    what's new, so a confident reader doesn't waste time waiting for a
+    review of ground they already hold. ELI5, Indian English, gloss any
+    unfamiliar term (e.g. "director circle" — the circle traced by points
+    from which the two tangents to a conic meet at a right angle) on first
+    use.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Describe the locus in plain words first — where the point IS and
+      what it's doing — with one concrete numeric example (one specific
+      circle, one specific external point), before any equation appears.
+      End on the one picture to hold onto, not a summary of what was said.
+    assured: |
+      Skip straight to the construction the school syllabus never covered —
+      pole-polar, radical axis, chord of contact, family of curves through
+      an intersection — and the one condition that's easy to get backwards
+      (e.g. which point is the pole and which line is the polar). Give a
+      genuine counterexample, not a restatement.
+
+formal_definition:
+  scaffold: coordinate-form
+  guidance: |
+    State the equation in full display-math form, with every constant
+    named (e.g. for a circle, centre and radius; for a conic, the
+    eccentricity and the semi-latus rectum). Two-sentence prose cap.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum. Favour a problem shape the school course wouldn't
+    have drilled — finding the chord of contact from an external point,
+    checking whether two circles intersect orthogonally, finding the
+    equation of the polar of a point with respect to a conic — over a bare
+    "find the equation of this line" problem. Steps separated by `\n---\n`.
+    Final line "Answer: ..." for :::verify.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step: identify the given point/line/circle, write down
+      the relevant standard form, substitute, simplify. Push every "why" —
+      why this formula applies here — into the walkthrough's prompts/hints.
+      End with an explicit check (does the resulting line actually touch
+      the circle at those two points?).
+    assured: |
+      Lead with the property that shortcuts the algebra — using the family
+      of circles through two given circles' intersection instead of solving
+      simultaneously, using the polar's equation directly instead of
+      finding both tangent points first — and name the condition that makes
+      it valid.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, weighted toward the genuinely new material:
+    swapping which point is the pole and which line is the polar, using
+    the tangent formula at a point ON the circle when the given point is
+    actually OUTSIDE it (chord of contact case), sign errors in the radical
+    axis when the two circles' equations aren't both written with a
+    coefficient of 1 on x^2 and y^2.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question in the same shape as the worked_example, smaller
+    numbers.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the standard form or condition; back gives it.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: picture-the-locus
+  guidance: |
+    A static picture of the locus — the circle, the two tangent lines and
+    the chord of contact; the two circles and their radical axis; the conic
+    with its polar line — is worth more here than a formula. Describe what
+    the reader should be able to see, in words, since coordinate geometry
+    is inherently visual and words alone under-serve it.
+
+    When the concept reduces to a plottable curve (a specific circle,
+    parabola, ellipse, or line), emit a fenced gif-scene block:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"sqrt(4 - x^2)","x_range":[-2,2],"y_range":[-1,3],"frames":30,"fps":12}
+    ```
+
+    Allowed tokens: x, t, +, -, *, /, ^, parens, numbers, sin/cos/tan/log/
+    ln/exp/sqrt/abs/pi/e. OMIT for anything that needs two curves at once
+    or an implicit relation the safe evaluator can't express as y=f(x) —
+    never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem with a one-line "when you see this
+    phrasing, do X" cue — e.g. "when the question mentions tangents drawn
+    FROM an external point, you need the chord of contact, not the tangent
+    at a point on the curve."
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line distinguishing two easily-confused constructs
+    (e.g. tangent at a point on the curve vs. chord of contact from an
+    external point).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two ideas from this concept family (e.g. a line's
+    family of curves combined with a circle's tangent condition).
+  bloom_floor: 4
+
+hook:
+  scaffold: locus-question
+  guidance: |
+    Open on one concrete geometric picture — a specific circle, a specific
+    external point — small enough to sketch mentally. For the genuinely new
+    material (pole-polar, radical axis), say plainly that this is new
+    ground, not a review, so the reader isn't left hunting for a school
+    memory that doesn't exist.
+
+    Fuse the hook into a scripted beat sequence: emit a fenced
+    interactive-spec block at the end of the body. Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats. Exactly ONE beat carries a "trap", drawn
+    from this concept's own common-traps.md. OMIT the fence for concepts
+    that don't reduce to a 2D parametric/trace scene (most coordinate
+    geometry constructions involve two curves or an implicit relation —
+    check first rather than forcing a plot).
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete picture, one small numeric example, worked through
+      completely. No history, no promise of what's coming — just the one
+      thing that works right now.
+    assured: |
+      State the sharpest form of the construction and the one place
+      students commonly swap two roles (pole/polar, or which circle's
+      equation the radical axis is subtracted from which).

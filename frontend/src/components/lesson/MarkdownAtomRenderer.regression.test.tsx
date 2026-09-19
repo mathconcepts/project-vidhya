@@ -82,14 +82,20 @@ describe('MarkdownAtomRenderer — regression on seed atoms', () => {
   it('covers every concept that has an atoms/ directory', () => {
     // The list is derived, so this asserts the derivation actually found the
     // corpus rather than an empty or truncated slice of it.
-    expect(CONCEPTS.length).toBe(101);
+    // 101 GATE-MA + 23 JEE Main Mathematics. The pin is the point of this
+    // test — it went red when the jee-main pack landed, which is exactly the
+    // signal it exists to give. Derived from disk, so it stays honest.
+    expect(CONCEPTS.length).toBe(124);
   });
 
-  it('loads all 1113 base seed atoms', () => {
+  it('loads all 1366 base seed atoms', () => {
     // Pinned so a seed atom cannot silently disappear. Recompute and update
     // deliberately when base content is genuinely added or removed; a change
     // here should always be something an author meant to do.
-    expect(atoms.filter((a) => !a.isVariant).length).toBe(1113);
+    // 1113 + 253, and 253 is exactly 23 new concepts x 11 base atom types.
+    // The arithmetic is recorded because a count that moves by an amount
+    // nobody can account for is the failure this pin guards against.
+    expect(atoms.filter((a) => !a.isVariant).length).toBe(1366);
   });
 
   it('loads the authored stance variants too', () => {

@@ -1,0 +1,32 @@
+# Concept anchors — jee-algebra
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+#
+# Audience: Class 11-12 students preparing for JEE Main — not the
+# postgraduate-engineering register of the GATE anchors in this same
+# directory. Where a concept shares a name with a GATE concept
+# (complex-numbers-algebra vs. complex-numbers, matrices-and-determinants
+# vs. linear-algebra's matrix concepts), the anchor below is written fresh
+# for this audience rather than copied across.
+version: 1
+topic: jee-algebra
+concepts:
+  sets-relations-functions:
+    anchor: "A UPI app's phone-to-bank-account link is a function: one input, exactly one output."
+  quadratic-equations:
+    anchor: "A cricketer's throw traces a quadratic path; its discriminant says if it clears the fielder."
+  complex-numbers-algebra:
+    anchor: "ISRO spaces identical satellites evenly around an orbit using the geometry of roots of unity."
+  permutations-combinations:
+    anchor: "An IPL season's fixture list counts team pairings with combinations, since order doesn't matter."
+  binomial-theorem:
+    anchor: "A bank compounding your deposit for years is literally expanding a binomial power term by term."
+  sequences-series:
+    anchor: "Census projections model a town's population growth as a geometric progression, decade by decade."
+  matrices-and-determinants:
+    anchor: "A factory's three-ingredient mix is solved by testing if its equations' matrix is consistent."

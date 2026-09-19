@@ -103,16 +103,32 @@ export type Intent = (typeof INTENTS)[number];
 const INTENT_SET: ReadonlySet<string> = new Set(INTENTS);
 
 /**
- * The 14 locked template families (W2.1/E11) — mirrors
- * template-families.yml's own header ("schema_version 1 is locked").
- * Iteration order here is ALSO the canonical rendering order
- * scripts/generate-intent-tables.ts uses for FAMILY_STAGE_SEQUENCES, so a
- * regen is byte-diff-clean run to run.
+ * The locked template families (W2.1/E11) — mirrors template-families.yml's
+ * own header ("schema_version 1 is locked"). Iteration order here is ALSO
+ * the canonical rendering order scripts/generate-intent-tables.ts uses for
+ * FAMILY_STAGE_SEQUENCES, so a regen is byte-diff-clean run to run.
+ *
+ * The first fourteen are the founder's GATE Engineering Mathematics
+ * content-generation spec, verbatim. The last three were added when the
+ * jee-main pack promoted its 23 Mathematics concepts into the concept
+ * graph: that corpus is a POSTGRADUATE engineering-maths syllabus and so
+ * contains no coordinate geometry, no school trigonometry and no
+ * school-level algebraic manipulation. Three whole JEE subject areas
+ * arrived with no honest family to land in.
+ *
+ * Extending the lock is the deliberate act this list exists to force. The
+ * alternative — filing conic sections under `vector` or quadratic equations
+ * under `matrix` — would have satisfied B12 while describing a teaching
+ * shape those concepts do not have. The three additions are appended, not
+ * interleaved, so the GATE-EM fourteen keep their source order and the
+ * generated tables stay stable for every concept that already resolved.
  */
 export const TEMPLATE_FAMILIES = [
   'matrix', 'eigen', 'limit', 'derivative', 'integral', 'optimization',
   'vector', 'ode', 'pde', 'complex', 'probability', 'statistics',
   'numerical', 'discrete',
+  // Beyond the 116-topic GATE-EM corpus — see the note above.
+  'coordinate_geometry', 'trigonometry', 'algebra',
 ] as const;
 export type TemplateFamilyId = (typeof TEMPLATE_FAMILIES)[number];
 const TEMPLATE_FAMILY_SET: ReadonlySet<string> = new Set(TEMPLATE_FAMILIES);
@@ -696,7 +712,7 @@ export function loadTemplateFamilies(filePath: string = TEMPLATE_FAMILIES_PATH):
   }
 }
 
-/** B8: exactly the 14 locked template families are present under families:. */
+/** B8: exactly the locked template families are present under families:. */
 export function checkB8_TemplateFamilySet(families: TemplateFamiliesFile): CheckResult {
   const violations: string[] = [];
   const present = new Set(Object.keys(families.families ?? {}));
@@ -708,7 +724,7 @@ export function checkB8_TemplateFamilySet(families: TemplateFamiliesFile): Check
     if (!TEMPLATE_FAMILY_SET.has(actual)) violations.push(`families.${actual} is not one of the locked 14 families`);
   }
 
-  return result('B8 exactly the 14 locked template families', violations);
+  return result('B8 exactly the locked template families', violations);
 }
 
 /** B9: every family stage's id/atom_kind is a real runtime StageKind/AtomKind. */

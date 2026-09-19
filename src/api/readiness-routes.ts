@@ -92,6 +92,7 @@ import {
 import { getCompositeContentChecker } from '../readiness/composite-content-checker';
 import { makeDueReviewSource } from '../readiness/due-cards';
 import { getProfile } from '../session-planner/exam-profile-store';
+import { conceptIdsForStudent } from '../curriculum/student-exam-scope';
 import type { Action } from '../core/interfaces';
 import {
   recordArmSelection,
@@ -352,23 +353,30 @@ export class ExamProfileSyllabusContext implements SyllabusContextProvider {
 
 /**
  * Resolve which curriculum nodes are in scope for a student's
- * `nextBestAction()` / `expectedScore()` call. Honest, minimal: the
- * student's registered exam(s) don't currently carry a concept-graph
- * mapping (exam-profile-store predates concept-graph.ts), so this falls
- * back to every concept in the graph — the only course
- * `ConceptGraphCurriculumRepo` covers today (see that file's header).
+ * `nextBestAction()` / `expectedScore()` call.
+ *
+ * This used to return every concept in the graph, with a docblock saying a
+ * future phase should scope it once an exam-to-concept-graph mapping existed
+ * beyond GATE-MA. That mapping exists now (v4.84.0's merged multi-exam
+ * graph), and the jee-main pack declaring 23 concepts is what made the
+ * unscoped read wrong rather than merely imprecise: a GATE student would
+ * have had JEE concepts recommended to them by the CAT selector, with
+ * nothing failing.
+ *
+ * `conceptIdsForStudent` (src/curriculum/student-exam-scope.ts) is the one
+ * resolver four call sites share, so this policy cannot drift between them.
+ * It degrades explicitly and never empty — an empty allowedNodes deadlocks
+ * the engine into `diagnose`.
  *
  * Deliberately the ~80 CONCEPT ids, not the 10 coarser topic ids:
  * `generated_problems.concept_id` (what `PgLearningObjectCatalog` matches
  * `CatalogQuery.skillId` against) is populated with concept-level ids
  * (e.g. 'eigenvalues'), and `StudentModel.abilityFor()` / FSRS cards are
  * tracked per concept too — passing topic ids here would make every
- * catalog lookup and ability lookup miss. A future phase should scope
- * this per the student's actual registered exam once exam→concept-graph
- * mapping exists beyond GATE-MA.
+ * catalog lookup and ability lookup miss.
  */
-function resolveAllowedNodes(): string[] {
-  return ALL_CONCEPTS.map(c => c.id);
+function resolveAllowedNodes(studentId: string | null): string[] {
+  return conceptIdsForStudent(studentId);
 }
 
 // ────────────────────────────────────────────────────────────────────
@@ -386,12 +394,15 @@ function resolveAllowedNodes(): string[] {
  * Rebuilt per-request (cheap — every dep here is either a cached
  * singleton accessor or a stateless wrapper) rather than cached at
  * module scope, so a fresh DATABASE_URL / catalog swap doesn't require a
- * server restart to take effect.
+ * server restart to take effect. That per-request rebuild is also what lets
+ * `studentId` be threaded in: the curriculum repo scopes every node it
+ * resolves to that student's own exam, which a module-scope singleton could
+ * not do.
  */
-function buildReadinessEngine() {
+function buildReadinessEngine(studentId: string | null) {
   const catalog: LearningObjectCatalog = getLearningObjectCatalog();
   const studentModel = getStudentModel();
-  const curriculum = new ConceptGraphCurriculumRepo({ catalog });
+  const curriculum = new ConceptGraphCurriculumRepo({ catalog, studentId });
   const selector = new ProtoCATSelector({ studentModel, catalog });
   const policy = makeMotivationAwarePolicy({ motivation: getMotivationSource() });
   const syllabus = new ExamProfileSyllabusContext();
@@ -469,8 +480,8 @@ async function handleNextAction(req: ParsedRequest, res: ServerResponse): Promis
     : 15;
 
   try {
-    const engine = buildReadinessEngine();
-    const allowedNodes = resolveAllowedNodes();
+    const engine = buildReadinessEngine(user.userId);
+    const allowedNodes = resolveAllowedNodes(user.userId);
     const action = await engine.nextBestAction(user.userId, { timeBudgetMin, allowedNodes });
 
     // Honest cold-start framing: a diagnose fallback with no objectId
@@ -517,7 +528,7 @@ async function handleExpectedScore(req: ParsedRequest, res: ServerResponse): Pro
   if (!user) return;
 
   try {
-    const engine = buildReadinessEngine();
+    const engine = buildReadinessEngine(user.userId);
     // /investigate (2026-09-08, "competency moving to the right") — an
     // optional single-concept scope. Without it this stays the existing
     // whole-syllabus aggregate every caller before this got; WalkthroughRail
@@ -526,8 +537,15 @@ async function handleExpectedScore(req: ParsedRequest, res: ServerResponse): Pro
     // concept graph here — an unknown id simply has no node to score,
     // degrading honestly to the same `potential === 0` "building your
     // baseline" branch below rather than a fabricated number.
+    //
+    // It IS now checked against the student's own exam scope. With one pack
+    // installed "unknown id" was the only failure mode; with two, a GATE
+    // student could pass a real JEE concept id and have it scored against
+    // their readiness. An out-of-scope id falls back to the full scope
+    // rather than 400-ing — the same honest degradation an unknown id gets.
     const nodeParam = req.query.get('node');
-    const allowedNodes = nodeParam ? [nodeParam] : resolveAllowedNodes();
+    const scope = conceptIdsForStudent(user.userId);
+    const allowedNodes = nodeParam && scope.includes(nodeParam) ? [nodeParam] : scope;
     const { realized, potential } = await engine.expectedScore(user.userId, { allowedNodes });
     const ratio = potential > 0 ? realized / potential : null;
 

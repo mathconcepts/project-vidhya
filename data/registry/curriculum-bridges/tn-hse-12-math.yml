@@ -1,0 +1,189 @@
+# Curriculum bridge — Tamil Nadu HSE Class 12 Mathematics -> JEE Main
+#
+# WHAT THIS IS. One line per JEE concept saying what this student's SCHOOL
+# curriculum already gave them for it, and where it stops short of what the
+# entrance exam asks. Not a syllabus, not a lesson: a framing line the lesson
+# page can render for a student whose `knowledge_track_id` is TN-HSE-12-MATH,
+# so "revision" and "genuinely new" are never confused with each other.
+#
+# WHY IT EXISTS. Every framing registry in this repo before it was
+# exam-framed — pain-points, the atomic catalogue's gate_examination_intent,
+# the attention-design hypothesis. Concept anchors added the real-world
+# "what is this FOR". None of them answer the question a state-board student
+# actually has, which is "have I seen this before, or is this new?" Getting
+# that wrong in either direction is expensive: patronise a student on
+# integration, which TN teaches well, and you waste the six days they have
+# between board papers ending and JEE Session 2 starting; assume familiarity
+# with skew lines, which TN never teaches, and they fail silently.
+#
+# COVERAGE VALUES (closed set, see src/registry/curriculum-bridge.ts):
+#   aligned  - the board teaches this at roughly the depth the exam wants
+#   partial  - the board teaches it, the exam wants more depth or a second form
+#   gap      - the board does not teach this in Class 11 or 12 at all
+#   surplus  - the board teaches it, the exam does not ask for it
+#
+# EVIDENCE. Sourced from the Class 11 and Class 12 Samacheer Kalvi chapter
+# structure. Where a subtopic could NOT be confirmed present or absent from
+# the published chapter/exercise lists, `confidence: probable` says so rather
+# than asserting. `confirmed` means the chapter list itself settles it.
+# Nothing here is inferred from a student's behaviour; this file is about a
+# published state syllabus, not about any person.
+
+version: 1
+track_id: TN-HSE-12-MATH
+board_label: Tamil Nadu HSE (Samacheer Kalvi)
+target_exam: jee-main
+
+concepts:
+  # ---- Aligned: TN teaches this well. Do not patronise. -------------------
+  limits-jee:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 9, Differential Calculus - Limits and Continuity
+    bridge: You already did a full chapter on limits in Class 11. This is speed and trap practice, not new ground.
+
+  continuity-differentiability-jee:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 9 and Ch. 10, Differential Calculus
+    bridge: TN gives you two whole chapters on this. What is new here is only the pace the exam expects.
+
+  applications-of-derivatives:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 12 Ch. 7, Applications of Differential Calculus
+    bridge: Your Class 12 chapter covers this. Treat it as revision plus exam timing.
+
+  indefinite-integration:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 11, Integral Calculus
+    bridge: You have done these techniques. The skill to add is picking the right one fast.
+
+  definite-integration:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 11 and Class 12 Ch. 9, Applications of Integration
+    bridge: Both years covered this. The properties that shortcut a hard integral are what pay off here.
+
+  differential-equations-jee:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 12 Ch. 10, Ordinary Differential Equations
+    bridge: A full Class 12 chapter. Revision, with attention to forming the equation from a word problem.
+
+  complex-numbers-algebra:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 12 Ch. 2, Complex Numbers
+    bridge: Your Class 12 chapter covers the Argand plane and polar form. Roots of unity is where exam questions live.
+
+  inverse-trigonometric:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 12 Ch. 4, Inverse Trigonometric Functions
+    bridge: A whole Class 12 chapter. The marks go to the validity conditions on the sum formulae, not the formulae.
+
+  matrices-and-determinants:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 7 and Class 12 Ch. 1, Applications of Matrices and Determinants
+    bridge: Covered across both years. Consistency of a system is the part the exam leans on.
+
+  quadratic-equations:
+    coverage: partial
+    confidence: confirmed
+    board_source: Class 12 Ch. 3, Theory of Equations
+    bridge: Theory of Equations covers roots and coefficients. Common roots and locating roots in an interval are extra for the exam.
+
+  vectors-jee:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 8, Vector Algebra-I, and Class 12 Ch. 6, Applications of Vector Algebra
+    bridge: Two years of vectors. The triple products are familiar; using them at exam speed is the new part.
+
+  probability-jee:
+    coverage: partial
+    confidence: confirmed
+    board_source: Class 11 Ch. 12, Introduction to Probability Theory, and Class 12 Ch. 11, Probability Distributions
+    bridge: Both years cover probability. Bayes' theorem in the exam's multi-stage form is worth extra practice.
+
+  trigonometric-functions:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 3, Trigonometry
+    bridge: A full Class 11 chapter. General solutions of equations is where exam questions concentrate.
+
+  sequences-series:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 5, Binomial Theorem, Sequences and Series
+    bridge: Covered in Class 11. The means inequality chain and telescoping sums repay a second look.
+
+  binomial-theorem:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 5, Binomial Theorem, Sequences and Series
+    bridge: Same Class 11 chapter as sequences. Greatest coefficient and divisibility questions are the exam's favourites.
+
+  sets-relations-functions:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 1, Sets, Relations and Functions
+    bridge: Your opening Class 11 chapter. Little new; it mainly underpins everything after it.
+
+  permutations-combinations:
+    coverage: aligned
+    confidence: confirmed
+    board_source: Class 11 Ch. 4, Combinatorics and Mathematical Induction
+    bridge: Covered in Class 11, sharing a chapter with induction, which the exam has largely dropped. Spend the time on counting.
+
+  heights-distances:
+    coverage: partial
+    confidence: probable
+    board_source: Class 11 Ch. 3, Trigonometry (application problems)
+    bridge: Application problems appear inside your trigonometry chapter rather than as their own topic.
+
+  # ---- The three documented gaps. Treat as new material. ------------------
+  three-d-geometry:
+    coverage: gap
+    confidence: probable
+    board_source: Class 12 Ch. 6, Applications of Vector Algebra (vector form only)
+    bridge: TN teaches planes in vector form only. The Cartesian form, skew lines and shortest distance are new here.
+
+  parabola-ellipse-hyperbola:
+    coverage: partial
+    confidence: probable
+    board_source: Class 12 Ch. 5, Two Dimensional Analytical Geometry-II
+    bridge: TN gives you the definitions and standard equations. Chord of contact and pole-polar are new, and the exam asks them.
+
+  circles-coordinate:
+    coverage: partial
+    confidence: probable
+    board_source: Class 11 Ch. 6, Two Dimensional Analytical Geometry
+    bridge: Circles are covered. Chord of contact, radical axis and orthogonal circles go beyond that chapter.
+
+  straight-lines:
+    coverage: partial
+    confidence: probable
+    board_source: Class 11 Ch. 6, Two Dimensional Analytical Geometry
+    bridge: The forms of a line are familiar. Family of lines, angle bisectors and pairs of lines likely are not.
+
+  statistics-jee:
+    coverage: gap
+    confidence: confirmed
+    board_source: Class 10 Ch. 8, Statistics and Probability
+    bridge: TN teaches variance and standard deviation in Class 10 and does not return to it. Two years is a long gap.
+
+# Topics TN teaches that this exam never asks. Listed so a student can stop
+# spending board-revision time on them once boards are done - which, given
+# that TN board theory papers run through March and JEE Session 2 starts six
+# days after they end, is a real amount of time. NOT concept ids: these have
+# no node in the graph precisely because the exam does not test them.
+surplus_board_topics:
+  - label: Discrete Mathematics (Class 12 Ch. 12)
+    detail: Mathematical logic, truth tables and binary operations. Board marks only; this exam has no such unit.
+  - label: Partial derivatives (Class 12 Ch. 8, second half)
+    detail: This exam stays single-variable. The differentials and error-approximation half of that chapter does count.
+  - label: Mathematical induction (Class 11 Ch. 4, shared chapter)
+    detail: Significantly reduced in the current exam syllabus. The combinatorics half of that chapter still matters.

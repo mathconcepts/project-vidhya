@@ -25,7 +25,7 @@ Read the right side left to right — $\vec b$ times (the letter that skipped it
   "title": "Drag a flat pair of vectors — watch dot, cross and the angle between them",
   "why": "In a flat plane, the cross product collapses to one signed number — the z-component of the full 3D cross product. Drag the two vectors and watch the dot product, that number, and cos of the angle move together.",
   "inputs": [
-    {"id": "a1", "label": "a₁ (a's x-component)", "min": -4, "max": 4, "step": 1, "initial": 3},
+    {"id": "a1", "label": "a₁ (a's x-component)", "min": 1, "max": 5, "step": 1, "initial": 3},
     {"id": "a2", "label": "a₂ (a's y-component)", "min": -4, "max": 4, "step": 1, "initial": 0},
     {"id": "b1", "label": "b₁ (b's x-component)", "min": -4, "max": 4, "step": 1, "initial": 2},
     {"id": "b2", "label": "b₂ (b's y-component)", "min": -4, "max": 4, "step": 1, "initial": 2}

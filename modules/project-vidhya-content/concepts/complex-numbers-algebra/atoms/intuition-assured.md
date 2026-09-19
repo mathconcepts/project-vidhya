@@ -9,7 +9,7 @@ difficulty: 0.1
 exam_ids: ["*"]
 ---
 
-Modulus as distance and argument as angle, combining into polar form, are familiar. The distinction that costs marks: the **principal argument** is bounded to $(-\pi, \pi]$, but De Moivre's theorem and repeated multiplication can push the *actual* angle far beyond that range — and the two must not be confused.
+Modulus as distance, argument as angle, and polar form combining the two — none of that is new by this stage. Here is the trap examiners set instead: the **principal argument** is bounded to $(-\pi, \pi]$, but De Moivre's theorem and repeated multiplication can push the *actual* angle far beyond that range — and the two must not be confused.
 
 Take $z$ with argument $150°$ and cube it. Naively adding $150°+150°+150°=450°$ gives the *actual* rotation, but the **principal** argument of $z^3$ is $450°-360°=90°$, not $450°$. Report $450°$ as "the argument" on an exam and it is marked wrong, even though the rotation genuinely happened — the principal value is defined to always land back inside one standard $360°$ window.
 

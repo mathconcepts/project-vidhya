@@ -14,19 +14,15 @@ for_stance: shaken
 
 $y=x$ and $y=x^2$. Find the area between them.
 
-## Find the crossing points
+**Find the crossing points.** $x=x^2 \Rightarrow x^2-x=0 \Rightarrow x(x-1)=0$. So $x=0$ and $x=1$.
 
-$x=x^2 \Rightarrow x^2-x=0 \Rightarrow x(x-1)=0$. So $x=0$ and $x=1$.
+**Which curve is on top?** Try $x=0.5$: $y=x$ gives $0.5$. $y=x^2$ gives $0.25$. Since $0.5>0.25$, $y=x$ is on top.
 
-## Which curve is on top?
-
-Try $x=0.5$: $y=x$ gives $0.5$. $y=x^2$ gives $0.25$. Since $0.5>0.25$, $y=x$ is on top.
-
-## Set up the integral
+**Set up the integral.**
 
 $$\text{Area}=\int_0^1 (x-x^2)\,dx$$
 
-## Evaluate
+**Evaluate.**
 
 $$\left[\frac{x^2}{2}-\frac{x^3}{3}\right]_0^1=\frac{1}{2}-\frac{1}{3}=\frac{1}{6}$$
 

@@ -1,0 +1,1126 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Physics practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) for eight jee-mechanics concepts: units-and-measurements, kinematics-1d, kinematics-2d, newtons-laws, work-energy-power, rotational-mechanics, gravitation, properties-of-matter. Authored 2026-09-19, g=10 m/s^2 used throughout and stated explicitly wherever needed. Every answer was solved by hand and then independently cross-verified via python3 sympy (symbolic dimensional/algebraic derivation followed by exact numeric substitution) or plain python numeric checks; distractors were derived by running the exact same wrong-method computation (sign errors, wrong reference frame, forgotten factors, unit-conversion slips) rather than invented after the fact.",
+  "items": [
+    {
+      "id": "pi-units-and-measurements-001",
+      "concept_id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Force is given by $F = ma$ (mass times acceleration). What is the dimensional formula of force?",
+      "options": [
+        "$[MLT^{-2}]$",
+        "$[MLT^{-1}]$",
+        "$[ML^2T^{-2}]$",
+        "$[ML^0T^{-2}]$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$[MLT^{-2}]$",
+      "solution_steps": [
+        "Mass has dimension $[M]$, and acceleration is (velocity)/(time) = (length/time)/time = $[LT^{-2}]$.",
+        "Multiplying: $[F] = [M] \\times [LT^{-2}] = [MLT^{-2}]$.",
+        "$[MLT^{-1}]$ is the dimensional formula of momentum ($mv$), not force — a very common mix-up since both involve mass and one power of length/time.",
+        "$[ML^2T^{-2}]$ is the dimensional formula of energy/work, not force. $[ML^0T^{-2}]$ drops the length dimension entirely, as if acceleration had no length in it at all."
+      ],
+      "verification_method": "python_sympy_dimensional_analysis"
+    },
+    {
+      "id": "pi-units-and-measurements-002",
+      "concept_id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many significant figures are there in the measurement $0.00580$ m?",
+      "options": [
+        "3",
+        "5",
+        "2",
+        "6"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "By the counting rule: leading zeros (before the first non-zero digit) are NEVER significant. Here, the two zeros right after the decimal point (before the '5') are leading zeros and don't count.",
+        "The digits that count are $5$, $8$, and the trailing $0$ — the trailing zero IS significant because there is a decimal point in the number.",
+        "So the significant figures are $5, 8, 0$ — exactly $3$ of them.",
+        "5 comes from counting every digit written (0,0,5,8,0), wrongly treating the leading zeros as significant. 2 comes from correctly dropping the leading zeros but then also wrongly dropping the trailing zero after the decimal point. 6 would only make sense if a stray extra digit were counted; it doesn't correspond to any consistent rule here."
+      ],
+      "verification_method": "python_manual_sigfig_rule_check"
+    },
+    {
+      "id": "pi-units-and-measurements-003",
+      "concept_id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Add the following three measurements, reporting the result to the correct number of decimal places: $12.11$ m $+ 18.0$ m $+ 1.012$ m.",
+      "options": [
+        "$31.1$ m",
+        "$31.122$ m",
+        "$31.12$ m",
+        "$31$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$31.1$ m",
+      "solution_steps": [
+        "First add the raw numbers: $12.11 + 18.0 + 1.012 = 31.122$ m.",
+        "For addition/subtraction, the rule is: round the result to the same number of DECIMAL PLACES as the input with the fewest decimal places — not the fewest significant figures.",
+        "$18.0$ has only $1$ decimal place (the other two have $2$ and $3$), so the final answer must be rounded to $1$ decimal place: $31.122 \\to 31.1$ m.",
+        "$31.122$ m is the mistake of reporting the raw, unrounded sum. $31.12$ m rounds to $2$ decimal places instead of $1$ (matching $12.11$'s decimal count instead of the LEAST precise term, $18.0$). $31$ m over-rounds to $0$ decimal places, as if none of the inputs had any decimal precision at all."
+      ],
+      "verification_method": "python_manual_sigfig_addition_rule"
+    },
+    {
+      "id": "pi-units-and-measurements-004",
+      "concept_id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two quantities are measured as $A = 4.0 \\pm 0.1$ and $B = 2.0 \\pm 0.05$ (same units). Find $Z = AB$ with its correct error.",
+      "options": [
+        "$8.0 \\pm 0.4$",
+        "$8.0 \\pm 0.15$",
+        "$8.0 \\pm 0.05$",
+        "$8.0 \\pm 0.2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$8.0 \\pm 0.4$",
+      "solution_steps": [
+        "$Z = AB = 4.0 \\times 2.0 = 8.0$.",
+        "For a product, relative errors ADD: $\\dfrac{\\Delta Z}{Z} = \\dfrac{\\Delta A}{A} + \\dfrac{\\Delta B}{B} = \\dfrac{0.1}{4.0} + \\dfrac{0.05}{2.0} = 0.025 + 0.025 = 0.05$ (i.e. $5\\%$).",
+        "Absolute error: $\\Delta Z = 0.05 \\times 8.0 = 0.4$. So $Z = 8.0 \\pm 0.4$.",
+        "$8.0 \\pm 0.15$ wrongly uses the ADDITION rule (adding the absolute errors $0.1+0.05=0.15$) for a quantity that is actually a PRODUCT — the two rules must never be mixed up. $8.0 \\pm 0.05$ reports the computed relative-error fraction ($0.05$) directly as if it were already the absolute error, forgetting to multiply it back by $Z$. $8.0 \\pm 0.2$ comes from only including one term's relative error ($2.5\\%$ of $8.0$) and forgetting the other measurement's contribution entirely."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-units-and-measurements-005",
+      "concept_id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using dimensional analysis, the time period $T$ of a simple pendulum is assumed to depend only on its length $l$ and the acceleration due to gravity $g$, as $T \\propto l^a g^b$. Find the correct relationship.",
+      "options": [
+        "$T \\propto \\sqrt{l/g}$",
+        "$T \\propto \\sqrt{g/l}$",
+        "$T \\propto l/g$",
+        "$T \\propto \\sqrt{lg}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$T \\propto \\sqrt{l/g}$",
+      "solution_steps": [
+        "Write dimensions: $[T] = [L]^a [LT^{-2}]^b = [L^{a+b} T^{-2b}]$.",
+        "Match powers on both sides. Power of $L$: $a+b=0$. Power of $T$: $-2b=1$.",
+        "Solving: $b = -1/2$, and then $a = -b = 1/2$.",
+        "So $T \\propto l^{1/2} g^{-1/2} = \\sqrt{l/g}$ — matching the actual pendulum formula $T=2\\pi\\sqrt{l/g}$.",
+        "$T \\propto \\sqrt{g/l}$ flips both signs (a sign error on both exponents at once, so $g$ ends up on top instead of $l$). $T \\propto l/g$ uses whole-number powers ($a=1,b=-1$) instead of correctly solving the two simultaneous equations for the half-powers. $T \\propto \\sqrt{lg}$ gets the exponent of $l$ right but flips the sign of $g$'s exponent, putting $g$ in the numerator instead of the denominator."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-units-and-measurements-006",
+      "concept_id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A voltage $V = 25 \\pm 1$ V is measured across a resistor carrying current $I = 5 \\pm 0.1$ A. Using $R = V/I$, find the resistance with its correct error.",
+      "options": [
+        "$5.0 \\pm 0.3\\ \\Omega$",
+        "$5.0 \\pm 0.1\\ \\Omega$",
+        "$5.0 \\pm 1.1\\ \\Omega$",
+        "$5.0 \\pm 0.06\\ \\Omega$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5.0 \\pm 0.3\\ \\Omega$",
+      "solution_steps": [
+        "$R = V/I = 25/5 = 5.0\\ \\Omega$.",
+        "For division, relative errors add: $\\dfrac{\\Delta R}{R} = \\dfrac{\\Delta V}{V} + \\dfrac{\\Delta I}{I} = \\dfrac{1}{25} + \\dfrac{0.1}{5} = 0.04+0.02 = 0.06$ (i.e. $6\\%$).",
+        "Absolute error: $\\Delta R = 0.06 \\times 5.0 = 0.3\\ \\Omega$. So $R = 5.0 \\pm 0.3\\ \\Omega$.",
+        "$5.0 \\pm 0.1\\ \\Omega$ comes from wrongly SUBTRACTING the relative errors ($4\\%-2\\%=2\\%$) instead of adding them — division still needs the two relative errors added, never subtracted. $5.0 \\pm 1.1\\ \\Omega$ just adds the two raw absolute errors ($1+0.1$) without ever converting them to relative errors first, which is only valid for addition/subtraction of quantities, not for division. $5.0 \\pm 0.06\\ \\Omega$ correctly computes the $6\\%$ relative-error fraction but then forgets to scale it back up by $R$ to get an absolute error."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-1d-001",
+      "concept_id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A ball is thrown straight up from the ground with initial speed $u=20$ m/s. Take upward as positive, so $g=10\\ \\text{m/s}^2$ acts as $a=-10\\ \\text{m/s}^2$. How long does it take to reach its highest point?",
+      "options": [
+        "$2$ s",
+        "$4$ s",
+        "$1$ s",
+        "$2.5$ s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2$ s",
+      "solution_steps": [
+        "At the highest point, the velocity is momentarily zero.",
+        "Using $v = u+at$: $0 = 20 + (-10)t \\Rightarrow t = 2$ s.",
+        "$4$ s is the TOTAL time to go up and come back down to the ground, not just the time to reach the top — the ball is symmetric, so this double-counts the return trip. $1$ s comes from forgetting to divide $u$ by $g$ properly (e.g. using $g=20$ by mistake). $2.5$ s would result from using the wrong sign convention and solving $0=20+10t$ backwards without noticing the negative time it implies, then guessing a nearby positive value."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-1d-002",
+      "concept_id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For the same ball as above ($u=20$ m/s upward, $g=10\\ \\text{m/s}^2$), find the maximum height it reaches.",
+      "options": [
+        "$20$ m",
+        "$40$ m",
+        "$10$ m",
+        "$400$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$20$ m",
+      "solution_steps": [
+        "Using $v^2 = u^2 + 2as$ with $v=0$ at the top and $a=-10\\ \\text{m/s}^2$ (upward positive): $0 = 20^2 - 2(10)h \\Rightarrow h = \\dfrac{400}{20} = 20$ m.",
+        "$40$ m comes from forgetting the factor of $2$ in the formula (computing $h=u^2/g$ instead of $h=u^2/(2g)$). $10$ m comes from using an extra factor of $2$ in the denominator by mistake ($h=u^2/(4g)$). $400$ m is simply $u^2$ left un-divided — the student squared $u$ correctly but never actually solved for $h$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-1d-003",
+      "concept_id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A stone is dropped (from rest) from a height of $45$ m. Take $g = 10\\ \\text{m/s}^2$. How long does it take to reach the ground?",
+      "options": [
+        "$3$ s",
+        "$9$ s",
+        "$4.5$ s",
+        "$1.5$ s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3$ s",
+      "solution_steps": [
+        "Since the stone starts from rest, use $h = \\tfrac{1}{2}gt^2$: $45 = \\tfrac{1}{2}(10)t^2 \\Rightarrow t^2 = 9 \\Rightarrow t=3$ s.",
+        "$9$ s is the value of $t^2$ itself — the student solved for $t^2$ correctly but forgot to take the square root. $4.5$ s comes from dividing $45$ by $10$ directly, skipping the factor of $\\tfrac{1}{2}$ and the square root altogether. $1.5$ s comes from halving the correct time by mistake, perhaps confusing it with a 'half the height, half the time' intuition that doesn't apply to accelerated motion."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-1d-004",
+      "concept_id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A car moving at $20$ m/s decelerates uniformly and comes to rest in $4$ s. Find the distance it travels while decelerating.",
+      "options": [
+        "$40$ m",
+        "$120$ m",
+        "$80$ m",
+        "$10$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$40$ m",
+      "solution_steps": [
+        "First find the (negative) acceleration: $v=u+at \\Rightarrow 0 = 20 + a(4) \\Rightarrow a=-5\\ \\text{m/s}^2$.",
+        "Distance: $s = ut + \\tfrac{1}{2}at^2 = 20(4) + \\tfrac{1}{2}(-5)(16) = 80 - 40 = 40$ m.",
+        "Cross-check with average velocity: $s = \\left(\\dfrac{20+0}{2}\\right)(4) = 40$ m — matches.",
+        "$120$ m is a sign error: using $a=+5$ (forgetting deceleration means $a$ is NEGATIVE in this frame) gives $80+40=120$ m instead of $80-40$. $80$ m comes from using only the $ut$ term and forgetting the deceleration term ($\\tfrac{1}{2}at^2$) altogether, as if the car moved at constant speed. $10$ m comes from mis-computing the acceleration as $a=-20$ (dividing $20$ by the wrong quantity) and then getting confused mid-calculation."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-1d-005",
+      "concept_id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Car $A$ moves at $20$ m/s and car $B$ moves at $15$ m/s in the same direction on a straight road, with $B$ initially $100$ m ahead of $A$. Taking the direction of motion as positive for both, how long does it take for $A$ to catch up to $B$?",
+      "options": [
+        "$20$ s",
+        "$6.67$ s",
+        "$4$ s",
+        "$100$ s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$20$ s",
+      "solution_steps": [
+        "Work in the frame where both velocities are measured along the same positive direction. The velocity of $A$ RELATIVE TO $B$ is $v_{AB} = v_A - v_B = 20-15 = 5$ m/s (closing speed).",
+        "$A$ needs to close the $100$ m gap at this relative speed: $t = \\dfrac{100}{5} = 20$ s.",
+        "$6.67$ s comes from dividing the gap by $B$'s speed alone ($100/15$) instead of by the relative (closing) speed between them — this ignores that $A$ is not standing still. $4$ s comes from a similar mistake, dividing by $A$'s own speed instead of the relative speed ($100/25$, using a wrong sum). $100$ s comes from forgetting to subtract the velocities at all and just using the gap divided by $1$ m/s implicitly, or equivalently misreading the relative velocity as $1$ m/s."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-1d-006",
+      "concept_id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A stone falls freely from rest, and it is found that in the LAST second of its fall it covers exactly half of the total height fallen. Take $g=10\\ \\text{m/s}^2$. Find the total time of fall $T$.",
+      "options": [
+        "$(2+\\sqrt{2})$ s $\\approx 3.41$ s",
+        "$(2-\\sqrt{2})$ s $\\approx 0.59$ s",
+        "$3$ s",
+        "$4$ s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$(2+\\sqrt{2})$ s $\\approx 3.41$ s",
+      "solution_steps": [
+        "Total height fallen in time $T$: $H = \\tfrac{1}{2}gT^2$. Distance fallen in the last (i.e. the $T^{\\text{th}}$) second: $d = \\tfrac{1}{2}g(2T-1)$.",
+        "Given condition: $d = H/2$, so $\\tfrac{1}{2}g(2T-1) = \\tfrac{1}{2}\\left(\\tfrac{1}{2}gT^2\\right)$, which simplifies to $2T-1 = \\tfrac{1}{2}T^2$, i.e. $T^2 - 4T + 2 = 0$.",
+        "By the quadratic formula: $T = \\dfrac{4\\pm\\sqrt{16-8}}{2} = 2\\pm\\sqrt{2}$.",
+        "Only $T = 2+\\sqrt{2} \\approx 3.41$ s makes physical sense here (the fall must last more than $1$ second for a distinct 'last second' to exist).",
+        "$(2-\\sqrt{2})$ s $\\approx 0.59$ s is the OTHER algebraic root of the same quadratic, but it's physically invalid here — solving a quadratic can give two roots, and picking the wrong one is a real, common mistake. $3$ s comes from carelessly approximating $\\sqrt{2}\\approx 1$ instead of $1.41$. $4$ s comes from mis-simplifying the equation (dropping the '$-1$' inside $2T-1$ and using $2T$ instead), which cancels a factor of $T$ and gives $T=4$ from a much simpler, wrong, linear-looking equation."
+      ],
+      "verification_method": "sympy_symbolic_quadratic_root_selection"
+    },
+    {
+      "id": "pi-kinematics-2d-001",
+      "concept_id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A projectile is launched with speed $u=25$ m/s at an angle of $53°$ above the horizontal ($\\sin 53° = 0.8$, $\\cos 53° = 0.6$). Take $g=10\\ \\text{m/s}^2$. Find its horizontal range.",
+      "options": [
+        "$60$ m",
+        "$20$ m",
+        "$50$ m",
+        "$30$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$60$ m",
+      "solution_steps": [
+        "Range formula: $R = \\dfrac{u^2 \\sin(2\\theta)}{g} = \\dfrac{u^2 \\cdot 2\\sin\\theta\\cos\\theta}{g}$.",
+        "$\\sin(2\\times 53°) = 2(0.8)(0.6) = 0.96$.",
+        "$R = \\dfrac{25^2 \\times 0.96}{10} = \\dfrac{625\\times 0.96}{10} = 60$ m.",
+        "$20$ m is actually the MAXIMUM HEIGHT of this projectile ($H = u^2\\sin^2\\theta/(2g)$), not the range — a mix-up of two different projectile formulas. $50$ m comes from forgetting to double the angle in the range formula, i.e. using $u^2\\sin\\theta/g$ instead of $u^2\\sin(2\\theta)/g$. $30$ m comes from forgetting the factor of $2$ inside $\\sin(2\\theta)=2\\sin\\theta\\cos\\theta$, i.e. using $u^2\\sin\\theta\\cos\\theta/g$ — exactly half the correct range."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-2d-002",
+      "concept_id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Rain is falling vertically downward at $8$ m/s. A man walks horizontally at $6$ m/s. Find the speed of the rain relative to the man.",
+      "options": [
+        "$10$ m/s",
+        "$14$ m/s",
+        "$2$ m/s",
+        "$8$ m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$10$ m/s",
+      "solution_steps": [
+        "Set up components: taking horizontal as $x$ and downward as $y$, rain's velocity is $(0,8)$ and the man's velocity is $(6,0)$.",
+        "Velocity of rain RELATIVE TO the man: $\\vec{v}_{\\text{rain,man}} = \\vec{v}_{\\text{rain}} - \\vec{v}_{\\text{man}} = (0-6,\\ 8-0) = (-6,8)$.",
+        "Magnitude: $\\sqrt{(-6)^2+8^2} = \\sqrt{36+64} = \\sqrt{100} = 10$ m/s.",
+        "$14$ m/s wrongly adds the two speeds as plain numbers ($8+6$), treating the velocities as if they point along the same line instead of combining them as vectors at right angles. $2$ m/s wrongly subtracts them as plain numbers ($8-6$) for the same reason. $8$ m/s uses the rain's speed in the GROUND frame and forgets to account for the man's own motion at all — the wrong frame of reference entirely."
+      ],
+      "verification_method": "python_math_hypot_vector_check"
+    },
+    {
+      "id": "pi-kinematics-2d-003",
+      "concept_id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A ball is thrown horizontally with speed $15$ m/s from the top of a building of height $20$ m. Take $g=10\\ \\text{m/s}^2$. Find the horizontal distance it travels before hitting the ground.",
+      "options": [
+        "$30$ m",
+        "$15$ m",
+        "$20$ m",
+        "$60$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$30$ m",
+      "solution_steps": [
+        "The vertical and horizontal motions are independent. Time to fall $20$ m from rest (vertically): $h=\\tfrac{1}{2}gt^2 \\Rightarrow 20 = \\tfrac{1}{2}(10)t^2 \\Rightarrow t^2=4 \\Rightarrow t=2$ s.",
+        "Horizontal distance: $x = (\\text{horizontal speed})\\times t = 15\\times 2 = 30$ m.",
+        "$15$ m is just the horizontal speed itself, as if the fall took exactly $1$ second — the student forgot to actually compute the fall time from the height. $20$ m confuses the horizontal range with the building's height (a units/quantity mix-up). $60$ m comes from computing $t^2 = 2h/g = 4$ correctly but then forgetting to take the square root before multiplying by the speed, using $t=4$ instead of $t=2$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-2d-004",
+      "concept_id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A particle moves in a circle of radius $2$ m with a constant speed of $4$ m/s. Find its centripetal acceleration.",
+      "options": [
+        "$8\\ \\text{m/s}^2$",
+        "$32\\ \\text{m/s}^2$",
+        "$2\\ \\text{m/s}^2$",
+        "$4\\ \\text{m/s}^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$8\\ \\text{m/s}^2$",
+      "solution_steps": [
+        "Centripetal acceleration formula: $a = \\dfrac{v^2}{r}$.",
+        "$a = \\dfrac{4^2}{2} = \\dfrac{16}{2} = 8\\ \\text{m/s}^2$.",
+        "$32\\ \\text{m/s}^2$ comes from multiplying by $r$ instead of dividing by it ($v^2 \\times r$) — inverting the formula. $2\\ \\text{m/s}^2$ comes from using $v/r$ instead of $v^2/r$, forgetting to square the speed. $4\\ \\text{m/s}^2$ comes from an extra, incorrect factor of $2$ in the denominator ($v^2/(2r)$), confusing it with a different formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-2d-005",
+      "concept_id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A projectile has initial velocity components $u_x=6$ m/s (horizontal) and $u_y=8$ m/s (vertical, upward). Take $g=10\\ \\text{m/s}^2$. Find its total time of flight.",
+      "options": [
+        "$1.6$ s",
+        "$0.8$ s",
+        "$1.2$ s",
+        "$2$ s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1.6$ s",
+      "solution_steps": [
+        "Time of flight depends ONLY on the vertical component: $T = \\dfrac{2u_y}{g}$ (the time to go up and come back down to the same height).",
+        "$T = \\dfrac{2(8)}{10} = 1.6$ s.",
+        "$0.8$ s comes from forgetting the factor of $2$ (using $u_y/g$ instead of $2u_y/g$) — that only gives the time to reach the TOP, not the full flight. $1.2$ s comes from wrongly using the HORIZONTAL component $u_x$ instead of $u_y$ in the formula ($2u_x/g$) — time of flight has nothing to do with horizontal speed. $2$ s comes from using the RESULTANT speed $\\sqrt{u_x^2+u_y^2}=10$ m/s in place of $u_y$ ($2\\times10/10$), forgetting that only the vertical component controls how long the projectile is in the air."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinematics-2d-006",
+      "concept_id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A man can swim at $5$ m/s in still water. He wants to cross a river of width $400$ m that flows at $3$ m/s, reaching the point directly opposite his starting point (the shortest straight-line path across). Find the time he takes to cross.",
+      "options": [
+        "$100$ s",
+        "$80$ s",
+        "$200$ s",
+        "$50$ s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$100$ s",
+      "solution_steps": [
+        "To land directly opposite, the man must angle his swim slightly upstream so that the river's push exactly cancels the upstream component of his swimming velocity, leaving only a purely-across resultant velocity.",
+        "That resultant (across-the-river) speed is found from the vector right-triangle: $v_{\\text{across}} = \\sqrt{v_{\\text{swim}}^2 - v_{\\text{river}}^2} = \\sqrt{5^2-3^2} = \\sqrt{16} = 4$ m/s.",
+        "Time to cross: $t = \\dfrac{400}{4} = 100$ s.",
+        "$80$ s comes from ignoring the river's current entirely and using his still-water swim speed ($400/5$) directly — the wrong frame, as if the current didn't need to be corrected for at all. $200$ s comes from wrongly SUBTRACTING the speeds as plain numbers instead of combining them as perpendicular vectors: $5-3=2$, giving $400/2$. $50$ s comes from wrongly ADDING the speeds as plain numbers instead: $5+3=8$, giving $400/8$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-newtons-laws-001",
+      "concept_id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A net force of $20$ N acts on a body of mass $4$ kg, initially at rest. Find its acceleration.",
+      "options": [
+        "$5\\ \\text{m/s}^2$",
+        "$80\\ \\text{m/s}^2$",
+        "$0.2\\ \\text{m/s}^2$",
+        "$24\\ \\text{m/s}^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5\\ \\text{m/s}^2$",
+      "solution_steps": [
+        "By Newton's second law, $F=ma \\Rightarrow a = F/m$.",
+        "$a = 20/4 = 5\\ \\text{m/s}^2$.",
+        "$80\\ \\text{m/s}^2$ comes from multiplying $F$ and $m$ instead of dividing ($20\\times4$) — inverting the formula. $0.2\\ \\text{m/s}^2$ comes from inverting the division the other way ($m/F=4/20$). $24\\ \\text{m/s}^2$ comes from simply adding $F$ and $m$ ($20+4$), ignoring the actual relationship between them entirely."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-newtons-laws-002",
+      "concept_id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two blocks, $m_1=2$ kg and $m_2=3$ kg, are in contact on a frictionless horizontal surface. A horizontal force $F=20$ N pushes on $m_1$ from the side away from $m_2$, so both blocks accelerate together. Find the contact force that $m_1$ exerts on $m_2$.",
+      "options": [
+        "$12$ N",
+        "$20$ N",
+        "$8$ N",
+        "$4$ N"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$12$ N",
+      "solution_steps": [
+        "Both blocks move together with the SAME acceleration: $a = \\dfrac{F}{m_1+m_2} = \\dfrac{20}{5} = 4\\ \\text{m/s}^2$.",
+        "To find the contact force, isolate ONLY $m_2$ (the block $F$ is not directly touching). The only horizontal force on $m_2$ is the contact push from $m_1$, call it $N$. By Newton's second law on $m_2$ alone: $N = m_2 a = 3\\times 4 = 12$ N.",
+        "$20$ N is the mistake of reporting the ENTIRE applied force as the contact force, without isolating $m_2$ and realizing that $m_1$ itself also needs some of that force to accelerate. $8$ N comes from isolating the wrong block ($m_1$ instead of $m_2$): $m_1 a = 2\\times 4 = 8$ N is actually the force $m_2$ pushes BACK on $m_1$ (equal in magnitude, by Newton's third law, but not what was asked, and this option's number happens to also look like a plausible 'contact force'). $4$ N is simply the acceleration value reported as if it were a force, a units mix-up."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-newtons-laws-003",
+      "concept_id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two blocks $m_1=3$ kg and $m_2=5$ kg are connected by a light string over a frictionless pulley (an Atwood machine), with $m_2$ hanging lower and heavier. Take $g=10\\ \\text{m/s}^2$. Find the tension in the string.",
+      "options": [
+        "$37.5$ N",
+        "$30$ N",
+        "$50$ N",
+        "$20$ N"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$37.5$ N",
+      "solution_steps": [
+        "The system accelerates with $a = \\dfrac{(m_2-m_1)g}{m_1+m_2} = \\dfrac{(5-3)(10)}{8} = \\dfrac{20}{8} = 2.5\\ \\text{m/s}^2$.",
+        "Apply Newton's second law to $m_1$ (which is being pulled UP by the string, against gravity): $T - m_1 g = m_1 a \\Rightarrow T = m_1(g+a) = 3(10+2.5)=37.5$ N.",
+        "Cross-check with $m_2$ (being pulled DOWN by gravity, held back by the string): $m_2 g - T = m_2 a \\Rightarrow T = m_2(g-a) = 5(10-2.5)=37.5$ N — matches.",
+        "$30$ N comes from treating $m_1 g$ alone as the tension, forgetting the system is accelerating at all (i.e. treating it as if it were in static equilibrium). $50$ N comes from the same static-equilibrium mistake applied to $m_2$ instead ($m_2 g$). $20$ N comes from wrongly multiplying the TOTAL mass by the acceleration, $(m_1+m_2)a = 8\\times2.5=20$ N, which is not what the tension formula actually is."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-newtons-laws-004",
+      "concept_id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A block slides down a frictionless incline that makes an angle of $30°$ with the horizontal. Take $g=10\\ \\text{m/s}^2$. Find the block's acceleration down the incline.",
+      "options": [
+        "$5\\ \\text{m/s}^2$",
+        "$8.66\\ \\text{m/s}^2$",
+        "$10\\ \\text{m/s}^2$",
+        "$2.5\\ \\text{m/s}^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5\\ \\text{m/s}^2$",
+      "solution_steps": [
+        "On a frictionless incline, only the component of gravity ALONG the incline's surface accelerates the block; the component perpendicular to the surface is balanced by the normal force.",
+        "The component of $g$ along the incline (i.e. down the slope) is $g\\sin\\theta$, not $g\\cos\\theta$ — $\\cos\\theta$ gives the component INTO the surface, which the normal force cancels out.",
+        "$a = g\\sin(30°) = 10\\times 0.5 = 5\\ \\text{m/s}^2$.",
+        "$8.66\\ \\text{m/s}^2$ is the classic sign/frame confusion: using $g\\cos(30°)$ instead of $g\\sin(30°)$, i.e. taking the component that presses into the incline as if it were the component that slides the block down. $10\\ \\text{m/s}^2$ ignores the incline entirely and just uses $g$ directly, as if the block were in free fall. $2.5\\ \\text{m/s}^2$ has the right idea (using $\\sin\\theta$) but includes an extra, incorrect factor of $\\tfrac{1}{2}$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-newtons-laws-005",
+      "concept_id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A block of mass $5$ kg rests on a rough horizontal surface. The coefficient of static friction is $\\mu_s=0.4$ and the coefficient of kinetic friction is $\\mu_k=0.3$. Take $g=10\\ \\text{m/s}^2$. Find the maximum static friction force before the block starts to slide.",
+      "options": [
+        "$20$ N",
+        "$15$ N",
+        "$50$ N",
+        "$2$ N"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$20$ N",
+      "solution_steps": [
+        "The MAXIMUM static friction (the threshold just before sliding begins) uses the STATIC coefficient: $f_{s,\\max} = \\mu_s N = \\mu_s mg$ (on a horizontal surface, $N=mg$).",
+        "$f_{s,\\max} = 0.4 \\times 5 \\times 10 = 20$ N.",
+        "$15$ N wrongly uses the KINETIC coefficient $\\mu_k=0.3$ instead of the static one — kinetic friction applies only once the block is already sliding, which is not the case here. $50$ N is just $mg$ with the friction coefficient forgotten entirely. $2$ N comes from forgetting to include $g$ in the formula ($\\mu_s \\times m$ only)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-newtons-laws-006",
+      "concept_id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A pendulum bob hangs from the ceiling of a car that is accelerating horizontally at $a=5\\ \\text{m/s}^2$. Take $g=10\\ \\text{m/s}^2$. In the car's own (non-inertial) frame, using the pseudo-force, find $\\tan\\theta$, where $\\theta$ is the angle the string makes with the vertical at equilibrium.",
+      "options": [
+        "$0.5$",
+        "$2$",
+        "$1.5$",
+        "$0.25$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.5$",
+      "solution_steps": [
+        "In the car's frame, the bob feels two forces besides tension: gravity $mg$ (downward) and the pseudo-force $ma$ (backward, opposite to the car's acceleration).",
+        "At equilibrium, the string tilts until its tension balances both. The tilt angle from vertical satisfies $\\tan\\theta = \\dfrac{\\text{pseudo-force}}{\\text{weight}} = \\dfrac{ma}{mg} = \\dfrac{a}{g}$.",
+        "$\\tan\\theta = \\dfrac{5}{10} = 0.5$.",
+        "$2$ comes from inverting the ratio ($g/a$ instead of $a/g$) — a very common sign/frame mix-up between which force goes on top. $1.5$ comes from wrongly adding the two accelerations before dividing, e.g. $(a+g)/g$, instead of taking the correct ratio $a/g$. $0.25$ comes from an extra, incorrect factor of $2$ in the denominator ($a/(2g)$)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-work-energy-power-001",
+      "concept_id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the kinetic energy of a $4$ kg object moving at $5$ m/s.",
+      "options": [
+        "$50$ J",
+        "$100$ J",
+        "$10$ J",
+        "$20$ J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$50$ J",
+      "solution_steps": [
+        "Kinetic energy formula: $KE = \\tfrac{1}{2}mv^2$.",
+        "$KE = \\tfrac{1}{2}(4)(5)^2 = \\tfrac{1}{2}(4)(25) = 50$ J.",
+        "$100$ J comes from forgetting the factor of $\\tfrac{1}{2}$ ($mv^2$ instead of $\\tfrac{1}{2}mv^2$). $10$ J comes from forgetting to square the velocity ($\\tfrac{1}{2}mv$ instead of $\\tfrac{1}{2}mv^2$). $20$ J comes from using $m\\times v$ directly (momentum, not kinetic energy) — mixing up two different quantities entirely."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-work-energy-power-002",
+      "concept_id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A $2$ kg object is raised to a height of $5$ m above the ground. Take $g=10\\ \\text{m/s}^2$. Find its gravitational potential energy relative to the ground.",
+      "options": [
+        "$100$ J",
+        "$50$ J",
+        "$1000$ J",
+        "$10$ J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$100$ J",
+      "solution_steps": [
+        "Gravitational PE formula: $PE = mgh$.",
+        "$PE = 2\\times10\\times5 = 100$ J.",
+        "$50$ J comes from mistakenly borrowing the $\\tfrac{1}{2}$ factor from the kinetic energy formula and applying it here too ($\\tfrac{1}{2}mgh$) — potential energy has no such factor. $1000$ J comes from squaring $g$ by mistake ($mg^2h = 2\\times100\\times5$). $10$ J comes from forgetting to include $g$ in the formula entirely ($mh$ only)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-work-energy-power-003",
+      "concept_id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A $2$ kg block starts from rest on a frictionless surface. A constant force of $4$ N acts on it over a distance of $9$ m in the direction of motion. Using the work-energy theorem, find the block's final speed.",
+      "options": [
+        "$6$ m/s",
+        "$18$ m/s",
+        "$12$ m/s",
+        "$3$ m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$6$ m/s",
+      "solution_steps": [
+        "Work done by the force: $W = F\\times d = 4\\times 9 = 36$ J.",
+        "By the work-energy theorem, since the block starts from rest, this work equals the final kinetic energy: $W = \\tfrac{1}{2}mv^2 \\Rightarrow 36 = \\tfrac{1}{2}(2)v^2 \\Rightarrow v^2=36 \\Rightarrow v=6$ m/s.",
+        "$18$ m/s comes from wrongly using $F\\times d^2$ instead of $F\\times d$ for the work ($4\\times81=324$, then $v=\\sqrt{2(324)/2}=18$) — squaring the distance by mistake. $12$ m/s comes from finding the acceleration WRONG, as $a=F\\times m$ instead of $a=F/m$ (i.e. $8\\ \\text{m/s}^2$ instead of $2\\ \\text{m/s}^2$), then using $v^2=2ad$ correctly with that wrong $a$. $3$ m/s comes from using an extra, incorrect factor of $2$ inside the kinetic-energy formula (as if $KE=2mv^2$ instead of $\\tfrac{1}{2}mv^2$)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-work-energy-power-004",
+      "concept_id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A pump lifts $200$ kg of water to a height of $10$ m in $20$ seconds. Take $g=10\\ \\text{m/s}^2$. Find the power delivered by the pump.",
+      "options": [
+        "$1000$ W",
+        "$100$ W",
+        "$500$ W",
+        "$20000$ W"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1000$ W",
+      "solution_steps": [
+        "First find the work done (energy given to the water): $W = mgh = 200\\times10\\times10 = 20000$ J.",
+        "Power is work done per unit time: $P = W/t = 20000/20 = 1000$ W.",
+        "$100$ W comes from forgetting to include $g$ in the work calculation ($mh/t$ instead of $mgh/t$). $500$ W comes from wrongly dividing by twice the given time ($20000/40$). $20000$ W is the mistake of reporting the total ENERGY (work done) as if it were the power, forgetting to divide by the time at all."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-work-energy-power-005",
+      "concept_id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A pendulum bob is released from a height of $1.25$ m above its lowest point. Take $g=10\\ \\text{m/s}^2$, and ignore air resistance. Find its speed at the lowest point using conservation of energy.",
+      "options": [
+        "$5$ m/s",
+        "$3.5$ m/s",
+        "$12.5$ m/s",
+        "$25$ m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5$ m/s",
+      "solution_steps": [
+        "By conservation of energy, the potential energy lost equals the kinetic energy gained: $mgh = \\tfrac{1}{2}mv^2$, so $v = \\sqrt{2gh}$ (mass cancels out).",
+        "$v = \\sqrt{2\\times10\\times1.25} = \\sqrt{25} = 5$ m/s.",
+        "$3.5$ m/s comes from forgetting the factor of $2$ inside the square root ($v=\\sqrt{gh}=\\sqrt{12.5}\\approx3.54$). $12.5$ m/s comes from using $v=gh$ (a linear relationship) instead of correctly relating $v^2$ to $gh$ and taking a square root. $25$ m/s comes from computing $v^2=2gh=25$ correctly but then forgetting to take the square root at all."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-work-energy-power-006",
+      "concept_id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A car of mass $1000$ kg moves at a constant $20$ m/s while also accelerating at $1\\ \\text{m/s}^2$, against a constant resistive (friction + air drag) force of $500$ N. Find the instantaneous power delivered by the car's engine at this moment.",
+      "options": [
+        "$30000$ W",
+        "$20000$ W",
+        "$10000$ W",
+        "$1500$ W"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$30000$ W",
+      "solution_steps": [
+        "By Newton's second law, the engine's driving force must overcome BOTH the resistive force AND provide the force needed for the given acceleration: $F_{\\text{engine}} = F_{\\text{resistive}} + ma = 500 + 1000(1) = 1500$ N.",
+        "Instantaneous power: $P = F_{\\text{engine}}\\times v = 1500\\times 20 = 30000$ W ($30$ kW).",
+        "$20000$ W comes from forgetting the resistive force entirely and using only the force needed for acceleration ($ma\\times v = 1000\\times20$). $10000$ W comes from forgetting the acceleration term entirely and using only the resistive force ($F_{\\text{resistive}}\\times v = 500\\times20$), as if the car moved at truly constant velocity. $1500$ W reports the engine FORCE itself, forgetting to multiply by the velocity to actually get power."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-rotational-mechanics-001",
+      "concept_id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A solid sphere has mass $5$ kg and radius $2$ m. Find its moment of inertia about an axis through its diameter (through its centre).",
+      "options": [
+        "$8\\ \\text{kg}\\cdot\\text{m}^2$",
+        "$20\\ \\text{kg}\\cdot\\text{m}^2$",
+        "$3.2\\ \\text{kg}\\cdot\\text{m}^2$",
+        "$40\\ \\text{kg}\\cdot\\text{m}^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$8\\ \\text{kg}\\cdot\\text{m}^2$",
+      "solution_steps": [
+        "Moment of inertia of a solid sphere about a diameter: $I = \\tfrac{2}{5}mr^2$.",
+        "$I = \\tfrac{2}{5}(5)(2^2) = \\tfrac{2}{5}(5)(4) = 8\\ \\text{kg}\\cdot\\text{m}^2$.",
+        "$20\\ \\text{kg}\\cdot\\text{m}^2$ comes from forgetting the $\\tfrac{2}{5}$ factor entirely and using $mr^2$ (the formula for a point mass or a hoop, not a solid sphere). $3.2\\ \\text{kg}\\cdot\\text{m}^2$ comes from using $r$ instead of $r^2$ in the formula ($\\tfrac{2}{5}mr$). $40\\ \\text{kg}\\cdot\\text{m}^2$ comes from using $mr^2$ but with an extra, incorrect factor of $2$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-rotational-mechanics-002",
+      "concept_id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A force of $20$ N is applied at a distance of $0.5$ m from a hinge, at an angle of $30°$ to the lever arm ($\\sin 30°=0.5$). Find the magnitude of the torque about the hinge.",
+      "options": [
+        "$5\\ \\text{N}\\cdot\\text{m}$",
+        "$10\\ \\text{N}\\cdot\\text{m}$",
+        "$2.5\\ \\text{N}\\cdot\\text{m}$",
+        "$8.7\\ \\text{N}\\cdot\\text{m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5\\ \\text{N}\\cdot\\text{m}$",
+      "solution_steps": [
+        "Torque formula: $\\tau = Fr\\sin\\theta$, where $\\theta$ is the angle between the force and the lever arm — only the perpendicular component of the force actually produces torque.",
+        "$\\tau = 20\\times0.5\\times\\sin(30°) = 20\\times0.5\\times0.5 = 5\\ \\text{N}\\cdot\\text{m}$.",
+        "$10\\ \\text{N}\\cdot\\text{m}$ comes from forgetting the $\\sin\\theta$ factor entirely ($Fr = 20\\times0.5$), as if the full force were always perpendicular to the arm. $2.5\\ \\text{N}\\cdot\\text{m}$ comes from including $\\sin\\theta$ correctly but then dividing by an extra, incorrect factor of $2$. $8.7\\ \\text{N}\\cdot\\text{m}$ comes from a sign/frame mix-up, using $\\cos(30°)\\approx0.87$ instead of $\\sin(30°)$ — the component ALONG the arm, which contributes nothing to torque, instead of the perpendicular component."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-rotational-mechanics-003",
+      "concept_id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A disc of mass $2$ kg and radius $1$ m spins about its central axis at an angular velocity $\\omega=2$ rad/s. Find its rotational kinetic energy.",
+      "options": [
+        "$2$ J",
+        "$4$ J",
+        "$1$ J",
+        "$8$ J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2$ J",
+      "solution_steps": [
+        "Moment of inertia of a disc about its central axis: $I=\\tfrac{1}{2}mr^2 = \\tfrac{1}{2}(2)(1)^2 = 1\\ \\text{kg}\\cdot\\text{m}^2$.",
+        "Rotational KE: $KE_{\\text{rot}} = \\tfrac{1}{2}I\\omega^2 = \\tfrac{1}{2}(1)(2)^2 = 2$ J.",
+        "$4$ J comes from forgetting the $\\tfrac{1}{2}$ factor when computing $I$ (using $mr^2=2$ instead of $\\tfrac{1}{2}mr^2=1$), which then doubles the final KE too. $1$ J comes from forgetting to square $\\omega$ in the KE formula ($\\tfrac{1}{2}I\\omega$ instead of $\\tfrac{1}{2}I\\omega^2$). $8$ J comes from mistakenly using the DIAMETER ($2r$) instead of the radius $r$ in the moment-of-inertia formula, which quadruples $I$ and hence the KE."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-rotational-mechanics-004",
+      "concept_id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A figure skater spinning with arms outstretched has moment of inertia $I_1=4\\ \\text{kg}\\cdot\\text{m}^2$ and angular velocity $\\omega_1=2$ rad/s. She pulls her arms in, reducing her moment of inertia to $I_2=1\\ \\text{kg}\\cdot\\text{m}^2$. Using conservation of angular momentum, find her new angular velocity.",
+      "options": [
+        "$8$ rad/s",
+        "$2$ rad/s",
+        "$0.5$ rad/s",
+        "$32$ rad/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$8$ rad/s",
+      "solution_steps": [
+        "With no external torque, angular momentum is conserved: $I_1\\omega_1 = I_2\\omega_2$.",
+        "$\\omega_2 = \\dfrac{I_1\\omega_1}{I_2} = \\dfrac{4\\times2}{1} = 8$ rad/s.",
+        "$2$ rad/s wrongly assumes $\\omega$ stays unchanged, ignoring conservation of angular momentum altogether (as if pulling the arms in had no effect on spin speed). $0.5$ rad/s comes from inverting the ratio ($I_2\\omega_1/I_1$ instead of $I_1\\omega_1/I_2$) — a sign/frame mix-up about which moment of inertia belongs on top. $32$ rad/s comes from squaring the ratio of moments of inertia by mistake, $(I_1/I_2)^2\\times\\omega_1 = 16\\times2$, instead of using it to the first power."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-rotational-mechanics-005",
+      "concept_id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A solid sphere (moment of inertia $I=\\tfrac{2}{5}mr^2$) rolls without slipping down an incline, starting from rest at a height of $7$ m. Take $g=10\\ \\text{m/s}^2$. Find its speed at the bottom of the incline.",
+      "options": [
+        "$10$ m/s",
+        "$11.8$ m/s",
+        "$9.7$ m/s",
+        "$100$ m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$10$ m/s",
+      "solution_steps": [
+        "By energy conservation, the lost PE becomes BOTH translational AND rotational KE: $mgh = \\tfrac{1}{2}mv^2 + \\tfrac{1}{2}I\\omega^2$. For rolling without slipping, $\\omega=v/r$, and using $I=\\tfrac{2}{5}mr^2$: $mgh = \\tfrac{1}{2}mv^2 + \\tfrac{1}{2}\\left(\\tfrac{2}{5}mr^2\\right)\\left(\\tfrac{v}{r}\\right)^2 = \\tfrac{7}{10}mv^2$.",
+        "Solving for $v$: $v^2 = \\dfrac{10gh}{7} = \\dfrac{10(10)(7)}{7} = 100 \\Rightarrow v=10$ m/s.",
+        "$11.8$ m/s ($=\\sqrt{2gh}$) comes from ignoring the rotational kinetic energy entirely, treating the sphere as if it were sliding down frictionlessly without rolling at all. $9.7$ m/s comes from using the WRONG moment-of-inertia coefficient for a solid CYLINDER ($I=\\tfrac{1}{2}mr^2$) instead of a solid sphere ($I=\\tfrac{2}{5}mr^2$) — mixing up which rigid body's formula applies. $100$ m/s correctly computes $v^2=100$ but then forgets to take the square root, reporting $v^2$ as if it were $v$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-rotational-mechanics-006",
+      "concept_id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A wheel (a uniform disc) of mass $4$ kg and radius $0.5$ m, initially at rest, is acted on by a constant torque of $2\\ \\text{N}\\cdot\\text{m}$. Find its angular velocity after $5$ seconds.",
+      "options": [
+        "$20$ rad/s",
+        "$10$ rad/s",
+        "$4$ rad/s",
+        "$100$ rad/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$20$ rad/s",
+      "solution_steps": [
+        "Moment of inertia of a disc: $I=\\tfrac{1}{2}mr^2 = \\tfrac{1}{2}(4)(0.5)^2 = 0.5\\ \\text{kg}\\cdot\\text{m}^2$.",
+        "Angular acceleration: $\\alpha = \\tau/I = 2/0.5 = 4\\ \\text{rad/s}^2$.",
+        "Angular velocity after $5$ s (starting from rest): $\\omega = \\alpha t = 4\\times5 = 20$ rad/s.",
+        "$10$ rad/s comes from forgetting the $\\tfrac{1}{2}$ factor in the moment-of-inertia formula ($I=mr^2=1$ instead of $0.5$), which halves the angular acceleration and hence the final answer. $4$ rad/s reports the angular ACCELERATION itself, forgetting to multiply by the time $t$ to get the angular velocity. $100$ rad/s comes from confusing this with the ANGLE-swept formula $\\theta=\\tfrac{1}{2}\\alpha t^2$ and using $t^2=25$ in place of $t=5$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-gravitation-001",
+      "concept_id": "gravitation",
+      "topic": "jee-mechanics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two point masses attract each other gravitationally with force $F$, separated by distance $r$. If the distance between them is doubled (masses unchanged), what does the new force become?",
+      "options": [
+        "$F/4$",
+        "$F/2$",
+        "$F/8$",
+        "$4F$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$F/4$",
+      "solution_steps": [
+        "Newton's law of gravitation: $F = \\dfrac{Gm_1m_2}{r^2}$ — an INVERSE-SQUARE law.",
+        "If $r \\to 2r$, then $F_{\\text{new}} = \\dfrac{Gm_1m_2}{(2r)^2} = \\dfrac{Gm_1m_2}{4r^2} = \\dfrac{F}{4}$.",
+        "$F/2$ wrongly treats the force as inversely proportional to $r$ (a simple inverse relationship) rather than $r^2$ (inverse-SQUARE), forgetting to square the factor of $2$. $F/8$ wrongly treats it as an inverse-CUBE law, over-squaring by one extra power of $r$. $4F$ gets the inverse-square relationship backwards — treating the force as DIRECTLY proportional to $r^2$, causing it to increase instead of decrease as the masses move apart."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-gravitation-002",
+      "concept_id": "gravitation",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The acceleration due to gravity at the Earth's surface is $g$, and Earth's radius is $R$. Find the acceleration due to gravity at a height $h=R$ above the surface (i.e. at a distance $2R$ from Earth's centre).",
+      "options": [
+        "$g/4$",
+        "$g/2$",
+        "$g/8$",
+        "$2g$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$g/4$",
+      "solution_steps": [
+        "Gravity falls off as the inverse square of the distance from Earth's centre: $g_h = g\\left(\\dfrac{R}{R+h}\\right)^2$.",
+        "At $h=R$: $g_h = g\\left(\\dfrac{R}{2R}\\right)^2 = g\\left(\\dfrac{1}{2}\\right)^2 = g/4$.",
+        "$g/2$ wrongly treats this as an inverse-linear relationship (just $R/(R+h)$) instead of inverse-square, forgetting to square the ratio. $g/8$ wrongly cubes the ratio instead of squaring it. $2g$ gets the direction of the effect backwards — assuming gravity gets STRONGER further from Earth's centre instead of weaker."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-gravitation-003",
+      "concept_id": "gravitation",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Earth's escape velocity is $v_e = 11.2$ km/s. If a hypothetical planet has $4$ times Earth's mass but the SAME radius, find its escape velocity.",
+      "options": [
+        "$22.4$ km/s",
+        "$44.8$ km/s",
+        "$11.2$ km/s",
+        "$5.6$ km/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$22.4$ km/s",
+      "solution_steps": [
+        "Escape velocity formula: $v_e = \\sqrt{\\dfrac{2GM}{R}}$ — it depends on the SQUARE ROOT of the mass, not directly on the mass.",
+        "If $M \\to 4M$ with $R$ unchanged: $v_e' = \\sqrt{\\dfrac{2G(4M)}{R}} = \\sqrt{4}\\times\\sqrt{\\dfrac{2GM}{R}} = 2\\times11.2 = 22.4$ km/s.",
+        "$44.8$ km/s wrongly scales the escape velocity DIRECTLY with the mass (a factor of $4$), forgetting that the formula has a square root over the mass. $11.2$ km/s wrongly assumes escape velocity doesn't depend on mass at all, keeping it unchanged. $5.6$ km/s divides instead of multiplies, getting the direction of the mass-dependence backwards."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-gravitation-004",
+      "concept_id": "gravitation",
+      "topic": "jee-mechanics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A satellite orbits the Earth at a radius equal to $2R$, where $R$ is Earth's radius (i.e. at a height $h=R$ above the surface). Given that the escape velocity from Earth's surface is $v_e=11.2$ km/s, find the satellite's orbital velocity.",
+      "options": [
+        "$5.6$ km/s",
+        "$11.2$ km/s",
+        "$22.4$ km/s",
+        "$7.9$ km/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5.6$ km/s",
+      "solution_steps": [
+        "Orbital velocity at radius $r$: $v_{\\text{orb}} = \\sqrt{GM/r}$. Using $v_e = \\sqrt{2GM/R} \\Rightarrow GM = v_e^2 R/2$.",
+        "At $r=2R$: $v_{\\text{orb}}^2 = \\dfrac{GM}{2R} = \\dfrac{v_e^2 R/2}{2R} = \\dfrac{v_e^2}{4}$, so $v_{\\text{orb}} = v_e/2 = 11.2/2 = 5.6$ km/s.",
+        "$11.2$ km/s confuses orbital velocity with escape velocity — a very common mix-up, but orbital velocity is always LESS than escape velocity at the same distance. $22.4$ km/s wrongly doubles instead of halves, getting the direction backwards. $7.9$ km/s uses the relation $v_{\\text{orb}}=v_e/\\sqrt{2}$, which is only correct for a satellite orbiting AT the surface itself ($r=R$), not at $r=2R$ as asked here — the right idea, wrong radius."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-gravitation-005",
+      "concept_id": "gravitation",
+      "topic": "jee-mechanics",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two planets orbit the Sun. Planet $B$'s orbital radius is $4$ times planet $A$'s orbital radius. Using Kepler's third law, find the ratio of their orbital periods, $T_B/T_A$.",
+      "options": [
+        "$8$",
+        "$4$",
+        "$2$",
+        "$64$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$8$",
+      "solution_steps": [
+        "Kepler's third law: $T^2 \\propto r^3$, so $\\dfrac{T_B}{T_A} = \\left(\\dfrac{r_B}{r_A}\\right)^{3/2}$.",
+        "$\\dfrac{T_B}{T_A} = 4^{3/2} = (4^{1/2})^3 = 2^3 = 8$.",
+        "$4$ wrongly uses a direct, linear proportionality ($T\\propto r$) instead of the actual power $3/2$. $2$ wrongly uses only $r^{1/2}$ (forgetting to cube it after taking the square root, i.e. mixing up which power in $r^{3/2}$ to apply). $64$ wrongly uses $r^3$ directly without ever taking the square root implied by $T^2\\propto r^3$ (i.e. forgetting that it's $T$, not $T^2$, that's asked for)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-gravitation-006",
+      "concept_id": "gravitation",
+      "topic": "jee-mechanics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A rocket of mass $1000$ kg is to be launched from Earth's surface, where the escape velocity is $v_e=11200$ m/s. Find the minimum kinetic energy it must be given to escape Earth's gravity completely (ignore air resistance).",
+      "options": [
+        "$6.272\\times10^{10}$ J",
+        "$1.2544\\times10^{11}$ J",
+        "$5.6\\times10^{6}$ J",
+        "$6.272\\times10^{4}$ J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$6.272\\times10^{10}$ J",
+      "solution_steps": [
+        "The minimum kinetic energy to escape equals the kinetic energy corresponding to exactly the escape velocity: $KE = \\tfrac{1}{2}mv_e^2$.",
+        "$KE = \\tfrac{1}{2}(1000)(11200)^2 = \\tfrac{1}{2}(1000)(125440000) = 6.272\\times10^{10}$ J.",
+        "$1.2544\\times10^{11}$ J comes from forgetting the factor of $\\tfrac{1}{2}$ in the kinetic energy formula. $5.6\\times10^{6}$ J comes from using $v_e$ instead of $v_e^2$ (forgetting to square the velocity) — a dimensional slip. $6.272\\times10^{4}$ J comes from forgetting to convert the escape velocity from km/s to m/s, mistakenly using $11.2$ in the formula instead of $11200$ — an order-of-magnitude unit-conversion error."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-properties-of-matter-001",
+      "concept_id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A metal wire of natural length $2$ m and cross-sectional area $1\\times10^{-6}\\ \\text{m}^2$ stretches by $1$ mm when a force of $100$ N is applied. Find Young's modulus of the wire's material.",
+      "options": [
+        "$2\\times10^{11}\\ \\text{N/m}^2$",
+        "$2\\times10^{8}\\ \\text{N/m}^2$",
+        "$2\\times10^{5}\\ \\text{N/m}^2$",
+        "$5\\times10^{-12}\\ \\text{N/m}^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2\\times10^{11}\\ \\text{N/m}^2$",
+      "solution_steps": [
+        "Young's modulus formula: $Y = \\dfrac{F\\cdot L}{A\\cdot \\Delta L}$, where $\\Delta L$ must be in the SAME length units as $L$. First convert $\\Delta L = 1$ mm $= 1\\times10^{-3}$ m.",
+        "$Y = \\dfrac{100\\times2}{(1\\times10^{-6})(1\\times10^{-3})} = \\dfrac{200}{1\\times10^{-9}} = 2\\times10^{11}\\ \\text{N/m}^2$.",
+        "$2\\times10^{8}\\ \\text{N/m}^2$ comes from forgetting to convert $\\Delta L$ from mm to m at all, using $\\Delta L=1$ directly in the formula — an extremely common unit-conversion slip. $2\\times10^{5}\\ \\text{N/m}^2$ comes from converting mm to m in the wrong direction (multiplying by $1000$ instead of dividing), using $\\Delta L=1000$. $5\\times10^{-12}\\ \\text{N/m}^2$ comes from inverting the entire formula ($\\dfrac{A\\cdot\\Delta L}{F\\cdot L}$ instead of $\\dfrac{F\\cdot L}{A\\cdot\\Delta L}$)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-properties-of-matter-002",
+      "concept_id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a hydraulic press, the small piston has area $5\\ \\text{cm}^2$ and the large piston has area $100\\ \\text{cm}^2$. A force of $20$ N is applied to the small piston. Find the force exerted on the large piston.",
+      "options": [
+        "$400$ N",
+        "$1$ N",
+        "$115$ N",
+        "$2000$ N"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$400$ N",
+      "solution_steps": [
+        "By Pascal's law, pressure is transmitted equally: $\\dfrac{F_1}{A_1} = \\dfrac{F_2}{A_2} \\Rightarrow F_2 = F_1\\times\\dfrac{A_2}{A_1}$.",
+        "$F_2 = 20\\times\\dfrac{100}{5} = 20\\times20 = 400$ N.",
+        "$1$ N comes from inverting the area ratio ($A_1/A_2$ instead of $A_2/A_1$), which wrongly makes the force SMALLER on the larger piston instead of larger. $115$ N comes from wrongly ADDING the difference in areas to the applied force ($20+(100-5)$) instead of scaling by the ratio of areas. $2000$ N comes from forgetting to divide by the small piston's area at all, using $F_1\\times A_2$ directly."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-properties-of-matter-003",
+      "concept_id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A capillary tube of radius $0.5$ mm is dipped vertically in water. Water's surface tension is $T=0.07$ N/m, its density is $1000\\ \\text{kg/m}^3$, take $g=10\\ \\text{m/s}^2$, and assume the water wets the glass perfectly (contact angle $\\approx 0°$, so $\\cos\\theta\\approx1$). Find the height to which water rises in the tube.",
+      "options": [
+        "$2.8$ cm",
+        "$1.4$ cm",
+        "$0.0028$ cm",
+        "$56$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.8$ cm",
+      "solution_steps": [
+        "Capillary rise formula: $h = \\dfrac{2T\\cos\\theta}{\\rho g r}$, where $r$ must be converted to metres: $r=0.5$ mm $=5\\times10^{-4}$ m.",
+        "$h = \\dfrac{2(0.07)(1)}{(1000)(10)(5\\times10^{-4})} = \\dfrac{0.14}{5} = 0.028$ m $= 2.8$ cm.",
+        "$1.4$ cm comes from forgetting the factor of $2$ in the numerator of the formula. $0.0028$ cm comes from forgetting to convert the radius from mm to m at all, plugging $r=0.5$ (treating it as if it were already in metres) — a huge, order-of-magnitude unit error. $56$ m comes from mistakenly using $r^2$ in the denominator instead of $r$, another formula-recall slip that produces a wildly unphysical result."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-properties-of-matter-004",
+      "concept_id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two metal rods of equal length and equal cross-sectional area are joined end to end (in series), forming a single insulated rod. The free end of the first rod (thermal conductivity $k_1=200\\ \\text{W/m·K}$) is held at $90°$C, and the free end of the second rod (thermal conductivity $k_2=100\\ \\text{W/m·K}$) is held at $0°$C. Find the steady-state temperature at the junction between the rods.",
+      "options": [
+        "$60°$C",
+        "$45°$C",
+        "$30°$C",
+        "$0.9°$C"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$60°$C",
+      "solution_steps": [
+        "In steady state, the same heat current flows through both rods (equal lengths and areas): $k_1(T_1-T_j) = k_2(T_j-T_2)$, where $T_1=90°$C and $T_2=0°$C.",
+        "Solving: $k_1 T_1 = (k_1+k_2)T_j \\Rightarrow T_j = \\dfrac{k_1 T_1}{k_1+k_2} = \\dfrac{200\\times90}{300} = 60°$C.",
+        "$45°$C is the mistake of taking a plain, unweighted AVERAGE of the two end temperatures, ignoring that the rods conduct heat differently. $30°$C comes from swapping which conductivity weights which end ($k_2 T_1/(k_1+k_2)$ instead of $k_1 T_1/(k_1+k_2)$) — putting the weight on the wrong rod. $0.9°$C comes from a denominator slip, using the PRODUCT $k_1\\times k_2$ instead of the SUM $k_1+k_2$ in the formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-properties-of-matter-005",
+      "concept_id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A solid block of density $2400\\ \\text{kg/m}^3$ and volume $0.01\\ \\text{m}^3$ is fully submerged in water (density $1000\\ \\text{kg/m}^3$). Take $g=10\\ \\text{m/s}^2$. Find the block's apparent weight while submerged.",
+      "options": [
+        "$140$ N",
+        "$240$ N",
+        "$340$ N",
+        "$0$ N"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$140$ N",
+      "solution_steps": [
+        "Weight in air: $W = \\rho_{\\text{block}}\\,V\\,g = 2400\\times0.01\\times10 = 240$ N.",
+        "Buoyant force (Archimedes' principle, using the density of the DISPLACED FLUID, i.e. water): $F_B = \\rho_{\\text{water}}\\,V\\,g = 1000\\times0.01\\times10 = 100$ N.",
+        "Apparent weight $= W - F_B = 240 - 100 = 140$ N.",
+        "$240$ N is just the weight in air, forgetting to subtract the buoyant force at all. $340$ N comes from a sign error — ADDING the buoyant force to the weight instead of subtracting it, as if buoyancy pulled the block down rather than pushing it up. $0$ N comes from mistakenly using the BLOCK's own density (instead of the water's density) to compute the buoyant force, which makes it exactly cancel the weight in air."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-properties-of-matter-006",
+      "concept_id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A metal wire of natural length $2$ m and cross-sectional area $2\\times10^{-6}\\ \\text{m}^2$ (Young's modulus $Y=2\\times10^{11}\\ \\text{N/m}^2$) is stretched by $2$ mm. Find the elastic potential energy stored in the wire.",
+      "options": [
+        "$0.4$ J",
+        "$0.8$ J",
+        "$200$ J",
+        "$4\\times10^{5}$ J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.4$ J",
+      "solution_steps": [
+        "Elastic PE stored in a stretched wire: $U = \\tfrac{1}{2}\\times(\\text{stress})\\times(\\text{strain})\\times(\\text{volume}) = \\dfrac{Y A (\\Delta L)^2}{2L}$, with $\\Delta L$ converted to metres: $\\Delta L = 2$ mm $=2\\times10^{-3}$ m.",
+        "$U = \\dfrac{(2\\times10^{11})(2\\times10^{-6})(2\\times10^{-3})^2}{2\\times2} = \\dfrac{(2\\times10^{11})(2\\times10^{-6})(4\\times10^{-6})}{4} = 0.4$ J.",
+        "$0.8$ J comes from forgetting the factor of $\\tfrac{1}{2}$ in the energy formula. $200$ J comes from forgetting to SQUARE $\\Delta L$ (using $\\Delta L$ instead of $(\\Delta L)^2$), which is a very different formula from the correct one. $4\\times10^{5}$ J comes from forgetting to convert $\\Delta L$ from mm to m (using $\\Delta L=2$ directly as if it were already in metres) — a large unit-conversion error."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    }
+  ]
+}

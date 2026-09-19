@@ -11,7 +11,7 @@ exam_ids: ["*"]
 
 Take two real polysaccharides: starch and cellulose. Both are made entirely of glucose units. Both join those units with the same general kind of bond, a **glycosidic linkage**.
 
-Yet a human can digest starch (rice, bread) but not cellulose (plant fibre). Same building block, same kind of bond — so what's different?
+Yet a human can digest starch (rice, bread) but not cellulose (plant fibre). Same building block, same kind of bond. Something else must be doing all the work here.
 
 The geometric arrangement of the linkage. Starch's glucose units link up so the chain coils. Human digestive enzymes are shaped to break exactly that coiled linkage apart. Cellulose's glucose units link up in a different geometric arrangement, giving straight chains those same enzymes cannot grab onto at all.
 

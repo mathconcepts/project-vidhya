@@ -14,8 +14,8 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Apply the release test directly.** Amide-bond formation between $\text{-NH}_2$ and $\text{-COOH}$ releases one water molecule per bond.
+**Step 1 — Run the release test on the actual bond formed.** Amide-bond formation between $\text{-NH}_2$ and $\text{-COOH}$ releases one water molecule per bond.
 
 $$\boxed{\text{Condensation polymerisation.}}$$
 
-**The condition that actually matters.** "Two different monomers" is not the test — Buna-S is built from two different monomers (butadiene and styrene) and is still classified as addition, since both carry a double bond that simply opens with nothing released. Nylon-6,6 also has two different monomers, but is condensation, because its bond-forming step specifically releases water. Monomer count settles nothing; only tracking what leaves at each bond decides the classification.
+**Where monomer counting stops being the right question.** "Two different monomers" is not the test — Buna-S is built from two different monomers (butadiene and styrene) and is still classified as addition, since both carry a double bond that simply opens with nothing released. Nylon-6,6 also has two different monomers, but is condensation, because its bond-forming step specifically releases water. Monomer count settles nothing; only tracking what leaves at each bond decides the classification.

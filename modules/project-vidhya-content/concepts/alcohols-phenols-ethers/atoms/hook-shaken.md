@@ -13,6 +13,6 @@ Two real liquids, one experiment. Ethanol, $\text{CH}_3\text{CH}_2\text{OH}$. Ph
 
 Add sodium hydroxide solution to ethanol: nothing visible happens.
 
-Add the same sodium hydroxide solution to phenol: it dissolves into a clear solution of sodium phenoxide — the phenol's hydrogen left as $\text{H}^+$.
+Add the same solution to phenol: it dissolves into a clear solution of sodium phenoxide — the phenol's hydrogen left as $\text{H}^+$.
 
-Both molecules started with the identical $-\text{OH}$ group. Only one of them gave up its hydrogen easily. Since the group itself is the same in both, the reason for the difference has to be found somewhere else — in whatever the oxygen is attached to.
+Both molecules started with the identical $-\text{OH}$ group. Just one gave up its hydrogen easily. Since the group itself matches in both, the reason must lie in whatever the oxygen is attached to.

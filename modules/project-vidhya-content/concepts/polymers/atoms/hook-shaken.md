@@ -13,7 +13,7 @@ Stretch a rubber band. Let go. It snaps back.
 
 Stretch a plastic bag. Let go. It stays stretched.
 
-Both are **polymers** — long chains built from small repeating units. So what's different?
+Both are **polymers** — long chains built from small repeating units. Yet one bounces back and the other does not.
 
 Rubber is treated with sulfur (**vulcanisation**), which adds cross-links between neighbouring chains — extra bonds joining one chain to the next at scattered points, like rungs between two ropes.
 

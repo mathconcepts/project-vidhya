@@ -19,7 +19,7 @@ modality: mnemonic
   "v": 1,
   "kind": "manipulable",
   "title": "Drag launch speed and angle - watch time of flight, height and range rebuild",
-  "why": "Every projectile answer comes from resolving u into u*cos(theta) and u*sin(theta) first, then running two separate one-dimensional problems - drag either slider and watch that resolution happen live, for any speed or angle, not only the worked example's numbers.",
+  "why": "Every projectile answer starts by resolving u into u*cos(theta) and u*sin(theta) - drag either slider to see that resolution rebuild live, for any speed or angle.",
   "inputs": [
     {"id": "u", "label": "u - launch speed (m/s)", "min": 5, "max": 40, "step": 1, "initial": 20},
     {"id": "theta", "label": "theta - launch angle (degrees)", "min": 10, "max": 80, "step": 0.01, "initial": 36.87}

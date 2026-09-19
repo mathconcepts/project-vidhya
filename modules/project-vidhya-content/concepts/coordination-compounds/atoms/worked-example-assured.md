@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — The mark-costing rule.** When the complex ion is an ANION, the metal's name takes the $-ate$ ending, and for several metals (iron, copper, silver, gold, lead, tin) that means switching to the metal's Latin root, not just adding a suffix to the English name.
+**Step 1 — Name the rule this problem is built to test.** When the complex ion is an ANION, the metal's name takes the $-ate$ ending, and for several metals (iron, copper, silver, gold, lead, tin) that means switching to the metal's Latin root, not just adding a suffix to the English name.
 
 ---
 

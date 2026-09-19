@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Write the neutral configuration.** Iron's neutral configuration is $[Ar]3d^64s^2$ — that is $6$ electrons in $3d$ and $2$ in $4s$, $8$ outer electrons total.
+**Step 1 — Recall iron's neutral configuration.** Iron's neutral configuration is $[Ar]3d^64s^2$ — that is $6$ electrons in $3d$ and $2$ in $4s$, $8$ outer electrons total.
 
 ---
 

@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Write the two pieces separately.** Inside the brackets: $Co(NH_3)_5Cl$. Outside the brackets: $2$ chloride ions, $Cl^-$ and $Cl^-$.
+**Step 1 — Split the formula into two parts.** Inside the brackets: $Co(NH_3)_5Cl$. Outside the brackets: $2$ chloride ions, $Cl^-$ and $Cl^-$.
 
 ---
 
@@ -26,7 +26,7 @@ scaffold_fade: true
 
 ---
 
-**Step 4 — Add up the charges already inside, apart from cobalt.** $5$ ammonia molecules, each $0$ charge: $5 \times 0 = 0$. $1$ chloride ligand: $-1$. Total so far: $0 + (-1) = -1$.
+**Step 4 — Total the charges already present, apart from cobalt.** $5$ ammonia molecules, each $0$ charge: $5 \times 0 = 0$. $1$ chloride ligand: $-1$. Total so far: $0 + (-1) = -1$.
 
 ---
 

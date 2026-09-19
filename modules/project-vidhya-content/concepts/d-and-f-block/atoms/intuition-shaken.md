@@ -9,7 +9,7 @@ difficulty: 0.15
 exam_ids: ["*"]
 ---
 
-Take one real ion: $Mn^{2+}$, configuration $3d^5$. Five electrons, five separate $d$ orbitals — every single one sits alone, unpaired. Check: $Mn^{2+}$ compounds are pale pink (a real colour, even if faint) and are strongly attracted to a magnet (paramagnetic).
+Start with a single ion: $Mn^{2+}$, configuration $3d^5$. Five electrons, five separate $d$ orbitals — every single one sits alone, unpaired. Check: $Mn^{2+}$ compounds are pale pink (a real colour, even if faint) and are strongly attracted to a magnet (paramagnetic).
 
 Now compare $Zn^{2+}$, configuration $3d^{10}$: all ten $d$ electrons are paired up, none left alone. $Zn^{2+}$ compounds are colourless and are not attracted to a magnet at all.
 

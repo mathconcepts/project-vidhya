@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Write down bromine's electron count.** Bromine's group number is 17, so bromine has $7$ valence electrons.
+**Step 1 — Note bromine's electron count.** Bromine's group number is 17, so bromine has $7$ valence electrons.
 
 ---
 

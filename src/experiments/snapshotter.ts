@@ -25,6 +25,7 @@
 
 import { getExperimentsPool } from './db';
 import type { SnapshotSource } from './types';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 
 // ============================================================================
 // Single-concept snapshot (called from attempt hook)
@@ -101,7 +102,10 @@ export async function snapshotAllActiveSessions(opts?: {
   }
 
   const windowHours = opts?.windowHours ?? 24;
-  const defaultExamPackId = opts?.defaultExamPackId ?? 'gate-ma';
+  // mastery_snapshots are the lift baseline, keyed by exam pack — a snapshot
+  // stamped with the wrong exam quietly corrupts every lift number computed
+  // from it, so this follows the deployment's active exam.
+  const defaultExamPackId = opts?.defaultExamPackId ?? resolveActiveExamId() ?? 'gate-ma';
 
   // Read recently-updated student models. Cast updated_at filter via interval.
   const { rows: students } = await pool.query<{

@@ -642,6 +642,12 @@ function DefaultAtomCard({ atom }: { atom: ContentAtom }) {
       content={prose}
       atomId={atom.id}
       structured={atom.atom_type === 'exam_pattern'}
+      // Row-kind badges (/investigate 2026-09-18, live-QA #4: "convey them
+      // using better design aesthetics... colors, contrasts, highlights,
+      // clustering"). `exam_pattern` ONLY — see rehypeStructuredRowKinds in
+      // MarkdownAtomRenderer for the measured coverage (368 of 436 committed
+      // rows classify) and for why `common_traps` deliberately opts out.
+      rowKinds={atom.atom_type === 'exam_pattern'}
       // Attention-span pass (/investigate, 2026-09-01, "Visual — elevate
       // readability... text displayed progressively"): visual_analogy is
       // the one atom type whose entire job is to be looked at, and its
@@ -1360,9 +1366,38 @@ export function AtomCardRenderer({ atoms: rawAtoms, conceptId, studentId, onComp
                     prose
                   )}
                 </div>
-                <div className="vidhya-atom-stage__figure">
-                  {figure}
-                </div>
+                {/*
+                  `data-figure` distinguishes the two kinds of thing that can
+                  land in this slot, because they need opposite treatment on a
+                  phone (/investigate 2026-09-18, live-QA #3: "Visual — does
+                  not do any kind of justice to the text... reimagine how
+                  visual and text can coexist side by side").
+
+                  A promoted resonance `scene` already owns its own sticky
+                  pin + 42vh cap inside Simulation.tsx, so the stage must NOT
+                  add a second one around it — nesting two sticky contexts is
+                  how you get a figure that pins to the wrong ancestor.
+
+                  A `media` figure (the GIF on every visual_analogy atom) has
+                  no such mechanism, and below 720px the stage gives it none
+                  either: the grid+sticky rule is inside `@media (min-width:
+                  720px)`, so on the mobile-first platform the figure leads,
+                  then scrolls entirely off-screen while the student reads the
+                  caption prose that references it. "The diagram on this card"
+                  is a promise the layout breaks on a phone. The CSS keyed off
+                  this attribute pins it instead.
+                */}
+                {/* No wrapper at all when there is nothing to put in it — an
+                    empty sticky box with an opaque background is still a
+                    stacking context the layout does not need. */}
+                {figure === null ? null : (
+                  <div
+                    className="vidhya-atom-stage__figure"
+                    data-figure={promotedSimSpec ? 'scene' : 'media'}
+                  >
+                    {figure}
+                  </div>
+                )}
               </div>
             );
           })()}

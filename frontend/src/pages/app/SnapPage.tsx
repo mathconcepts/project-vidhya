@@ -21,6 +21,7 @@ import {
   Clock, DollarSign, ArrowRight, ClipboardCheck, MinusCircle,
 } from 'lucide-react';
 import { useSession } from '@/hooks/useSession';
+import { useActiveExam } from '@/hooks/useActiveExam';
 import { trackEvent } from '@/lib/analytics';
 import NextStepChip, { type NextStepData } from '@/components/app/NextStepChip';
 
@@ -218,6 +219,10 @@ export default function SnapPage() {
   const sessionId = useSession();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  // The diagnostic is scoped to an exam. This used to post a hardcoded
+  // 'gate-ma', which on any other deployment meant a student photographed a
+  // question and got it analysed against the wrong syllabus, silently.
+  const { exam: activeExam } = useActiveExam();
   const [mode, setMode] = useState<Mode>(searchParams.get('mode') === 'diagnostic' ? 'diagnostic' : 'analyze');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -344,7 +349,7 @@ export default function SnapPage() {
           image: data,
           image_mime_type: mimeType,
           scope: 'mcq-rigorous',
-          exam_id: 'gate-ma',
+          exam_id: activeExam?.exam_id,
           session_id: sessionId,
         }),
       });

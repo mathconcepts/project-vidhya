@@ -201,6 +201,156 @@ function remarkDirectiveTransform() {
   };
 }
 
+/**
+ * ─── Structured row kinds (exam_pattern) ──────────────────────────────────
+ *
+ * `/investigate` 2026-09-18, live-QA finding #4: "exam pattern — good info.
+ * But convey them using better design aesthetics that resonate the message
+ * being conveyed, colors, contrasts, highlights, clustering."
+ *
+ * The clustering the ask wants is already IN the content and the renderer
+ * was throwing it away. Every `exam_pattern` atom is authored as
+ * `- **lead-in**: detail` rows, and that lead-in already names the KIND of
+ * fact the row carries. Measured across all 101 committed exam_pattern
+ * atoms (436 bold-label rows): 247 name a question format (NAT/MCQ/MSQ),
+ * 85 are a time budget, 36 are a trap, 68 are plain prose. So 84% of rows
+ * carry a derivable kind, and `--structured` rendered all 436 identically —
+ * same weight, same ink, same hairline — leaving the student to re-read
+ * every row to find the two that are traps.
+ *
+ * Deriving the kind instead of authoring it is what makes this reach all
+ * 101 concepts (and every concept the generator produces from here on) with
+ * zero content edits — the same discipline as `deriveLinearMapWhy` and the
+ * `focus_eigen` mechanism.
+ *
+ * NO NEW HUES. The prior pass deferred this finding precisely because
+ * per-row semantic colour would collide with Clarity's two-accent law
+ * (green = mastery, indigo = AI/tutor). It does not collide any more,
+ * because the marker is a TEXT badge: `Trap` / `Time` / `NAT`. Only the
+ * trap badge is tinted, and it reuses `--orange` — the one already-
+ * sanctioned warning exception, identical to `common_traps`' AlertTriangle
+ * and Simulation's TrapRow. `/ui-ux-pro-max`'s own Accessibility guidance
+ * ("Don't convey information by color alone — use icons/text in addition to
+ * color", severity High) is why the badge carries the word and not just a
+ * colour: a reader who cannot see the orange still reads "Trap".
+ */
+export type StructuredRowKind = 'format' | 'trap' | 'time';
+
+export interface StructuredRowMark {
+  kind: StructuredRowKind;
+  /** Short text rendered in the badge — the exam's own vocabulary. */
+  badge: string;
+}
+
+/**
+ * Classify one row from its authored bold lead-in. Pure, order-sensitive,
+ * and deliberately conservative: an unrecognised lead-in returns null and
+ * the row renders exactly as it does today rather than getting a guessed
+ * marker.
+ *
+ * Order matters and is not arbitrary:
+ *   1. trap first — "The trap GATE likes on NAT questions" is a trap row,
+ *      not a format row, and 6 real committed labels have exactly that
+ *      shape.
+ *   2. time next — anchored to the start (`^time`), so it matches the 85
+ *      "Time budget:" rows without claiming any row that merely mentions
+ *      time later in its text.
+ *   3. format last, and case-SENSITIVE on the acronyms. NAT/MCQ/MSQ are
+ *      uppercase exam question-type acronyms in every committed atom;
+ *      matching case-insensitively would make a lead-in beginning "Natural
+ *      ..." read as a NAT row.
+ */
+export function classifyStructuredRow(label: string): StructuredRowMark | null {
+  const text = label.trim();
+  if (!text) return null;
+  if (/\btraps?\b|\bpitfalls?\b/i.test(text)) return { kind: 'trap', badge: 'Trap' };
+  if (/^time\b/i.test(text)) return { kind: 'time', badge: 'Time' };
+  const acronyms = text.match(/\b(?:NAT|MCQ|MSQ)\b/g);
+  if (acronyms && acronyms.length > 0) {
+    // De-duplicate while preserving authored order: "MCQ/MSQ ..." keeps
+    // both because the row genuinely covers both formats.
+    const seen: string[] = [];
+    for (const a of acronyms) if (!seen.includes(a)) seen.push(a);
+    return { kind: 'format', badge: seen.join('/') };
+  }
+  return null;
+}
+
+/**
+ * Depth-first search for THIS row's first <strong> lead-in.
+ *
+ * The recursion stops at a nested <ul>/<ol>. Without that stop, an <li> whose
+ * own text carries no bold but whose sub-item does would inherit the
+ * sub-item's badge, and the sub-item would be badged again — one row labelled
+ * by another row's lead-in. No committed atom triggers it today (the 17 files
+ * with nested bullets carry no `**` in the nested items), so this closes it
+ * while it is still latent.
+ */
+function findFirstStrongText(node: any): string | null {
+  if (!node || typeof node !== 'object') return null;
+  if (node.type === 'element' && node.tagName === 'strong') {
+    return collectText(node);
+  }
+  const children = Array.isArray(node.children) ? node.children : [];
+  for (const child of children) {
+    if (child?.type === 'element' && (child.tagName === 'ul' || child.tagName === 'ol')) continue;
+    const found = findFirstStrongText(child);
+    if (found !== null) return found;
+  }
+  return null;
+}
+
+function collectText(node: any): string {
+  if (!node || typeof node !== 'object') return '';
+  if (node.type === 'text') return String(node.value ?? '');
+  const children = Array.isArray(node.children) ? node.children : [];
+  return children.map(collectText).join('');
+}
+
+/**
+ * rehype plugin — stamps `data-row-kind` on each <li> whose bold lead-in
+ * classifies, and prepends a real <span> badge element (not a CSS
+ * `content: attr()` pseudo-element, which screen readers announce
+ * inconsistently). Opt-in per call site: only `exam_pattern` passes
+ * `rowKinds`, because every `common_traps` row is a trap by definition and
+ * badging all of them "Trap" would be noise, not clustering.
+ */
+function rehypeStructuredRowKinds() {
+  return (tree: any) => {
+    visit(tree, 'element', (node: any) => {
+      if (node.tagName !== 'li') return;
+      const label = findFirstStrongText(node);
+      if (label === null) return;
+      const mark = classifyStructuredRow(label);
+      if (!mark) return;
+      node.properties = { ...(node.properties ?? {}), 'data-row-kind': mark.kind };
+      // Wrap the row's own content in ONE element beside the badge. The badged
+      // <li> is a flex row, and a loose list item can hold several blocks —
+      // a second paragraph, a nested <ul>. Measured: 67 of the 101 committed
+      // exam_pattern atoms have at least one bolded row carrying a second
+      // block. Left as direct children they each become a flex item on the
+      // same line, so the follow-up paragraph or sub-list landed BESIDE the
+      // lead-in at roughly half width instead of beneath it. jsdom cannot see
+      // this, and the live 375px check that cleared the badges used
+      // hand-written single-paragraph markup.
+      node.children = [
+        {
+          type: 'element',
+          tagName: 'span',
+          properties: { 'data-row-badge': mark.kind, className: ['vidhya-row-badge'] },
+          children: [{ type: 'text', value: mark.badge }],
+        },
+        {
+          type: 'element',
+          tagName: 'div',
+          properties: { className: ['vidhya-row-body'] },
+          children: Array.isArray(node.children) ? node.children : [],
+        },
+      ];
+    });
+  };
+}
+
 interface InteractiveTagProps {
   'data-directive': string;
   'data-attrs': string;
@@ -265,6 +415,13 @@ export interface MarkdownAtomRendererProps {
    */
   structured?: boolean;
   /**
+   * Opt-in on top of `structured`: derive a row kind from each bullet's bold
+   * lead-in and render a short text badge (Trap / Time / NAT). Only
+   * `exam_pattern` sets this — see rehypeStructuredRowKinds above for why
+   * `common_traps` deliberately does not.
+   */
+  rowKinds?: boolean;
+  /**
    * Extra class(es) appended to the wrapper div, e.g. a tone modifier like
    * `vidhya-atom-body--hint`. `.vidhya-atom-body` sets its own explicit
    * `color`, so a parent's inline style can't override it by inheritance —
@@ -273,7 +430,7 @@ export interface MarkdownAtomRendererProps {
   className?: string;
 }
 
-export function MarkdownAtomRenderer({ content, atomId, structured = false, className }: MarkdownAtomRendererProps) {
+export function MarkdownAtomRenderer({ content, atomId, structured = false, rowKinds = false, className }: MarkdownAtomRendererProps) {
   const tree = useMemo(() => {
     try {
       const processor = unified()
@@ -285,9 +442,14 @@ export function MarkdownAtomRenderer({ content, atomId, structured = false, clas
         // Must run BEFORE remark-rehype: it consumes the raw <details> html
         // nodes that remark-rehype would otherwise drop on the floor.
         .use(remarkDetailsTransform)
-        .use(remarkRehype, { allowDangerousHtml: false })
-        .use(rehypeKatex, { strict: 'ignore', throwOnError: false } as any)
-        .use(rehypeReact, rehypeReactOptions as any);
+        .use(remarkRehype, { allowDangerousHtml: false });
+      // BEFORE rehype-katex, not after. Row classification reads the row's
+      // bold lead-in as text, and KaTeX's output carries a hidden MathML
+      // <annotation> holding the LaTeX source — so a lead-in containing inline
+      // math would be classified against doubled, mangled text.
+      if (rowKinds) processor.use(rehypeStructuredRowKinds);
+      processor.use(rehypeKatex, { strict: 'ignore', throwOnError: false } as any);
+      processor.use(rehypeReact, rehypeReactOptions as any);
       const result = processor.processSync(content);
       return result.result as React.ReactNode;
     } catch (err) {
@@ -299,7 +461,7 @@ export function MarkdownAtomRenderer({ content, atomId, structured = false, clas
         </div>
       );
     }
-  }, [content, atomId]);
+  }, [content, atomId, rowKinds]);
 
   // `prose prose-sm` used to sit here. @tailwindcss/typography is not
   // installed (tailwind.config.cjs: `plugins: []`), so both were dead class

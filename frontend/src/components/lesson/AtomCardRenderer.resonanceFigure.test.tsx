@@ -282,6 +282,63 @@ describe('AtomCardRenderer — W2 resonance figure promotion', () => {
   });
 });
 
+describe('AtomCardRenderer — figure slot kind (mobile coexistence)', () => {
+  /*
+   * /investigate 2026-09-18, live-QA finding #3: "Visual — does not do any
+   * kind of justice to the text. It is very vague. Reimagine how visual and
+   * text can coexist side by side."
+   *
+   * Root cause: `.vidhya-atom-stage`'s grid + sticky figure lives entirely
+   * inside `@media (min-width: 720px)`. On the mobile-first platform the
+   * figure leads and then scrolls completely off-screen while the student
+   * reads the caption prose that points at it — "the diagram on this card"
+   * is a promise the phone layout breaks.
+   *
+   * The CSS fix pins a leading `media` figure below 720px. It must NOT wrap
+   * a promoted resonance `scene`, which already owns its own sticky pin and
+   * 42vh cap inside Simulation.tsx — nesting two sticky contexts resolves
+   * the inner pin against the outer one. These tests lock the discriminator
+   * the CSS keys off, since jsdom applies no stylesheet and cannot assert
+   * the pin itself.
+   */
+  it('marks a GIF/media figure so the mobile sticky rule can pin it', () => {
+    render(
+      <AtomCardRenderer
+        atoms={[makeAtom({ atom_type: 'visual_analogy', content: `A caption.\n\n${GIF_FENCE}` })]}
+        conceptId="c"
+        studentId="s1"
+      />,
+    );
+    const slot = document.querySelector('.vidhya-atom-stage__figure');
+    expect(slot?.getAttribute('data-figure')).toBe('media');
+  });
+
+  it('marks a promoted resonance scene so the stage does NOT double-pin it', () => {
+    render(
+      <AtomCardRenderer
+        atoms={[makeAtom({ atom_type: 'hook', content: `Body.\n\n${simulationFence()}` })]}
+        conceptId="c"
+        studentId="s1"
+      />,
+    );
+    const slot = document.querySelector('.vidhya-atom-stage__figure');
+    expect(slot?.getAttribute('data-figure')).toBe('scene');
+  });
+
+  it('still leads with the figure on a visual_analogy atom', () => {
+    // The mobile pin is only correct for the atom types whose figure leads;
+    // `data-stage` is what the CSS pairs with `data-figure`.
+    render(
+      <AtomCardRenderer
+        atoms={[makeAtom({ atom_type: 'visual_analogy', content: `A caption.\n\n${GIF_FENCE}` })]}
+        conceptId="c"
+        studentId="s1"
+      />,
+    );
+    expect(document.querySelector('.vidhya-atom-stage')?.getAttribute('data-stage')).toBe('above');
+  });
+});
+
 describe('buildPresetVariants — motion-token compliance', () => {
   const PRESETS: AnimationPreset[] = [
     'fade-in',

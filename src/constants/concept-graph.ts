@@ -1,21 +1,50 @@
 // @ts-nocheck
 /**
- * Concept Dependency Graph — GATE Engineering Mathematics
+ * Concept Dependency Graph — the concept universe, across every exam pack.
  *
- * Thin loader (CEO plan Phase 0, §6 registry unification / Loop A). The 82
- * concepts + prerequisite edges are no longer hardcoded here — they live in
- * `data/curriculum/gate-ma.yml`'s `concepts:` section, which is now the
- * single source of truth for the GATE-MA concept graph. This file reads
- * that YAML once at module load and reconstructs the exact same exported
- * shape (`ConceptNode`, `ALL_CONCEPTS`, `CONCEPT_MAP`, and every helper
- * function below) so the dozens of existing consumers across the codebase
- * (curriculum-repo.ts, the Elo/FSRS/readiness engine, batch generation,
- * the content CI gate, etc.) need zero changes.
+ * Thin loader (CEO plan Phase 0, §6 registry unification / Loop A). Concepts
+ * and prerequisite edges are not hardcoded here — they live in each exam
+ * pack's `concepts:` section under `data/curriculum/`, which is the single
+ * source of truth. This file reads those packs once at module load and
+ * reconstructs the exact same exported shape (`ConceptNode`, `ALL_CONCEPTS`,
+ * `CONCEPT_MAP`, and every helper function below) so the dozens of existing
+ * consumers across the codebase (curriculum-repo.ts, the Elo/FSRS/readiness
+ * engine, batch generation, the content CI gate, etc.) need zero changes.
  *
- * Edit concepts by editing `data/curriculum/gate-ma.yml`'s `concepts:`
- * block, not this file. See that file's header comment for the split
- * between `concepts:` (what nodes exist), `syllabus:` (partial curation
- * for weight/depth metadata), and `concept_links:` (per-exam emphasis).
+ * MULTI-EXAM (Step A)
+ *
+ * This used to read exactly one file, `data/curriculum/gate-ma.yml`, and that
+ * single line is what made the whole adaptive engine single-exam: Elo, FSRS,
+ * readiness / next-best-action, prerequisite repair, FIRe credit propagation,
+ * quiz-pool assembly and the frontier spine all read `ALL_CONCEPTS`, so a
+ * second exam's concepts did not exist to any of them — even with a valid
+ * pack installed and `DEFAULT_EXAM_ID` pointing at it.
+ *
+ * The universe is now the MERGE of every pack's `concepts:` block. Concept ids
+ * are global, which is deliberate and already how the rest of the system
+ * behaves: lesson atoms live at `modules/…/concepts/<concept_id>/` and
+ * practice items carry a bare `node_id`, neither of which is namespaced by
+ * exam. So a concept genuinely shared between exams (`eigenvalues` is the same
+ * idea, and the same lesson, in GATE and in JEE) is DECLARED ONCE in whichever
+ * pack owns it and REFERENCED by id from any other pack's `syllabus:`. That is
+ * already the shape `jee-main.yml` uses today.
+ *
+ * Declaring the same id in two packs is therefore an error, not a merge: two
+ * definitions of one concept would silently diverge in difficulty, topic and
+ * prerequisites depending on load order. The error names both files.
+ *
+ * `SYLLABUS_SECTIONS` stays per-exam (it is the ACTIVE exam's navigation, and
+ * section ids like `linear-algebra` legitimately recur across exams).
+ *
+ * Edit concepts by editing a pack's `concepts:` block, not this file. See
+ * `gate-ma.yml`'s header for the split between `concepts:` (what nodes exist),
+ * `syllabus:` (partial curation for weight/depth metadata), and
+ * `concept_links:` (per-exam emphasis).
+ *
+ * `ConceptNode.gate_frequency` keeps its name across exams. It means "how
+ * often does this exam's papers ask it", not anything GATE-specific; renaming
+ * it touches ~40 call sites for no behaviour change, so it stays until there
+ * is a reason beyond the word.
  *
  * Powers:
  *   - Prerequisite Auto-Repair (Pillar 3)
@@ -23,11 +52,13 @@
  *   - Mastery Vector granularity (Pillar 1)
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { parse as parseYaml } from 'yaml';
 import { assertNoPrerequisiteCycles, assertNoGraphCycles } from '../curriculum/prereq-cycles';
+import {
+  CURRICULUM_DIR,
+  listExamPackFiles,
+  resolveActiveExamPack,
+  type ExamPackFile,
+} from '../curriculum/active-exam';
 
 /**
  * T11 (Milestone B — B1). A concept X "encompasses" concept Y with weight
@@ -73,39 +104,36 @@ export interface ConceptNode {
   exam_tested?: boolean;
 }
 
-// Resolved relative to THIS module's own location (not process.cwd()) —
-// unlike exam-loader.ts / registry.ts, which scan a whole directory and
-// degrade gracefully when it's absent, this is the one canonical file the
-// concept graph cannot function without, and callers (scripts, tests
-// spawned with an unrelated cwd) shouldn't have to run from the repo root
-// just to import it.
-const GATE_MA_YAML_PATH = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  '../../data/curriculum/gate-ma.yml',
-);
 const VALID_FREQUENCIES = new Set(['high', 'medium', 'low', 'rare']);
 
-function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
-  if (!fs.existsSync(yamlPath)) {
-    throw new Error(
-      `concept-graph.ts: canonical concept file not found at ${yamlPath}. ` +
-      `The GATE-MA concept graph (82 nodes) lives in data/curriculum/gate-ma.yml's ` +
-      `"concepts:" section — this file can no longer construct it from hardcoded data.`,
-    );
-  }
+/**
+ * Parses one pack's `concepts:` block into nodes, validating each node's own
+ * shape. Cross-node checks (prerequisite resolution, cycles) happen once over
+ * the MERGED universe in `buildConceptUniverse()`, because a pack is allowed
+ * to declare a concept whose prerequisite is declared by another pack.
+ *
+ * A pack with no `concepts:` block contributes nothing and is not an error:
+ * that is a pack which references shared concepts from its `syllabus:`
+ * without owning any (see this file's header). `jee-main.yml` is exactly
+ * that today.
+ */
+function parseConceptNodes(pack: ExamPackFile): ConceptNode[] {
+  const yamlPath = pack.path;
 
-  let raw: any;
-  try {
-    raw = parseYaml(fs.readFileSync(yamlPath, 'utf-8'));
-  } catch (err) {
-    throw new Error(`concept-graph.ts: failed to parse ${yamlPath}: ${(err as Error).message}`);
-  }
+  // `pack.doc` is already parsed. This function used to re-read and re-parse
+  // the file and THROW on failure — at module scope, so one unparseable YAML
+  // anywhere in data/curriculum/ took the whole server down at boot. Parseability
+  // is now listExamPackFiles()'s job (it skips a bad file with a warning and
+  // exam-loader still reports the real error), which leaves this function to
+  // validate only the `concepts:` block of a file already known to be a pack.
+  const raw: any = pack.doc;
 
   const list = raw?.concepts;
-  if (!Array.isArray(list) || list.length === 0) {
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) {
     throw new Error(
-      `concept-graph.ts: ${yamlPath} has no "concepts:" list (or it's empty). ` +
-      `This section is the canonical concept universe — it must not be missing.`,
+      `concept-graph.ts: ${yamlPath} has a "concepts:" key that is not a list. ` +
+      `Omit the key entirely if this pack declares no concepts of its own.`,
     );
   }
 
@@ -145,16 +173,83 @@ function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
     };
   });
 
+  return nodes;
+}
+
+/**
+ * Where each concept came from. Exported for diagnostics: with more than one
+ * pack installed, "which exam contributed these nodes" stops being obvious,
+ * and an operator staring at a wrong-looking graph should be able to see it
+ * without reading YAML.
+ */
+export interface ConceptGraphSource {
+  exam_id: string;
+  file: string;
+  concept_count: number;
+}
+
+interface ConceptUniverse {
+  nodes: ConceptNode[];
+  sources: ConceptGraphSource[];
+  /** concept id → the pack that declared it, for precise error messages. */
+  declaredBy: Map<string, ExamPackFile>;
+}
+
+/**
+ * Merges every pack's concepts into the one universe the engine reasons over,
+ * then runs the cross-node checks that only make sense against the whole set.
+ */
+function buildConceptUniverse(): ConceptUniverse {
+  const packs = listExamPackFiles();
+  if (packs.length === 0) {
+    throw new Error(
+      `concept-graph.ts: no exam packs found in ${CURRICULUM_DIR}. ` +
+      `The concept universe is built from each pack's "concepts:" section — ` +
+      `this file can no longer construct it from hardcoded data.`,
+    );
+  }
+
+  const nodes: ConceptNode[] = [];
+  const sources: ConceptGraphSource[] = [];
+  const declaredBy = new Map<string, ExamPackFile>();
+
+  for (const pack of packs) {
+    const packNodes = parseConceptNodes(pack);
+    for (const node of packNodes) {
+      const prior = declaredBy.get(node.id);
+      if (prior) {
+        throw new Error(
+          `concept-graph.ts: concept "${node.id}" is declared in both ` +
+          `${prior.filename} and ${pack.filename}. Concept ids are global — ` +
+          `declare a shared concept in exactly one pack and reference it by id ` +
+          `from the other pack's "syllabus:" block.`,
+        );
+      }
+      declaredBy.set(node.id, pack);
+      nodes.push(node);
+    }
+    sources.push({ exam_id: pack.id, file: pack.filename, concept_count: packNodes.length });
+  }
+
+  if (nodes.length === 0) {
+    throw new Error(
+      `concept-graph.ts: no exam pack in ${CURRICULUM_DIR} declares a "concepts:" block ` +
+      `(scanned: ${packs.map((p) => p.filename).join(', ')}). The concept universe cannot be empty.`,
+    );
+  }
+
   // Prerequisites must point at real nodes — an unresolvable prerequisite
   // id is a data bug, not something to silently ignore (it would make
   // getPrerequisites() quietly drop an edge and getDependents() never see
-  // it at all).
+  // it at all). Checked across the merged set, so one pack may depend on a
+  // concept another pack declares.
   const ids = new Set(nodes.map((n) => n.id));
   for (const node of nodes) {
+    const where = declaredBy.get(node.id)!.filename;
     for (const prereqId of node.prerequisites) {
       if (!ids.has(prereqId)) {
         throw new Error(
-          `concept-graph.ts: ${yamlPath} concept "${node.id}" declares prerequisite ` +
+          `concept-graph.ts: ${where} concept "${node.id}" declares prerequisite ` +
           `"${prereqId}" which is not a known concept id.`,
         );
       }
@@ -162,13 +257,13 @@ function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
     for (const edge of node.encompasses ?? []) {
       if (!ids.has(edge.id)) {
         throw new Error(
-          `concept-graph.ts: ${yamlPath} concept "${node.id}" declares encompasses ` +
+          `concept-graph.ts: ${where} concept "${node.id}" declares encompasses ` +
           `"${edge.id}" which is not a known concept id.`,
         );
       }
       if (edge.id === node.id) {
         throw new Error(
-          `concept-graph.ts: ${yamlPath} concept "${node.id}" declares encompasses ` +
+          `concept-graph.ts: ${where} concept "${node.id}" declares encompasses ` +
           `pointing at itself.`,
         );
       }
@@ -188,7 +283,7 @@ function loadConceptsFromYaml(yamlPath: string): ConceptNode[] {
   // like a prerequisite bug.
   assertNoGraphCycles(nodes, (n) => (n.encompasses ?? []).map((e) => e.id), 'encompasses');
 
-  return nodes;
+  return { nodes, sources, declaredBy };
 }
 
 /**
@@ -226,7 +321,68 @@ function parseEncompasses(raw: any, conceptId: string, yamlPath: string): Encomp
 // COMBINED GRAPH — loaded once at module init
 // ============================================================================
 
-export const ALL_CONCEPTS: ConceptNode[] = loadConceptsFromYaml(GATE_MA_YAML_PATH);
+const _universe = buildConceptUniverse();
+
+export const ALL_CONCEPTS: ConceptNode[] = _universe.nodes;
+
+/** Which pack contributed how many concepts. Diagnostics only. */
+export const CONCEPT_GRAPH_SOURCES: ConceptGraphSource[] = _universe.sources;
+
+/** concept id → the exam pack id that declares it. */
+export const CONCEPT_DECLARED_BY: Map<string, string> = new Map(
+  Array.from(_universe.declaredBy.entries()).map(([conceptId, pack]) => [conceptId, pack.id]),
+);
+
+/**
+ * The concepts one exam pack declares of its own.
+ *
+ * Distinct from `ALL_CONCEPTS`, which is every pack's concepts merged, and
+ * the distinction is load-bearing: a caller asking "what is THIS exam about"
+ * (generation scope, coverage reporting, an exam-scoped dashboard) must not
+ * be handed another exam's concepts just because they share a graph. While
+ * only one pack declared anything the two were interchangeable, which is
+ * exactly why the difference is easy to miss.
+ *
+ * Returns [] for a pack that declares none — a stub pack that only references
+ * shared concepts from its `syllabus:`. That emptiness is the honest answer,
+ * and callers that can fall back to the syllabus should do so explicitly.
+ */
+export function conceptsDeclaredByExam(exam_id: string): ConceptNode[] {
+  return ALL_CONCEPTS.filter((c) => CONCEPT_DECLARED_BY.get(c.id) === exam_id);
+}
+
+/** The pack whose `syllabus:` drives SYLLABUS_SECTIONS below, or null. */
+const ACTIVE_PACK: ExamPackFile | null = resolveActiveExamPack();
+
+/**
+ * How many concepts the ACTIVE exam declares of its own.
+ *
+ * Zero is a real and meaningful state, not a bug to paper over: it means the
+ * deployment is configured to serve an exam whose pack references concepts
+ * without owning any (a stub pack, like `jee-main.yml` today). The graph is
+ * still non-empty, because other packs contributed — so without this the app
+ * would boot happily, label itself with the active exam's name, and teach
+ * another exam's concepts underneath. That is the exact silent falsehood this
+ * codebase refuses elsewhere, so it is surfaced rather than swallowed.
+ *
+ * Surfaced, not thrown: a stub pack is a legitimate intermediate state while
+ * an exam is being filled in, and hard-failing boot would make that state
+ * impossible to work in. Callers that need to gate on readiness read this.
+ */
+export const ACTIVE_EXAM_CONCEPT_COUNT: number = ACTIVE_PACK
+  ? (CONCEPT_GRAPH_SOURCES.find((s) => s.exam_id === ACTIVE_PACK.id)?.concept_count ?? 0)
+  : 0;
+
+if (ACTIVE_PACK && ACTIVE_EXAM_CONCEPT_COUNT === 0) {
+  console.warn(
+    `[concept-graph] active exam "${ACTIVE_PACK.id}" (${ACTIVE_PACK.filename}) declares no ` +
+    `concepts of its own. The graph has ${ALL_CONCEPTS.length} concepts from ` +
+    `${CONCEPT_GRAPH_SOURCES.filter((s) => s.concept_count > 0).map((s) => s.exam_id).join(', ')}, ` +
+    `so anything adaptive (readiness, spaced repetition, prerequisites) will reason over ` +
+    `those and not over "${ACTIVE_PACK.id}". Fill in its "concepts:" block, or set ` +
+    `DEFAULT_EXAM_ID to an exam that has one.`,
+  );
+}
 
 /** Map concept_id → ConceptNode for O(1) lookup */
 export const CONCEPT_MAP: Map<string, ConceptNode> = new Map(
@@ -245,9 +401,9 @@ export interface SyllabusSection {
   concept_ids: string[];
 }
 
-function loadSyllabusFromYaml(yamlPath: string): SyllabusSection[] {
+function loadSyllabusFromPack(pack: ExamPackFile): SyllabusSection[] {
   try {
-    const raw = parseYaml(fs.readFileSync(yamlPath, 'utf-8'));
+    const raw: any = pack.doc;
     const sections = raw?.syllabus;
     if (!Array.isArray(sections)) return [];
     return sections
@@ -264,7 +420,17 @@ function loadSyllabusFromYaml(yamlPath: string): SyllabusSection[] {
   }
 }
 
-export const SYLLABUS_SECTIONS: SyllabusSection[] = loadSyllabusFromYaml(GATE_MA_YAML_PATH);
+/**
+ * The ACTIVE exam's sections, not every pack's merged together.
+ *
+ * Unlike concept ids, section ids are per-exam navigation labels and
+ * legitimately recur — two exams can both have a `linear-algebra` section
+ * covering different concept lists. Merging them would make SECTION_MAP
+ * ambiguous and `resolveConceptOrSection()` land on whichever pack loaded
+ * first, so this stays scoped to the exam the deployment is serving.
+ */
+export const SYLLABUS_SECTIONS: SyllabusSection[] =
+  ACTIVE_PACK ? loadSyllabusFromPack(ACTIVE_PACK) : [];
 
 /** Map section_id → SyllabusSection for O(1) lookup */
 export const SECTION_MAP: Map<string, SyllabusSection> = new Map(

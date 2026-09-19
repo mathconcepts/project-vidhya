@@ -229,6 +229,105 @@
     border-top: var(--hairline) solid var(--separator);
   }
   /*
+   * Row-kind badges on exam_pattern rows (/investigate 2026-09-18, live-QA
+   * #4: "convey them using better design aesthetics that resonate the
+   * message being conveyed, colors, contrasts, highlights, clustering").
+   *
+   * `--structured` above already turned the wall of bullets into scannable
+   * hairline rows, but it rendered all 436 committed rows identically, so
+   * finding the two traps in a six-row list still meant reading all six.
+   * The badge text is derived in MarkdownAtomRenderer from the row's own
+   * authored bold lead-in (rehypeStructuredRowKinds) — no content edits, all
+   * 101 concepts.
+   *
+   * `align-items: baseline`, NOT `center`: this is the same flex row shape
+   * that caused the 2026-09-07 walkthrough-header bug, where `items-center`
+   * put a single-line badge beside the MIDDLE line of a four-line wrapped
+   * title. Baseline pins the badge to the row's first line, which is the one
+   * carrying the lead-in it labels.
+   *
+   * Only the trap badge is tinted, and it reuses --orange — the one
+   * already-sanctioned warning exception in this system (common_traps'
+   * AlertTriangle, Simulation's TrapRow), not a new hue. Every badge carries
+   * a WORD, so colour is never the only channel (/ui-ux-pro-max
+   * Accessibility: "Don't convey information by color alone", severity High).
+   */
+  .vidhya-atom-body--structured li[data-row-kind] {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+  /* ONE flex sibling beside the badge, holding every block the row authored.
+     rehypeStructuredRowKinds wraps the row's own children in this element —
+     see its comment for the 67-of-101 regression that made the wrapper
+     necessary. `min-width: 0` so a long formula scrolls its own container
+     instead of widening the row. */
+  .vidhya-atom-body--structured li[data-row-kind] > .vidhya-row-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .vidhya-atom-body--structured li[data-row-kind] > .vidhya-row-body > p {
+    margin: 0;
+  }
+  .vidhya-atom-body--structured li[data-row-kind] > .vidhya-row-body > * + * {
+    margin-top: var(--space-2);
+  }
+  .vidhya-row-badge {
+    flex-shrink: 0;
+    display: inline-block;
+    /* 13px is DESIGN-SYSTEM.md's floor for anything a student reads. This is
+       metadata about the row, not the row's content, so it sits at the floor
+       rather than the 17px body size. */
+    font-size: var(--text-footnote);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: 0.02em;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-xs);
+    background: var(--surface-fill-strong);
+    /* --text-primary, NOT --text-secondary. The badge is metadata, so
+       secondary ink is the instinctive choice — and it is the same
+       rgba(60,60,67,0.6) that measured ~3.5:1 on this exact fill when the
+       2026-09-04 pass fixed the low-contrast `×λ` labels. 13px at weight 600
+       is not WCAG "large text" (that needs 18.66px bold), so the 4.5:1 floor
+       applies here and secondary ink fails it. Caught by a real 375px browser
+       check, not by jsdom. */
+    color: var(--text-primary);
+    white-space: nowrap;
+  }
+  /*
+   * The trap row is the one a student most needs to find, so it gets the
+   * warning hue — in the FILL, with the text left at primary ink.
+   *
+   * Both tighter pairings were measured in a real 375px browser and both
+   * failed the 4.5:1 floor this badge owes as text: --orange on --orange-tint
+   * is 1.85:1 (same hue, different alpha, almost no luminance delta) and
+   * --orange-ink on --orange-tint is 4.34:1 — close, but a fail is a fail,
+   * and shipping 4.34 right after citing the contrast rule would be worse
+   * than picking a pairing that actually clears it.
+   *
+   * Hue in the fill is the honest split: the chip is non-text content, where
+   * a warm tint against the neutral grey of every other badge is a real
+   * at-a-glance difference, and the text on top stays maximally readable.
+   * The word "Trap" remains the primary channel either way, so no reader
+   * depends on seeing the orange (/ui-ux-pro-max Accessibility: "Don't
+   * convey information by color alone", severity High).
+   *
+   * common_traps' own AlertTriangle keeps --orange as a FOREGROUND colour
+   * legitimately: an icon is non-text content and owes 3:1, not 4.5:1.
+   */
+  .vidhya-row-badge[data-row-badge='trap'] {
+    background: var(--orange-tint);
+    /* Measured: the orange tint and the neutral fill differ by only 1.14:1 in
+       luminance (light) / 1.21:1 (dark) — a hue difference, which a reader
+       with reduced colour perception may not get. The badge WORD already
+       carries the meaning, so nothing breaks for them, but a 1px ring adds a
+       channel that needs no colour vision at all: edge present vs absent.
+       An inset shadow rather than a border so the chip's box size is
+       identical to every other badge and the baseline row does not shift. */
+    box-shadow: inset 0 0 0 1px var(--orange);
+  }
+  /*
    * .vidhya-atom-body--definition — formal_definition atoms are authored as
    * blank-line-separated "**Term**: detail" paragraphs (the corpus
    * convention), but the default renderer's paragraph margin alone reads as
@@ -551,5 +650,46 @@
     position: sticky;
     top: var(--space-4);
     margin-bottom: 0;
+  }
+}
+
+/* Below 720px there is no second column to give, so "visual and text side by
+   side" (/investigate 2026-09-18, live-QA #3) becomes "the visual stays put
+   while you read": the leading media figure pins to the top of the card and
+   the caption prose scrolls underneath it, instead of the figure scrolling
+   away before the prose that references it is even reached.
+
+   Scoped to [data-figure='media'] on purpose — a promoted resonance scene
+   already pins itself inside Simulation.tsx, and wrapping a second sticky
+   context around it would resolve the inner pin against the outer one.
+
+   `--surface-card`, never `--surface-fill`: the fill token is 12% opaque
+   (rgba(120,120,128,0.12)) and was the exact cause of the 2026-09-06
+   sticky-overlay bleed-through bug, where scrolling caption text showed
+   straight through the pinned figure. A sticky overlay needs a genuinely
+   opaque ground.
+
+   The image is capped rather than the wrapper clipped: `max-height` on the
+   wrapper with `overflow: hidden` would crop the top of a tall GIF. Capping
+   the img and letting it keep its aspect ratio scales it down instead, so
+   the whole figure stays visible and the majority of the viewport still
+   belongs to the words. */
+@media (max-width: 719px) {
+  .vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure[data-figure='media'] {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface-card);
+  }
+  /* Every element kind that can carry the figure's height, not just <img>.
+     Capping only the image left any other figure element unbounded, which is
+     the same "pinned block eats the viewport" problem this rule exists to
+     prevent. The cap is on the CONTENT, never `overflow: hidden` on the
+     wrapper — that crops instead of scaling. */
+  .vidhya-atom-stage[data-stage='above'] .vidhya-atom-stage__figure[data-figure='media'] :is(img, svg, video, canvas) {
+    max-height: 34vh;
+    width: auto;
+    max-width: 100%;
+    margin-inline: auto;
   }
 }

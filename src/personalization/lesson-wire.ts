@@ -18,6 +18,7 @@ import pg from 'pg';
 import { applyPersonalizedRanking } from './selector';
 import { bucketFor, PERSONALIZED_SELECTOR_EXPERIMENT_ID } from './ab';
 import type { AtomShape, RankingContext } from './types';
+import { resolveActiveExamId } from '../curriculum/exam-loader';
 
 const { Pool } = pg;
 let _pool: pg.Pool | null = null;
@@ -57,7 +58,7 @@ export interface LessonRankingInput {
   /** Optional UUID; null for anonymous sessions → forces control bucket. */
   student_id: string | null;
   concept_id: string;
-  /** Defaults to 'gate-ma' if missing — single-exam pilot. */
+  /** Defaults to the deployment's active exam when the caller omits it. */
   exam_pack_id?: string;
 }
 
@@ -95,7 +96,7 @@ export async function rankAtomsForLesson<T extends WithSelectorFields>(
     session_id: input.session_id,
     student_id: resolvedStudentId,
     concept_id: input.concept_id,
-    exam_pack_id: input.exam_pack_id ?? 'gate-ma',
+    exam_pack_id: input.exam_pack_id ?? resolveActiveExamId() ?? 'gate-ma',
     ab_bucket: bucketFor(PERSONALIZED_SELECTOR_EXPERIMENT_ID, input.session_id),
     // Realtime layer is intentionally absent here — the lesson serving
     // path doesn't have an obvious last_correct signal at load time.

@@ -22,7 +22,13 @@
 import fs from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
-import { ALL_CONCEPTS, CONCEPT_MAP, type ConceptNode } from '../constants/concept-graph';
+import {
+  ALL_CONCEPTS,
+  CONCEPT_MAP,
+  conceptsDeclaredByExam,
+  type ConceptNode,
+} from '../constants/concept-graph';
+import { CURRICULUM_DIR, isExamSidecar, pickActiveExamId } from './active-exam';
 import type {
   ExamDefinition,
   ExamMetadata,
@@ -32,7 +38,12 @@ import type {
   ConceptDepth,
 } from './types';
 
-const CURRICULUM_DIR = path.resolve(process.cwd(), 'data/curriculum');
+// CURRICULUM_DIR now comes from active-exam.ts rather than being computed
+// here from process.cwd(). Two modules resolving the same directory by two
+// different rules is the drift this whole split exists to remove — and the
+// module-relative resolution is also the more robust of the two, since a
+// script or test spawned with an unrelated cwd used to make this loader see
+// an empty curriculum directory and report zero exams.
 const VALID_SCOPES: CurriculumScope[] = [
   'mcq-fast', 'mcq-rigorous', 'mcq-and-numerical', 'subjective-short', 'subjective-long', 'oral-viva', 'practical',
 ];
@@ -86,9 +97,10 @@ export function checkConceptId(cid: string, path_: string, knownConcepts: Set<st
   if (knownConcepts.has(cid) || declaredStubs.has(cid)) return;
   throw new Error(
     `${path_}: concept_id "${cid}" is neither a known concept-graph node nor declared in ` +
-    `this file's stub_concepts: list. Either link it into the concept graph (` +
-    `data/curriculum/gate-ma.yml's concepts: section) or add it to stub_concepts: to ` +
-    `acknowledge it's a placeholder — an unrecognized concept_id is a hard failure, not a warning.`,
+    `this file's stub_concepts: list. Either declare it in some exam pack's concepts: ` +
+    `section under data/curriculum/ (any pack — ids are global and the concept graph ` +
+    `merges every pack's block) or add it to stub_concepts: to acknowledge it's a ` +
+    `placeholder — an unrecognized concept_id is a hard failure, not a warning.`,
   );
 }
 
@@ -193,7 +205,20 @@ function loadOne(filepath: string): ExamDefinition {
       stub_concept_ids.add(link.concept_id);
     }
   }
-  return { metadata, syllabus, concept_links, stub_concept_ids: Array.from(stub_concept_ids).sort() };
+  // Only the flags we understand are carried through, so a typo in the block
+  // reads as "not enabled" rather than silently becoming a truthy unknown.
+  const capabilities =
+    raw.capabilities && typeof raw.capabilities === 'object'
+      ? { interactives_enabled: raw.capabilities.interactives_enabled === true }
+      : undefined;
+
+  return {
+    metadata,
+    syllabus,
+    concept_links,
+    stub_concept_ids: Array.from(stub_concept_ids).sort(),
+    capabilities,
+  };
 }
 
 // ============================================================================
@@ -227,25 +252,12 @@ export function loadAllExams(forceReload = false): Map<string, ExamDefinition> {
 }
 
 /**
- * Not every YAML file beside an exam pack IS an exam pack.
- *
- * `<exam>.floor.yml` is the Bare-Minimum Syllabus Contract for that exam —
- * scripts/check-syllabus-floor.ts resolves it by exactly that name. It
- * declares floors, not an exam, so it has no `metadata:` block and never
- * should. Feeding it to loadOne() made every boot log
- *
- *   [exam-loader] failed gate-ma.floor.yml: metadata block required
- *
- * which is a real error message about a file that is not in fact wrong.
- *
- * Skipping by suffix rather than by "has no metadata block" is deliberate:
- * the metadata error is the loader's only defence against a genuinely
- * malformed exam pack, and swallowing it to quiet this one file would trade a
- * false alarm for a silence that matters.
+ * Re-exported from active-exam.ts, which owns the rule so the concept graph
+ * can skip sidecars by the same one. Kept exported here because this is the
+ * import path every existing caller uses, and moving the definition isn't a
+ * reason to break them.
  */
-export function isExamSidecar(filename: string): boolean {
-  return /\.floor\.ya?ml$/.test(filename);
-}
+export { isExamSidecar };
 
 export function getExam(exam_id: string): ExamDefinition | null {
   return loadAllExams().get(exam_id) || null;
@@ -316,10 +328,13 @@ export function listSyllabusIds(): string[] {
  *     legitimately empty today; contentGenerationJob's preflight refuses
  *     with an honest message instead of silently generating nothing.
  *   - Onboarding real content generation for a new exam: (1) write
- *     data/curriculum/<exam-id>.yml, (2) link its concept_ids into the
- *     concept graph (data/curriculum/gate-ma.yml's concepts: section, one
- *     entry each with real prerequisites — or a future per-exam concepts
- *     file, once a second exam earns its own canonical graph).
+ *     data/curriculum/<exam-id>.yml, (2) give it its own `concepts:` block,
+ *     one entry each with real prerequisites. The concept graph merges every
+ *     pack's block, so a new exam declares its own concepts in its own file
+ *     and references any it genuinely SHARES with another exam by id (declare
+ *     once, reference anywhere — see concept-graph.ts's header). The advice
+ *     here used to be "add them to gate-ma.yml's concepts: section", which
+ *     was the only option back when the graph read that one file.
  */
 export function getSyllabus(id: string = DEFAULT_SYLLABUS_ID): GenerationSyllabus {
   const exam = getExam(id);
@@ -327,14 +342,35 @@ export function getSyllabus(id: string = DEFAULT_SYLLABUS_ID): GenerationSyllabu
     throw new Error(`unknown syllabus "${id}" — registered: ${listSyllabusIds().join(', ')}`);
   }
 
-  if (id === DEFAULT_SYLLABUS_ID) {
-    // gate-ma: the concept graph is the full, authoritative scope (see docblock above).
+  // A pack that declares its own `concepts:` block IS its own authoritative
+  // scope — its `syllabus:` block is partial weight/depth curation, not a
+  // generation scope (see docblock above).
+  //
+  // This used to read `ALL_CONCEPTS` for gate-ma specifically, which was the
+  // same thing back when the concept graph was gate-ma's graph. It is not the
+  // same thing now that the graph merges every pack: handing gate-ma
+  // ALL_CONCEPTS would pull a second exam's concepts into gate-ma's generation
+  // scope the moment that exam declared any. Asking for the concepts THIS pack
+  // declares gives gate-ma the identical 101 it has today and stays correct
+  // with more packs installed.
+  const ownConcepts = conceptsDeclaredByExam(id);
+  if (ownConcepts.length > 0) {
+    // Still report the pack's own `syllabus:` ids that resolve to nothing. An
+    // earlier draft hardcoded `[]` here on the reasoning that a pack declaring
+    // its own concepts has nothing left to resolve — which is only true once
+    // the migration is FINISHED. A pack part-way through (one concept declared,
+    // sixty-three still referenced by id and not yet written) would otherwise
+    // report zero unresolved, and the two operator-facing gap reports that read
+    // this field — the generation preflight and the Setup Wizard's
+    // `unresolved_count` — would call a 1/64-complete pack done.
+    const unresolved = Array.from(new Set(flattenConceptIds(exam.syllabus)))
+      .filter((cid) => !CONCEPT_MAP.has(cid));
     return {
       id,
       name: exam.metadata.name,
-      concepts: ALL_CONCEPTS,
-      unresolvedConceptIds: [],
-      atomsSubdir: '',
+      concepts: ownConcepts,
+      unresolvedConceptIds: unresolved,
+      atomsSubdir: id === DEFAULT_SYLLABUS_ID ? '' : id,
     };
   }
 
@@ -370,6 +406,14 @@ export function getSyllabus(id: string = DEFAULT_SYLLABUS_ID): GenerationSyllabu
  *
  * Returns null when data/curriculum/ has no exams loaded at all.
  *
+ * The policy itself lives in active-exam.ts's pickActiveExamId() because
+ * concept-graph.ts needs the same rule and cannot import this module (this
+ * one imports the concept graph, so the dependency only runs one way). The
+ * CANDIDATE LIST differs on purpose: this passes listExamIds(), i.e. packs
+ * that actually parsed, because a pack that fails loadOne() is on disk but
+ * is not a usable exam. concept-graph.ts passes what it finds on disk, since
+ * it is built before any pack has been validated.
+ *
  * IMPORTANT — do not confuse this with src/exams/default-exam.ts's
  * resolveDefaultExamId(). That resolves an *admin-defined Exam record*
  * (ids like 'EXM-UGEE-MATH-SAMPLE', stored in .data/exams.json via
@@ -382,10 +426,7 @@ export function getSyllabus(id: string = DEFAULT_SYLLABUS_ID): GenerationSyllabu
  * lookup silently returns nothing.
  */
 export function resolveActiveExamId(): string | null {
-  const ids = listExamIds();
-  if (ids.length === 0) return null;
-  const envExamId = (process.env.DEFAULT_EXAM_ID || '').trim();
-  return envExamId && ids.includes(envExamId) ? envExamId : ids[0];
+  return pickActiveExamId(listExamIds());
 }
 
 /**
@@ -484,6 +525,11 @@ function dbPackToDefinition(row: ExamPackDbRow): ExamDefinition | null {
     syllabus,
     concept_links: [], // operator packs don't seed concept_links yet — they grow via the unit generator
     stub_concept_ids: [], // operator packs don't declare stubs via YAML — N/A until they seed concept_links
+    // The DB row carries this as its own column, so surface it here too.
+    // Leaving it undefined would make `getExamWithDb(...).capabilities` quietly
+    // mean "YAML packs only" — a trap for the next caller, even though today's
+    // one consumer happens to read the DB repo first.
+    capabilities: { interactives_enabled: row.interactives_enabled === true },
   };
 }
 

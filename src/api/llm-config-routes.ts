@@ -29,6 +29,14 @@ import {
   getConfigFromRequest,
   type LLMConfig,
 } from '../llm/config-resolver';
+// The SAME url builder the runtime dispatchers use. These two layers used to
+// construct provider URLs by different, disagreeing rules: this file assumed
+// the endpoint already carried its version and appended none, while the runtime
+// accepts an endpoint both with and without one. A user pasting
+// `https://api.anthropic.com` therefore got "invalid key" from Test Connection
+// on a config the runtime would have called fine — the same "two independent
+// truths about one URL" defect that caused the outage this pass fixed.
+import { joinProviderUrl } from '../llm/runtime';
 
 // ============================================================================
 // 1. List providers — full registry, no secrets
@@ -257,8 +265,11 @@ async function callChat(params: {
 
   switch (provider.api_shape) {
     case 'google-gemini': {
-      // Gemini REST: /v1beta/models/{model}:generateContent?key=...
-      const url = `${params.endpoint}/models/${params.model_id}:generateContent`;
+      // Gemini REST: /v1beta/models/{model}:generateContent
+      const url = joinProviderUrl(
+        params.endpoint,
+        `/v1beta/models/${encodeURIComponent(params.model_id)}:generateContent`,
+      );
       const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -277,7 +288,7 @@ async function callChat(params: {
     }
 
     case 'anthropic': {
-      const url = `${params.endpoint}/messages`;
+      const url = joinProviderUrl(params.endpoint, '/v1/messages');
       const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -297,9 +308,33 @@ async function callChat(params: {
       return json.content?.[0]?.text || '';
     }
 
-    case 'openai-compatible':
     case 'ollama': {
-      const url = `${params.endpoint}/chat/completions`;
+      // Ollama's NATIVE API, matching runtime.ts's dispatcher. This used to
+      // fall through to the openai-compatible branch below, which worked only
+      // because the registry's default_endpoint carried a `/v1` that pointed at
+      // Ollama's OpenAI-compatibility shim. Removing that `/v1` (so the runtime
+      // dispatcher stopped building `/v1/api/chat`) would have left this branch
+      // hitting `http://localhost:11434/chat/completions` → 404 → "Test
+      // connection" calling a working local Ollama invalid.
+      const url = joinProviderUrl(params.endpoint, '/api/chat');
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: params.model_id,
+          messages: [{ role: 'user', content: params.prompt }],
+          stream: false,
+          options: { num_predict: max_tokens, temperature: 0 },
+        }),
+      });
+      recordOutcome(res.status);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`);
+      const json = await res.json();
+      return json.message?.content || '';
+    }
+
+    case 'openai-compatible': {
+      const url = joinProviderUrl(params.endpoint, '/v1/chat/completions');
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (params.key) {
         headers[provider.auth.header_name] = provider.auth.header_value_template.replace('{key}', params.key);

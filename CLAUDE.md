@@ -5722,6 +5722,344 @@ body-size). `tsc` clean both sides. `npm run ci` **19 gates** (was 18) clean.
 Verified live at 375px on a real browser, before and after the cap change —
 the one box the PR's own test plan had left unchecked.
 
+### `/investigate` on 5 live-QA findings: a platform-wide LLM outage and an invisible highlight (2026-09-18)
+
+Five numbered findings, three root-caused and fixed, two honestly deferred.
+Every fix below was traced to primary evidence before any code changed.
+
+**#5 "anytime tutor not working" — the whole runtime LLM layer had never
+worked.** The student-facing string is a catch-all, so the real error came from
+production's own log:
+
+```
+[chat] Stream error: Gemini stream 404:
+```
+
+Empty body, and locally (no key) the honest "needs an API key" message renders
+instead — so production reached the streaming path and threw. Cause:
+`provider-registry.ts`'s `default_endpoint` values already carry their version
+prefix (`https://api.anthropic.com/v1`,
+`https://generativelanguage.googleapis.com/v1beta`, `https://openrouter.ai/api/v1`,
+...) and every dispatcher in `src/llm/runtime.ts` appended a second one —
+`.../v1beta/v1beta/models/...`, `api.anthropic.com/v1/v1/messages`. **7 of 8
+registered providers were malformed**; Ollama was wrong differently (`/v1` on the
+endpoint while the dispatcher speaks the native `/api/chat`). The one call site
+that worked, `embedText`, is the only one that hardcodes its full URL instead of
+reading `resolved.endpoint`.
+
+So the AI tutor, thinking-gap insights, error classification and the
+personalisation generators had **never completed a call with any provider**. This
+corrects a standing misattribution in this very file: the "known-unrun" notes
+blame a missing provider key. That was true locally; production has a Gemini key,
+resolution succeeded, the boot banner said `RAG + LLM (...)`, and every call
+404'd.
+
+Fixed with `joinProviderUrl(endpoint, path)` — one helper, all 8 call sites.
+It dedupes only an EXACT trailing version match, so it accepts both forms a BYOK
+user might paste, and anchors on the end of the base (groq's `/openai/v1` is not
+mistaken mid-URL). `src/llm/__tests__/provider-url-join.test.ts` (15 tests) pins
+every provider's final URL against its real documented endpoint; the assertions
+were verified to catch all three old-code shapes.
+
+**#1 "Highlighted shape unclear. Where is the highlight." — nothing was
+highlighted.** `LinearMapScene` only turned an arrow green when a SAMPLED
+direction happened to be parallel to an eigenvector, and the samples are
+multiples of `360/num_vectors` (22.5° at the default 16). For
+positive-definite-matrices' own hook matrix `[[3,1],[1,2]]` the eigen-directions
+are 31.72° and 121.72° — nearest cross-product 0.16 against a 1e-3 tolerance —
+so **zero arrows turned green** while the chip told the student to look at the
+highlight. Measured corpus-wide: **33 of 57 committed `linear_map` scenes** had
+at least one eigen-direction with no arrow, and on 4 concepts
+(`quadratic-forms`, `spectral-theorem`, `positive-definite-matrices`,
+`rank-nullity`) it was 2 of 2 — no green at all. `LM_SPEC`, the test fixture,
+hid this for months because its eigenvectors sit at exactly ±45°, which ARE
+sampled. Eigen arrows are now drawn explicitly rather than left to chance.
+
+Four more defects in the same report, all confirmed in the render code:
+`×${e.value}` interpolated the raw float (production showed `×3.61803399`, a
+10-character digit wall) while this file already exported `formatSignificant`;
+the label's halo used `--surface-fill`, which is 12% opaque and so never
+occluded (the same token confusion as the 2026-09-06 sticky-wrapper bug); the
+label was ink rather than the green it names; and the 16 ordinary arrows now
+recede to 0.16 opacity on reveal so the payoff reads by CONTRAST instead of by
+1px of stroke width. The mapping chip was also naming a noun that was not on
+screen — it said "the highlighted shape" in every figure mode — so
+`highlightNounForSpec` now picks the noun from the figure mode (arrows / nodes
+and edges / curve), and the chip moved 11px → 13px, the design system's own floor
+for anything a student reads.
+
+**#2 "the glass window scrolls down to cover complete text" — a consequence of
+my own earlier fix.** The sticky figure (2026-09-05, made correctly opaque
+2026-09-06) pins figure + beat bar + controls + slider at the top of the card, so
+on a phone the caption scrolled underneath an opaque block with almost no room
+left. Capped at `maxHeight: 42vh`, which keeps the pin's benefit while
+guaranteeing the majority of the viewport belongs to the text.
+
+**Deliberately NOT done, named rather than half-delivered:** #3 (reimagine how
+the visual and text coexist side by side) and #4 (exam_pattern clustering,
+colour, contrast) are design redesigns, not defects — #4 in particular wants
+per-row semantic colour inside one card, which collides with the two-accent law
+and the scoped atom-kind exception this file documents, so it needs a real design
+decision rather than a guess. The content half of #2 ("too much mathematics
+text") is corpus-scale density work on beat prose. All three are in TODOS.md.
+
+**Tests:** backend 4759 → 4774 (+15, the provider-URL suite). Frontend 2883 →
+2891 (+8: label rounding, opaque halo, green-by-contrast, the noun helper's four
+branches, the 42vh cap). 4 pre-existing assertions reconciled where my changes
+intentionally moved them (the ×0 label's fill and halo, and two chip-copy
+fixtures — `MAPPING_SPEC` is parametric, so its nouns are curve/point, not
+arrows). `tsc` clean both sides; `npm run ci` 19 gates clean.
+
+**Not verified live:** production is unreachable from this sandbox (egress policy
+blocks the host), so the URL fix is proven by unit tests against each provider's
+documented endpoint, not by a successful live call. The real confirmation is the
+first chat turn after deploy.
+
+### `/investigate` findings #3 and #4: figure/text coexistence on a phone, and exam_pattern row clustering (2026-09-18)
+
+The two findings the prior pass deferred with named blockers. Both closed as
+code-level fixes derived from data the system already had, so both reach all
+101 concepts with zero content authoring — and both were verified in a real
+375px Chromium, which is where the one genuine defect in my own work surfaced.
+
+**#4 — the clustering was already in the content and the renderer discarded
+it.** Report: "exam pattern — good info. But convey them using better design
+aesthetics that resonate the message being conveyed, colors, contrasts,
+highlights, clustering." Every `exam_pattern` atom is authored as
+`- **lead-in**: detail` rows, and the lead-in already names the KIND of fact.
+Measured across all 101 committed atoms — **436 bold-label rows: 247 name a
+question format (NAT/MCQ/MSQ), 85 a time budget, 36 a trap, 68 plain prose**,
+so 368 of 436 (84%) carry a derivable kind. `--structured` rendered all 436
+identically, so finding the two traps in a six-row list meant reading all six.
+
+`classifyStructuredRow` + `rehypeStructuredRowKinds`
+(`MarkdownAtomRenderer.tsx`) derive the kind and prepend a real `<span>` badge
+— not a `content: attr()` pseudo-element, which screen readers announce
+inconsistently. Order is deliberate: trap beats format, because "The trap GATE
+likes on NAT questions" is a trap row and 6 real committed labels have exactly
+that shape; `^time` is anchored so it claims the 85 "Time budget" rows without
+grabbing any row that merely mentions time; the acronym match is
+case-SENSITIVE, so a lead-in beginning "Natural..." is not read as NAT. An
+unrecognised lead-in returns null and the row renders exactly as today — the
+68 plain rows are untouched rather than given a guessed marker. Opt-in per
+call site: `exam_pattern` only, because every `common_traps` row is a trap by
+definition and badging all of them "Trap" would be noise, not clustering.
+
+**The blocker the prior pass named is genuinely gone, not worked around.** That
+pass deferred #4 because per-row semantic colour collides with Clarity's
+two-accent law. It does not collide, because the marker is a WORD (`Trap` /
+`Time` / `NAT`) — no new hue anywhere. Only the trap chip is tinted, reusing
+`--orange`, the one already-sanctioned warning exception.
+
+**#3 — on a phone the figure and its caption never coexisted at all.** Report:
+"Visual — does not do any kind of justice to the text. It is very vague.
+Reimagine how visual and text can coexist side by side."
+`.vidhya-atom-stage`'s grid + sticky figure lives entirely inside
+`@media (min-width: 720px)`, so on the mobile-first platform the figure led and
+then scrolled completely off-screen while the student read the caption prose
+pointing at it — "the diagram on this card" was a promise the phone layout
+broke. The prior pass's own TODO had flagged that two columns at 375px means
+two unreadable columns; the answer turned out to be persistence, not adjacency.
+Below 720px a leading figure now pins and the prose scrolls underneath it.
+
+Scoped via a new `data-figure` discriminator (`scene` vs `media`) because a
+promoted resonance scene already owns its own sticky pin and 42vh cap inside
+`Simulation.tsx` — wrapping a second sticky context around it would resolve the
+inner pin against the outer one. `--surface-card`, never `--surface-fill`: the
+fill token is 12% opaque and was the exact cause of the 2026-09-06 sticky
+bleed-through bug. The image is capped (34vh) rather than the wrapper clipped,
+so a tall GIF scales instead of losing its top.
+
+**One content bug, measured before being called a pattern.**
+`positive-definite-matrices/atoms/visual-analogy.md` described its two
+level-set families as "primary color" / "secondary color" while the renderer
+deliberately draws them ink `#1d1d1f` vs grey `#8e8e93` — a LIGHTNESS
+difference chosen so the scene reads for a colour-blind student
+(`gif-generator.ts`'s own palette comment). The prose was discarding the exact
+cue the figure was built around. A corpus grep found **1 file**, so this is a
+one-off, not the structural cause of #3.
+
+**The live check caught a defect in my own work, twice.** jsdom applies no
+stylesheet, so the badge colours were only verifiable in a real browser. First
+measurement: the neutral badge resolved to `--text-secondary`
+(`rgba(60,60,67,0.6)`) on the grey fill at **3.5:1** — the same token and the
+same failure the 2026-09-04 pass fixed on the `×λ` labels. 13px at weight 600
+is not WCAG "large text" (that needs 18.66px bold), so 4.5:1 applies. Switched
+to `--text-primary`: **12.30:1**. Second measurement: `--orange` text on
+`--orange-tint` fill was **1.85:1** (same hue, different alpha, almost no
+luminance delta), and `--orange-ink` on it was **4.34:1** — closer, still a
+fail, and shipping 4.34 right after citing the contrast rule would have been
+worse than picking a pairing that clears it. Final shape puts the hue in the
+FILL (non-text content) with primary ink on top: **14.07:1 light / 12.03:1
+dark**, all badges passing in both themes. The trap chip's fill differs from a
+neutral chip by only 1.14:1 in luminance — a hue-only difference — so it also
+carries a 1px `--orange` inset ring, an edge-present-vs-absent channel that
+needs no colour vision; the badge word remains the channel nobody depends on
+sight for.
+
+**Verified live at 375px, not asserted.** `data-figure="media"`,
+`position: sticky`, `top: 0`, genuinely opaque white ground, real seeded GIF at
+173px against the 258px cap, and the pin holding: **figure top stayed at 0
+while the prose scrolled 733px underneath it**. The exam_pattern badge CSS was
+measured against the real stylesheet in the same browser (classified rows
+`display: flex` / `align-items: baseline`, unclassified rows untouched at
+`display: list-item`, badge 13px/600, no horizontal overflow at 375px).
+`align-items: baseline` and not `center` is deliberate — `center` is the exact
+shape of the 2026-09-07 walkthrough-header bug, where a single-line badge
+landed beside the middle line of a four-line wrapped title.
+
+**Honest gap in the live check:** no concept's served atom set includes
+`exam_pattern` on the DB-less local lesson path (the pedagogy engine does not
+select it — pre-existing, and not something to bend for my own convenience), so
+the badges were verified by injecting the renderer's exact emitted markup into
+the live page rather than by reaching the card through the app. The React half
+is covered by 24 jsdom tests; what the browser added was computed CSS.
+
+**Deliberately still open** (TODOS.md): giving `visual_analogy` a real
+per-sentence binding to its picture — a promoted `simulation` scene with
+`narration_steps`/`focus_point`, which is ~88 concepts of authoring with
+per-claim verification, a wave rather than a task. The pin puts figure and text
+side by side; it does not make them refer to each other.
+
+**Tests:** frontend 2891 → 2918 (+27: 24 in a new
+`MarkdownAtomRenderer.rowKinds.test.tsx`, whose label fixtures are REAL
+committed lead-ins rather than tidy synthetic strings, plus 3 `data-figure`
+cases). Backend unchanged at 4774 + 1 todo (371 files) — frontend, CSS and one
+content file only. `tsc` clean both sides; `npm run ci` 19 gates clean; the
+locked `AtomCardRenderer.trapVisualIdentity.test.tsx` passes untouched, so
+`common_traps`' own AlertTriangle is unaffected.
+
+### Step A — the concept graph follows the active exam (2026-09-19)
+
+The one change that separated "one exam" from "any exam". `src/constants/
+concept-graph.ts` hard-loaded exactly one file, `data/curriculum/gate-ma.yml`,
+and everything adaptive reads `ALL_CONCEPTS` from it — Elo, FSRS, readiness /
+`nextBestAction`, prerequisite repair, FIRe credit propagation, quiz-pool
+assembly, the frontier spine. So a second exam's concepts did not exist to any
+of them even with a valid pack installed and `DEFAULT_EXAM_ID` pointing at it.
+Measured before touching anything: `jee-main.yml` declares 64 `concept_ids`,
+all 64 of them `stub_concepts`, `concepts:` block empty, `concept_links: 0`.
+
+**The constraint that shaped the design:** `exam-loader.ts` imports
+`concept-graph.ts` (it validates every pack's `concept_ids` against the graph
+in `checkConceptId`), so the graph cannot import the loader back. That cycle is
+why the graph had a hardcoded path in the first place.
+
+**`src/curriculum/active-exam.ts`** is the new dependency-free layer both sides
+import: `CURRICULUM_DIR`, `isExamSidecar` (moved here, exam-loader re-exports
+it), `listExamPackFiles()` (disk scan, id from `metadata.id`),
+`pickActiveExamId()`, `resolveActiveExamPack()`. `pickActiveExamId` is the ONE
+policy implementation; the two layers pass it different candidate lists on
+purpose and the difference is documented at both sites — exam-loader passes
+`listExamIds()` (packs that actually parsed, since a pack failing `loadOne()`
+is on disk but is not a usable exam), concept-graph passes what it finds on
+disk (it is built before any pack has been validated). The fallback when
+`DEFAULT_EXAM_ID` is unset changed from "whatever `readdirSync` listed first"
+to sorted-first: directory order is arbitrary, so two machines running
+identical code could disagree on the active exam.
+
+**The universe is now the MERGE of every pack's `concepts:` block.** Concept
+ids are global, which is already how the rest of the system behaves — lesson
+atoms live at `modules/…/concepts/<concept_id>/` and practice items carry a
+bare `node_id`, neither namespaced by exam. So a concept genuinely shared
+between exams is DECLARED ONCE in whichever pack owns it and REFERENCED by id
+from any other pack's `syllabus:`, which is already the shape `jee-main.yml`
+uses. Declaring the same id twice is a hard error naming both files, because
+two definitions would silently diverge in difficulty/topic/prerequisites by
+load order. Cross-pack prerequisites resolve. `SYLLABUS_SECTIONS` stays
+per-exam — section ids like `linear-algebra` legitimately recur across exams,
+so merging them would make `SECTION_MAP` ambiguous.
+
+**A bug this change would have introduced, caught and fixed in the same pass.**
+`getSyllabus('gate-ma')` returned `ALL_CONCEPTS` — correct while the graph WAS
+gate-ma's graph, wrong the moment it merges packs, since gate-ma's generation
+scope would silently absorb another exam's concepts. New
+`conceptsDeclaredByExam(exam_id)` sources scope per-pack; the rule is now "a
+pack that declares its own `concepts:` block IS its own scope, one that
+declares none falls back to its `syllabus:` intersected with the graph", and
+the `id === DEFAULT_SYLLABUS_ID` special case is gone. gate-ma stays at exactly
+101. The existing test asserted `toBe(ALL_CONCEPTS)` (same array reference) —
+updated to assert the rule, with the whole-graph equality kept as a separate
+test labelled a fact about today's data rather than a rule.
+
+**Honest failure instead of a silent substitution.** With the graph merged, a
+deployment set to a stub exam would boot happily, label itself with that exam's
+name, and teach another exam's concepts underneath. `ACTIVE_EXAM_CONCEPT_COUNT`
+plus a boot warning surface it. Warned, not thrown: a stub pack is a legitimate
+state while an exam is being filled in, and hard-failing boot would make that
+state impossible to work in.
+
+**Audit of the hardcoded `gate-ma` references** (103 backend / 26 frontend at
+the start; 67 of the backend ones are comments). Genuine defects found and
+fixed:
+
+- **`capabilities:` was dropped by the loader entirely.** `jee-main.yml` has
+  declared `interactives_enabled: true` since it shipped and `loadOne()` never
+  read it, so `curriculum-unit-orchestrator.ts`'s check fell through to a
+  hardcoded `examPackId === 'gate-ma' || 'jee-main'` allowlist every time —
+  a pack's capability decided by its name, and no way at all for a new YAML
+  pack to enable interactives. Now passed through (`ExamDefinition.capabilities`,
+  only known flags carried so a typo reads as off), and `gate-ma.yml` declares
+  its own block so the allowlist is the dead defensive branch it was meant to be.
+- **`SnapPage.tsx` posted `exam_id: 'gate-ma'` hardcoded** — student-facing: on
+  any other deployment a student photographs a question and gets it analysed
+  against the wrong syllabus, silently. Now `useActiveExam()`.
+- **Three server-side defaults pinned to GATE regardless of the active exam**:
+  `content-flywheel.ts`'s `exam_pack_id` (the key the effectiveness ledger
+  groups lift by), `snapshotter.ts`'s `defaultExamPackId` (mastery_snapshots
+  are the lift baseline — a snapshot stamped with the wrong exam corrupts every
+  lift number computed from it), and `lesson-wire.ts`'s ranking context. All
+  three now resolve the active exam, keeping the literal only as a final
+  fallback. `diagnostic-analyzer.ts`'s `req.exam_id || 'gate-ma'` likewise.
+- `checkConceptId`'s error and `getSyllabus`'s onboarding docblock both told
+  authors to add concepts to `gate-ma.yml` — the only option when the graph read
+  that one file. Both now say to declare them in the new pack's own block.
+
+**Deliberately NOT changed, and why:** `ConceptNode.gate_frequency` keeps its
+name (it means "how often this exam's papers ask it"; renaming touches ~40 call
+sites for no behaviour change). The admin surfaces that hardcode a `gate-ma`
+filter or default — `RunLauncher`, `HoldoutPage`, `ContentRDPage`,
+`ConceptOrchestratorPage`, `frontend/src/api/admin/exam-packs.ts` — are
+operator tools, not student-facing, and wiring each to `useActiveExam()` is a
+bigger diff than this pass; recorded in TODOS.md. `marketing-samples.ts` and
+`StaticSampleProblem` are literally GATE sample content, which is data, not a
+bug. `gateMcqNegativeMarksFallback` is named for what it is.
+
+**Behaviour today is unchanged, verified rather than asserted:** 101 concepts,
+gate-ma's generation scope 101, 8 nav sections, active exam `gate-ma`. With
+`DEFAULT_EXAM_ID=jee-main` the app now genuinely switches — nav sections become
+JEE's three, the warning fires, and the exam owns 0 concepts — where before the
+graph stayed GATE's no matter what.
+
+**Tests:** backend 4774 → **4801** + 1 todo (371 → 373 files): 15 in
+`active-exam.test.ts` (policy, sidecars, disk scan, module-relative
+`CURRICULUM_DIR`), 10 in `concept-graph-multi-exam.test.ts` (merge, attribution,
+a real temp pack joining the universe, a cross-pack prerequisite, and the
+duplicate-id refusal — the temp pack is written into the real
+`data/curriculum/` and removed in `afterEach`, since a leftover would be loaded
+by every other test), 2 net in `generation-scope.test.ts`. `tsc --noEmit` clean
+both sides. `npm run ci` 19 gates clean including `ci:boot`.
+
+**What this does NOT do:** it unlocks the engine, it does not fill content. A
+second exam still needs its own `concepts:` block with real prerequisites, then
+lessons, practice items and mapped past-exam questions at the standard the CI
+gates enforce. That remains the bulk of the work for any new exam.
+
+**One finding from the adversarial review is deliberately NOT fixed**, and has a
+tripwire instead: every adaptive engine (`readiness-routes`, `quiz-routes`,
+`fire.ts`, `notebook-store`, the topic-string matchers) reads `ALL_CONCEPTS`
+unfiltered. That is correct only while one pack declares concepts. A test in
+`concept-graph-multi-exam.test.ts` fails the moment a second one does and names
+the call sites to scope first, so the next content PR cannot silently degrade
+readiness and coverage for existing students. See TODOS.md.
+
+**Released as `4.84.0`.** Two merged PRs ahead of it had shipped with no
+version bump and no CHANGELOG entry — #171 (Competency Compass + three
+live-QA fixes) and #172 (Concept Anchors) — the same gap that produced the
+`4.37.0`/`4.38.0` backfills. Both were backfilled as `4.82.0`/`4.83.0` in the
+same pass that caught it, so this release is `4.84.0` rather than `4.82.0`.
+
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill

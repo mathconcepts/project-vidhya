@@ -4,6 +4,54 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Live-QA #3 (remaining half): give `visual_analogy` a real text-to-picture binding (2026-09-18)
+
+The LAYOUT half shipped 2026-09-18 — see CLAUDE.md. Below 720px the leading
+media figure is now `position: sticky` and the caption scrolls underneath it,
+so the figure and the words that reference it are on screen together on a
+phone (verified live at 375px: figure held at top 0 while the prose moved
+733px). That settles the "coexist side by side" tension this entry originally
+flagged as suspect on a 375px viewport — the answer was persistence, not two
+unreadable columns.
+
+What is still open is the OTHER half of the same report: "does not do any kind
+of justice to the text... very vague." A `visual_analogy` atom carrying a
+passive `gif-scene` still has no per-sentence binding to its picture, unlike a
+`simulation` scene's `narration_steps` + `focus_point`/`focus_eigen` + `why`.
+The pin puts them side by side; it does not make them refer to each other.
+
+**Trigger:** a content pass with budget to author and verify a scene per
+concept (every numeric claim needs SymPy/Wolfram verification, per this repo's
+standing rule), not a layout change.
+
+**Shape:** let `visual_analogy` carry a promoted `simulation` scene the way
+hook/intuition already do — the renderer needs no change (figure promotion is
+already atom-type-agnostic; `ATOM_PRESENTATION_MAP`'s `stage: 'above'` already
+applies). This is ~88 concepts of authoring, so it is a wave, not a task.
+
+One local content bug from the same report WAS fixed:
+`positive-definite-matrices/atoms/visual-analogy.md` described its two level-set
+families as "primary color" / "secondary color". The renderer deliberately
+draws them ink `#1d1d1f` vs grey `#8e8e93` — a LIGHTNESS difference chosen so
+the scene stays readable to a colour-blind reader (gif-generator.ts's own
+palette comment) — so the prose was discarding the exact cue the figure was
+built around. Now "the dark curve" / "the lighter grey curve". Measured
+corpus-wide before fixing: 1 file, so this was a one-off, not a pattern.
+
+## Live-QA #2 (content half): beat prose is too dense (2026-09-18)
+
+The layout half is fixed (the pinned figure is capped at 42vh so it can no
+longer cover the caption). The other half of the report — "too many details...
+Tooo much of mathematics text, then immediately where marks are lost" — is the
+beat prose itself: on positive-definite-matrices' intuition the caption carries a
+full worked determinant argument, and the trap row lands immediately after it.
+
+This is the corpus-scale density work already measured and parked by the
+2026-09-03 first-principles review: `countTotalReadingLoad` exists and is
+report-only (`npm run content:reading-load-report`) because turning it into a
+gate needs an editorial ceiling nobody has set, and 255 atoms would fail at once.
+Same blocker, same decision owner.
+
 ## `WhyThisHelps` dismiss link squeezes the tip it labels at phone width (2026-09-18)
 
 Found during the live 375px verification pass for the Concept Anchor PR —
@@ -2423,3 +2471,94 @@ mechanism against what the maths actually does, Wolfram/SymPy in hand.
 **Priority:** P2 — a wrong mechanism taught confidently is worse than a
 missing one.
 **Deferred from:** Concept Anchors + rendering agenda, 2026-09-18.
+
+---
+
+## Admin surfaces still hardcode a `gate-ma` filter or default
+
+**What:** five operator-facing frontend surfaces pin the exam rather than
+reading `useActiveExam()`:
+
+- `frontend/src/components/admin/RunLauncher.tsx` — `exam_pack_id: 'gate-ma'`
+  default plus a literal `<option value="gate-ma">` as the only choice
+- `frontend/src/pages/app/HoldoutPage.tsx` — `const EXAMS = ['gate-ma',
+  'jee-main']`, a hand-maintained list beside a real loader that already
+  enumerates packs
+- `frontend/src/pages/app/ContentRDPage.tsx` — four calls filtered
+  `{ exam: 'gate-ma' }` plus `defaultExam="gate-ma"`
+- `frontend/src/pages/app/ConceptOrchestratorPage.tsx` — `EXAM_PACK_ID`
+- `frontend/src/api/admin/exam-packs.ts` — a `gate-ma` entry in its fallback list
+
+**Why this is open, not a bug fixed in Step A:** none of it is student-facing.
+An operator on a second-exam deployment sees GATE's runs and experiments, which
+is wrong but visible and self-correcting — unlike the student-facing
+`SnapPage.tsx` case, which analysed a photographed question against the wrong
+syllabus with nothing on screen to say so, and was fixed. Wiring five admin
+pages through `useActiveExam()` is a wider diff than the graph change it would
+have ridden along with.
+
+**Where to start:** `HoldoutPage`'s `EXAMS` array is the cleanest first cut —
+`GET /api/exam/active` already returns `all_exam_ids`, so the hardcoded list
+has a real source to read. `ContentRDPage` is the largest.
+
+**Effort:** S-M CC.
+**Priority:** P2 — blocks an operator running a second exam, not a student.
+**Deferred from:** Step A (multi-exam concept graph), 2026-09-19.
+
+---
+
+## `DEFAULT_SYLLABUS_ID` is still a literal, not the active exam
+
+**What:** `src/curriculum/exam-loader.ts` exports `DEFAULT_SYLLABUS_ID =
+'gate-ma'`, read by `content-generation-job.ts`, `setup-cli.ts` and
+`admin-setup-routes.ts` as the syllabus to generate against when
+`VIDHYA_SYLLABUS` is unset. Step A removed its role in scope resolution (a
+pack now declares its own scope), so it is purely a default now — but it is a
+second "which exam" truth sitting beside `resolveActiveExamId()`, and on a
+deployment with `DEFAULT_EXAM_ID=jee-main` the generation CLI would still
+default to gate-ma.
+
+**Why this is open:** it is also the `atomsSubdir === ''` key — gate-ma's
+content is laid out unprefixed at `modules/…/concepts/<concept_id>/` while
+every other pack is nested under its id. Changing what `DEFAULT_SYLLABUS_ID`
+resolves to therefore moves where generated atoms are written, which is a
+content-layout decision, not a rename. Worth doing deliberately, with the
+layout question answered first.
+
+**Effort:** S CC, once the layout call is made.
+**Priority:** P3 — a CLI default an operator overrides with one env var.
+**Deferred from:** Step A (multi-exam concept graph), 2026-09-19.
+
+---
+
+## The adaptive engines read `ALL_CONCEPTS` unfiltered, across every exam
+
+**What:** Step A merged every installed pack's concepts into one universe. The
+graph is right to do that. These call sites are not yet, because none of them
+filters by exam:
+
+| Site | What goes wrong with a second pack |
+|---|---|
+| `src/api/readiness-routes.ts` (`allowedNodes`) | `nextBestAction` can hand a GATE student a JEE concept |
+| `src/api/quiz-routes.ts` | same, for the checkpoint quiz pool |
+| `src/gbrain/fire.ts` | encompassing closures span exams, so FIRe credit propagates across them |
+| `src/notebook/notebook-store.ts` | coverage denominator becomes every exam's concepts, silently halving reported coverage |
+| `src/syllabus/generator.ts` | matches by TOPIC STRING, and names like `calculus` recur across exams |
+| `src/curriculum/guardrails.ts`, `src/curriculum/curriculum-repo.ts`, `src/content/build-content-bundle.ts` | same unfiltered read |
+
+**Why this is open:** behaviour is correct today only because exactly one pack
+declares concepts. Scoping each of these is real work with its own blast radius
+(a request needs to carry which exam it is for, which several of these paths do
+not have today), and doing it blind before any second pack exists means guessing
+at the shape.
+
+**The guard that exists meanwhile:** the tripwire in
+`src/constants/__tests__/concept-graph-multi-exam.test.ts` fails the moment a
+second pack declares concepts, names these call sites, and says to scope them
+first. It is not an invariant anyone wants forever — delete it in the PR that
+does the scoping.
+
+**Effort:** M CC.
+**Priority:** P1 — blocks the first real second exam, and the failure mode is
+silent degradation for every existing student.
+**Found by:** adversarial review of PR #173, 2026-09-19.

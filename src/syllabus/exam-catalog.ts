@@ -191,6 +191,51 @@ export const EXAMS: Record<string, ExamDefinition> = {
     description: 'Mathematics section of JEE Advanced — high-difficulty MCQ, numerical-answer, and match-the-column types. Emphasizes conceptual depth within a tight timeframe.',
   },
 
+  /**
+   * JEE Main Mathematics — added when data/curriculum/jee-main.yml promoted
+   * its 23 Mathematics concepts into the concept graph.
+   *
+   * Its `topics` are the pack's own NAMESPACED topic strings, not the
+   * GATE-shaped ones the `jee-advanced-math` entry above reuses. That entry
+   * predates the multi-exam graph and maps JEE Advanced onto GATE-MA's topic
+   * names; this one maps onto topics only jee-main declares, which is what
+   * makes `examIdsForTopic` a real exam filter rather than a merge. See
+   * src/curriculum/topic-namespace.ts and `npm run ci:topic-namespace`.
+   *
+   * `topic_weights` are structural, from the declared concept counts per
+   * topic (7 algebra, 6 calculus, 3 each for coordinate geometry and
+   * trigonometry, 2 each for vectors/3D and probability/statistics), NOT
+   * imported per-topic weightage percentages. Those circulate widely on
+   * aggregator sites with no NTA basis and are not encoded anywhere here.
+   */
+  'jee-main': {
+    id: 'jee-main',
+    name: 'JEE Main — Mathematics',
+    authority: 'National Testing Agency (NTA)',
+    default_scope: 'mcq-fast',
+    allowed_scopes: ['mcq-fast', 'mcq-rigorous'],
+    topics: [
+      'jee-algebra',
+      'jee-calculus',
+      'jee-coordinate-geometry',
+      'jee-trigonometry',
+      'jee-vectors-3d',
+      'jee-probability-statistics',
+    ],
+    topic_weights: {
+      'jee-algebra': 0.30,
+      'jee-calculus': 0.26,
+      'jee-coordinate-geometry': 0.13,
+      'jee-trigonometry': 0.13,
+      'jee-vectors-3d': 0.09,
+      'jee-probability-statistics': 0.09,
+    },
+    typical_prep_weeks: 52,
+    reference_url: 'https://jeemain.nta.nic.in/',
+    official_syllabus_url: 'https://jeemain.nta.nic.in/',
+    description: 'Mathematics section of JEE Main Paper 1 — 20 MCQs plus 5 compulsory numerical-value questions, 100 marks, sat alongside Physics and Chemistry in a 3-hour paper.',
+  },
+
   'university-math-ug-final': {
     id: 'university-math-ug-final',
     name: 'Undergraduate Math — End-Semester (Generic)',

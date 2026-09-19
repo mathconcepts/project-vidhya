@@ -70,6 +70,7 @@ import type { BatchMasteryStudentModel } from '../gbrain/student-model-pg';
 import { recordProblemAttempt } from '../gbrain/problem-generator';
 import type { Attempt, StudentModel } from '../core/interfaces';
 import { ALL_CONCEPTS, CONCEPT_MAP } from '../constants/concept-graph';
+import { conceptIdsForStudent, isConceptInScope } from '../curriculum/student-exam-scope';
 import { makeDueReviewSource, recentlyReviewedObjectIds } from '../readiness/due-cards';
 import { assembleQuizPool, quizIsEligible, selectQuizItems, type QuizPoolCandidate } from '../readiness/quiz-pool';
 import {
@@ -165,7 +166,14 @@ async function frontierCandidates(
   catalog: LearningObjectCatalog,
   studentModel: StudentModel & Partial<BatchMasteryStudentModel>,
 ): Promise<Array<{ objectId: string; skillId: string }>> {
-  const allowedNodes = ALL_CONCEPTS.map((c) => c.id);
+  // Scoped to the student's own exam, not the merged graph. `studentId` has
+  // always been this function's first parameter, so this needed a resolution
+  // call and no new plumbing. Unscoped, a GATE student's checkpoint quiz
+  // would sample JEE concepts — and worse, the FRONTIER_CONCEPT_SCAN_CAP
+  // fallback below slices the first 30 ids of an unordered merged list, so it
+  // would start sampling the wrong exam before the recommendations
+  // themselves visibly went wrong.
+  const allowedNodes = conceptIdsForStudent(studentId);
 
   // "Frontier" = concepts the student has actually begun (not 'not-started') —
   // items from a concept nobody has touched yet aren't a checkpoint's job;
@@ -365,7 +373,7 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
   const body = (req.body ?? {}) as Record<string, unknown>;
   let conceptId: string | undefined;
   if (typeof body.concept_id === 'string' && body.concept_id.trim() !== '') {
-    if (!CONCEPT_MAP.has(body.concept_id)) {
+    if (!isConceptInScope(user.userId, body.concept_id)) {
       return sendError(res, 400, `unknown concept: ${body.concept_id}`);
     }
     conceptId = body.concept_id;

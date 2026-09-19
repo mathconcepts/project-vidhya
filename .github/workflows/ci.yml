@@ -277,6 +277,18 @@ jobs:
       - name: Topic strings are namespaced per exam pack
         run: npm run ci:topic-namespace
 
+      # Curriculum bridges. Every framing registry before this one was
+      # exam-framed; none answered the question a state-board student
+      # actually arrives with, which is "have I seen this before, or is this
+      # new?" Getting it wrong in either direction is expensive for a Tamil
+      # Nadu HSE student whose board theory papers run through March and
+      # whose JEE Session 2 starts six days after they end. Blocking on
+      # COVERAGE as well as contract, like ci:concept-anchors: a half-written
+      # bridge is worse than none, because the concepts it silently omits are
+      # exactly the ones nobody thought about.
+      - name: Curriculum bridge coverage + contract
+        run: npm run ci:curriculum-bridge
+
       # The gate that would have caught the boot crash PR #134 shipped, and
       # the one every other signal here missed. src/content/atomic-topic-spec.ts
       # used __dirname in a "type": "module" package, on an unconditional

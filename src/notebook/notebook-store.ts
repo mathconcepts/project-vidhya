@@ -35,6 +35,7 @@ import fs from 'fs';
 import { createFlatFileStore } from '../lib/flat-file-store';
 import { makeSharedStore } from '../storage/repositories/durable-store-repo';
 import { CONCEPT_MAP, ALL_CONCEPTS } from '../constants/concept-graph';
+import { conceptScopeForStudent } from '../curriculum/student-exam-scope';
 
 // ============================================================================
 // Entry types
@@ -388,8 +389,15 @@ export function analyzeGaps(notebook: Notebook): {
     if (entry.content.concept_id) covered.add(entry.content.concept_id);
   }
 
+  // Scoped to the student's own exam. `Notebook` carries `user_id`, and both
+  // callers (handleGetGaps, exportAsMarkdown) have it, so this needed a
+  // resolution call and no new plumbing. Unscoped, the denominator became
+  // every installed pack's concepts and a GATE student's reported coverage
+  // silently halved the moment a second pack declared any.
+  const inScope = conceptScopeForStudent(notebook.user_id).concepts;
+
   const byTopic: Record<string, { all: string[]; covered: string[] }> = {};
-  for (const node of ALL_CONCEPTS) {
+  for (const node of inScope) {
     const topic = node.topic || 'other';
     if (!byTopic[topic]) byTopic[topic] = { all: [], covered: [] };
     byTopic[topic].all.push(node.id);
@@ -410,10 +418,10 @@ export function analyzeGaps(notebook: Notebook): {
 
   return {
     topics,
-    overall_coverage_pct: ALL_CONCEPTS.length > 0
-      ? Math.round((covered.size / ALL_CONCEPTS.length) * 100)
+    overall_coverage_pct: inScope.length > 0
+      ? Math.round((covered.size / inScope.length) * 100)
       : 0,
-    total_syllabus_concepts: ALL_CONCEPTS.length,
+    total_syllabus_concepts: inScope.length,
     total_covered: covered.size,
   };
 }

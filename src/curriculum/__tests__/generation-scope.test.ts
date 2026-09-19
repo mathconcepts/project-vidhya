@@ -43,15 +43,18 @@ describe('getSyllabus — gate-ma (declares its own concepts)', () => {
     expect(syllabus.atomsSubdir).toBe('');
   });
 
-  it('happens to equal the whole graph today, because gate-ma is the only pack declaring concepts', () => {
-    // Deliberately asserted as a coincidence rather than a rule. This used to
-    // be `toBe(ALL_CONCEPTS)` — literally the same array — which was correct
-    // while the concept graph WAS gate-ma's graph. Now the graph merges every
-    // pack, so handing gate-ma ALL_CONCEPTS would pull a second exam's
-    // concepts into gate-ma's generation scope. The scope is sourced per-pack;
-    // the equality below is a fact about today's data, and the test above is
-    // the rule.
-    expect(getSyllabus('gate-ma').concepts.length).toBe(ALL_CONCEPTS.length);
+  it('is a strict subset of the merged graph now that a second pack declares concepts', () => {
+    // This test previously asserted gate-ma's scope EQUALLED the whole graph,
+    // and said in its own comment that it was recording a coincidence rather
+    // than a rule — true only while gate-ma was the only pack declaring
+    // concepts. jee-main declaring 23 ended the coincidence, exactly as that
+    // comment anticipated. The rule it was standing in for is asserted here
+    // and in 'never includes a concept another pack declares' below: a pack's
+    // generation scope is its OWN concepts, and with more than one pack
+    // installed that is strictly smaller than the universe.
+    const scope = getSyllabus('gate-ma').concepts;
+    expect(scope.length).toBe(101);
+    expect(scope.length).toBeLessThan(ALL_CONCEPTS.length);
   });
 
   it('never includes a concept another pack declares', () => {
@@ -76,17 +79,22 @@ describe('getSyllabus — gate-ma (declares its own concepts)', () => {
 });
 
 describe('getSyllabus — jee-main (Phase-1 stub, not gate-ma)', () => {
-  it('resolves to zero concepts today — jee-main.yml concept_ids are declared stubs, not yet in the concept graph', () => {
+  it('resolves to the 23 Mathematics concepts it now declares', () => {
+    // jee-main was a Phase-1 stub: every concept_id its syllabus: named was
+    // listed under stub_concepts: and resolved to nothing. Its Mathematics
+    // half now declares real nodes, so the scope is those 23 — and the
+    // Physics and Chemistry ids, still stubs, are reported as unresolved
+    // rather than rounded away. A part-migrated pack must read as
+    // part-migrated.
     const syllabus = getSyllabus('jee-main');
-    expect(syllabus.id).toBe('jee-main');
-    expect(syllabus.concepts).toEqual([]);
+    expect(syllabus.concepts).toHaveLength(23);
+    expect(syllabus.concepts.map((c) => c.id).sort()).toEqual(
+      conceptsDeclaredByExam('jee-main').map((c) => c.id).sort(),
+    );
     expect(syllabus.unresolvedConceptIds.length).toBeGreaterThan(0);
-    expect(syllabus.atomsSubdir).toBe('jee-main');
-  });
-
-  it('unresolved ids come from jee-main.yml, e.g. a physics concept id', () => {
-    const syllabus = getSyllabus('jee-main');
-    expect(syllabus.unresolvedConceptIds).toContain('kinematics-1d');
+    for (const cid of syllabus.unresolvedConceptIds) {
+      expect(syllabus.concepts.some((c) => c.id === cid)).toBe(false);
+    }
   });
 });
 

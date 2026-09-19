@@ -26,10 +26,10 @@ scaffold_fade: true
 
 ---
 
-**Step 4 — Apply the displacement-current formula.** $I_d = \varepsilon_0 A \dfrac{dE}{dt} = (8.85\times10^{-12})(0.02)(1.13\times10^{13})$.
+**Step 4 — Substitute into the displacement-current formula.** $I_d = \varepsilon_0 A \dfrac{dE}{dt} = (8.85\times10^{-12})(0.02)(1.13\times10^{13})$.
 
 ---
 
-**Step 5 — Run the check.** Multiplying out Step 4 gives $I_d \approx 2\text{ A}$ — exactly the conduction current from the problem statement.
+**Step 5 — Multiply it out and compare.** This gives $I_d \approx 2\text{ A}$ — exactly the conduction current stated in the problem.
 
 $$\boxed{I_d = 2\text{ A}}$$

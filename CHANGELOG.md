@@ -130,7 +130,7 @@ lets CSS ellipsis do the rest: a shortened name is always *visibly* shortened.
 
 ### Verified
 
-Backend 4895 passed / 1 todo (376 files), frontend 3328 → 3343 passed,
+Backend 4898 passed / 1 todo (377 files), frontend 3329 passed,
 `tsc --noEmit` clean both sides, `npm run ci` green across all 21 gates,
 `ci:practice-items` green across 656 items / 24 banks. Driven in a real
 headless Chromium at 375px: 44px tap target, menu inside the viewport, no

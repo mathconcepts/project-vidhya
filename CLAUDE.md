@@ -6415,7 +6415,7 @@ evidence about a commit), the shape of both mistakes is the same: a check
 that looks like it passed because the thing reporting is not the thing
 being checked.
 
-**Verified:** backend 4895 / 1 todo (376 files), frontend 3343,
+**Verified:** backend 4898 / 1 todo (377 files), frontend 3329,
 `tsc --noEmit` clean both sides, `npm run ci` green across 21 gates,
 `ci:practice-items` green across 656 items / 24 banks. Driven live in
 headless Chromium at 375px: 44px tap target, menu inside the viewport, no

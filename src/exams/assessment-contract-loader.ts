@@ -53,6 +53,9 @@ import {
   COMPILED_CONTRACT_KEY,
   COMPILED_CONTRACT_VERSION,
   DB_CONTRACT_VERSION,
+  COMPILED_CONTRACTS,
+  findCompiledContract,
+  type PartialCompiledAssessmentContract,
 } from './marking-constants';
 
 // ============================================================================
@@ -163,13 +166,19 @@ export function validateMarkingBlob(marking: unknown): string | null {
  * pure-function paths) should be able to get the same object without
  * awaiting a read that will fail.
  */
-export function compiledAssessmentContract(reason: string | null = null): ResolvedAssessmentContract {
-  const c = COMPILED_ASSESSMENT_CONTRACT;
+export function compiledAssessmentContract(
+  reason: string | null = null,
+  entry: PartialCompiledAssessmentContract = COMPILED_ASSESSMENT_CONTRACT,
+): ResolvedAssessmentContract {
+  const c = entry;
   return {
     exam: c.exam,
     paper: c.paper,
     year: c.year,
-    version: COMPILED_CONTRACT_VERSION,
+    // Built per entry rather than read from COMPILED_CONTRACT_VERSION: that
+    // constant is GATE's, and stamping it on another exam's grade would
+    // misreport which contract was applied.
+    version: `${c.exam}-${c.year}+compiled`,
     source: 'compiled',
     // Structural clone so a caller mutating the resolved contract cannot
     // corrupt the compiled constant for the rest of the process.
@@ -181,16 +190,17 @@ export function compiledAssessmentContract(reason: string | null = null): Resolv
 }
 
 /**
- * Is this key the one the compiled constant actually answers for? A
- * compiled fallback for SOME OTHER exam would be a fabrication — the
- * numbers would be this exam's, wearing another exam's name.
+ * Does THIS build carry a compiled contract for this key?
+ *
+ * Was an equality check against the single `COMPILED_CONTRACT_KEY`. Now a
+ * registry lookup, because more than one exam ships compiled numbers
+ * (v4.86.0). The guarantee is unchanged and is the point of the function:
+ * a compiled fallback for an exam the registry does not cover would be a
+ * fabrication — one exam's numbers wearing another exam's name — so a miss
+ * still returns an EMPTY contract and the caller still refuses.
  */
 function compiledCovers(key: AssessmentContractKey): boolean {
-  return (
-    key.exam === COMPILED_CONTRACT_KEY.exam &&
-    key.paper === COMPILED_CONTRACT_KEY.paper &&
-    key.year === COMPILED_CONTRACT_KEY.year
-  );
+  return findCompiledContract(key) !== null;
 }
 
 // ============================================================================
@@ -243,15 +253,17 @@ export async function resolveAssessmentContract(
 
 async function resolveUncached(key: AssessmentContractKey): Promise<ResolvedAssessmentContract> {
   const fallback = (reason: string): ResolvedAssessmentContract => {
-    if (!compiledCovers(key)) {
-      // No row, and the compiled constant is for a DIFFERENT exam. Handing
-      // back this exam's numbers under that exam's name would be a
+    const entry = findCompiledContract(key);
+    if (entry === null) {
+      // No row, and no compiled contract for this key either. Handing back
+      // some other exam's numbers under this exam's name would be a
       // fabrication, so the contract comes back EMPTY: a caller sees no
-      // marking for any question type and refuses, rather than grading a
-      // JEE paper under this exam's rules.
+      // marking for any question type and refuses, rather than grading one
+      // exam's paper under another's rules.
       console.warn(
         `[assessment-contract] no contract for ${ck(key)} (${reason}); ` +
-        `the compiled contract covers ${ck(COMPILED_CONTRACT_KEY)} only — returning an empty contract`,
+        `this build's compiled contracts cover ` +
+        `${COMPILED_CONTRACTS.map((c) => ck(c)).join(', ')} — returning an empty contract`,
       );
       return {
         ...key,
@@ -264,7 +276,7 @@ async function resolveUncached(key: AssessmentContractKey): Promise<ResolvedAsse
       };
     }
     console.warn(`[assessment-contract] ${ck(key)}: ${reason}; using the compiled contract`);
-    return compiledAssessmentContract(reason);
+    return compiledAssessmentContract(reason, entry);
   };
 
   const pool = getSharedPool();

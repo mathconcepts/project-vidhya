@@ -257,3 +257,131 @@ export const NAT_MARKS_WRONG = COMPILED_ASSESSMENT_CONTRACT.marking.nat.params.m
 /** Boundary tolerance applied to both ends of a numeric item's accepted range. */
 export const NAT_TOLERANCE_EPSILON =
   COMPILED_ASSESSMENT_CONTRACT.marking.nat.params.tolerance_epsilon;
+
+// ============================================================================
+// The compiled contract registry — more than one exam (v4.86.0)
+// ============================================================================
+
+/**
+ * A compiled contract that carries marking for only SOME question kinds.
+ *
+ * `CompiledAssessmentContract` above requires all three, which is right for
+ * GATE: its paper genuinely asks MCQ, MSQ and NAT, so a missing entry would
+ * be an omission. It is wrong as a universal shape. An exam that does not
+ * ASK a question kind should not carry marking for it, and an exam whose
+ * rule for a kind is genuinely unsettled must not carry an invented one —
+ * in both cases the honest contract is one with that kind absent, so a
+ * caller refuses by name instead of grading under numbers nobody published.
+ */
+export interface PartialCompiledAssessmentContract
+  extends Omit<CompiledAssessmentContract, 'marking'> {
+  marking: Partial<ContractMarking>;
+}
+
+/**
+ * JEE Main Paper 1, Mathematics section.
+ *
+ * ── Why this is a registry entry and not a new strategy ──────────────────
+ *
+ * `strategy: 'gate_2026'` on a JEE contract reads strangely and is correct.
+ * The id names the ALGORITHM, never the exam (see `MarkingStrategyId` and
+ * `src/scoring/marking-strategy.ts`): "award the item's marks when right,
+ * apply a table-driven signed deduction when wrong". JEE Main MCQ is that
+ * same arithmetic on different numbers — +4 correct, a flat -1 wrong — so
+ * it is a contract entry and ZERO code, exactly the claim the seam was
+ * built to make good on. The id is historical; renaming it would touch the
+ * registry, the migration seed row and the scorer-parity test for a
+ * cosmetic gain.
+ *
+ * `marks_wrong_by_marks` is keyed by the item's mark value as a string.
+ * Every JEE Main MCQ is worth 4, so the table has exactly one row. GATE's
+ * deduction is SCALED (one-third of the item's marks); JEE's is FLAT (-1
+ * regardless), which the per-mark-value table expresses directly without
+ * either exam needing to know the other's rule.
+ *
+ * ── What is deliberately ABSENT, and what that blocks ────────────────────
+ *
+ * `msq`: JEE Main Mathematics has no multiple-select questions. An entry
+ * would describe a question kind the paper does not ask.
+ *
+ * `nat`: JEE Main DOES ask five numerical-value questions per subject, and
+ * the negative-marking rule for them is the open question recorded in
+ * `data/curriculum/jee-main.yml`'s own `scoring:` block — secondary sources
+ * split between the MCQ's -1 and the older +4/0 with no negative marking,
+ * and `jeemain.nta.nic.in` is unreachable from this environment, so the
+ * primary information bulletin could not settle it. Guessing would mean
+ * grading a real student's real attempt under a rule nobody published.
+ *
+ * Leaving `nat` out is not a TODO, it is the enforcement: a JEE numeric
+ * item resolves a contract with no `nat` entry and is REFUSED BY NAME at
+ * grading time. That is why the shipped JEE practice bank is MCQ-only —
+ * the constraint is mechanical, not a matter of authoring discipline.
+ *
+ * ── Provenance ───────────────────────────────────────────────────────────
+ *
+ * `verified_at` follows this module's existing convention: it records when
+ * these numbers were last reconciled against the repo's fact-labelled
+ * sources, NOT a claim that anyone re-read the current-year bulletin. The
+ * +4/-1 MCQ rule is the long-stable, uncontested published rule; it is the
+ * NVQ rule that is disputed, and it is absent above rather than recorded.
+ */
+export const JEE_MAIN_CONTRACT_KEY = {
+  exam: 'jee-main',
+  paper: 'paper-1-maths',
+  year: 2026,
+} as const;
+
+export const JEE_MAIN_COMPILED_CONTRACT: PartialCompiledAssessmentContract = {
+  exam: JEE_MAIN_CONTRACT_KEY.exam,
+  paper: JEE_MAIN_CONTRACT_KEY.paper,
+  year: JEE_MAIN_CONTRACT_KEY.year,
+  official_source_url: 'https://jeemain.nta.nic.in/',
+  verified_at: '2026-09-19',
+  marking: {
+    mcq: {
+      strategy: 'gate_2026',
+      params: {
+        // Every JEE Main MCQ is 4 marks; a flat -1 for a wrong answer.
+        marks_wrong_by_marks: {
+          '4': -1,
+        },
+        // Defensive only — this exam has no MCQ mark value other than 4.
+        // Chosen as 4 so the fallback stays consistent with the one real
+        // row (-(4/4) = -1) instead of inventing a different ratio.
+        marks_wrong_fallback_divisor: 4,
+      },
+    },
+    // msq: absent by design — JEE Main Mathematics does not ask MSQ.
+    // nat:  absent by design — the NVQ negative-marking rule is unsettled.
+  },
+};
+
+/**
+ * Every compiled contract this build can answer for, in no significant
+ * order. `COMPILED_ASSESSMENT_CONTRACT` stays exported on its own because
+ * every derived accessor above reads GATE's numbers specifically.
+ */
+export const COMPILED_CONTRACTS: readonly PartialCompiledAssessmentContract[] = [
+  COMPILED_ASSESSMENT_CONTRACT,
+  JEE_MAIN_COMPILED_CONTRACT,
+];
+
+/**
+ * The compiled contract for a key, or null when this build has none.
+ *
+ * Null is load-bearing: `assessment-contract-loader` turns it into an EMPTY
+ * resolved contract rather than handing back some other exam's numbers
+ * wearing this exam's name. Matching is exact on all three key parts,
+ * because a marking scheme is notified per paper per year.
+ */
+export function findCompiledContract(key: {
+  exam: string;
+  paper: string;
+  year: number;
+}): PartialCompiledAssessmentContract | null {
+  return (
+    COMPILED_CONTRACTS.find(
+      (c) => c.exam === key.exam && c.paper === key.paper && c.year === key.year,
+    ) ?? null
+  );
+}

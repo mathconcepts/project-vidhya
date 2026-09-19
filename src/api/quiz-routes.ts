@@ -60,6 +60,7 @@ import {
   type GateItem,
 } from '../scoring/deterministic-scorer';
 import { resolveAssessmentContract } from '../exams/assessment-contract-loader';
+import { contractKeyForStudent } from '../exams/exam-contract-key';
 import { snapshotForCreation, parseContractSnapshot, makeContractGrader, type ContractGrader } from '../scoring/contract-grading';
 import { recordAttemptFacts, type AttemptFact } from '../gbrain/attempt-facts';
 import { gateItemFromPayload, gateResponseFromBody } from './practice-routes';
@@ -431,7 +432,11 @@ async function handleQuizStart(req: ParsedRequest, res: ServerResponse): Promise
   // the session. resolveAssessmentContract() never throws (DB-less / no
   // row / malformed row all degrade to the compiled contract with a warn
   // line — see the loader's header), so this never blocks a quiz start.
-  const resolvedContract = await deps.resolveContract();
+  // Keyed to the student's own exam (v4.86.0). Was an unkeyed call, which
+  // always resolved GATE's contract — fine while one pack shipped marking
+  // numbers, wrong once a second did: a JEE Main MCQ is 4 marks, and GATE's
+  // contract has no row for a 4-mark MCQ, so it fell through to -(4/3).
+  const resolvedContract = await deps.resolveContract(contractKeyForStudent(user.userId));
   const contractSnapshot = snapshotForCreation(resolvedContract);
 
   try {

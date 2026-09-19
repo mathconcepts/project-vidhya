@@ -86,16 +86,28 @@ async function handleGetExam(req: ParsedRequest, res: ServerResponse): Promise<v
  * Returns 503 when data/curriculum/ is empty — that surfaces as a clear
  * "no exams loaded" message instead of the original "Failed to build session".
  */
-async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+async function handleActiveExam(req: ParsedRequest, res: ServerResponse): Promise<void> {
   const ids = listExamIds();
   if (ids.length === 0) {
     return sendError(res, 503, 'no exams loaded — check data/curriculum/');
   }
-  // resolveActiveExamId() is the single source of truth for "which exam is
-  // active" — gate-routes/spine-routes/topic-pages/blog-index/topic-detection
+  // resolveActiveExamId() is the single source of truth for the DEPLOYMENT's
+  // exam — gate-routes/spine-routes/topic-pages/blog-index/topic-detection
   // all resolve through the same function so they can't drift from what this
   // endpoint (and therefore Home, via useActiveExam()) reports.
-  const activeId = resolveActiveExamId()!;
+  //
+  // ?exam_id= overrides it for ONE request (v4.86.0). Before this, the
+  // active exam was a deployment constant, so a build carrying two packs
+  // could only ever show one of them and the second was unreachable to
+  // every student-facing surface no matter what was installed.
+  //
+  // Validated against listExamIds() exactly as GET /api/topics already
+  // validates its own ?exam_id=, and an unrecognised value falls back to
+  // the deployment default rather than 404ing: this drives the exam NAME
+  // and the nav on every page, so a stale or hand-typed id should render
+  // the default app, never an empty one.
+  const requested = req.query.get('exam_id')?.trim() || null;
+  const activeId = (requested && ids.includes(requested)) ? requested : resolveActiveExamId()!;
   const exam = getExam(activeId)!;
 
   sendJSON(res, {
@@ -110,6 +122,15 @@ async function handleActiveExam(_req: ParsedRequest, res: ServerResponse): Promi
     section_count: exam.syllabus.length,
     loaded_count: ids.length,
     all_exam_ids: ids,
+    // Enough for a switcher to render real labels without N round-trips.
+    // `id` + `name` only: everything else about an exam is available from
+    // this same endpoint once it IS the active one.
+    available_exams: ids.map((id) => {
+      const e = getExam(id);
+      return { id, name: e?.metadata?.name ?? id };
+    }),
+    /** The deployment default, so a switcher can mark it and reset to it. */
+    default_exam_id: resolveActiveExamId(),
     starter_prompts: buildStarterPrompts(exam),
   });
 }

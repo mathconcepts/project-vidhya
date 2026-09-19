@@ -1,0 +1,320 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Mathematics practice items (MCQ-only, 4 marks each, per the marking-contract note that this repo refuses to guess JEE's disputed NAT negative-marking rule) for the jee-vectors-3d topic: 8 vectors-jee items and 8 three-d-geometry items. three-d-geometry is deliberately weighted toward the Cartesian machinery (direction cosines vs direction ratios, skew-line shortest distance, angle between planes, point-to-line/point-to-plane distance) that this repo's own curriculum-bridge research flags as genuinely new for Tamil Nadu state-board students, whose only 3D-adjacent chapter is vector-only. Authored 2026-09-19; every answer key was independently verified via python3 -c \"import sympy...\" (sympy.Matrix dot/cross/scalar-triple products, plus back-substitution checks for the plane/foot-of-perpendicular items) before being written, and every wrong option encodes one specific, named computational or conceptual slip rather than a filler number.",
+  "items": [
+    {
+      "id": "pi-vectors-jee-001",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let a = (1, 1, 0) and b = (1, 0, 1). What is cos θ, where θ is the angle between a and b?",
+      "options": ["1/2", "1", "1/4", "1/√2"],
+      "answer_index": 0,
+      "correct_answer": "1/2",
+      "solution_steps": [
+        "The angle between two vectors uses cos θ = (a·b) / (|a||b|) — the dot product divided by the PRODUCT of the two magnitudes, never just one of them.",
+        "a·b = 1×1 + 1×0 + 0×1 = 1. The magnitude of a vector (x,y,z) is √(x²+y²+z²), so |a| = √(1+1+0) = √2 and |b| = √(1+0+1) = √2.",
+        "So cos θ = 1 / (√2 × √2) = 1/2. Cross-check: since a and b both have length √2 and their dot product is 1, θ = arccos(1/2) = 60°, a clean angle — a good sign the arithmetic is right.",
+        "Option 1 comes from forgetting to divide by the magnitudes at all (just reporting the raw dot product as if it were cos θ). Option 1/4 comes from dividing by |a|²|b|² = 2×2 = 4 instead of |a||b| = 2. Option 1/√2 comes from dividing by only one magnitude (say |a| = √2) instead of both."
+      ],
+      "verification_method": "sympy_matrix_dot_and_norm"
+    },
+    {
+      "id": "pi-vectors-jee-002",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "O is the origin, P = (1, 2, 3), and Q = (2, 1, 0). Find the area of triangle OPQ.",
+      "options": ["(3√6)/2", "3√6", "3/2", "(3√6)/4"],
+      "answer_index": 0,
+      "correct_answer": "(3√6)/2",
+      "solution_steps": [
+        "The area of a triangle with two sides given as vectors OP and OQ from a common vertex O is (1/2)|OP × OQ| — half the magnitude of the cross product, because |OP × OQ| itself is the area of the PARALLELOGRAM the two vectors span.",
+        "OP × OQ = ( (2)(0)-(3)(1), (3)(2)-(1)(0), (1)(1)-(2)(2) ) = (-3, 6, -3). Its magnitude is √(9+36+9) = √54 = 3√6.",
+        "Area of the triangle = (3√6)/2. Cross-check: 3√6 ≈ 7.35, so the triangle's area ≈ 3.67, which is sensibly smaller than the parallelogram's ≈7.35 — a triangle is always exactly half its parallelogram.",
+        "Option 3√6 forgets to halve — that's the parallelogram's area, not the triangle's. Option 3/2 comes from ignoring the z-coordinates entirely and computing a flat 2D cross product on just the x,y parts: |1×1 − 2×2|/2 = |1−4|/2 = 3/2. Option (3√6)/4 comes from halving twice by mistake."
+      ],
+      "verification_method": "sympy_matrix_cross_product"
+    },
+    {
+      "id": "pi-vectors-jee-003",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let a = (1, 2, 3), b = (2, 3, 4), and c = (3, 5, 7). Are a, b, c coplanar?",
+      "options": [
+        "Yes — the scalar triple product a·(b×c) equals 0",
+        "No — the scalar triple product equals 8",
+        "No — three vectors can only be coplanar if one of them is the zero vector",
+        "It cannot be determined without knowing the angle between the vectors"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes — the scalar triple product a·(b×c) equals 0",
+      "solution_steps": [
+        "Three vectors are coplanar exactly when their scalar triple product (the determinant of the 3×3 matrix formed by writing them as rows) is 0 — geometrically, it means the parallelepiped they'd span has zero volume, so they all lie flat in one plane.",
+        "Determinant of [[1,2,3],[2,3,4],[3,5,7]], expanding along the first row with the correct alternating +,−,+ sign pattern: 1×(3×7−4×5) − 2×(2×7−4×3) + 3×(2×5−3×3) = 1×(1) − 2×(2) + 3×(1) = 1 − 4 + 3 = 0.",
+        "Since the triple product is 0, a, b, c ARE coplanar — no zero vector is needed for this, and no angle needs to be known separately (the triple product already packages the angle information in).",
+        "Option 'equals 8' comes from forgetting the minus sign in the middle term of the cofactor expansion (using +,+,+ instead of +,−,+): 1×1 + 2×2 + 3×1 = 8. The other two options are misconceptions: coplanarity has nothing to do with a vector being zero, and the triple product itself already answers the question without needing a separate angle."
+      ],
+      "verification_method": "sympy_matrix_determinant"
+    },
+    {
+      "id": "pi-vectors-jee-004",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let a = (2, 3, 6) and b = (1, 2, 2). Find the scalar projection of a onto b (the signed length of a's shadow along b's direction).",
+      "options": ["20/3", "20/9", "20/7", "8/3"],
+      "answer_index": 0,
+      "correct_answer": "20/3",
+      "solution_steps": [
+        "The scalar projection of a onto b is (a·b)/|b| — the dot product divided by the LENGTH of b only (not b's own vector, and not |a|).",
+        "a·b = 2×1 + 3×2 + 6×2 = 2+6+12 = 20. |b| = √(1+4+4) = √9 = 3.",
+        "So the scalar projection = 20/3 ≈ 6.67. Cross-check: |a| = √(4+9+36) = √49 = 7, and a shadow of length 6.67 out of a's own length 7 makes sense for two vectors pointing in a broadly similar direction.",
+        "Option 20/9 divides by |b|² = 9 instead of |b| = 3 — that number is actually the SCALE FACTOR used in the vector-projection formula (proj = (a·b/|b|²) b), not the scalar projection's length, a common mix-up between the two related formulas. Option 20/7 divides by |a| = 7 instead of |b|. Option 8/3 comes from dropping the z-component (6×2=12) out of the dot product, leaving only 2+6=8."
+      ],
+      "verification_method": "sympy_matrix_dot_and_norm"
+    },
+    {
+      "id": "pi-vectors-jee-005",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.15,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two forces p = (3, 0, 0) and q = (0, 4, 0) act on a body. Find the unit vector along their resultant p + q.",
+      "options": ["(3/5, 4/5, 0)", "(3/7, 4/7, 0)", "(3, 4, 0)", "(4/5, 3/5, 0)"],
+      "answer_index": 0,
+      "correct_answer": "(3/5, 4/5, 0)",
+      "solution_steps": [
+        "First add the vectors: p + q = (3, 4, 0). A unit vector always means 'divide by the magnitude of THIS vector', not by anything else.",
+        "|p+q| = √(9+16+0) = √25 = 5.",
+        "Unit vector = (p+q)/|p+q| = (3/5, 4/5, 0). Cross-check: (3/5)² + (4/5)² + 0² = 9/25+16/25 = 25/25 = 1, confirming it genuinely has length 1.",
+        "Option (3/7, 4/7, 0) comes from dividing by |p| + |q| = 3+4 = 7 (the sum of the two ORIGINAL magnitudes) instead of the magnitude of their resultant, which is 5, not 7. Option (3, 4, 0) is just the resultant itself — forgetting to normalise at all. Option (4/5, 3/5, 0) swaps the x and y components by mistake."
+      ],
+      "verification_method": "sympy_matrix_norm"
+    },
+    {
+      "id": "pi-vectors-jee-006",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Let a = (2, λ, 1) and b = (4, -2, -2). Find λ if a and b are perpendicular.",
+      "options": ["3", "-3", "4", "6"],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "Two vectors are perpendicular exactly when their dot product is 0.",
+        "a·b = 2×4 + λ×(-2) + 1×(-2) = 8 - 2λ - 2 = 6 - 2λ. Setting this to 0: 6 - 2λ = 0, so λ = 3.",
+        "Cross-check by plugging back in: a = (2, 3, 1), and a·b = 8 - 6 - 2 = 0 — confirmed perpendicular.",
+        "Option -3 comes from a sign slip while solving (treating 6-2λ=0 as -6-2λ=0, giving λ=-3). Option 4 comes from dropping the constant '1×(-2) = -2' term out of the dot product before solving, leaving 8-2λ=0. Option 6 comes from solving 6=2λ but forgetting to divide by 2 at the last step."
+      ],
+      "verification_method": "sympy_solve_dot_product_equation"
+    },
+    {
+      "id": "pi-vectors-jee-007",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.15,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A constant force F = (2, -3, 4) newtons moves a body through a displacement d = (1, 1, 1) metres. Find the work done, W = F·d, in joules.",
+      "options": ["3", "9", "-1", "-24"],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "Work done by a constant force is the dot product of the force and displacement vectors: W = F·d.",
+        "F·d = 2×1 + (-3)×1 + 4×1 = 2 - 3 + 4 = 3 joules.",
+        "Cross-check by grouping differently: (2+4) - 3 = 6 - 3 = 3 — same answer either way the sum is grouped, as it should be.",
+        "Option 9 comes from a sign slip on the middle term (treating -3 as +3: 2+3+4=9). Option -1 comes from dropping the z-component entirely (2-3=-1). Option -24 comes from multiplying the three components together (2×(-3)×4=-24) instead of forming the dot product, confusing 'multiply the numbers' with 'multiply corresponding components and add'."
+      ],
+      "verification_method": "sympy_matrix_dot"
+    },
+    {
+      "id": "pi-vectors-jee-008",
+      "concept_id": "vectors-jee",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two vectors a and b have |a| = 3, |b| = 4, and the angle between them is 60°. Find |a + b|.",
+      "options": ["√37", "7", "5", "√13"],
+      "answer_index": 0,
+      "correct_answer": "√37",
+      "solution_steps": [
+        "The law of cosines for vector addition: |a+b|² = |a|² + |b|² + 2|a||b| cos θ, where θ is the angle BETWEEN the vectors (note the PLUS sign — this is not the same as the law of cosines for a triangle's third side, which uses a minus).",
+        "|a+b|² = 9 + 16 + 2×3×4×cos60° = 9 + 16 + 24×(1/2) = 9 + 16 + 12 = 37. So |a+b| = √37 ≈ 6.08.",
+        "Sanity check: since θ=60° is less than 90°, the two forces reinforce each other somewhat, so |a+b| should be more than either magnitude alone (3 or 4) but less than the straight sum (7) — 6.08 fits exactly in that range.",
+        "Option 7 comes from treating the vectors as if they were parallel (θ=0°), just adding the magnitudes directly. Option 5 comes from treating them as perpendicular (θ=90°, so the cross term vanishes), giving √(9+16)=5 and ignoring the actual 60° angle. Option √13 comes from using a minus sign instead of a plus in the formula: √(9+16-12)=√13."
+      ],
+      "verification_method": "sympy_law_of_cosines_vector_addition"
+    },
+    {
+      "id": "pi-three-d-geometry-001",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A line has direction ratios (2, 3, 6). What are its direction cosines?",
+      "options": ["(2/7, 3/7, 6/7)", "(2, 3, 6)", "(2/11, 3/11, 6/11)", "(1/3, 1/2, 1)"],
+      "answer_index": 0,
+      "correct_answer": "(2/7, 3/7, 6/7)",
+      "solution_steps": [
+        "Direction ratios (DRs) are ANY three numbers proportional to a line's direction — they don't have to have a special length. Direction cosines (DCs) are the SPECIFIC direction ratios that are already normalised to length 1, i.e. numbers l, m, n with l² + m² + n² = 1 (the cosines of the angles the line makes with the x, y, z axes). To convert DRs to DCs, divide each DR by the magnitude of the DR vector.",
+        "Here the magnitude is √(2²+3²+6²) = √(4+9+36) = √49 = 7.",
+        "So the direction cosines are (2/7, 3/7, 6/7). Cross-check: (2/7)²+(3/7)²+(6/7)² = (4+9+36)/49 = 49/49 = 1 — confirmed, this is exactly what makes them direction COSINES rather than just direction ratios.",
+        "Option (2, 3, 6) is the mistake of treating direction ratios and direction cosines as the same thing — they are only equal when the DR vector already has length 1, which (2,3,6) does not. Option (2/11, 3/11, 6/11) comes from dividing by the SUM of the components (2+3+6=11) instead of the magnitude. Option (1/3, 1/2, 1) comes from dividing by the LARGEST component (6) instead of the magnitude."
+      ],
+      "verification_method": "sympy_matrix_norm"
+    },
+    {
+      "id": "pi-three-d-geometry-002",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two lines have direction ratios (1, 2, 2) and (2, 2, 1). Find cos θ, where θ is the angle between the lines.",
+      "options": ["8/9", "8/81", "4/9", "0"],
+      "answer_index": 0,
+      "correct_answer": "8/9",
+      "solution_steps": [
+        "The angle between two lines with direction ratios d1 and d2 uses the same formula as the angle between two vectors: cos θ = (d1·d2) / (|d1||d2|).",
+        "d1·d2 = 1×2 + 2×2 + 2×1 = 2+4+2 = 8. |d1| = √(1+4+4) = √9 = 3, and |d2| = √(4+4+1) = √9 = 3.",
+        "cos θ = 8/(3×3) = 8/9. Cross-check: 8/9 ≈ 0.889, giving θ ≈ 27.3°, a small but nonzero angle — sensible since the two direction-ratio triples are close to (but not exactly) proportional to each other.",
+        "Option 8/81 comes from forgetting the square root when finding the magnitudes — using |d1|²=9 and |d2|²=9 multiplied AGAIN (9×9=81) instead of the actual magnitudes 3 and 3. Option 4/9 comes from adding the squared magnitudes (9+9=18) as the denominator instead of multiplying the magnitudes (3×3=9), giving 8/18=4/9. Option 0 comes from a sign slip in the dot product (computing 2-4+2=0 instead of 2+4+2=8)."
+      ],
+      "verification_method": "sympy_matrix_dot_and_norm"
+    },
+    {
+      "id": "pi-three-d-geometry-003",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.75,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the shortest distance between the skew lines L1: (x-1)/2 = (y-2)/3 = (z-3)/4 and L2: (x-2)/3 = (y-4)/4 = (z-5)/5.",
+      "options": ["1/√6", "3", "1/√29", "7/√6"],
+      "answer_index": 0,
+      "correct_answer": "1/√6",
+      "solution_steps": [
+        "L1 passes through A1=(1,2,3) with direction d1=(2,3,4); L2 passes through A2=(2,4,5) with direction d2=(3,4,5). For skew lines, the shortest distance is |(A2-A1)·(d1×d2)| / |d1×d2| — you MUST use the cross product of the two directions, because that cross product is the one direction perpendicular to BOTH lines at once.",
+        "d1×d2 = (3×5-4×4, 4×3-2×5, 2×4-3×3) = (-1, 2, -1), so |d1×d2| = √(1+4+1) = √6. The connecting vector is A2-A1 = (1,2,2), and (A2-A1)·(d1×d2) = 1×(-1) + 2×2 + 2×(-1) = -1+4-2 = 1.",
+        "Shortest distance = |1|/√6 = 1/√6 ≈ 0.408. Cross-check: since |1/√6| is much smaller than either line's own direction-vector length, this is a small gap between two lines that pass fairly close to each other — plausible for the numbers involved.",
+        "Option 3 comes from confusing the shortest distance between the LINES with the plain distance between the two given POINTS A1 and A2: |A2-A1| = |(1,2,2)| = 3, which skips the projection step entirely. Option 1/√29 comes from dividing by |d1| = √29 instead of |d1×d2| = √6. Option 7/√6 comes from a sign error in one component of the cross product (flipping the middle term to give (-1,-2,-1) instead of (-1,2,-1)), which changes the numerator to -7 while the denominator stays the same."
+      ],
+      "verification_method": "sympy_matrix_cross_and_scalar_triple_product"
+    },
+    {
+      "id": "pi-three-d-geometry-004",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Determine whether L1: r = (0,0,0) + t(1,1,0) and L2: r = (0,0,1) + s(1,-1,0) intersect, are parallel, or are skew.",
+      "options": [
+        "Skew — the direction vectors aren't proportional (not parallel), and the scalar triple product of the connecting vector with the two directions is nonzero",
+        "Parallel — both lines lie in planes parallel to the xy-plane",
+        "Intersecting — setting z = 0 in both equations and solving for x, y gives a common point",
+        "Coincident — both lines pass through exactly the same set of points"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Skew — the direction vectors aren't proportional (not parallel), and the scalar triple product of the connecting vector with the two directions is nonzero",
+      "solution_steps": [
+        "First check parallel: the direction vectors are (1,1,0) and (1,-1,0). Their cross product is ((1)(0)-(0)(-1), (0)(1)-(1)(0), (1)(-1)-(1)(1)) = (0,0,-2), which is NOT the zero vector, so the lines are not parallel.",
+        "Next, since they're not parallel, check whether they actually meet: the connecting vector between a point on each line, (0,0,1)-(0,0,0) = (0,0,1), dotted with the cross product (0,0,-2), gives (0,0,1)·(0,0,-2) = -2, which is nonzero. A nonzero result here means the two lines do NOT lie in a common plane, so they cannot intersect — they are skew.",
+        "Cross-check directly: on L1 every point has z=0; on L2 every point has z=1 (fixed, since L2's direction vector has zero z-component). Since z=0 can never equal z=1, the lines genuinely never meet, confirming skew.",
+        "Option 'Parallel' confuses lying in parallel PLANES with the lines themselves being parallel — direction vectors (1,1,0) and (1,-1,0) point in genuinely different directions, so the lines are not parallel even though both happen to lie flat in horizontal planes. Option 'Intersecting' comes from setting z=0 in BOTH equations without noticing that L2's own equation forces z=1 always, so z=0 is never actually achievable on L2. Option 'Coincident' wrongly assumes any two lines that don't obviously diverge must be the same line."
+      ],
+      "verification_method": "sympy_matrix_cross_and_scalar_triple_product"
+    },
+    {
+      "id": "pi-three-d-geometry-005",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the acute angle (to the nearest degree) between the planes 2x + 3y - 6z = 5 and x - 2y + 2z = 7.",
+      "options": ["40°", "140°", "74°", "79°"],
+      "answer_index": 0,
+      "correct_answer": "40°",
+      "solution_steps": [
+        "The angle between two planes equals the angle between their normal vectors, n1=(2,3,-6) and n2=(1,-2,2) here (read straight off each plane's equation coefficients). Formula: cos θ = |n1·n2| / (|n1||n2|) — the ABSOLUTE VALUE is required so the answer is always the acute angle, by convention.",
+        "n1·n2 = 2×1 + 3×(-2) + (-6)×2 = 2-6-12 = -16. |n1| = √(4+9+36) = √49 = 7, |n2| = √(1+4+4) = √9 = 3.",
+        "cos θ = |-16|/(7×3) = 16/21 ≈ 0.762, so θ = arccos(0.762) ≈ 40.4°, which rounds to 40°.",
+        "Option 140° comes from forgetting the absolute value bars and taking arccos(-16/21) directly, which gives the OBTUSE angle between the normals (180°-40°=140°) instead of the acute angle convention the question asks for. Option 74° comes from using |n1|²+|n2|² = 49+9 = 58 as the denominator instead of |n1|×|n2| = 21, giving arccos(16/58)≈74°. Option 79° comes from a sign slip copying n2's middle component as +2 instead of -2, changing the dot product to -4 and giving arccos(4/21)≈79°."
+      ],
+      "verification_method": "sympy_matrix_dot_and_norm_with_absolute_value"
+    },
+    {
+      "id": "pi-three-d-geometry-006",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the perpendicular distance from the point (1, 2, -3) to the plane x - 2y + 2z = 5.",
+      "options": ["14/3", "-14/3", "14/9", "3"],
+      "answer_index": 0,
+      "correct_answer": "14/3",
+      "solution_steps": [
+        "Distance from a point (x1,y1,z1) to a plane ax+by+cz=d is |ax1+by1+cz1-d| / √(a²+b²+c²). The numerator subtracts the plane's constant d, and the denominator uses the SQUARE ROOT of the sum of squared normal coefficients (not the sum itself).",
+        "Plug in: a×x1+b×y1+c×z1 = 1×1 + (-2)×2 + 2×(-3) = 1-4-6 = -9. Then subtract d=5: -9-5 = -14. And √(1²+(-2)²+2²) = √9 = 3.",
+        "Distance = |-14|/3 = 14/3 ≈ 4.67. Since distance is always a non-negative length, the absolute value is essential here.",
+        "Option -14/3 comes from forgetting to take the absolute value, reporting the signed quantity instead of a true (always non-negative) distance. Option 14/9 comes from forgetting to take the square root of the denominator, using a²+b²+c²=9 as if it were already the magnitude, when the actual magnitude is √9=3 (here it coincidentally still gives a valid-looking fraction, but the wrong one). Option 3 comes from forgetting to subtract the plane's constant d=5 at all: |1-4-6| would already be 9... actually here it comes from mistakenly dividing the raw point-plug-in value -9 by 3 without ever subtracting 5, |-9|/3=3."
+      ],
+      "verification_method": "sympy_point_to_plane_distance_formula"
+    },
+    {
+      "id": "pi-three-d-geometry-007",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A line makes an angle of 45° with the x-axis and 60° with the y-axis. Find the angle it makes with the z-axis (take the direction cosine along z to be positive).",
+      "options": ["60°", "75°", "45°", "102°"],
+      "answer_index": 0,
+      "correct_answer": "60°",
+      "solution_steps": [
+        "If l, m, n are the direction cosines of a line (the cosines of the angles it makes with the x, y, z axes respectively), they always satisfy l² + m² + n² = 1 — this is the key identity, and it involves the SQUARES of the cosines, not the angles themselves.",
+        "Here l = cos45° = √2/2, so l² = 1/2. m = cos60° = 1/2, so m² = 1/4. Then n² = 1 - 1/2 - 1/4 = 1/4, so n = 1/2 (taking the positive root as instructed).",
+        "The angle with the z-axis is arccos(1/2) = 60°. Cross-check: (√2/2)² + (1/2)² + (1/2)² = 1/2+1/4+1/4 = 1 exactly, confirming these are a valid set of direction cosines.",
+        "Option 75° comes from wrongly assuming the three direction ANGLES add up like a triangle's angles (to 180°): 180°-45°-60°=75°, which is not how direction cosines work at all. Option 45° comes from assuming the third angle must just equal one of the other two given angles. Option 102° comes from forgetting to SQUARE the cosines before subtracting — computing n = 1 - cos45° - cos60° ≈ -0.207 directly as if it were cos(angle), and taking arccos of that."
+      ],
+      "verification_method": "sympy_direction_cosine_identity"
+    },
+    {
+      "id": "pi-three-d-geometry-008",
+      "concept_id": "three-d-geometry",
+      "topic": "jee-vectors-3d",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the perpendicular distance from the point P(4, 2, 1) to the line passing through A(1, 2, 3) with direction ratios (1, 1, 1).",
+      "options": ["√114/3", "√38/3", "√38", "√13"],
+      "answer_index": 0,
+      "correct_answer": "√114/3",
+      "solution_steps": [
+        "The perpendicular distance from a point P to a line through A with direction d is |AP × d| / |d| — you need the CROSS product (which isolates the component of AP perpendicular to the line), then divide by the direction vector's own length.",
+        "AP = P - A = (4-1, 2-2, 1-3) = (3, 0, -2). AP × d = ((0)(1)-(-2)(1), (-2)(1)-(3)(1), (3)(1)-(0)(1)) = (2, -5, 3), so |AP×d| = √(4+25+9) = √38.",
+        "|d| = √(1+1+1) = √3. Distance = √38/√3 = √(38×3)/3 = √114/3 ≈ 3.56.",
+        "Option √38/3 comes from dividing by |d|² = 3 instead of |d| = √3 (a units mismatch — dividing a length by a squared length instead of a length). Option √38 forgets to divide by |d| at all, reporting the cross product's magnitude directly. Option √13 comes from using |AP| = √(9+0+4) = √13 directly as 'the distance', skipping the cross-product step that removes the part of AP running ALONG the line (only the perpendicular part should count toward the distance)."
+      ],
+      "verification_method": "sympy_point_to_line_distance_via_cross_product"
+    }
+  ]
+}

@@ -1,0 +1,348 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Mathematics MCQ-only practice items for the jee-trigonometry topic (trigonometric-functions, inverse-trigonometric, heights-distances), authored 2026-09-19; every answer key was derived by hand via a compound-angle/identity method and independently cross-checked with python3 sympy (symbolic simplification plus numeric evaluation at 2-3 sample angles), with special care on inverse-trig principal-value branch ranges.",
+  "items": [
+    {
+      "id": "pi-trigonometric-functions-001",
+      "concept_id": "trigonometric-functions",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If sin θ = 3/5 and θ lies in the second quadrant, find the value of cos θ.",
+      "options": ["-4/5", "4/5", "-3/5", "7/5"],
+      "answer_index": 0,
+      "correct_answer": "-4/5",
+      "solution_steps": [
+        "We know sin²θ + cos²θ = 1 for any angle θ. So cos²θ = 1 - (3/5)² = 1 - 9/25 = 16/25, which gives cos θ = plus or minus 4/5.",
+        "Now use the quadrant. In the second quadrant (angles between 90° and 180°), sine is positive but cosine is negative. Since θ is in the second quadrant, we pick the negative root: cos θ = -4/5.",
+        "Check: (3/5)² + (-4/5)² = 9/25 + 16/25 = 25/25 = 1. This matches the identity, so the answer is correct.",
+        "Option 4/5 is what you get if you forget to check the quadrant and just take the positive root. Option -3/5 mixes up sine and cosine. Option 7/5 comes from wrongly computing 1 - 3/5 instead of squaring first."
+      ],
+      "verification_method": "sympy_identity_solve_plus_quadrant_check"
+    },
+    {
+      "id": "pi-trigonometric-functions-002",
+      "concept_id": "trigonometric-functions",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the period of the function f(x) = sin 2x + cos 2x.",
+      "options": ["π", "2π", "π/2", "4π"],
+      "answer_index": 0,
+      "correct_answer": "π",
+      "solution_steps": [
+        "Both sin 2x and cos 2x individually have period π, because for sin(kx) the period is 2π/k, and here k = 2, so 2π/2 = π.",
+        "Since both pieces repeat every π, their sum f(x) = sin 2x + cos 2x also repeats every π. In fact f(x) can be rewritten as a single wave, √2 sin(2x + π/4), which has period π.",
+        "Cross-check numerically: f(0) = sin0 + cos0 = 0+1 = 1, and f(π) = sin2π + cos2π = 0+1 = 1 — they match, confirming π works. Also f(π/2) = sinπ + cosπ = 0 + (-1) = -1, which is different from f(0), so π/2 is NOT a valid smaller period.",
+        "Option 2π comes from forgetting that the '2' inside sin 2x speeds the wave up (a common slip: using the period of plain sin x instead of sin 2x). Option π/2 wrongly assumes the period shrinks even further. Option 4π confuses multiplying the coefficient in instead of dividing by it."
+      ],
+      "verification_method": "sympy_shift_equality_plus_counterexample"
+    },
+    {
+      "id": "pi-trigonometric-functions-003",
+      "concept_id": "trigonometric-functions",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the value of tan 105°.",
+      "options": ["-(2 + √3)", "2 + √3", "2 - √3", "√3 + 1"],
+      "answer_index": 0,
+      "correct_answer": "-(2 + √3)",
+      "solution_steps": [
+        "Write 105° = 60° + 45°, and use tan(A+B) = (tanA + tanB)/(1 - tanA·tanB) with tan60° = √3 and tan45° = 1: tan105° = (√3+1)/(1-√3).",
+        "Rationalize by multiplying top and bottom by (1+√3): (√3+1)(1+√3) / ((1-√3)(1+√3)) = (√3+3+1+√3)/(1-3) = (4+2√3)/(-2) = -(2+√3).",
+        "Cross-check with a decimal: tan105° ≈ -3.732 on a calculator, and -(2+√3) ≈ -(2+1.732) = -3.732. They match.",
+        "Option '2+√3' drops the minus sign — a common slip, since 105° is in the second quadrant where tangent is always negative. Option '2-√3' comes from using the subtraction formula tan(60°-45°) by mistake. Option '√3+1' comes from just adding tan60° and tan45° directly, skipping the compound-angle formula altogether."
+      ],
+      "verification_method": "sympy_symbolic_simplify_plus_numeric_check"
+    },
+    {
+      "id": "pi-trigonometric-functions-004",
+      "concept_id": "trigonometric-functions",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the maximum value of the expression 3 sin x + 4 cos x.",
+      "options": ["5", "7", "25", "1"],
+      "answer_index": 0,
+      "correct_answer": "5",
+      "solution_steps": [
+        "For any expression of the form a sin x + b cos x, the maximum possible value is √(a² + b²), because it can be rewritten as R sin(x + φ) where R = √(a²+b²).",
+        "Here a=3, b=4, so R = √(3²+4²) = √(9+16) = √25 = 5. This is the largest value 3sinx+4cosx can reach.",
+        "Cross-check: pick x so that sinx=3/5 and cosx=4/5 (a valid pair, since (3/5)²+(4/5)²=1). Then 3sinx+4cosx = 3(3/5)+4(4/5) = 9/5+16/5 = 25/5 = 5, confirming 5 is actually reachable.",
+        "Option 7 comes from wrongly adding 3+4 directly, as if sinx and cosx could both equal 1 at the same time. Option 25 forgets to take the square root of a²+b². Option 1 wrongly assumes the maximum of any such sum is always 1, confusing it with the range of sine or cosine alone."
+      ],
+      "verification_method": "sympy_pythagorean_amplitude_plus_achievability_check"
+    },
+    {
+      "id": "pi-trigonometric-functions-005",
+      "concept_id": "trigonometric-functions",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many solutions does the equation 2 sin²x - 1 = 0 have in the interval [0, 2π)?",
+      "options": ["4", "2", "8", "3"],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Rearrange: 2sin²x - 1 = 0 means sin²x = 1/2, so sinx = 1/√2 or sinx = -1/√2.",
+        "For sinx = 1/√2 in [0,2π), the solutions are x = π/4 and x = 3π/4 (both where sine is positive). For sinx = -1/√2, the solutions are x = 5π/4 and x = 7π/4 (both where sine is negative).",
+        "That gives 4 solutions total: π/4, 3π/4, 5π/4, 7π/4. Check x=3π/4: sin(3π/4)=1/√2, and 2(1/√2)²-1 = 2(1/2)-1 = 0 — correct.",
+        "Option 2 comes from only considering sinx=1/√2 and forgetting the negative branch sinx=-1/√2 entirely. Option 8 double-counts, as if each solution also repeated in a second cycle inside the same interval. Option 3 comes from mis-locating one of the four angles into the wrong quadrant."
+      ],
+      "verification_method": "sympy_solveset_over_interval"
+    },
+    {
+      "id": "pi-trigonometric-functions-006",
+      "concept_id": "trigonometric-functions",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the exact value of cos 15°.",
+      "options": ["(√6 + √2)/4", "(√6 - √2)/4", "(√3 + 1)/4", "√6/4"],
+      "answer_index": 0,
+      "correct_answer": "(√6 + √2)/4",
+      "solution_steps": [
+        "Write 15° = 45° - 30°, and use cos(A-B) = cosA·cosB + sinA·sinB with cos45°=sin45°=√2/2, cos30°=√3/2, sin30°=1/2.",
+        "cos15° = cos45°·cos30° + sin45°·sin30° = (√2/2)(√3/2) + (√2/2)(1/2) = √6/4 + √2/4 = (√6+√2)/4.",
+        "Cross-check with a decimal: (√6+√2)/4 ≈ (2.449+1.414)/4 ≈ 0.9659, and cos15° on a calculator is also ≈ 0.9659 — matches.",
+        "Option '(√6-√2)/4' is actually the value of sin15°, not cos15° — a common mix-up between the two related half-angle results. Option '(√3+1)/4' drops the square root over the 6 and 2 terms by mistake. Option '√6/4' forgets the second term entirely, as if sin45°·sin30° contributed nothing."
+      ],
+      "verification_method": "sympy_compound_angle_plus_decimal_check"
+    },
+    {
+      "id": "pi-inverse-trigonometric-001",
+      "concept_id": "inverse-trigonometric",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the value of sin⁻¹(sin(3π/4)).",
+      "options": ["π/4", "3π/4", "-π/4", "π/2"],
+      "answer_index": 0,
+      "correct_answer": "π/4",
+      "solution_steps": [
+        "The shortcut sin⁻¹(sin x) = x only works directly when x already lies in the principal value range of sin⁻¹, which is [-π/2, π/2]. Here x = 3π/4, which is more than π/2, so we cannot just write the answer as 3π/4.",
+        "To fix this, find an angle inside [-π/2, π/2] with the same sine as 3π/4. Since sin(π - x) = sin(x), sin(3π/4) = sin(π - 3π/4) = sin(π/4), and π/4 IS inside [-π/2, π/2].",
+        "So sin⁻¹(sin(3π/4)) = π/4. Numeric check: sin(3π/4) = √2/2 ≈ 0.7071, and sin⁻¹(0.7071) on a calculator gives 0.7854 radians = π/4 — matches.",
+        "Option '3π/4' is the classic principal-value-range trap — just returning the original angle without checking it lies inside [-π/2, π/2]. Option '-π/4' flips the sign incorrectly. Option 'π/2' confuses the actual answer with the boundary of the range itself."
+      ],
+      "verification_method": "sympy_numeric_asin_of_sin_plus_range_check"
+    },
+    {
+      "id": "pi-inverse-trigonometric-002",
+      "concept_id": "inverse-trigonometric",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the value of cos⁻¹(cos(7π/6)).",
+      "options": ["5π/6", "7π/6", "π/6", "-5π/6"],
+      "answer_index": 0,
+      "correct_answer": "5π/6",
+      "solution_steps": [
+        "The shortcut cos⁻¹(cos x) = x only works directly when x lies in the principal value range of cos⁻¹, which is [0, π]. Here x = 7π/6, which is bigger than π, so we can't use it as-is.",
+        "cos⁻¹ must always output a value in [0, π]. Since cosine is even and periodic, cos(7π/6) = cos(2π - 7π/6) = cos(5π/6), and 5π/6 IS inside [0, π].",
+        "So cos⁻¹(cos(7π/6)) = 5π/6. Numeric check: cos(7π/6) = cos(210°) ≈ -0.8660, and cos⁻¹(-0.8660) on a calculator gives about 2.618 radians, which equals 5π/6 ≈ 2.618 — matches.",
+        "Option '7π/6' is the range trap again — just echoing the input angle even though it lies outside [0, π]. Option 'π/6' comes from a sign/reduction slip (using 7π/6 - π instead of 2π - 7π/6). Option '-5π/6' is never possible at all, since cos⁻¹ can only output angles from 0 upward, never a negative one."
+      ],
+      "verification_method": "sympy_numeric_acos_of_cos_plus_range_check"
+    },
+    {
+      "id": "pi-inverse-trigonometric-003",
+      "concept_id": "inverse-trigonometric",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the value of tan⁻¹(1) + tan⁻¹(2) + tan⁻¹(3).",
+      "options": ["π", "π/2", "3π/4", "2π"],
+      "answer_index": 0,
+      "correct_answer": "π",
+      "solution_steps": [
+        "This is a well-known identity, but the safest way to get it right is to compute each term as a decimal first, rather than risk a wrong branch of the addition formula: tan⁻¹1 = π/4 ≈ 0.7854 rad, tan⁻¹2 ≈ 1.1071 rad, tan⁻¹3 ≈ 1.2490 rad.",
+        "Adding all three decimals: 0.7854 + 1.1071 + 1.2490 ≈ 3.1416 radians.",
+        "3.1416 radians is exactly π. This confirms the identity tan⁻¹1 + tan⁻¹2 + tan⁻¹3 = π.",
+        "Option 'π/2' comes from wrongly combining just two of the three terms and stopping there. Option '3π/4' comes from adding only tan⁻¹1 and tan⁻¹2 using the plain formula, without including the third term at all. Option '2π' comes from doubling the correct answer by mistake."
+      ],
+      "verification_method": "sympy_numeric_sum_of_atan_terms"
+    },
+    {
+      "id": "pi-inverse-trigonometric-004",
+      "concept_id": "inverse-trigonometric",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate sin(cos⁻¹(3/5)).",
+      "options": ["4/5", "-4/5", "3/5", "5/4"],
+      "answer_index": 0,
+      "correct_answer": "4/5",
+      "solution_steps": [
+        "Let θ = cos⁻¹(3/5). By definition, θ is the angle in the principal value range [0, π] whose cosine equals 3/5.",
+        "Since θ is in [0, π], sine is always non-negative there (sine only goes negative in the third and fourth quadrants, which lie outside [0, π]), so sinθ must be ≥ 0. Using sin²θ + cos²θ = 1: sin²θ = 1 - (3/5)² = 16/25, so sinθ = 4/5 (taking the non-negative root).",
+        "Numeric check: cos⁻¹(0.6) ≈ 0.9273 radians, and sin(0.9273) ≈ 0.8 = 4/5 — matches.",
+        "Option '-4/5' wrongly assumes sine could come out negative here, forgetting that cos⁻¹'s range [0,π] rules that out. Option '3/5' just repeats the given cosine value instead of computing the sine. Option '5/4' comes from flipping the fraction upside down by mistake."
+      ],
+      "verification_method": "sympy_symbolic_sin_of_acos_plus_numeric_check"
+    },
+    {
+      "id": "pi-inverse-trigonometric-005",
+      "concept_id": "inverse-trigonometric",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the value of cot⁻¹(-1), using the principal value range (0, π) for cot⁻¹.",
+      "options": ["3π/4", "-π/4", "π/4", "5π/4"],
+      "answer_index": 0,
+      "correct_answer": "3π/4",
+      "solution_steps": [
+        "We need an angle θ inside the principal range (0, π) — this is the range used for cot⁻¹, which is different from tan⁻¹'s range of (-π/2, π/2). This difference is exactly where mistakes happen.",
+        "cotθ = -1 means cosθ/sinθ = -1. In (0, π), sine is always positive, so cosine must be negative, which puts θ in the second quadrant. The reference angle for cot = 1 (ignoring the sign) is π/4, so θ = π - π/4 = 3π/4.",
+        "Check: cot(3π/4) = cos(3π/4)/sin(3π/4) = (-√2/2)/(√2/2) = -1 — matches.",
+        "Option '-π/4' comes from wrongly using tan⁻¹'s range (-π/2, π/2) instead of cot⁻¹'s own range (0, π) — a very common range mix-up. Option 'π/4' drops the negative sign entirely. Option '5π/4' lies outside the valid (0,π) range altogether, so it can never be a genuine cot⁻¹ output."
+      ],
+      "verification_method": "sympy_numeric_cot_at_candidate_angle"
+    },
+    {
+      "id": "pi-inverse-trigonometric-006",
+      "concept_id": "inverse-trigonometric",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Evaluate tan⁻¹(2) + tan⁻¹(1/2).",
+      "options": ["π/2", "π", "-π/2", "0"],
+      "answer_index": 0,
+      "correct_answer": "π/2",
+      "solution_steps": [
+        "There is a useful identity: tan⁻¹(x) + tan⁻¹(1/x) = π/2 when x > 0, and = -π/2 when x < 0. This is because x and 1/x are the tangents of two angles that add up to a right angle, exactly when x is positive.",
+        "Here x = 2, which is positive, so tan⁻¹(2) + tan⁻¹(1/2) = π/2 directly.",
+        "Numeric check: tan⁻¹(2) ≈ 1.1071 radians, tan⁻¹(0.5) ≈ 0.4636 radians. Adding them: 1.1071 + 0.4636 ≈ 1.5708 radians, which is exactly π/2 ≈ 1.5708 — matches.",
+        "Option 'π' comes from confusing this with a different three-term identity. Option '-π/2' uses the wrong sign case of the identity — that case only applies when x is negative, but here x=2 is positive. Option '0' wrongly assumes the two terms should cancel each other out."
+      ],
+      "verification_method": "sympy_numeric_sum_of_reciprocal_atan_pair"
+    },
+    {
+      "id": "pi-heights-distances-001",
+      "concept_id": "heights-distances",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A tower stands vertically on level ground. From a point 20√3 m away from the base of the tower, the angle of elevation to the top of the tower is 30°. Find the height of the tower.",
+      "options": ["20 m", "20√3 m", "10 m", "40 m"],
+      "answer_index": 0,
+      "correct_answer": "20 m",
+      "solution_steps": [
+        "Let the height of the tower be h. In the right triangle formed by the tower, the ground, and the line of sight, tan(angle of elevation) = height ÷ distance from base. So tan30° = h / (20√3).",
+        "tan30° = 1/√3. So h = 20√3 × (1/√3) = 20 m — the √3 in the distance cancels neatly with the √3 in tan30°.",
+        "Check: if h=20 and distance=20√3≈34.64, then the angle satisfies tan(angle) = 20/34.64 ≈ 0.577, and tan⁻¹(0.577) = 30° — matches the given angle.",
+        "Option '20√3 m' comes from forgetting to multiply by tan30° at all, just copying the given distance as the height. Option '10 m' comes from wrongly halving the correct answer. Option '40 m' comes from using tan60° (=√3) instead of tan30° by mixing up the angle."
+      ],
+      "verification_method": "sympy_symbolic_tan_ratio_plus_numeric_check"
+    },
+    {
+      "id": "pi-heights-distances-002",
+      "concept_id": "heights-distances",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A flagpole 10 m tall stands on top of a building. From a point on the ground, the angle of elevation to the bottom of the flagpole (that is, the top of the building) is 30°, and the angle of elevation to the top of the flagpole is 45°. Find the height of the building.",
+      "options": ["5(√3 + 1) m", "10(√3 + 1) m", "5√3 m", "10√3 m"],
+      "answer_index": 0,
+      "correct_answer": "5(√3 + 1) m",
+      "solution_steps": [
+        "Let the building height be h and the horizontal distance from the observer to the building be d. From the angle of elevation to the building's top (30°): tan30° = h/d, so d = h/tan30° = h√3.",
+        "From the angle of elevation to the flagpole's top, which is (h+10) m up: tan45° = (h+10)/d = 1, so d = h+10.",
+        "Both expressions equal d, so h√3 = h+10. Rearranging: h(√3-1) = 10, so h = 10/(√3-1). Rationalize by multiplying top and bottom by (√3+1): h = 10(√3+1)/((√3)²-1²) = 10(√3+1)/2 = 5(√3+1) ≈ 13.66 m.",
+        "Option '10(√3+1) m' forgets to divide by 2 at the last rationalizing step. Option '5√3 m' drops the '+1' term entirely, as if the flagpole's own height never entered the equation. Option '10√3 m' multiplies the flagpole's height (10) by √3 directly, skipping the two-equation setup altogether."
+      ],
+      "verification_method": "sympy_solve_simultaneous_tan_equations"
+    },
+    {
+      "id": "pi-heights-distances-003",
+      "concept_id": "heights-distances",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "From the top of a building 50 m high, the angle of depression of a car parked on the road is 30°. Find the distance of the car from the base of the building.",
+      "options": ["50√3 m", "50/√3 m", "25√3 m", "100 m"],
+      "answer_index": 0,
+      "correct_answer": "50√3 m",
+      "solution_steps": [
+        "The angle of depression from the top of the building down to the car equals the angle of elevation from the car up to the top of the building (they are alternate angles between the horizontal line at the top and the horizontal line at ground level).",
+        "So in the right triangle: tan30° = (height of building) / (distance of car) = 50/d. This gives d = 50/tan30° = 50/(1/√3) = 50√3 ≈ 86.6 m.",
+        "Numeric check: if d=50√3≈86.6 and height=50, then tan(angle) = 50/86.6 ≈ 0.577, and tan⁻¹(0.577) = 30° — matches the given angle of depression.",
+        "Option '50/√3 m' comes from flipping the ratio the wrong way round — computing d = 50 × tan30° instead of d = 50 ÷ tan30°, a very common tan-ratio inversion mistake. Option '25√3 m' halves the correct distance by mistake. Option '100 m' is a rough guess with no real trigonometric setup behind it."
+      ],
+      "verification_method": "sympy_symbolic_tan_ratio_plus_numeric_check"
+    },
+    {
+      "id": "pi-heights-distances-004",
+      "concept_id": "heights-distances",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A temple 75 m high stands between two men standing on opposite sides of it, on the same straight line as its base. The angle of elevation of the top of the temple from one man is 30°, and from the other man is 60°. Find the distance between the two men.",
+      "options": ["100√3 m", "50√3 m", "150√3 m", "75√3 m"],
+      "answer_index": 0,
+      "correct_answer": "100√3 m",
+      "solution_steps": [
+        "Let the two men be at distances d1 and d2 from the base of the temple, on opposite sides. For the man seeing 30° elevation: tan30° = 75/d1, so d1 = 75/tan30° = 75√3 m.",
+        "For the man seeing 60° elevation: tan60° = 75/d2, so d2 = 75/tan60° = 75/√3 = 25√3 m.",
+        "Since the two men are on opposite sides of the temple, the total distance between them is d1 + d2 = 75√3 + 25√3 = 100√3 ≈ 173.2 m.",
+        "Option '50√3 m' comes from forgetting one of the two distances and just doubling the smaller one. Option '150√3 m' comes from doubling the larger distance (75√3) instead of adding the two different distances together. Option '75√3 m' stops after computing only the first man's distance and forgets the second man entirely."
+      ],
+      "verification_method": "sympy_two_triangle_distance_sum"
+    },
+    {
+      "id": "pi-heights-distances-005",
+      "concept_id": "heights-distances",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A ladder 10 m long leans against a vertical wall, making an angle of 60° with the ground. Find the height on the wall reached by the top of the ladder.",
+      "options": ["5√3 m", "5 m", "10/√3 m", "5√2 m"],
+      "answer_index": 0,
+      "correct_answer": "5√3 m",
+      "solution_steps": [
+        "The ladder, the wall, and the ground form a right triangle where the ladder is the hypotenuse (10 m), and the angle between the ladder and the ground is 60°. The height on the wall is the side opposite this angle.",
+        "sin(angle) = opposite/hypotenuse, so sin60° = height/10, giving height = 10 × sin60° = 10 × (√3/2) = 5√3 ≈ 8.66 m.",
+        "Numeric check: if height=5√3≈8.66 and ladder=10, then sin(angle) = 8.66/10 = 0.866, and sin⁻¹(0.866) = 60° — matches.",
+        "Option '5 m' comes from using cos60° (=1/2) instead of sin60° — mixing up which side is adjacent versus opposite to the given angle. Option '10/√3 m' comes from using the tangent ratio the wrong way round. Option '5√2 m' comes from misremembering the special-angle value as if the angle were 45° instead of 60°."
+      ],
+      "verification_method": "sympy_symbolic_sin_ratio_plus_numeric_check"
+    },
+    {
+      "id": "pi-heights-distances-006",
+      "concept_id": "heights-distances",
+      "topic": "jee-trigonometry",
+      "difficulty": 0.75,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The angle of elevation of the top of a tower from a point on the ground is 45°. On walking 20 m towards the tower, the angle of elevation becomes 60°. Find the height of the tower.",
+      "options": ["(30 + 10√3) m", "20√3 m", "(30 - 10√3) m", "10√3 m"],
+      "answer_index": 0,
+      "correct_answer": "(30 + 10√3) m",
+      "solution_steps": [
+        "Let the tower height be h, and let d be the initial distance from the tower (before walking). From the first angle of elevation, 45°: tan45° = h/d = 1, so d = h.",
+        "After walking 20 m closer, the new distance is (d - 20), and the new angle of elevation is 60°: tan60° = h/(d-20) = √3, so d - 20 = h/√3.",
+        "Substitute d = h from step 1: h - 20 = h/√3. Multiply both sides by √3: h√3 - 20√3 = h, so h(√3-1) = 20√3, giving h = 20√3/(√3-1). Rationalize by multiplying by (√3+1): h = 20√3(√3+1)/((√3)²-1²) = 20√3(√3+1)/2 = 10√3(√3+1) = 10(3+√3) = 30+10√3 ≈ 47.32 m.",
+        "Option '20√3 m' stops partway through the algebra, before rationalizing correctly. Option '(30-10√3) m' comes from a sign slip while expanding (√3+1) during rationalizing. Option '10√3 m' drops the constant '30' term entirely, as if only one part of the expansion mattered."
+      ],
+      "verification_method": "sympy_solve_simultaneous_tan_equations"
+    }
+  ]
+}

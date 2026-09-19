@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
   Grid3x3, Activity, GitBranch, Circle, BarChart,
-  Hash, Repeat, Layers, Share2, Navigation,
+  Hash, Repeat, Layers, Share2, Navigation, Crosshair, Triangle,
   ArrowRight, SkipForward, RefreshCw, MessageCircle, Camera, FileText,
 } from 'lucide-react';
 
@@ -80,6 +80,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
   'grid': Grid3x3, 'activity': Activity, 'git-branch': GitBranch,
   'circle': Circle, 'bar-chart': BarChart, 'hash': Hash,
   'repeat': Repeat, 'layers': Layers, 'share-2': Share2, 'navigation': Navigation,
+  // Added for the JEE Main sections (v4.86.0). The `|| Grid3x3` fallback
+  // below means a missing entry never crashes — it just silently renders
+  // three different topics with the same glyph, which is the defect the
+  // per-section icons exist to avoid.
+  'crosshair': Crosshair, 'triangle': Triangle,
 };
 
 // --- Component ---

@@ -100,11 +100,31 @@ syllabus:
       - d-and-f-block
       - coordination-compounds
 
-  - id: jee-main-mathematics
-    title: Mathematics
-    weight_pct: 33.3
+  # Mathematics, as SIX sections rather than one (v4.86.0).
+  #
+  # This was a single `jee-main-mathematics` section holding all 23 concepts.
+  # Sections are what the app renders as TOPICS (src/curriculum/topic-adapter.ts
+  # maps section id + title straight onto the topic list), so one section meant
+  # a student switching to JEE saw a single undifferentiated "Mathematics"
+  # bucket where GATE gets eight named, separately-iconed subjects. The
+  # concepts were already grouped this way in comments here; this promotes
+  # those comments into the structure the UI actually reads.
+  #
+  # Section ids ARE the concept `topic` strings on purpose — the same
+  # convention gate-ma.yml follows (its `linear-algebra` section id is its
+  # `linear-algebra` topic) — so topic pages, the topic-string selectors and
+  # this list cannot disagree about what a topic is called.
+  #
+  # weight_pct is derived STRUCTURALLY from concept counts (33.3 x n/23), not
+  # imported from any published per-subtopic breakdown. NTA publishes a
+  # subject-level split, not a subtopic one, and inventing precise-looking
+  # subtopic weights would be exactly the fabrication this pack's `scoring:`
+  # block already refuses for the numerical-value marking rule.
+
+  - id: jee-algebra
+    title: Algebra
+    weight_pct: 10.1
     concept_ids:
-      # Algebra
       - sets-relations-functions
       - complex-numbers-algebra
       - quadratic-equations
@@ -112,25 +132,45 @@ syllabus:
       - binomial-theorem
       - sequences-series
       - matrices-and-determinants
-      # Calculus
+
+  - id: jee-calculus
+    title: Calculus
+    weight_pct: 8.7
+    concept_ids:
       - limits-jee
       - continuity-differentiability-jee
       - applications-of-derivatives
       - indefinite-integration
       - definite-integration
       - differential-equations-jee
-      # Coordinate Geometry
+
+  - id: jee-coordinate-geometry
+    title: Coordinate Geometry
+    weight_pct: 4.3
+    concept_ids:
       - straight-lines
       - circles-coordinate
       - parabola-ellipse-hyperbola
-      # Trigonometry
+
+  - id: jee-trigonometry
+    title: Trigonometry
+    weight_pct: 4.3
+    concept_ids:
       - trigonometric-functions
       - inverse-trigonometric
       - heights-distances
-      # Vectors + 3D
+
+  - id: jee-vectors-3d
+    title: Vectors and 3D Geometry
+    weight_pct: 2.9
+    concept_ids:
       - vectors-jee
       - three-d-geometry
-      # Probability + Statistics
+
+  - id: jee-probability-statistics
+    title: Probability and Statistics
+    weight_pct: 2.9
+    concept_ids:
       - probability-jee
       - statistics-jee
 

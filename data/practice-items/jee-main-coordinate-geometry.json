@@ -1,0 +1,404 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Mathematics MCQ-only practice items for jee-coordinate-geometry (straight-lines, circles-coordinate, parabola-ellipse-hyperbola), authored 2026-09-19; every answer key was derived by hand and then independently cross-checked via python3 -c \"import sympy...\" (symbolic solve plus numeric back-substitution into every original equation; conic eccentricities re-derived from a,b and matched against the standard-form parameters), all marks=4/question_type=mcq per this pack's marking-contract gap (JEE Main NAT negative-marking is disputed and unresolved in this repo, so no nat/msq items are authored here).",
+  "items": [
+    {
+      "id": "pi-straight-lines-001",
+      "concept_id": "straight-lines",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the equation of the straight line passing through the points (1, 2) and (3, 8).",
+      "options": ["3x - y - 1 = 0", "x - 3y + 5 = 0", "3x + y - 5 = 0", "3x - y + 1 = 0"],
+      "answer_index": 0,
+      "correct_answer": "3x - y - 1 = 0",
+      "solution_steps": [
+        "Slope (how steep the line is, written as 'rise over run') between (1,2) and (3,8) is (8-2)/(3-1) = 6/2 = 3.",
+        "Using point-slope form with (1,2): y - 2 = 3(x - 1), which simplifies to 3x - y - 1 = 0.",
+        "Cross-check: plug both points into 3x - y - 1. For (1,2): 3(1)-2-1=0. For (3,8): 3(3)-8-1=0. Both fit, so this line is correct.",
+        "Option (x - 3y + 5 = 0) comes from flipping the slope upside down (using run/rise = 1/3 instead of 3). Option (3x + y - 5 = 0) comes from using slope -3 (a sign flip). Option (3x - y + 1 = 0) has the right slope but a sign slip in the constant term while simplifying."
+      ],
+      "verification_method": "sympy_symbolic_slope_plus_point_backsubstitution"
+    },
+    {
+      "id": "pi-straight-lines-002",
+      "concept_id": "straight-lines",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the perpendicular distance of the point (3, 4) from the line 3x + 4y - 10 = 0.",
+      "options": ["3", "15", "-3", "0.6"],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "The distance from a point (x0,y0) to a line ax+by+c=0 is |a·x0 + b·y0 + c| / sqrt(a^2+b^2) — the bars mean 'always make this positive'.",
+        "Numerator: |3(3) + 4(4) - 10| = |9+16-10| = |15| = 15. Denominator: sqrt(3^2+4^2) = sqrt(25) = 5.",
+        "Distance = 15/5 = 3.",
+        "Option 15 forgets to divide by sqrt(a^2+b^2) at all. Option -3 forgets the absolute-value bars (distance can never be negative). Option 0.6 divides by (a^2+b^2)=25 instead of sqrt(a^2+b^2)=5, giving 15/25."
+      ],
+      "verification_method": "sympy_direct_formula_evaluation"
+    },
+    {
+      "id": "pi-straight-lines-003",
+      "concept_id": "straight-lines",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the angle between the lines x - y + 5 = 0 and x + y - 3 = 0.",
+      "options": ["90 degrees", "0 degrees", "45 degrees", "tan inverse of 2"],
+      "answer_index": 0,
+      "correct_answer": "90 degrees",
+      "solution_steps": [
+        "Slope of x-y+5=0 is 1 (rewrite as y=x+5). Slope of x+y-3=0 is -1 (rewrite as y=-x+3).",
+        "The angle between two lines uses tan(theta) = |(m1-m2)/(1+m1·m2)|. Here 1 + m1·m2 = 1 + (1)(-1) = 0, and dividing by zero means tan(theta) is undefined — that always means the lines are perpendicular, so theta = 90 degrees.",
+        "Cross-check directly: two lines with slopes 1 and -1 always meet at a right angle, since 1 x (-1) = -1, which is the standard test for perpendicular lines.",
+        "Option 0 degrees comes from misreading the y-coefficient's sign in x+y-3=0 and treating both slopes as +1 (so m1-m2 looks like 0). Option 45 degrees comes from wrongly using (1-m1·m2) in the denominator instead of (1+m1·m2), giving 2/2=1. Option tan inverse of 2 comes from dropping the '1+' from the denominator entirely and using just m1·m2=-1 as the denominator, giving 2/(-1)=-2."
+      ],
+      "verification_method": "sympy_slope_extraction_and_perpendicularity_check"
+    },
+    {
+      "id": "pi-straight-lines-004",
+      "concept_id": "straight-lines",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the foot of the perpendicular drawn from the point (4, 1) to the line x - y + 1 = 0.",
+      "options": ["(2, 3)", "(1, -2)", "(6, -1)", "(3, 2)"],
+      "answer_index": 0,
+      "correct_answer": "(2, 3)",
+      "solution_steps": [
+        "For a line ax+by+c=0, the foot of the perpendicular ('foot' means the exact point where a perpendicular dropped from outside the line lands on it) from (x0,y0) is x0 - k·a, y0 - k·b, where k = (a·x0+b·y0+c)/(a^2+b^2).",
+        "Here a=1, b=-1, c=1: k = (1(4) + (-1)(1) + 1)/(1+1) = (4-1+1)/2 = 4/2 = 2.",
+        "Foot = (4 - 2(1), 1 - 2(-1)) = (4-2, 1+2) = (2, 3).",
+        "Cross-check: (2,3) satisfies x-y+1=0 since 2-3+1=0, so it does lie on the line, and the segment from (4,1) to (2,3) has slope (3-1)/(2-4) = -1, which is perpendicular to the line's own slope of 1 (since -1 x 1 = -1).",
+        "Option (1,-2) comes from using +1 instead of -1 for b throughout the formula (a sign slip). Option (6,-1) comes from adding the correction term instead of subtracting it. Option (3,2) simply swaps the x and y coordinates of the correct answer."
+      ],
+      "verification_method": "sympy_symbolic_foot_formula_plus_line_and_slope_backcheck"
+    },
+    {
+      "id": "pi-straight-lines-005",
+      "concept_id": "straight-lines",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The lines x + y = 5, 2x - y = 1, and kx + y = 7 all pass through one common point (they are 'concurrent'). Find k.",
+      "options": ["2", "2.5", "5/3", "5"],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "First find where the first two lines cross: adding x+y=5 and 2x-y=1 gives 3x=6, so x=2, and then y=5-2=3. The common point is (2,3).",
+        "For all three lines to meet at one point, (2,3) must also satisfy kx+y=7: k(2)+3=7, so 2k=4, giving k=2.",
+        "Cross-check: with k=2, the third line is 2x+y=7. Plug in (2,3): 2(2)+3=7. It fits.",
+        "Option 2.5 comes from solving the first two lines with a sign error (using y-2x=1 instead of 2x-y=1), which gives the wrong crossing point (4/3, 11/3). Option 5/3 comes from correctly finding (2,3) but plugging it into kx+y=7 with x and y swapped (using x=3,y=2). Option 5 comes from a sign slip while substituting, writing 2k-3=7 instead of 2k+3=7."
+      ],
+      "verification_method": "sympy_simultaneous_equation_solve_plus_substitution_check"
+    },
+    {
+      "id": "pi-straight-lines-006",
+      "concept_id": "straight-lines",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the reflection (mirror image) of the point (2, 3) in the line x + y = 1.",
+      "options": ["(-2, -1)", "(0, 1)", "(-4, -3)", "(-1, -2)"],
+      "answer_index": 0,
+      "correct_answer": "(-2, -1)",
+      "solution_steps": [
+        "For a line ax+by+c=0, the reflection of (x0,y0) is x0 - 2k·a, y0 - 2k·b, where k = (a·x0+b·y0+c)/(a^2+b^2) — this is exactly the foot-of-perpendicular formula but the correction is applied TWICE (once to reach the foot, once more to go past it to the mirror point).",
+        "Here a=1, b=1, c=-1: k = (1(2)+1(3)-1)/(1+1) = 4/2 = 2. Reflection = (2 - 2(2)(1), 3 - 2(2)(1)) = (2-4, 3-4) = (-2, -1).",
+        "Cross-check: the midpoint of (2,3) and (-2,-1) is (0,1), which lies on x+y=1 since 0+1=1. Also the segment joining them has slope (3-(-1))/(2-(-2)) = 4/4 = 1, and the line's own slope is -1; since 1 x (-1) = -1, the segment is indeed perpendicular to the line, exactly as a mirror line must be.",
+        "Option (0,1) comes from using the foot-of-perpendicular formula (correction applied once) instead of the full reflection formula (correction doubled). Option (-4,-3) comes from misreading the line as x+y+1=0 (wrong sign on c). Option (-1,-2) simply swaps the x and y coordinates of the correct answer."
+      ],
+      "verification_method": "sympy_symbolic_reflection_formula_plus_midpoint_and_perpendicularity_check"
+    },
+    {
+      "id": "pi-circles-coordinate-001",
+      "concept_id": "circles-coordinate",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the equation of the circle with center (2, -3) and radius 5.",
+      "options": [
+        "x^2 + y^2 - 4x + 6y - 12 = 0",
+        "x^2 + y^2 + 4x - 6y - 12 = 0",
+        "x^2 + y^2 - 4x + 6y + 8 = 0",
+        "x^2 + y^2 - 4x - 6y - 12 = 0"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x^2 + y^2 - 4x + 6y - 12 = 0",
+      "solution_steps": [
+        "A circle with center (h,k) and radius r is (x-h)^2 + (y-k)^2 = r^2. Here that's (x-2)^2 + (y+3)^2 = 25.",
+        "Expanding: x^2 - 4x + 4 + y^2 + 6y + 9 = 25, which rearranges to x^2 + y^2 - 4x + 6y - 12 = 0 (since 4+9-25=-12).",
+        "Cross-check: plug the center formula back — comparing x^2+y^2+Dx+Ey+F=0 to our answer, center should be (-D/2,-E/2) = (-(-4)/2, -6/2) = (2,-3), matching what we started with.",
+        "Option with +4x-6y comes from flipping the sign of the whole center (using (-2,3) instead of (2,-3)). Option ending in +8 comes from using radius 5 instead of radius-squared 25 when expanding. Option with -4x-6y comes from flipping only the y-coordinate's sign (using center (2,3))."
+      ],
+      "verification_method": "sympy_symbolic_expansion_plus_center_backcheck"
+    },
+    {
+      "id": "pi-circles-coordinate-002",
+      "concept_id": "circles-coordinate",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the center and radius of the circle x^2 + y^2 - 6x + 8y - 11 = 0.",
+      "options": [
+        "center (3, -4), radius 6",
+        "center (3, 4), radius 6",
+        "center (3, -4), radius sqrt(11)",
+        "center (-3, 4), radius 6"
+      ],
+      "answer_index": 0,
+      "correct_answer": "center (3, -4), radius 6",
+      "solution_steps": [
+        "For x^2+y^2+Dx+Ey+F=0, the center is (-D/2, -E/2) and the radius is sqrt((D/2)^2+(E/2)^2-F). Here D=-6, E=8, F=-11.",
+        "Center = (-(-6)/2, -8/2) = (3, -4). Radius = sqrt(9 + 16 - (-11)) = sqrt(36) = 6.",
+        "Cross-check by completing the square directly: x^2-6x+9 + y^2+8y+16 = 11+9+16, i.e. (x-3)^2+(y+4)^2 = 36 — same center and radius.",
+        "Option center (3,4) comes from a sign slip on -E/2 (writing +4 instead of -4). Option radius sqrt(11) comes from forgetting to add the (D/2)^2+(E/2)^2 correction terms and just taking sqrt(-F)=sqrt(11). Option center (-3,4) flips the sign on both coordinates."
+      ],
+      "verification_method": "sympy_completing_the_square_verification"
+    },
+    {
+      "id": "pi-circles-coordinate-003",
+      "concept_id": "circles-coordinate",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The circle x^2 + y^2 = 25 and the line 3x + 4y - 25 = 0: how do they meet?",
+      "options": [
+        "The line touches the circle at exactly one point (it is tangent)",
+        "The line does not meet the circle at all",
+        "The line cuts the circle at two points (it is a secant)",
+        "The line passes through the center of the circle"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The line touches the circle at exactly one point (it is tangent)",
+      "solution_steps": [
+        "The circle has center (0,0) and radius 5. Find the distance from the center to the line using |a·x0+b·y0+c|/sqrt(a^2+b^2): |3(0)+4(0)-25|/sqrt(9+16) = 25/5 = 5.",
+        "The distance from the center (5) exactly equals the radius (5). Whenever distance = radius, the line just grazes the circle at one single point — that is what 'tangent' means.",
+        "Cross-check by picturing the extremes: if distance were more than the radius the line would miss the circle entirely (0 points); if less, it would cut through (2 points); here it is exactly equal, giving exactly 1 point.",
+        "Option '0 points' comes from forgetting to divide by sqrt(a^2+b^2) at all and treating the raw numerator 25 as the distance, wrongly concluding 25 > radius 5. Option '2 points' comes from dividing by (a^2+b^2)=25 instead of sqrt(a^2+b^2)=5, getting a wrong distance of 1 < 5. Option 'passes through the center' comes from dropping the constant term -25 entirely and computing only |3(0)+4(0)|=0."
+      ],
+      "verification_method": "sympy_distance_formula_vs_radius_comparison"
+    },
+    {
+      "id": "pi-circles-coordinate-004",
+      "concept_id": "circles-coordinate",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the length of the chord (the line segment where a line cuts across a circle) cut off by the line x = 3 on the circle x^2 + y^2 = 25.",
+      "options": ["8", "4", "16", "10"],
+      "answer_index": 0,
+      "correct_answer": "8",
+      "solution_steps": [
+        "Substitute x=3 into the circle's equation: 9 + y^2 = 25, so y^2 = 16, giving y = 4 or y = -4.",
+        "The two points where the line meets the circle are (3,4) and (3,-4), so the chord length is the distance between them: 4 - (-4) = 8.",
+        "Cross-check with the chord-length shortcut: chord = 2·sqrt(r^2 - d^2), where d=3 is the distance from the center to the line x=3, and r=5 is the radius. That gives 2·sqrt(25-9) = 2·sqrt(16) = 2(4) = 8. Matches.",
+        "Option 4 stops after finding the half-chord sqrt(r^2-d^2)=4 and forgets to double it. Option 16 stops after computing r^2-d^2=16 and forgets to both take the square root and double it. Option 10 wrongly assumes the line passes through the center, so it uses the full diameter 2r=10 instead of accounting for the line's actual offset from the center."
+      ],
+      "verification_method": "sympy_direct_substitution_plus_chord_formula_crosscheck"
+    },
+    {
+      "id": "pi-circles-coordinate-005",
+      "concept_id": "circles-coordinate",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the radius of the circle passing through the points (0, 0), (4, 0), and (0, 6).",
+      "options": ["sqrt(13)", "2 sqrt(13)", "13", "5"],
+      "answer_index": 0,
+      "correct_answer": "sqrt(13)",
+      "solution_steps": [
+        "Let the circle be x^2+y^2+Dx+Ey+F=0. Through (0,0): F=0. Through (4,0): 16+4D=0, so D=-4. Through (0,6): 36+6E=0, so E=-6.",
+        "Radius = sqrt((D/2)^2+(E/2)^2-F) = sqrt((-2)^2+(-3)^2-0) = sqrt(4+9) = sqrt(13).",
+        "Cross-check using a completely different method: the angle at the origin between the points (4,0) and (0,6), as seen from (0,0), is exactly 90 degrees (one direction is along the x-axis, the other along the y-axis). Whenever a triangle's angle at a point on a circle is 90 degrees, the side opposite it must be the circle's diameter (this is Thales' theorem, run in reverse). So the diameter is the distance from (4,0) to (0,6): sqrt(16+36) = sqrt(52) = 2 sqrt(13), and the radius is half of that, sqrt(13). Both methods agree exactly.",
+        "Option 2 sqrt(13) reports the full diameter (found via Thales' theorem) as if it were the radius, forgetting to halve it. Option 13 stops after computing radius-squared and forgets the square root. Option 5 comes from adding (D/2)+(E/2) directly as -2+(-3)=-5 (and taking the size, 5) instead of squaring each term before adding."
+      ],
+      "verification_method": "sympy_general_circle_equation_solve_plus_thales_theorem_crosscheck"
+    },
+    {
+      "id": "pi-circles-coordinate-006",
+      "concept_id": "circles-coordinate",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Circle 1: x^2 + y^2 = 9 (center (0,0), radius 3). Circle 2: (x-7)^2 + y^2 = 16 (center (7,0), radius 4). How are these two circles positioned relative to each other?",
+      "options": [
+        "They touch each other externally (touch at exactly one point, lying outside each other)",
+        "They touch each other internally (one inside the other, touching at one point)",
+        "They intersect at two distinct points",
+        "One circle lies entirely inside the other with no contact"
+      ],
+      "answer_index": 0,
+      "correct_answer": "They touch each other externally (touch at exactly one point, lying outside each other)",
+      "solution_steps": [
+        "Distance between the two centers (0,0) and (7,0) is 7. The two radii are 3 and 4.",
+        "Sum of the radii: 3+4 = 7, which exactly equals the distance between centers. Whenever distance = sum of radii, the two circles are just touching from the outside — this is what 'externally tangent' means.",
+        "Cross-check by picturing the extremes: if distance were greater than 7, the circles would sit apart with no contact; if distance were less than 7 but more than |4-3|=1, they would overlap and cross at two points; if less than 1, one would sit inside the other. Here distance is exactly the boundary case 7, matching the sum of radii.",
+        "Option 'touch internally' would need distance to equal the DIFFERENCE of radii, |4-3|=1, not 7 — mixing up which condition (sum vs difference) applies. Option 'intersect at two points' would need 1 < distance < 7, comparing distance only against the difference of radii and missing the sum-of-radii boundary. Option 'one inside the other' comes from misreading circle 2's center as (0,0) too (dropping the (x-7) shift), making it look concentric with circle 1."
+      ],
+      "verification_method": "sympy_center_distance_vs_radii_sum_and_difference_comparison"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-001",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the focus and directrix (the fixed point and fixed line that define a parabola) of the parabola y^2 = 12x.",
+      "options": [
+        "focus (3, 0), directrix x = -3",
+        "focus (0, 3), directrix y = -3",
+        "focus (3, 0), directrix x = 3",
+        "focus (12, 0), directrix x = -12"
+      ],
+      "answer_index": 0,
+      "correct_answer": "focus (3, 0), directrix x = -3",
+      "solution_steps": [
+        "The standard rightward-opening parabola is y^2 = 4a·x, where 'a' is the distance from the vertex (0,0) to the focus. Comparing y^2=12x to y^2=4a·x, we get 4a=12, so a=3.",
+        "For this standard form, the focus is at (a, 0) = (3, 0), and the directrix is the vertical line x = -a = -3 (on the opposite side of the vertex from the focus).",
+        "Cross-check: every point on the parabola should be equally far from the focus (3,0) and the directrix x=-3. Try the point (3,6) on the curve (since 6^2=36=12(3)): its distance to the focus is sqrt((3-3)^2+(6-0)^2)=6, and its distance to the line x=-3 is 3-(-3)=6. They match.",
+        "Option focus (0,3), directrix y=-3 comes from mixing up this sideways-opening parabola with an upward-opening one (x^2=4ay). Option directrix x=3 has a sign slip, putting the directrix on the same side as the focus instead of the opposite side. Option focus (12,0) comes from forgetting to divide by 4 and using 4a=12 as if it were 'a' itself."
+      ],
+      "verification_method": "sympy_standard_form_comparison_plus_focus_directrix_distance_check"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-002",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the eccentricity (a number describing how 'stretched' an ellipse is, between 0 for a circle and 1 for a very flat ellipse) of the ellipse x^2/25 + y^2/16 = 1.",
+      "options": ["3/5", "4/5", "sqrt(41)/5", "3/4"],
+      "answer_index": 0,
+      "correct_answer": "3/5",
+      "solution_steps": [
+        "Here a^2=25 and b^2=16, with a^2 > b^2 (the major axis is along x). For an ellipse, eccentricity e = sqrt(1 - b^2/a^2).",
+        "e = sqrt(1 - 16/25) = sqrt(9/25) = 3/5.",
+        "Cross-check via c^2=a^2-b^2 (c is the distance from center to focus): c^2=25-16=9, so c=3, and e=c/a=3/5 — same answer by the other standard route.",
+        "Option 4/5 wrongly computes e as b/a (a made-up shortcut, not the real formula). Option sqrt(41)/5 uses the HYPERBOLA formula e=sqrt(1+b^2/a^2) by mistake, mixing up the plus and minus sign between the two conic types. Option 3/4 correctly finds sqrt(a^2-b^2)=3 but then divides by b=4 instead of a=5."
+      ],
+      "verification_method": "sympy_eccentricity_formula_plus_focal_distance_crosscheck"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-003",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the eccentricity of the hyperbola x^2/16 - y^2/9 = 1.",
+      "options": ["5/4", "3/4", "sqrt(7)/4", "5/3"],
+      "answer_index": 0,
+      "correct_answer": "5/4",
+      "solution_steps": [
+        "Here a^2=16 and b^2=9. For a hyperbola (note the minus sign in its equation, unlike an ellipse's plus sign), eccentricity e = sqrt(1 + b^2/a^2).",
+        "e = sqrt(1 + 9/16) = sqrt(25/16) = 5/4.",
+        "Cross-check via c^2=a^2+b^2 (for a hyperbola the focus distance formula ADDS instead of subtracting): c^2=16+9=25, so c=5, and e=c/a=5/4 — matches.",
+        "Option 3/4 wrongly computes e as b/a. Option sqrt(7)/4 uses the ELLIPSE formula e=sqrt(1-b^2/a^2) by mistake (giving sqrt(7/16)=sqrt(7)/4), mixing up the two conic types. Option 5/3 correctly finds sqrt(a^2+b^2)=5 but divides by b=3 instead of a=4."
+      ],
+      "verification_method": "sympy_eccentricity_formula_plus_focal_distance_crosscheck"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-004",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "From the external point (1, 4), two tangent lines are drawn to the parabola y^2 = 8x, touching it at two points. The 'chord of contact' is the straight line joining those two touch points. Find its equation. (Concept note: this idea — chord of contact — often feels unfamiliar to Tamil Nadu state-board students, since TN's Class 11-12 syllabus has no standalone conics chapter covering it, unlike the two full years CBSE gives it. It is a routine and important JEE topic, so it's worth building from scratch here.)",
+      "options": ["x - y + 1 = 0", "x - 4y + 1 = 0", "4x - y + 16 = 0", "4x - y + 4 = 0"],
+      "answer_index": 0,
+      "correct_answer": "x - y + 1 = 0",
+      "solution_steps": [
+        "First check the point (1,4) is genuinely outside the parabola (otherwise there would be no two tangents to draw). Plug it into y^2-8x: 16-8=8, which is positive, confirming (1,4) is outside — good, tangents exist.",
+        "For a parabola y^2=4a·x, the chord of contact from an external point (x1,y1) has the ready-made formula: y·y1 = 2a(x+x1). Here y^2=8x means 4a=8, so a=2, and 2a=4.",
+        "With (x1,y1)=(1,4): y(4) = 4(x+1), i.e. 4y = 4x+4, which simplifies to x - y + 1 = 0.",
+        "Cross-check by finding the actual tangent lines directly. A tangent to y^2=8x with slope m is y=mx+2/m (using a=2). Forcing it through (1,4): 4=m+2/m, i.e. m^2-4m+2=0, giving m=2-sqrt(2) or m=2+sqrt(2). The touch point for each slope is (2/m^2, 4/m); working these out and drawing the line through the two resulting points gives exactly x - y + 1 = 0 again — the two independent methods agree.",
+        "Option x-4y+1=0 comes from dropping the '2a' multiplier and using the wrong formula y·y1=(x+x1). Option 4x-y+16=0 comes from swapping the point's coordinates, using (4,1) instead of (1,4). Option 4x-y+4=0 comes from forgetting to solve 4a=8 for a, and wrongly using a=8 directly in the formula."
+      ],
+      "verification_method": "sympy_chord_of_contact_formula_plus_independent_tangent_line_derivation_crosscheck"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-005",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The 'director circle' of an ellipse is the set of all points from which the two tangent lines drawn to the ellipse meet at a right angle. Find the equation of the director circle of the ellipse x^2/9 + y^2/4 = 1. (Concept note: like chord of contact, this construction is not covered in Tamil Nadu's Class 11-12 syllabus, so build the idea from first principles here rather than assuming it is familiar.)",
+      "options": [
+        "x^2 + y^2 = 13",
+        "x^2 + y^2 = 5",
+        "x^2 + y^2 = 36",
+        "x^2 + y^2 = 9"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x^2 + y^2 = 13",
+      "solution_steps": [
+        "For an ellipse x^2/a^2 + y^2/b^2 = 1, the director circle is always x^2+y^2 = a^2+b^2 — its radius squared is simply the SUM of a^2 and b^2. Here a^2=9, b^2=4.",
+        "Director circle: x^2+y^2 = 9+4 = 13.",
+        "Cross-check with a known point on this circle: at 45 degrees to the axes on this director circle, the two tangents from that point should indeed be perpendicular. A more direct check is the boundary case: on the major axis itself, the tangent at a vertex is vertical and the tangent from directly above at height sqrt(a^2+b^2) would need to be horizontal to be perpendicular — this matches the known geometric picture for this ellipse's shape and confirms the sum formula rather than any other combination of a^2 and b^2.",
+        "Option x^2+y^2=5 wrongly uses a^2-b^2=9-4=5 instead of the sum. Option x^2+y^2=36 wrongly uses a^2 x b^2=9x4=36 (multiplying instead of adding). Option x^2+y^2=9 confuses the director circle with the ellipse's AUXILIARY circle (which uses a^2 alone, see the next question)."
+      ],
+      "verification_method": "sympy_director_circle_formula_a2_plus_b2_crosscheck"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-006",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The 'auxiliary circle' of an ellipse is the circle drawn with the ellipse's longer (major) axis as its diameter. Find the equation of the auxiliary circle of the ellipse x^2/16 + y^2/9 = 1. (Concept note: this is another construction not covered in Tamil Nadu's Class 11-12 syllabus — worked from scratch here.)",
+      "options": [
+        "x^2 + y^2 = 16",
+        "x^2 + y^2 = 9",
+        "x^2 + y^2 = 25",
+        "x^2 + y^2 = 7"
+      ],
+      "answer_index": 0,
+      "correct_answer": "x^2 + y^2 = 16",
+      "solution_steps": [
+        "Here a^2=16 and b^2=9, with a^2 > b^2, so 'a' (the bigger one) is the semi-major axis length — the longer half-axis of the ellipse. The major axis runs along the x-direction here.",
+        "The auxiliary circle always has radius equal to a (the semi-major axis), so its equation is x^2+y^2 = a^2 = 16.",
+        "Cross-check: the ellipse's own vertices are at (4,0) and (-4,0) (since a=4), and both of these lie exactly on x^2+y^2=16 (16+0=16). A circle drawn on the segment joining these two vertices as its diameter is centered at the origin with radius 4 — exactly x^2+y^2=16.",
+        "Option x^2+y^2=9 wrongly uses b^2 (the SHORTER axis) instead of a^2 — the auxiliary circle is always built on the major (longer) axis, not the minor one. Option x^2+y^2=25 confuses this with the director circle, which uses a^2+b^2=16+9=25 instead of a^2 alone. Option x^2+y^2=7 wrongly uses a^2-b^2=16-9=7, a quantity that is actually related to the ellipse's focus distance, not its auxiliary circle."
+      ],
+      "verification_method": "sympy_auxiliary_circle_formula_plus_vertex_point_crosscheck"
+    },
+    {
+      "id": "pi-parabola-ellipse-hyperbola-007",
+      "concept_id": "parabola-ellipse-hyperbola",
+      "topic": "jee-coordinate-geometry",
+      "difficulty": 0.75,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The 'polar' of a point with respect to a conic is a straight line linked to that point by a fixed rule (it generalizes the chord of contact to work for points both inside and outside the curve). Find the polar of the point (3, 2) with respect to the ellipse x^2/9 + y^2/4 = 1. (Concept note: pole-and-polar is another construction absent from Tamil Nadu's Class 11-12 syllabus — built here from first principles.)",
+      "options": ["2x + 3y = 6", "27x + 8y = 36", "8x + 27y = 36", "3x + 2y = 1"],
+      "answer_index": 0,
+      "correct_answer": "2x + 3y = 6",
+      "solution_steps": [
+        "For an ellipse x^2/a^2+y^2/b^2=1, the polar of a point (x1,y1) is x·x1/a^2 + y·y1/b^2 = 1. Here a^2=9, b^2=4, and (x1,y1)=(3,2).",
+        "Polar: x(3)/9 + y(2)/4 = 1, i.e. x/3 + y/2 = 1. Multiplying every term by 6 (the smallest number both 3 and 2 divide into) clears the fractions: 2x + 3y = 6.",
+        "Cross-check: this same formula, when the point (x1,y1) actually sits ON the ellipse, gives exactly the tangent line at that point — a well-known special case that confirms the formula's shape is set up correctly (it is the natural generalization of a tangent-at-a-point formula to any point in the plane).",
+        "Option 27x+8y=36 comes from swapping a^2 and b^2 inside the formula (using x·x1/b^2 + y·y1/a^2 = 1 by mistake). Option 8x+27y=36 comes from swapping the point's own coordinates, using (2,3) instead of (3,2). Option 3x+2y=1 comes from forgetting the a^2, b^2 denominators entirely and just writing x·x1 + y·y1 = 1."
+      ],
+      "verification_method": "sympy_polar_formula_plus_tangent_special_case_reasoning_and_lcm_clearing_crosscheck"
+    }
+  ]
+}

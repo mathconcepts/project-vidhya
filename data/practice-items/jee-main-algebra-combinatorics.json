@@ -1,0 +1,459 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Mathematics practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) for four jee-algebra concepts: permutations-combinations, binomial-theorem, sequences-series, matrices-and-determinants. Authored 2026-09-19. Every answer key was solved by hand and then independently cross-verified via python3 sympy (symbolic expansion/solve for algebra, exact Matrix.det()/matrix multiplication for the matrices items) plus itertools brute force for two counting items (word-arrangement letter count, 3-digit even-number enumeration) before being written down.",
+  "items": [
+    {
+      "id": "pi-permutations-combinations-001",
+      "concept_id": "permutations-combinations",
+      "topic": "jee-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In how many different ways can the letters of the word LEADER be arranged?",
+      "options": ["360", "720", "180", "120"],
+      "answer_index": 0,
+      "correct_answer": "360",
+      "solution_steps": [
+        "LEADER has 6 letters in total, and the letter E repeats twice (all other letters L, A, D, R appear once each).",
+        "When some letters repeat, the arrangement count formula is (total letters)! divided by (repeat count)! for every letter that repeats. So the answer is 6! / 2! = 720 / 2 = 360.",
+        "Cross-check with a brute-force count of all distinct orderings (a computer can list every arrangement of L,E,A,D,E,R and simply count the distinct ones): this also comes to exactly 360.",
+        "720 is the mistake of treating all 6 letters as different and forgetting to divide by 2! for the repeated E. 180 divides by 2! twice, as if there were two different repeated letters. 120 is simply 5!, which is not the right formula for this word at all."
+      ],
+      "verification_method": "python_math_factorial_and_counter_brute_force"
+    },
+    {
+      "id": "pi-permutations-combinations-002",
+      "concept_id": "permutations-combinations",
+      "topic": "jee-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A committee of 3 men and 2 women is to be formed from a group of 5 men and 4 women. In how many ways can this be done?",
+      "options": ["60", "40", "126", "16"],
+      "answer_index": 0,
+      "correct_answer": "60",
+      "solution_steps": [
+        "Choosing 3 men out of 5 (order does not matter, so this is a combination) can be done in C(5,3) = 10 ways.",
+        "Choosing 2 women out of 4 can be done in C(4,2) = 6 ways.",
+        "Since the man-group and the woman-group are chosen independently, and both choices are needed together, multiply: 10 × 6 = 60.",
+        "40 comes from swapping the counts by mistake, C(5,2) × C(4,3) = 10 × 4 = 40. 126 comes from pooling everyone together and choosing 5 people out of 9 without separating genders, C(9,5) = 126, which ignores the '3 men AND 2 women' requirement. 16 comes from wrongly adding the two combination counts (10 + 6) instead of multiplying them."
+      ],
+      "verification_method": "python_sympy_binomial"
+    },
+    {
+      "id": "pi-permutations-combinations-003",
+      "concept_id": "permutations-combinations",
+      "topic": "jee-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In how many ways can 6 people be seated around a circular table (clockwise and counter-clockwise seatings counted as different)?",
+      "options": ["120", "720", "60", "24"],
+      "answer_index": 0,
+      "correct_answer": "120",
+      "solution_steps": [
+        "For a straight line, 6 people can be arranged in 6! = 720 ways.",
+        "Around a circle, rotating everyone by one seat gives what looks like a 'new' line-up but is actually the same seating pattern, since everyone still has the same left and right neighbours. There are 6 such rotations of any one arrangement, so the circular count is 6!/6 = (6-1)! = 5! = 120.",
+        "720 is the plain linear-arrangement count, which wrongly treats the row's two ends as fixed, distinct positions — a circle has no fixed starting point. 60 divides by an extra factor of 2 (that extra halving is only correct when a mirror-image seating, like a bracelet, is also considered identical, which this question does not ask for). 24 comes from mistakenly using 4! instead of 5!, i.e. using the wrong value of n."
+      ],
+      "verification_method": "python_math_factorial"
+    },
+    {
+      "id": "pi-permutations-combinations-004",
+      "concept_id": "permutations-combinations",
+      "topic": "jee-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many 3-digit numbers, with no digit repeated, can be formed using the digits 1, 2, 3, 4, 5 such that the number is even?",
+      "options": ["24", "60", "12", "48"],
+      "answer_index": 0,
+      "correct_answer": "24",
+      "solution_steps": [
+        "A number is even exactly when its last digit is even. Among 1,2,3,4,5, only 2 and 4 are even, so there are 2 choices for the last (units) digit.",
+        "Once the last digit is fixed, the remaining 2 positions (hundreds and tens) must be filled from the 4 digits left, with no repeats, which is a permutation: 4 × 3 = 12 ways.",
+        "Total = (choices for last digit) × (ways to fill the rest) = 2 × 12 = 24.",
+        "Cross-check by brute force: listing every 3-digit permutation of {1,2,3,4,5} taken 3 at a time and counting the ones ending in an even digit also gives 24. 60 is the total count of ALL 3-digit numbers (5×4×3), ignoring the even-number condition completely. 12 is what you get if you correctly find the 'remaining positions' count but forget to multiply by the 2 choices for the last digit. 48 comes from mistakenly treating the last-digit position as leaving 3 remaining slots instead of 2 (as if this were a 4-digit number), giving 2 × (4×3×2) = 48."
+      ],
+      "verification_method": "python_itertools_permutations_brute_force"
+    },
+    {
+      "id": "pi-permutations-combinations-005",
+      "concept_id": "permutations-combinations",
+      "topic": "jee-algebra",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A regular decagon (10-sided polygon) has how many diagonals?",
+      "options": ["35", "45", "120", "70"],
+      "answer_index": 0,
+      "correct_answer": "35",
+      "solution_steps": [
+        "First count every line segment joining any 2 of the 10 vertices: that's C(10,2) = 45 segments in total (this includes both the sides of the polygon and the diagonals).",
+        "A decagon has 10 sides, and every side is one of those 45 segments but is NOT a diagonal (a diagonal must connect two non-adjacent vertices). So diagonals = 45 − 10 = 35.",
+        "Cross-check with the direct formula for the number of diagonals of an n-sided polygon, n(n-3)/2 = 10×7/2 = 35 — matches.",
+        "45 is the mistake of forgetting to subtract the 10 sides. 120 comes from wrongly using C(10,3) (choosing 3 vertices, which is unrelated to counting diagonals). 70 comes from using n(n-3) = 70 but forgetting to divide by 2 (each diagonal would otherwise be counted from both of its endpoints)."
+      ],
+      "verification_method": "python_sympy_binomial_and_formula_crosscheck"
+    },
+    {
+      "id": "pi-permutations-combinations-006",
+      "concept_id": "permutations-combinations",
+      "topic": "jee-algebra",
+      "difficulty": 0.75,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In how many ways can 10 identical balls be distributed into 4 distinct boxes so that every box gets at least 1 ball?",
+      "options": ["84", "286", "126", "210"],
+      "answer_index": 0,
+      "correct_answer": "84",
+      "solution_steps": [
+        "This is the classic 'stars and bars' setup. Since every box must get at least 1 ball, first give each of the 4 boxes 1 ball — that uses up 4 balls, leaving 10 − 4 = 6 balls still to place, and now those 6 remaining balls can go into any box, including getting extra balls in a box that's already non-empty.",
+        "Distributing 6 identical remaining balls into 4 distinct boxes with no restriction uses the stars-and-bars formula C((6+4-1), (4-1)) = C(9,3) = 84.",
+        "Cross-check with the general 'at least 1 per box' stars-and-bars formula directly: for n identical items into k distinct boxes with every box non-empty, the count is C(n-1, k-1) = C(9,3) = 84 — matches.",
+        "286 is C(13,3), the count you'd get if boxes were allowed to be empty (a common mistake of forgetting the 'at least one' condition and using the plain, unrestricted stars-and-bars formula on all 10 balls). 126 is C(9,4), which uses C(n-1,k) instead of the correct C(n-1,k-1). 210 is C(10,4), a further mix-up that uses the un-reduced ball count together with the wrong choose-value."
+      ],
+      "verification_method": "python_sympy_binomial_stars_and_bars"
+    },
+    {
+      "id": "pi-binomial-theorem-001",
+      "concept_id": "binomial-theorem",
+      "topic": "jee-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the coefficient of x^5 in the binomial expansion of (1 + x)^8?",
+      "options": ["56", "70", "6720", "256"],
+      "answer_index": 0,
+      "correct_answer": "56",
+      "solution_steps": [
+        "The general term of (1+x)^n is T_(r+1) = C(n,r) x^r. Here n = 8, and we want the power x^5, so r = 5.",
+        "The coefficient is therefore C(8,5) = 56.",
+        "Cross-check by symbolically expanding (1+x)^8 in full and reading off the x^5 coefficient directly — it also comes out to 56.",
+        "70 is the mistake of using the wrong term index: since T_(r+1) is called the '(r+1)-th term', a student may look for the '5th term' itself (which is T_5, meaning r = 4) instead of the term containing x^5 (r = 5), getting C(8,4) = 70 by mistake. 6720 forgets to divide by 5! and uses the raw falling-factorial product 8×7×6×5×4 instead of the binomial coefficient. 256 is 2^8, which is the SUM of all the coefficients in the expansion (found by setting x = 1), not the coefficient of one particular term."
+      ],
+      "verification_method": "python_sympy_expand_and_coeff"
+    },
+    {
+      "id": "pi-binomial-theorem-002",
+      "concept_id": "binomial-theorem",
+      "topic": "jee-algebra",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many terms are there in the binomial expansion of (2x + 3y)^10?",
+      "options": ["11", "10", "20", "100"],
+      "answer_index": 0,
+      "correct_answer": "11",
+      "solution_steps": [
+        "For any binomial expansion (a + b)^n, the number of terms is always n + 1 (the terms correspond to r = 0, 1, 2, ..., n, which is n+1 values).",
+        "Here n = 10, so the number of terms is 10 + 1 = 11.",
+        "Cross-check by symbolically expanding (2x+3y)^10 and counting the number of distinct terms in the fully expanded polynomial — it comes to exactly 11.",
+        "10 is the mistake of forgetting the '+1' in the n+1 rule. 20 comes from doubling n instead of adding 1 to it. 100 comes from squaring n (n^2), an unrelated formula confusion."
+      ],
+      "verification_method": "python_sympy_expand_term_count"
+    },
+    {
+      "id": "pi-binomial-theorem-003",
+      "concept_id": "binomial-theorem",
+      "topic": "jee-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the coefficient of the middle term in the expansion of (x + y)^8.",
+      "options": ["70", "56", "8", "256"],
+      "answer_index": 0,
+      "correct_answer": "70",
+      "solution_steps": [
+        "Since n = 8 is even, the expansion has an odd number of terms (n+1 = 9 terms), so there is exactly ONE middle term: the ((n/2)+1)-th term, which here is the 5th term, T_5.",
+        "T_5 corresponds to r = 4 in the general term T_(r+1) = C(8,r) x^(8-r) y^r, so its coefficient is C(8,4) = 70.",
+        "Cross-check by fully expanding (x+y)^8 symbolically and reading off the coefficient of the exactly-central term x^4 y^4 — it is also 70.",
+        "56 is the off-by-one mistake of using r = 3 (i.e. treating T_4 as the middle term instead of T_5), giving C(8,3) = 56 by mistake. 8 comes from forgetting the binomial coefficient formula altogether and just writing down n itself. 256 is 2^8, again the sum of ALL coefficients (from setting x=y=1), not this one specific middle coefficient."
+      ],
+      "verification_method": "python_sympy_expand_and_coeff"
+    },
+    {
+      "id": "pi-binomial-theorem-004",
+      "concept_id": "binomial-theorem",
+      "topic": "jee-algebra",
+      "difficulty": 0.8,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In the expansion of (1 + x)^n, the coefficients of the 2nd, 3rd, and 4th terms are in arithmetic progression (AP). Find the value of n (n > 3).",
+      "options": ["7", "2", "9", "14"],
+      "answer_index": 0,
+      "correct_answer": "7",
+      "solution_steps": [
+        "The 2nd, 3rd, and 4th term coefficients of (1+x)^n are C(n,1), C(n,2), and C(n,3). Being in AP means the middle one is the average of the other two: 2·C(n,2) = C(n,1) + C(n,3).",
+        "Writing this out fully — 2 · n(n-1)/2 = n + n(n-1)(n-2)/6 — and simplifying (after dividing through by n, valid since n ≠ 0) leads to the quadratic n^2 - 9n + 14 = 0, which factors as (n-7)(n-2) = 0.",
+        "This gives two roots, n = 7 and n = 2. But n = 2 is not a valid answer here: for n = 2, the polynomial (1+x)^2 doesn't even HAVE a 4th term (C(n,3) needs n ≥ 3 to make sense), so n = 2 is an extraneous root that must be rejected. Cross-check: solving the same equation symbolically confirms the root set is exactly {0, 2, 7}, and 7 is the only one that is a genuine, meaningful answer here.",
+        "So n = 7 is correct. Option (2) is exactly that extraneous root, kept by a student who forgets to check whether the 4th term even exists for it. 9 and 14 come from sign or coefficient slips while expanding the AP equation (e.g. mixing up the +9n and -9n terms, or stopping one step early and reporting the constant term 14 as if it were the answer)."
+      ],
+      "verification_method": "python_sympy_solve_symbolic"
+    },
+    {
+      "id": "pi-binomial-theorem-005",
+      "concept_id": "binomial-theorem",
+      "topic": "jee-algebra",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the term independent of x (the constant term) in the expansion of (x + 1/x)^10.",
+      "options": ["252", "210", "1024", "1"],
+      "answer_index": 0,
+      "correct_answer": "252",
+      "solution_steps": [
+        "The general term is T_(r+1) = C(10,r) · x^(10-r) · (1/x)^r = C(10,r) · x^(10-2r). The term is independent of x exactly when the power of x is zero: 10 - 2r = 0, so r = 5.",
+        "The coefficient (which, since x^0 = 1, IS the term itself) is C(10,5) = 252.",
+        "Cross-check by expanding (x+1/x)^10 symbolically and simplifying — the constant term that appears is indeed 252.",
+        "210 comes from an off-by-one slip, using r = 4 or r = 6 instead of r = 5 (C(10,4) = C(10,6) = 210, which is a real but different coefficient in the same expansion). 1024 is 2^10, the sum of all binomial coefficients — unrelated to this specific term. 1 comes from the mistake of only tracking the x^(10-r) part and forgetting that 1/x ALSO contributes -r to the exponent; wrongly setting 10 - r = 0 gives r = 10 and C(10,10) = 1."
+      ],
+      "verification_method": "python_sympy_expand_and_simplify"
+    },
+    {
+      "id": "pi-binomial-theorem-006",
+      "concept_id": "binomial-theorem",
+      "topic": "jee-algebra",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the sum of all the binomial coefficients in the expansion of (1 + x)^12.",
+      "options": ["4096", "2048", "924", "144"],
+      "answer_index": 0,
+      "correct_answer": "4096",
+      "solution_steps": [
+        "The sum of all binomial coefficients C(n,0) + C(n,1) + ... + C(n,n) is found by simply setting x = 1 in (1+x)^n, which gives 2^n.",
+        "Here n = 12, so the sum is 2^12 = 4096.",
+        "Cross-check by directly adding up C(12,0) through C(12,12) term by term — the total is also 4096.",
+        "2048 is 2^11, an off-by-one slip in the exponent. 924 is C(12,6), the single LARGEST individual coefficient (the middle one) rather than the sum of all of them — a common mix-up between 'the biggest term' and 'the sum of every term'. 144 is 12^2, an unrelated formula confusion."
+      ],
+      "verification_method": "python_sympy_binomial_and_power_of_two"
+    },
+    {
+      "id": "pi-sequences-series-001",
+      "concept_id": "sequences-series",
+      "topic": "jee-algebra",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the 15th term of the arithmetic progression (AP): 3, 7, 11, 15, ...",
+      "options": ["59", "63", "55", "45"],
+      "answer_index": 0,
+      "correct_answer": "59",
+      "solution_steps": [
+        "The first term is a = 3 and the common difference is d = 7 - 3 = 4.",
+        "The n-th term formula is a_n = a + (n-1)d. For n = 15: a_15 = 3 + (14)(4) = 3 + 56 = 59.",
+        "Cross-check by simply listing the terms out: 3, 7, 11, 15, 19, ..., continuing this pattern all the way to the 15th term also lands on 59.",
+        "63 comes from the common mistake of using a + n·d instead of a + (n-1)·d, i.e. multiplying the difference by 15 instead of 14. 55 is the opposite off-by-one error, using a + 13d. 45 comes from misreading the common difference as 3 (the value of the first term) instead of correctly computing it as 4."
+      ],
+      "verification_method": "python_arithmetic_direct_computation"
+    },
+    {
+      "id": "pi-sequences-series-002",
+      "concept_id": "sequences-series",
+      "topic": "jee-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the sum of the first 20 terms of the AP: 2, 5, 8, 11, ...",
+      "options": ["610", "640", "61", "551"],
+      "answer_index": 0,
+      "correct_answer": "610",
+      "solution_steps": [
+        "Here a = 2, d = 3, and n = 20. The sum formula is S_n = (n/2)[2a + (n-1)d].",
+        "S_20 = (20/2)[2(2) + (19)(3)] = 10[4 + 57] = 10 × 61 = 610.",
+        "Cross-check with the alternative sum formula S_n = (n/2)(first term + last term): the 20th term is a_20 = 2 + 19(3) = 59, so S_20 = 10 × (2 + 59) = 10 × 61 = 610 — matches.",
+        "640 comes from the common slip of using 2a + n·d instead of 2a + (n-1)·d, i.e. 10[4+60]=640. 61 is the correct bracket value 2a+(n-1)d itself, but forgetting to multiply by n/2 to finish the formula. 551 comes from mistakenly using n=19 instead of n=20 throughout the whole calculation."
+      ],
+      "verification_method": "python_arithmetic_direct_computation"
+    },
+    {
+      "id": "pi-sequences-series-003",
+      "concept_id": "sequences-series",
+      "topic": "jee-algebra",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the 6th term of the geometric progression (GP): 2, 6, 18, 54, ...",
+      "options": ["486", "1458", "162", "17"],
+      "answer_index": 0,
+      "correct_answer": "486",
+      "solution_steps": [
+        "The first term is a = 2 and the common ratio is r = 6/2 = 3.",
+        "The n-th term of a GP is a_n = a·r^(n-1). For n = 6: a_6 = 2 × 3^5 = 2 × 243 = 486.",
+        "Cross-check by direct repeated multiplication: 2, 6, 18, 54, 162, 486 — the 6th term listed out this way is indeed 486.",
+        "1458 comes from the off-by-one mistake of using r^6 instead of r^5, i.e. a·r^n instead of a·r^(n-1). 162 is the opposite off-by-one error (using r^4, one step too early — that's actually the 5th term). 17 comes from wrongly applying the AP formula a + (n-1)d to a GP, treating the ratio 3 as if it were a common difference: 2 + 5(3) = 17."
+      ],
+      "verification_method": "python_arithmetic_direct_computation"
+    },
+    {
+      "id": "pi-sequences-series-004",
+      "concept_id": "sequences-series",
+      "topic": "jee-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the sum to infinity of the geometric progression: 8, 4, 2, 1, ...",
+      "options": ["16", "15", "32", "-8"],
+      "answer_index": 0,
+      "correct_answer": "16",
+      "solution_steps": [
+        "The first term is a = 8 and the common ratio is r = 4/8 = 1/2. Since |r| < 1, the infinite sum converges and is given by S_infinity = a / (1 - r).",
+        "S_infinity = 8 / (1 - 1/2) = 8 / (1/2) = 16.",
+        "Cross-check: the terms keep getting smaller and smaller (8, 4, 2, 1, 0.5, 0.25, ...) and their running total keeps climbing toward 16 but never actually reaches or passes it, which matches the formula's answer of 16.",
+        "15 is the mistake of only adding up the 4 terms that happen to be shown (8+4+2+1) and stopping there, forgetting the series actually continues forever with infinitely many smaller terms still left to add. 32 comes from using a wrong common ratio of 3/4 instead of 1/2 in the formula. -8 comes from mistakenly inverting the ratio to r = 2 (a GP with |r| ≥ 1 doesn't even have a finite sum to infinity at all, so getting a negative number here is a clear warning sign of an error, not a real answer)."
+      ],
+      "verification_method": "python_sympy_rational_arithmetic"
+    },
+    {
+      "id": "pi-sequences-series-005",
+      "concept_id": "sequences-series",
+      "topic": "jee-algebra",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two positive numbers have an arithmetic mean (AM) of 10 and a geometric mean (GM) of 8. What is the larger of the two numbers?",
+      "options": ["16", "12", "8", "20"],
+      "answer_index": 0,
+      "correct_answer": "16",
+      "solution_steps": [
+        "If the two numbers are p and q, then AM = (p+q)/2 = 10 means p + q = 20, and GM = √(pq) = 8 means pq = 64.",
+        "Numbers with a known sum and product are the roots of the quadratic x^2 - (sum)x + (product) = 0, i.e. x^2 - 20x + 64 = 0.",
+        "Solving: the discriminant is 20^2 - 4(64) = 400 - 256 = 144, and √144 = 12, so x = (20 ± 12)/2, giving x = 16 or x = 4.",
+        "Cross-check: 16 + 4 = 20 (matches the required sum) and 16 × 4 = 64 (matches the required product) — so the two numbers are exactly 4 and 16, and the larger one is 16.",
+        "12 comes from a slip while computing the discriminant's square root and using that intermediate value as if it were the final answer. 8 is simply the GM value itself, mistaken for one of the two actual numbers. 20 is the sum p+q, reported instead of solving the quadratic to find the individual numbers."
+      ],
+      "verification_method": "python_sympy_solve_quadratic"
+    },
+    {
+      "id": "pi-sequences-series-006",
+      "concept_id": "sequences-series",
+      "topic": "jee-algebra",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the sum 1^2 + 2^2 + 3^2 + ... + 10^2 (the sum of the squares of the first 10 natural numbers).",
+      "options": ["385", "55", "3025", "770"],
+      "answer_index": 0,
+      "correct_answer": "385",
+      "solution_steps": [
+        "The formula for the sum of squares of the first n natural numbers is n(n+1)(2n+1)/6. For n = 10: 10 × 11 × 21 / 6 = 2310/6 = 385.",
+        "Cross-check by direct addition: 1+4+9+16+25+36+49+64+81+100 = 385 — matches.",
+        "55 comes from using the WRONG formula entirely — n(n+1)/2 = 55 — which is the sum of the first n natural numbers (not their squares). 3025 comes from a different wrong formula, n^2(n+1)^2/4 = 3025, which is actually the sum of CUBES of the first n numbers, not their squares. 770 comes from remembering the right formula's numerator, n(n+1)(2n+1), but wrongly dividing by 3 instead of 6."
+      ],
+      "verification_method": "python_arithmetic_direct_computation"
+    },
+    {
+      "id": "pi-matrices-and-determinants-001",
+      "concept_id": "matrices-and-determinants",
+      "topic": "jee-algebra",
+      "difficulty": 0.15,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the determinant of the matrix A = [[3, 4], [1, 2]].",
+      "options": ["2", "10", "-2", "-5"],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "For a 2×2 matrix [[a,b],[c,d]], the determinant is a·d - b·c.",
+        "Here a=3, b=4, c=1, d=2, so det(A) = (3)(2) - (4)(1) = 6 - 4 = 2.",
+        "10 comes from a sign error — ADDING the cross terms instead of subtracting them: 3×2 + 4×1 = 10. -2 comes from computing the cross terms in the wrong (swapped) order: 4×1 - 3×2 = -2. -5 comes from crossing the wrong pairs of entries together: 3×1 - 4×2 = -5, instead of the correct top-left×bottom-right minus top-right×bottom-left."
+      ],
+      "verification_method": "python_sympy_matrix_det"
+    },
+    {
+      "id": "pi-matrices-and-determinants-002",
+      "concept_id": "matrices-and-determinants",
+      "topic": "jee-algebra",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Find the determinant of the matrix B = [[1, 2, 3], [4, 5, 6], [7, 8, 10]].",
+      "options": ["-3", "-11", "-25", "7"],
+      "answer_index": 0,
+      "correct_answer": "-3",
+      "solution_steps": [
+        "Expand along the first row using cofactor expansion: det(B) = 1·(5×10 - 6×8) - 2·(4×10 - 6×7) + 3·(4×8 - 5×7).",
+        "The three 2×2 minors are: (5×10-6×8) = 50-48 = 2, (4×10-6×7) = 40-42 = -2, and (4×8-5×7) = 32-35 = -3.",
+        "So det(B) = 1(2) - 2(-2) + 3(-3) = 2 + 4 - 9 = -3.",
+        "Cross-check by re-computing the same determinant using a computer algebra system's built-in determinant routine, which also gives -3.",
+        "-11 comes from forgetting to alternate the cofactor signs (using +,+,+ instead of +,-,+): 1(2)+2(-2)+3(-3) = 2-4-9 = -11. -25 comes from an arithmetic slip inside one of the 2×2 minors (accidentally computing 5×8-6×10=-20 instead of 5×10-6×8=2). 7 comes from using the wrong alternating pattern +,+,- instead of the correct +,-,+: 1(2)+2(-2)-3(-3) = 2-4+9 = 7."
+      ],
+      "verification_method": "python_sympy_matrix_det"
+    },
+    {
+      "id": "pi-matrices-and-determinants-003",
+      "concept_id": "matrices-and-determinants",
+      "topic": "jee-algebra",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If A = [[2, 3], [1, 4]], find det(A^-1) (the determinant of the inverse of A).",
+      "options": ["0.2", "5", "-0.2", "25"],
+      "answer_index": 0,
+      "correct_answer": "0.2",
+      "solution_steps": [
+        "First, det(A) = (2)(4) - (3)(1) = 8 - 3 = 5.",
+        "For any invertible matrix, det(A^-1) = 1/det(A) — this is a direct property, since A·A^-1 = I means det(A)·det(A^-1) = det(I) = 1.",
+        "So det(A^-1) = 1/5 = 0.2.",
+        "5 is just det(A) itself, reported by mistake instead of taking its reciprocal for A^-1. -0.2 comes from a sign slip while computing det(A), e.g. mistakenly getting det(A) = -5 first. 25 comes from squaring det(A) instead of taking its reciprocal, confusing this with an unrelated matrix-power rule."
+      ],
+      "verification_method": "python_sympy_matrix_det_and_inverse_property"
+    },
+    {
+      "id": "pi-matrices-and-determinants-004",
+      "concept_id": "matrices-and-determinants",
+      "topic": "jee-algebra",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If A is a 3×3 matrix with det(A) = 5, find det(2A).",
+      "options": ["40", "10", "8", "20"],
+      "answer_index": 0,
+      "correct_answer": "40",
+      "solution_steps": [
+        "For an n×n matrix, multiplying every entry by a scalar k scales the determinant by k^n (not just by k) — this is because the scalar factor comes out of EVERY row of the determinant, once per row.",
+        "Here n = 3 (a 3×3 matrix) and k = 2, so det(2A) = 2^3 × det(A) = 8 × 5 = 40.",
+        "10 comes from the mistake of scaling the determinant by k directly (treating it like a single number instead of an n×n determinant), i.e. just 2 × 5 = 10. 8 comes from computing 2^3 correctly but then forgetting to multiply by det(A) = 5 at all. 20 comes from using the wrong power, applying k^2 (as if this were a 2×2 matrix) instead of the correct k^3 for a 3×3 matrix."
+      ],
+      "verification_method": "python_scalar_determinant_scaling_rule"
+    },
+    {
+      "id": "pi-matrices-and-determinants-005",
+      "concept_id": "matrices-and-determinants",
+      "topic": "jee-algebra",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "If A = [[1, 2], [3, 4]] and B = [[2, 0], [1, 2]], find the entry in the 2nd row, 1st column of the product AB.",
+      "options": ["10", "7", "4", "3"],
+      "answer_index": 0,
+      "correct_answer": "10",
+      "solution_steps": [
+        "The (2,1) entry of AB is found by taking row 2 of A, which is (3, 4), and dotting it with column 1 of B, which is (2, 1): (3)(2) + (4)(1) = 6 + 4 = 10.",
+        "Cross-check by computing the full product AB = [[4, 4], [10, 8]] directly — its (2,1) entry is indeed 10.",
+        "7 comes from computing BA instead of AB (matrix multiplication is NOT commutative — the order matters): BA = [[2,4],[7,10]], whose (2,1) entry happens to be 7, a genuinely different matrix from AB. 4 comes from reading off the wrong position — the (1,2) entry of AB — instead of the requested (2,1) entry. 3 comes from doing entry-by-entry (Hadamard) multiplication instead of real matrix multiplication: (row2,col1 of A) × (row2,col1 of B) = 3 × 1 = 3, which is not how matrix multiplication works at all."
+      ],
+      "verification_method": "python_sympy_matrix_multiplication"
+    },
+    {
+      "id": "pi-matrices-and-determinants-006",
+      "concept_id": "matrices-and-determinants",
+      "topic": "jee-algebra",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using Cramer's rule, solve for x in the system: 2x + 3y = 8, x - y = 1.",
+      "options": ["2.2", "1.2", "-11", "-2.2"],
+      "answer_index": 0,
+      "correct_answer": "2.2",
+      "solution_steps": [
+        "The coefficient determinant is D = |2 3; 1 -1| = (2)(-1) - (3)(1) = -2 - 3 = -5.",
+        "Replace the x-column with the constants to get D_x = |8 3; 1 -1| = (8)(-1) - (3)(1) = -8 - 3 = -11. Then x = D_x / D = -11 / -5 = 11/5 = 2.2.",
+        "Cross-check by solving directly: from x - y = 1, x = y + 1; substituting into 2x+3y=8 gives 2(y+1)+3y=8, so 5y=6, y=1.2, and x = y+1 = 2.2 — matches exactly.",
+        "1.2 is the value of y, not x — a student who correctly computes D_y = -6 and y = D_y/D = 1.2 but then reports y's value for the x that was actually asked for. -11 comes from a sign error in computing D (forgetting to alternate signs, using (2)(-1)+(3)(1) = 1 instead of -5, then wrongly dividing -11 by that broken D = 1). -2.2 comes from a sign-dropping slip on D — using D = 5 (its positive magnitude) instead of the correct D = -5 — giving -11/5 = -2.2 instead of the correctly-signed 11/5 = 2.2."
+      ],
+      "verification_method": "python_sympy_matrix_det_cramers_rule"
+    }
+  ]
+}

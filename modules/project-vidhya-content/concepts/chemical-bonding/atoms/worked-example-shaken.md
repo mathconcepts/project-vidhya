@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Write down the two given numbers.** Bonding electrons $=10$. Antibonding electrons $=4$.
+**Step 1 — Note the two given electron counts.** Bonding electrons $=10$. Antibonding electrons $=4$.
 
 ---
 

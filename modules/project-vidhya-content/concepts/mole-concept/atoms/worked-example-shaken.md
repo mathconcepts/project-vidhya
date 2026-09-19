@@ -22,16 +22,16 @@ scaffold_fade: true
 
 ---
 
-**Step 3 — How much $\text{H}_2$ does 0.5 mol $\text{O}_2$ actually need?** The equation's ratio is 2 mol $\text{H}_2$ per 1 mol $\text{O}_2$. So $0.5 \times 2 = 1$ mol $\text{H}_2$ is needed.
+**Step 3 — How much $\text{H}_2$ does 0.5 mol $\text{O}_2$ need?** Ratio: 2 mol $\text{H}_2$ per 1 mol $\text{O}_2$. So $0.5 \times 2 = 1$ mol $\text{H}_2$ needed.
 
 ---
 
-**Step 4 — Compare needed to available.** 1 mol $\text{H}_2$ is needed; 2 mol are available. $\text{H}_2$ has 1 mol left over — it is in excess. All the $\text{O}_2$ runs out first, so $\text{O}_2$ is the limiting reagent.
+**Step 4 — Compare needed to available.** 1 mol needed; 2 mol available. 1 mol $\text{H}_2$ is left over, in excess. All the $\text{O}_2$ runs out first, so $\text{O}_2$ is limiting.
 
 ---
 
-**Step 5 — Product from the limiting reagent.** Ratio is 2 mol $\text{H}_2\text{O}$ per 1 mol $\text{O}_2$. $0.5 \times 2 = 1$ mol $\text{H}_2\text{O}$. Mass $= 1 \times 18 = 18$ g.
+**Step 5 — Product from the limiting reagent.** Ratio: 2 mol $\text{H}_2\text{O}$ per 1 mol $\text{O}_2$. $0.5 \times 2 = 1$ mol $\text{H}_2\text{O}$. Mass $= 1 \times 18 = 18$ g.
 
 $$\boxed{18 \text{ g of water forms}}$$
 
-**Check:** total mass in was $4 + 16 = 20$ g. Mass out is 18 g water plus the 1 mol ($2$ g) of leftover $\text{H}_2$: $18 + 2 = 20$ g. Matches.
+**Check:** mass in $= 4+16=20$ g. Mass out $= 18$ g water $+ 2$ g leftover $\text{H}_2 = 20$ g. Matches.

@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Write down the overall reaction and count electrons.** $\text{Zn} + \text{Cu}^{2+} \rightarrow \text{Zn}^{2+} + \text{Cu}$. Each $\text{Zn}$ atom loses $2$ electrons; each $\text{Cu}^{2+}$ ion gains $2$. So $n=2$.
+**Step 1 — Identify the overall reaction and count electrons.** $\text{Zn} + \text{Cu}^{2+} \rightarrow \text{Zn}^{2+} + \text{Cu}$. Each $\text{Zn}$ atom loses $2$ electrons; each $\text{Cu}^{2+}$ ion gains $2$. So $n=2$.
 
 ---
 

@@ -9,8 +9,8 @@ difficulty: 0.0
 exam_ids: ["*"]
 ---
 
-Calling the negative electrode "the anode" is true for a galvanic cell and false for an electrolytic one — the same words, opposite terminals, and this is exactly where marks are lost.
+Calling the negative electrode "the anode" is true for a galvanic cell and false for an electrolytic one — same words, opposite terminals, and this is exactly where marks are lost.
 
-In a galvanic cell (like $\text{Zn}$–$\text{Cu}$ above), the reaction runs on its own; the anode (where oxidation happens) ends up negative, because it is the source of the electrons flowing out. In an electrolytic cell, an external battery force-feeds electrons in the OPPOSITE direction, driving a non-spontaneous reaction — and now the anode (still, by definition, wherever oxidation happens) is wired to the battery's positive terminal, making it positive.
+In a galvanic cell (like $\text{Zn}$–$\text{Cu}$ above), the reaction runs on its own; the anode (where oxidation happens) ends up negative, since it is the source of the electrons flowing out. In an electrolytic cell, an external battery force-feeds electrons the OPPOSITE way, driving a non-spontaneous reaction — and now the anode, still wherever oxidation happens, is wired to the battery's positive terminal instead.
 
-**Anode is always oxidation, cathode is always reduction — that identity never changes.** What flips between the two cell types is only which terminal, positive or negative, that oxidation happens to sit at.
+**Anode is always oxidation, cathode is always reduction — that identity never changes.** Only which terminal, positive or negative, that oxidation sits at flips between the two cell types.

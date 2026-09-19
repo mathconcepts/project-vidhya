@@ -14,7 +14,7 @@ scaffold_fade: true
 
 ---
 
-**Step 1 — Write down what is conserved.** The moles present are $n(\text{HA}) = 0.2$ mol of acid and $n(\text{A}^-) = 0.1$ mol of conjugate base. Both sit in the same $500\ \text{mL}$, so the ratio of moles will equal the ratio of concentrations — the volume can be ignored entirely.
+**Step 1 — Note what is conserved.** The moles present are $n(\text{HA}) = 0.2$ mol of acid and $n(\text{A}^-) = 0.1$ mol of conjugate base, both in the same $500\ \text{mL}$ — so the mole ratio equals the concentration ratio, and volume can be ignored.
 
 ---
 

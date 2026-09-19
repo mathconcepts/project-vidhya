@@ -1,0 +1,209 @@
+# Best-practice authoring templates for JEE Main Algebra concepts
+# (sets-relations-functions, quadratic-equations, complex-numbers-algebra,
+# permutations-combinations, binomial-theorem, sequences-series,
+# matrices-and-determinants).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose. That key is
+# the signal loadTopicsWithStancesBlock() reads to add a topic's concepts to
+# the content-maturity report's rollout denominator — it means "every concept
+# here carries a shaken and an assured body for hook/intuition/worked_example,
+# right now." That is not true yet: atom content for jee-algebra is being
+# authored by other agents concurrently with this template. Adding the key
+# would make the rollout figure claim a completion that hasn't happened.
+# Add it once a real audit (the same kind linear-algebra.yaml passed) confirms
+# every concept below actually has both stance bodies for all three types.
+#
+# Audience note (all six new JEE templates share this): the reader is an
+# Indian Class 12 student from the Tamil Nadu State Board (Samacheer Kalvi)
+# sitting JEE Main — see data/registry/curriculum-bridges/tn-hse-12-math.yml.
+# For jee-algebra specifically, the bridge file marks EVERY concept here
+# `aligned` or `partial` — TN's Class 11/12 syllabus already teaches sets,
+# quadratics, complex numbers, P&C, the binomial theorem, sequences, and
+# matrices at close to JEE depth. So this template's guidance treats the
+# reader as already knowing the mechanics: it should read as sharpening and
+# exam-pattern practice, not first-time instruction, and should name the one
+# or two things the school course stops short of (common roots and locating
+# roots in an interval for quadratics; the greatest-coefficient/divisibility
+# slice of the binomial theorem) rather than re-teaching the whole chapter.
+
+topic_family: jee-algebra
+
+intuition:
+  scaffold: rule-then-restriction
+  guidance: |
+    You already learned this rule in school — don't restate the rule as if
+    it were new. Instead, show the ONE restriction or edge case the school
+    course glosses over (a repeated root, an empty set, a term that only
+    exists for certain n) and why the exam is built to test exactly that
+    edge. Use one small, concrete example worked by hand before naming the
+    general pattern. ELI5, Indian English, and gloss any technical word
+    (e.g. "discriminant" — the number under the square root in the quadratic
+    formula that tells you what kind of roots you get) the first time it's
+    used, because an anxious student re-reading this at 11pm should not need
+    to look anything up.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement entirely. Pick one small, concrete case —
+      one quadratic, one small set, one short binomial expansion — and do
+      the whole thing by hand, out loud, before any symbol appears in
+      general form. End on the one thing to hold onto, phrased as what to
+      DO next time, not as a summary of what was said. No praise, no
+      mention of how the reader might be feeling — a worked small win does
+      that job better than being told to feel better.
+    assured: |
+      Skip the mechanics — a confident JEE Main aspirant from a TN-board
+      background already has them. Go straight to the one restriction that
+      costs marks: a condition on the discriminant, a boundary the counting
+      argument silently assumes, a case (repeated root, empty product, n=0)
+      the general formula quietly mishandles. Give a genuine counterexample,
+      not a restatement of the rule.
+
+formal_definition:
+  scaffold: symbolic-statement
+  guidance: |
+    State the rule or identity in full symbolic form with display math —
+    the discriminant formula, the general term of a binomial expansion, the
+    definition of a relation as a subset of A×B. Two-sentence prose cap
+    around the display math. Name every symbol once, in plain words, the
+    first time it appears (e.g. "here nCr is 'n choose r', the number of
+    ways to pick r items from n without caring about order").
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum, each step one action (state what's known, apply the
+    rule, simplify, check). Favour a JEE-flavoured problem shape over a
+    textbook-generic one — locating roots in an interval rather than just
+    solving a quadratic, a restricted arrangement rather than a bare
+    permutation count. Steps separated by `\n---\n` so scaffold-fade can
+    blank trailing steps on revisit. Final line "Answer: ..." so :::verify
+    can confirm.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — state what's given, then apply,
+      then simplify, then check, each on its own line. Push every "why does
+      this step work" explanation into the walkthrough's prompts/hints, not
+      onto the page. End with the check run explicitly (substitute the root
+      back in; verify the count against a smaller case), not just claimed.
+    assured: |
+      Lead with the shortcut a school course doesn't always emphasise —
+      Vieta's relations between roots and coefficients instead of solving
+      directly, the sum-of-a-GP trick instead of expanding term by term,
+      symmetry that halves a counting argument — and state the one condition
+      that must hold for the shortcut to be valid before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to what
+    the school syllabus doesn't drill: common roots between two quadratics,
+    sign errors when squaring during "location of roots" problems, treating
+    nCr as nPr (or vice versa) under time pressure, forgetting the domain
+    restriction that makes a relation a function.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with different
+    numbers. Keep the arithmetic small enough to finish in under a minute.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the rule or identity by name; back gives the symbolic
+    form. Used by SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: set-or-curve-picture
+  guidance: |
+    Use a Venn diagram for sets/relations, a number line for root location
+    and inequalities, or an Argand-plane picture for complex numbers.
+
+    When the concept has a clean closed-form y=f(x) (a quadratic's graph
+    crossing the x-axis, for instance), ALSO emit a fenced gif-scene block
+    at the end of the body. Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"x^2 - 4*x + 3","x_range":[-1,5],"y_range":[-2,4],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. NO function definitions, NO
+    semicolons, NO identifiers other than these. OMIT the block for
+    anything that doesn't reduce cleanly to a 2D plot (abstract sets,
+    permutation counts, matrix algebra) — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question says 'common root', set the two quadratics equal and eliminate
+    x^2 first."
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (sum/product
+    of roots, nCr vs nPr, the general term's position in a binomial
+    expansion).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    permutations with restrictions + the binomial theorem's use of nCr).
+  bloom_floor: 4
+
+hook:
+  scaffold: sharp-question
+  guidance: |
+    Open on one concrete instance, small enough to verify by hand in a few
+    seconds — not a restatement of the school-textbook definition, since
+    this reader has already met it. Name the JEE-specific twist up front
+    (e.g. "two quadratics share exactly one root — what does that force?").
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. OMIT the fence entirely for
+    concepts that don't reduce to a 2D parametric/trace scene (abstract
+    sets, permutation counts, matrix algebra) — never invent a misleading
+    scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete instance, small enough to check by hand right now. No
+      history, no "you'll need this later" framing — the reader is here
+      after getting something wrong, and the useful move is one thing that
+      works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      on an edge case.

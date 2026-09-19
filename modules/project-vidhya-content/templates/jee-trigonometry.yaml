@@ -1,0 +1,184 @@
+# Best-practice authoring templates for JEE Main Trigonometry concepts
+# (trigonometric-functions, inverse-trigonometric, heights-distances).
+#
+# NO top-level `stances:` opt-in key on this file. See jee-algebra.yaml's
+# header comment for the full reasoning — content for this topic is being
+# authored concurrently by other agents; add the key only once a real audit
+# confirms every concept below carries both stance bodies for all three
+# narrative atom types.
+#
+# Audience note: see data/registry/curriculum-bridges/tn-hse-12-math.yml.
+# All three concepts are `aligned` or `partial` — TN gives a full Class 11
+# chapter to trigonometric identities and equations, and a full Class 12
+# chapter to inverse trig functions; heights-and-distances shows up as
+# application problems inside the trigonometry chapter rather than as its
+# own topic. So the mechanics (identities, the unit circle, basic inverse
+# functions) are not new to this reader — what needs first-principles
+# attention is the GENERAL SOLUTION of a trigonometric equation (school
+# often stops at the principal value) and the validity conditions on the
+# inverse-trig sum/difference formulae (which branch of the inverse
+# function you're allowed to add).
+
+topic_family: jee-trigonometry
+
+intuition:
+  scaffold: unit-circle-before-identity
+  guidance: |
+    Anchor every explanation on the unit circle BEFORE stating an identity
+    symbolically — walk around the circle, point at the coordinates, and
+    let the identity fall out of what's visibly true there, rather than
+    presenting the identity as a rule to memorise. This reader already
+    knows the identities exist; what makes them stick is seeing WHY they're
+    true on the circle, especially for the general-solution and inverse-trig
+    material where memorising a formula without the picture leads to sign
+    errors under exam pressure. ELI5, Indian English, gloss any less-common
+    term (e.g. "principal value branch" — the one small range of angles an
+    inverse trig function is defined to return, so it gives one answer
+    instead of infinitely many) on first use.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Point at one specific spot on the unit circle, read off the
+      coordinates, and let the reader see the identity/equation solved for
+      that one angle before any general formula appears. End on the single
+      picture to hold onto — no summary, no reassurance.
+    assured: |
+      Skip the unit-circle warmup and go straight to the general solution
+      or the validity condition that trips up a confident reader — the
+      "+2nπ" or "+nπ" that's easy to drop, or the domain restriction that
+      makes an inverse-trig sum formula wrong outside a specific range.
+      Give a genuine counterexample.
+
+formal_definition:
+  scaffold: identity-statement
+  guidance: |
+    State the identity, the general solution form, or the inverse function's
+    domain/range in full display math. Two-sentence prose cap. Name every
+    symbol in plain words on first use.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum, one action per step. Favour a problem shape the
+    school course under-drills — finding the GENERAL solution of an
+    equation (not just the principal value), applying an inverse-trig sum
+    formula and checking its validity condition, or a two-vertical-planes
+    heights-and-distances problem. Steps separated by `\n---\n`. Final line
+    "Answer: ..." for :::verify.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step — identify the equation's period, find the
+      principal solution, then add the general term, each on its own line.
+      Push every "why" into the walkthrough's prompts/hints. End with an
+      explicit check (substitute a value of n and confirm the angle
+      satisfies the original equation).
+    assured: |
+      Lead with the property that shortcuts the work — a sum-to-product
+      identity instead of expanding, recognising the equation's symmetry
+      to halve the solution search — and name the validity condition before
+      using it. Skip arithmetic a confident reader does mentally.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs weighted toward the genuinely error-prone
+    material: giving only the principal value where the question asks for
+    the general solution, adding two inverse-trig angles outside the range
+    where the sum formula is actually valid, sign errors in heights-and-
+    distances when the observer moves between two positions.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question in the worked_example's shape, smaller numbers.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the identity or general-solution form; back gives it.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: unit-circle-picture
+  guidance: |
+    A picture of the unit circle with the relevant angle(s) marked, or (for
+    heights-and-distances) a simple diagram of the observer, the object,
+    and the angle of elevation/depression.
+
+    When the concept reduces to a clean y=f(x) form (a single trig function
+    over one period, for instance), emit a fenced gif-scene block:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"sin(x)","x_range":[-6.28,6.28],"y_range":[-1.5,1.5],"frames":30,"fps":12}
+    ```
+
+    Allowed tokens: x, t, +, -, *, /, ^, parens, numbers, sin/cos/tan/log/
+    ln/exp/sqrt/abs/pi/e. OMIT for anything needing two curves or an
+    implicit relation — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem with a one-line "when you see this
+    phrasing, do X" cue — e.g. "when the question says 'find all solutions'
+    or gives a domain like [0, 4π], you need the general solution, not just
+    the principal value."
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for an easily-mixed-up rule (e.g. the sign
+    convention for angle of elevation vs. depression, or which quadrant
+    each inverse trig function's range sits in).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas (e.g. a general-solution
+    equation combined with an inverse-trig validity check).
+  bloom_floor: 4
+
+hook:
+  scaffold: unit-circle-question
+  guidance: |
+    Open on one concrete angle on the unit circle, small enough to check by
+    eye. Name the JEE-specific twist up front (e.g. "the equation has more
+    solutions than the one you'd naturally write down — where are the
+    rest?").
+
+    Fuse the hook into a scripted beat sequence: emit a fenced
+    interactive-spec block at the end of the body. Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats. Exactly ONE beat carries a "trap", drawn
+    from this concept's own common-traps.md. OMIT the fence for concepts
+    that don't reduce to a 2D parametric/trace scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete angle, one small numeric check, worked through fully.
+      No history, no "you already know this" framing — just the one thing
+      that works right now.
+    assured: |
+      Name the exact JEE phrasing this hides behind (e.g. "general
+      solution", "principal value branch"), and the one restriction
+      students forget under time pressure.

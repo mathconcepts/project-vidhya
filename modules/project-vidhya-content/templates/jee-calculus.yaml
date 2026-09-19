@@ -1,0 +1,189 @@
+# Best-practice authoring templates for JEE Main Calculus concepts
+# (limits-jee, continuity-differentiability-jee, applications-of-derivatives,
+# indefinite-integration, definite-integration, differential-equations-jee).
+#
+# NO top-level `stances:` opt-in key on this file. See jee-algebra.yaml's
+# header comment for the full reasoning — the short version: content for
+# this topic is being authored concurrently by other agents right now, so
+# claiming the stance rollout is done here would be false. Add the key only
+# once every concept below is confirmed to carry both a shaken and an
+# assured body for hook/intuition/worked_example.
+#
+# Audience note: see data/registry/curriculum-bridges/tn-hse-12-math.yml.
+# Every one of these six concepts is marked `aligned` — TN's Samacheer Kalvi
+# syllabus gives a FULL Class 11/12 chapter to each of limits, continuity,
+# derivatives, both flavours of integration, and differential equations. This
+# reader can already differentiate and integrate; do not teach them how.
+# What's genuinely new is exam SPEED and the specific trap phrasings JEE
+# Main favours — L'Hopital applied where a standard limit would be faster,
+# forming a differential equation from a word problem (school drills solving
+# a given ODE far more than setting one up), the properties of a definite
+# integral that shortcut a hard-looking integral. Write every guidance
+# string as if to a reader who would be insulted by "recall that
+# differentiation means..." — because they would be.
+
+topic_family: jee-calculus
+
+intuition:
+  scaffold: shortcut-not-mechanics
+  guidance: |
+    Do NOT re-derive what a limit, a derivative, or an integral IS — the
+    TN Class 11/12 syllabus already gave this reader a full chapter on
+    each. Instead, open on the one situation where the mechanical rule they
+    already know is slower than a property or shortcut they may not have
+    drilled (a standard limit form instead of L'Hopital, a symmetry that
+    kills half a definite integral, recognising a variable-separable ODE at
+    a glance). Show the shortcut applied to one concrete case before naming
+    it in general. ELI5, Indian English, gloss any less-common term
+    (e.g. "indeterminate form" — an expression like 0/0 that doesn't tell
+    you the limit's value just by looking at it) on first use.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip straight to one worked number — one limit, one derivative, one
+      small integral — done in full, with the shortcut named only after the
+      reader has seen it work. No mention of how much calculus they already
+      know or don't; just the one thing that works right now.
+    assured: |
+      Skip the setup entirely and go straight to where the standard method
+      breaks or is slower than a shortcut — a limit that looks like 0/0 but
+      isn't (L'Hopital wrongly applied), a symmetric integral evaluated the
+      long way, a differential equation misclassified as linear when it's
+      actually homogeneous. That misclassification is the exam's real test,
+      not the calculus mechanics underneath it.
+
+formal_definition:
+  scaffold: epsilon-delta
+  guidance: |
+    State the rule cleanly with display math (limit definition, the
+    fundamental theorem of calculus, the standard form of a first-order
+    linear ODE with its integrating factor). Two-sentence prose cap. Name
+    each symbol once in plain words.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum, each step one action. Favour a JEE-shaped problem —
+    forming a differential equation from a stated physical or geometric
+    condition, finding the area between two curves, a limit requiring a
+    standard substitution — over a bare "differentiate this" drill this
+    reader has already done a hundred times in school. Steps separated by
+    `\n---\n`. Final line "Answer: ..." for :::verify.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step — substitute, or differentiate, or integrate,
+      never two combined into one line. Push every "why" into the
+      walkthrough's prompts/hints. End with the answer checked explicitly
+      (verify a solution satisfies the original ODE; confirm a definite
+      integral's sign matches the region's position).
+    assured: |
+      Lead with the property or substitution that collapses the problem —
+      a known standard integral, a symmetry property of definite integrals,
+      recognising the ODE's type before attempting to solve it — and state
+      the condition that makes it valid before using it. Skip re-deriving
+      arithmetic a confident reader does mentally.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs specific to what the school course under-drills:
+    applying L'Hopital's rule to a form that isn't actually 0/0 or infinity/
+    infinity, forgetting the "+C" or losing a constant when forming an ODE
+    from a word problem, sign errors when splitting a definite integral at
+    a point where the integrand changes behaviour, confusing "continuous"
+    with "differentiable."
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    A single fast question matching the worked_example's pattern with
+    different numbers.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the rule or standard form; back gives it. Used by SM-2.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: rate-as-slope
+  guidance: |
+    Think slope-of-tangent, area-under-curve, or the direction field of a
+    differential equation.
+
+    When the concept has a clean closed-form y=f(x) or y=f(x,t), ALSO emit
+    a fenced gif-scene block:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"x^2 - 2*x","x_range":[-1,3],"y_range":[-2,3],"frames":30,"fps":12}
+    ```
+
+    Allowed tokens: x, t, +, -, *, /, ^, parens, numbers, sin/cos/tan/log/
+    ln/exp/sqrt/abs/pi/e. OMIT the block for anything that doesn't reduce
+    to a 2D plot — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem with a one-line "when you see this
+    phrasing, do X" cue — e.g. "when the question gives a rate of change
+    condition in words, write the differential equation first, don't try
+    to guess the answer form."
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for an easy-to-mix-up rule (e.g. ILATE for
+    choosing u in integration by parts).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas (e.g. a limit that needs both
+    a standard form and L'Hopital, or an integral needing substitution then
+    parts).
+  bloom_floor: 4
+
+hook:
+  scaffold: exam-phrasing-question
+  guidance: |
+    One sentence naming the exam-specific twist on ground this reader
+    already has — not a re-introduction of what a limit, derivative, or
+    integral is. Lead with the question, not the formalism.
+
+    Fuse the hook into a scripted beat sequence: emit a fenced
+    interactive-spec block at the end of the body. Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats. Exactly ONE beat carries a "trap", drawn
+    from this concept's own common-traps.md. OMIT the fence for concepts
+    that don't reduce to a 2D parametric/trace scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete number worked right now — not a reminder of what the
+      topic covers, since the reader already knows. The useful move is one
+      thing that works immediately.
+    assured: |
+      Name the exact JEE phrasing this hides behind, and the one shortcut
+      students misapply under time pressure without checking its condition
+      first.

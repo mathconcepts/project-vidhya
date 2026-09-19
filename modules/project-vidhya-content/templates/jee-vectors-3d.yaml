@@ -1,0 +1,192 @@
+# Best-practice authoring templates for JEE Main Vectors + 3D Geometry
+# concepts (vectors-jee, three-d-geometry).
+#
+# NO top-level `stances:` opt-in key on this file. See jee-algebra.yaml's
+# header comment for the full reasoning — content for this topic is being
+# authored concurrently by other agents; add the key only once a real audit
+# confirms every concept below carries both stance bodies for all three
+# narrative atom types.
+#
+# Audience note: see data/registry/curriculum-bridges/tn-hse-12-math.yml.
+# vectors-jee is `aligned` — TN gives two years to vector algebra, dot and
+# cross products, and the triple products, so this reader has the mechanics.
+# three-d-geometry is the sharpest documented GAP of all 23 new concepts:
+# TN teaches the plane and line ONLY in vector form (inside the vector
+# algebra chapter), never the Cartesian form, and never skew lines or the
+# shortest-distance-between-two-lines construction at all. So this template
+# has to do two different jobs depending on the concept: for vectors-jee,
+# sharpen and drill; for three-d-geometry, teach the Cartesian form,
+# skew lines, and shortest distance from first principles while explicitly
+# reusing the vector form the reader DOES already have as the bridge —
+# hold both forms side by side rather than presenting the Cartesian form
+# as if it were a completely separate topic. Never write "recall that..."
+# for the Cartesian material; it hasn't been seen before.
+
+topic_family: jee-vectors-3d
+
+intuition:
+  scaffold: vector-then-cartesian
+  guidance: |
+    For vectors-jee (already covered in school): open on the geometric
+    picture — what the dot product or cross product MEANS, not just how to
+    compute it — since the reader can already compute but may not have
+    connected the number to what it represents. For three-d-geometry: this
+    is genuinely new material for a TN-board reader, who has only ever seen
+    a line or plane written as a vector equation. Hold BOTH forms side by
+    side from the very first sentence — write the vector form first (which
+    the reader recognises), then show the Cartesian form is nothing but
+    that same vector equation written out coordinate by coordinate. Never
+    say "recall that..." about the Cartesian form, skew lines, or the
+    shortest-distance formula — say "this is new, and here's where it comes
+    from" instead. ELI5, Indian English, gloss any unfamiliar term
+    (e.g. "direction ratios" — three numbers, not necessarily a unit
+    vector, that point the same way as a line) on first use.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      One concrete vector or one concrete line/plane, both forms written
+      out side by side, with the arithmetic done in full before any general
+      statement. End on the single bridge to hold onto: "the Cartesian form
+      is just the vector form's coordinates written separately." No
+      reassurance, no mention of feelings — the worked bridge does that job.
+    assured: |
+      For vectors-jee: skip straight to the geometric-proof use of the
+      triple product or the condition for coplanarity — the part a
+      confident reader hasn't drilled as heavily as raw computation. For
+      three-d-geometry: skip straight to skew lines and the shortest-
+      distance formula, and the one sign or ordering mistake that flips the
+      answer.
+
+formal_definition:
+  scaffold: vector-and-cartesian-form
+  guidance: |
+    State the definition in BOTH the vector form and the Cartesian form,
+    side by side, with display math for each — this is the one template in
+    this file where showing two equivalent forms together is the actual
+    point, not padding. Name every symbol once in plain words.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: step-unfold
+  guidance: |
+    Six steps maximum, one action per step. For vectors-jee, favour a
+    geometric-proof-style problem (show three vectors are coplanar, find
+    the angle between a line and a plane) over a bare "compute this dot
+    product" drill. For three-d-geometry, favour finding the shortest
+    distance between two skew lines, or converting between vector and
+    Cartesian form — the genuinely new material — over a problem the
+    reader's school course would already have covered. Steps separated by
+    `\n---\n`. Final line "Answer: ..." for :::verify.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step: write the vector form, convert to (or read off)
+      direction ratios, substitute into the formula, simplify. Push every
+      "why this formula" into the walkthrough's prompts/hints. End with an
+      explicit check (does the computed point actually lie on both lines'
+      common perpendicular?).
+    assured: |
+      Lead with the property that shortcuts the algebra — recognising two
+      lines are parallel (so "shortest distance" is a different, simpler
+      formula) before reaching for the general skew-lines formula — and
+      name the condition that makes the shortcut valid.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs. For vectors-jee: confusing the scalar triple
+    product's sign convention, or using the dot product where the cross
+    product was needed (or vice versa). For three-d-geometry: treating two
+    non-parallel, non-intersecting lines as if they must intersect (missing
+    that they're skew), or plugging direction ratios into the shortest-
+    distance formula in the wrong order.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question in the worked_example's shape, smaller numbers.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the vector or Cartesian form (or the shortest-distance
+    formula); back gives it.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: 3d-picture
+  guidance: |
+    Describe a genuine 3D picture — two skew lines that clearly don't meet
+    even though they're not parallel, or a plane cutting through space at
+    an angle — since this is exactly the kind of spatial reasoning a
+    TN-board reader hasn't had to do before for lines and planes. Words
+    should paint the picture explicitly rather than assume it's obvious.
+
+    A gif-scene block is USUALLY not applicable here (the safe evaluator
+    only expresses 2D curves y=f(x), not 3D geometry) — OMIT it for
+    essentially all concepts in this topic rather than forcing a
+    misleading 2D stand-in. Only emit one if a concept genuinely reduces to
+    a flat 2D relationship worth plotting.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem with a one-line "when you see this
+    phrasing, do X" cue — e.g. "when two lines' direction ratios aren't
+    proportional AND they don't share a common point, they're skew — go
+    straight to the shortest-distance formula."
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for an easily-mixed-up rule (e.g. which vectors
+    go into which row of the scalar triple product's determinant).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas (e.g. a cross-product angle
+    calculation combined with the plane-through-three-points formula).
+  bloom_floor: 4
+
+hook:
+  scaffold: vector-then-cartesian-question
+  guidance: |
+    For vectors-jee, open on one concrete geometric question (are these
+    three vectors coplanar?) small enough to check by hand. For
+    three-d-geometry, open by stating plainly that this is new ground for
+    a TN-board reader — two lines that look like they should cross but
+    don't — and hold the vector form the reader knows next to the new
+    Cartesian form from the first sentence.
+
+    A gif-scene / interactive-spec fence is usually NOT applicable to this
+    topic's 3D content — OMIT it rather than forcing a misleading 2D
+    stand-in for a genuinely spatial idea. If a concept ever reduces to a
+    flat 2D relationship, the schema (mirrors visual_analogy's) is:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ]}
+    ```
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete vector or one concrete pair of lines, worked through
+      fully with numbers. For three-d-geometry, say plainly this is new —
+      not a review — and give the one bridge from the vector form.
+    assured: |
+      Name the exact JEE phrasing this hides behind (e.g. "shortest
+      distance between skew lines"), and the one condition students skip
+      checking before reaching for the general formula.

@@ -19,7 +19,7 @@ modality: mnemonic
   "v": 1,
   "kind": "manipulable",
   "title": "Drag the object distance and focal length for a convex lens",
-  "why": "The image distance and magnification are both read straight off u and f through the lens formula, for any convex lens and any object position -- drag the sliders to see real, inverted, magnified images turn into virtual, upright ones as the object crosses the focal length.",
+  "why": "Image distance and magnification are read straight off u and f -- drag the sliders and watch real, inverted images turn virtual and upright once the object crosses the focal length.",
   "inputs": [
     {"id": "u", "label": "Object distance u (cm, negative)", "min": -50, "max": -10, "step": 5, "initial": -30},
     {"id": "f", "label": "Focal length f (cm, positive for convex)", "min": 10, "max": 30, "step": 5, "initial": 20}

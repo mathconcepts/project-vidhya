@@ -9,7 +9,7 @@ difficulty: 0.15
 exam_ids: ["*"]
 ---
 
-The alpha-hydrogen check (aldol if present, Cannizzaro if absent) is familiar ground. The distinction examiners actually probe: "aromatic aldehyde" is not the same test as "no alpha-hydrogen", even though every aromatic aldehyde happens to satisfy it.
+You already run the alpha-hydrogen check (aldol if present, Cannizzaro if absent) on reflex. Examiners probe a sharper line than that: "aromatic aldehyde" is not the same test as "no alpha-hydrogen", even though every aromatic aldehyde happens to satisfy it.
 
 Counterexample: 2,2-dimethylpropanal, $\text{(CH}_3)_3\text{C-CHO}$, is a perfectly ordinary aliphatic (non-aromatic) aldehyde — no benzene ring anywhere — yet it also has no alpha-hydrogen, because the carbon next to its carbonyl carbon carries three methyl groups and no hydrogen at all. It undergoes Cannizzaro exactly like benzaldehyde does, for the identical reason: nothing available for the base to remove. Checking "is this aromatic?" as a shortcut for "does this have an alpha-hydrogen?" would wrongly clear every quaternary-substituted aliphatic aldehyde as an aldol candidate. The only test that never fails is the direct one: look at the carbon bonded to the carbonyl carbon, and ask whether it is bonded to at least one hydrogen — aromatic or not.
 

@@ -33,13 +33,21 @@ import { useActiveExam, setActiveExam } from '@/hooks/useActiveExam';
 
 /**
  * Exam names are long ("GATE Engineering Mathematics", "JEE Main (PCM)")
- * and the header is narrow. The chip shows a short form; the menu always
- * shows the full name, so nothing is only ever seen abbreviated.
+ * and the header is narrow, so the chip has to shorten them somehow.
+ *
+ * It does NOT shorten by dropping words. A first cut kept the first two,
+ * which turned "GATE Engineering Mathematics" into "GATE Engineering" —
+ * a name that reads as complete and names the wrong subject, since the
+ * exam is the Mathematics paper. Caught by looking at the rendered chip,
+ * not by any assertion: every structural test still passed.
+ *
+ * So the only thing dropped is a parenthetical qualifier ("JEE Main (PCM)"
+ * -> "JEE Main"), which removes nothing a reader needs, and anything still
+ * too wide is cut by CSS ellipsis below. A visibly truncated name says
+ * "there is more here"; a silently shortened one does not.
  */
 export function shortExamName(name: string): string {
-  const trimmed = name.replace(/\s*\(.*?\)\s*/g, ' ').trim();
-  const words = trimmed.split(/\s+/);
-  return words.length <= 2 ? trimmed : words.slice(0, 2).join(' ');
+  return name.replace(/\s*\(.*?\)\s*/g, ' ').trim();
 }
 
 export function ExamSwitcher() {
@@ -95,7 +103,18 @@ export function ExamSwitcher() {
         onMouseEnter={e => (e.currentTarget.style.opacity = '0.72')}
         onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
       >
-        <span>{shortExamName(exam.name)}</span>
+        <span
+          style={{
+            // Honest truncation: the chip shows as much of the real name as
+            // fits and ellipses the rest. The menu always shows it in full.
+            maxWidth: 124,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {shortExamName(exam.name)}
+        </span>
         <ChevronDown size={10} style={{ color: 'var(--text-tertiary)' }} />
       </button>
 

@@ -4,6 +4,144 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.86.0] — 2026-09-19 — Both exams live on one deployment: a viewer exam switcher, and marking that knows which exam it is grading
+
+**Operator action** — none. No new ENV vars, no migrations. `DEFAULT_EXAM_ID`
+still picks the deployment default and still defaults to `gate-ma`; it is now
+overridable per viewer rather than being the only answer.
+
+### The grading bug this closes first
+
+v4.85.0 installed a second curriculum pack. Nothing in the grading path knew
+that. `resolveAssessmentContract()` was called with **no key at every single
+site**, so it always resolved GATE's contract, and `POST /api/practice/attempt`
+resolved no contract at all — it graded on compiled GATE defaults.
+
+A JEE Main MCQ is worth 4 marks. GATE's contract has no row for a 4-mark MCQ,
+so it fell through to the defensive `-(marks / 3)` fallback: **−1.333 where the
+real paper deducts −1**. Nothing threw and nothing logged. Authoring a JEE
+practice bank before fixing this would have shipped 151 items that graded
+wrong.
+
+- `marking-constants.ts` — the single compiled contract becomes a registry.
+  GATE's entry is byte-for-byte unchanged, so every derived export
+  (`MCQ_NEGATIVE_MAGNITUDE_1_MARK` and friends) keeps working. JEE's entry is
+  **partial on purpose**: `mcq` only.
+  - no `msq` — JEE Main Mathematics does not ask multiple-select questions.
+  - no `nat` — JEE Main *does* ask five numerical-value questions per subject,
+    and their negative-marking rule is genuinely disputed across secondary
+    sources while `jeemain.nta.nic.in` is unreachable from this environment.
+    Leaving it out **is the enforcement, not a TODO**: a JEE numeric item is
+    refused by name at grading time, which is why the bank below is MCQ-only
+    by construction rather than by authoring discipline.
+- `exam-contract-key.ts` — the one pack-id → contract-key translation.
+  Deliberately an explicit table, not a string convention: `gate-ma` maps to
+  exam `gate`, paper `common-em`, which no transform would have produced.
+  A practice attempt keys on the **item's own concept** (`CONCEPT_DECLARED_BY`)
+  because a JEE item is graded under JEE's rules whoever attempts it; quiz and
+  mock sessions key on the student, matching E7's pin-once design. An unmapped
+  pack gets a key nothing covers, so it refuses rather than borrowing another
+  exam's numbers.
+
+Verified end to end: JEE 4-mark MCQ marks −1 wrong / +4 correct; the same item
+under GATE's contract still marks −1.333 (a test locks that, since it *is* the
+bug); GATE 1- and 2-mark MCQs unchanged at −1/3 and −2/3; JEE `nat` refused by
+name.
+
+### The JEE practice bank — 151 items, 23 of 23 concepts
+
+Authored by 8 parallel Claude Sonnet batches against one shared brief. Every
+answer key verified by a second independent method before it shipped — sympy
+for algebra/calculus, back-substitution for ODEs and geometry, and **brute-force
+enumeration of the sample space** for probability and combinatorics, which is
+the strongest available check against a formula slip.
+
+Not merely schema-valid: all 151 were proven gradable through the real
+`FileLearningObjectCatalog` and `gateItemFromPayload`, and proven to mark
++4/−1 through the real JEE contract. Practice bank 505 → **656 items**,
+16 → 24 banks.
+
+Distractors are not filler. Each of the three wrong options encodes one
+specific, named mistake, and the last solution step says which option came from
+which slip. Coordinate-geometry and 3D items are weighted toward the gaps this
+repo's own TN curriculum-bridge research flagged (conics depth, Cartesian 3D
+machinery, dispersion), and teach those from first principles.
+
+### Topics: JEE was one bucket where GATE gets eight
+
+Syllabus sections are what the app renders as topics, and `jee-main.yml` had
+all 23 Mathematics concepts in a single `jee-main-mathematics` section. A
+student switching to JEE saw one undifferentiated "Mathematics" entry, plus
+Physics and Chemistry — two more topics whose every concept is still a stub, so
+they were doors opening onto nothing.
+
+- Split into the **six real groupings the file's own comments already used**,
+  with section ids equal to the concept `topic` strings (gate-ma's convention,
+  so the topic list and the topic-string selectors cannot disagree) and
+  weights derived structurally from concept counts rather than invented
+  per-subtopic percentages NTA does not publish.
+- Per-section icons and JEE-specific detection keywords. The keywords are
+  deliberately not copies of GATE's: a JEE student asking about "matrices"
+  should land on `jee-algebra`, not GATE's postgraduate linear algebra.
+- A section whose concepts do not resolve is filtered from the topic view.
+  Physics and Chemistry stay in the pack because the syllabus really is PCM
+  and `getSyllabus()` must keep reporting them unresolved — the filter is
+  exam-agnostic, keys on whether concepts resolve, and clears itself the
+  moment they land.
+
+### The exam switcher
+
+`DEFAULT_EXAM_ID` made the active exam deployment-wide, so a build carrying two
+packs could still only ever show one of them.
+
+- `GET /api/exam/active` takes a validated `?exam_id=`, and now returns
+  `available_exams` + `default_exam_id`. An unrecognised id falls back to the
+  default rather than 404ing: this endpoint drives the exam name and the nav on
+  every page, so a stale id must render the default app, never an empty one.
+- The viewer's choice is appended **centrally in `apiFetch`**. `/api/topics`
+  alone is fetched from four separate pages; a per-call param would be four
+  chances to forget one and serve a student the other exam's topic list. An
+  explicit per-call `exam_id` still wins, and the value is URL-encoded so a
+  stored id cannot forge a second query param.
+- `ExamSwitcher` reuses the header's existing room-badge capsule rather than
+  inventing a second "switch context" affordance beside the first. **No accent
+  colour**: Clarity reserves green for mastery and indigo for AI/tutor, and
+  which exam you are browsing is neither — a green tick would read as "you have
+  achieved this exam". Renders nothing when fewer than two packs are loaded, so
+  single-exam deployments are untouched.
+
+GATE stays the default; JEE is one tap away.
+
+### Two numbers that had been wrong, found by looking
+
+Home renders `{topics.length} sections · {exam.concept_count} concepts`.
+`concept_count` read `exam.concept_links.length`, which is a different thing:
+**GATE reported 27 while declaring 101 concepts**, and had done since the line
+shipped — it simply looked plausible. A second pack made it read
+"6 sections · 0 concepts", which is where it became obvious. Both counts now
+report what a student can actually reach (101 and 23), via the same resolver
+`getSyllabus()` uses.
+
+The other was only visible in pixels. The chip shortened names by keeping the
+first two words, turning "GATE Engineering Mathematics" into **"GATE
+Engineering"** — a name that reads as complete and names the wrong subject.
+Every structural test passed. It now drops only a parenthetical qualifier and
+lets CSS ellipsis do the rest: a shortened name is always *visibly* shortened.
+
+### Verified
+
+Backend 4895 passed / 1 todo (376 files), frontend 3328 → 3343 passed,
+`tsc --noEmit` clean both sides, `npm run ci` green across all 21 gates,
+`ci:practice-items` green across 656 items / 24 banks. Driven in a real
+headless Chromium at 375px: 44px tap target, menu inside the viewport, no
+horizontal overflow, GATE topics gone and JEE topics present after switching,
+and zero console errors.
+
+One pinned invariant was **restated rather than renumbered**: stub-exam-rule's
+"the migrated half is exactly the Mathematics section" was keyed on a section
+id the topic split replaced. It now asserts the property it always stood in for
+— no section is half migrated — which survives any future split.
+
 ## [4.85.0] — 2026-09-19 — IIT JEE Main for Tamil Nadu board students: the second exam pack goes live
 
 **Operator action** — none. No new ENV vars, no migrations. `DEFAULT_EXAM_ID`

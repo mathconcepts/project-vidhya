@@ -46,9 +46,11 @@ describe('ExamSwitcher', () => {
     fireEvent.click(screen.getByRole('button'));
     const opts = screen.getAllByRole('option');
     expect(opts).toHaveLength(2);
-    expect(screen.getByText('JEE Main (PCM)')).toBeTruthy();
-    // The chip abbreviates; the menu never does.
-    expect(screen.getByText('GATE Engineering Mathematics')).toBeTruthy();
+    // Scoped to the menu: since the chip stopped dropping words, the full
+    // name legitimately appears twice on screen (chip + row).
+    const rowText = opts.map(o => o.textContent);
+    expect(rowText).toContain('JEE Main (PCM)');
+    expect(rowText).toContain('GATE Engineering Mathematics');
   });
 
   it('marks the current exam selected and does not re-switch to it', () => {
@@ -86,9 +88,20 @@ describe('ExamSwitcher', () => {
     expect((screen.getAllByRole('button')[0] as HTMLElement).style.minHeight).toBe('44px');
   });
 
-  it('shortExamName keeps the chip narrow without inventing a name', () => {
-    expect(shortExamName('GATE Engineering Mathematics')).toBe('GATE Engineering');
+  it('shortExamName drops only a parenthetical — it never renames the exam', () => {
+    // Dropping words produced "GATE Engineering", which reads as a complete
+    // name and names the wrong subject. Width is handled by CSS ellipsis
+    // instead, so a shortened name is always visibly shortened.
+    expect(shortExamName('GATE Engineering Mathematics')).toBe('GATE Engineering Mathematics');
     expect(shortExamName('JEE Main (PCM)')).toBe('JEE Main');
     expect(shortExamName('BITSAT')).toBe('BITSAT');
+  });
+
+  it('truncates the chip with ellipsis rather than by dropping words', () => {
+    render(<ExamSwitcher />);
+    const label = screen.getByRole('button').querySelector('span') as HTMLElement;
+    expect(label.style.textOverflow).toBe('ellipsis');
+    expect(label.style.whiteSpace).toBe('nowrap');
+    expect(label.textContent).toBe('GATE Engineering Mathematics');
   });
 });

@@ -2528,3 +2528,37 @@ layout question answered first.
 **Effort:** S CC, once the layout call is made.
 **Priority:** P3 — a CLI default an operator overrides with one env var.
 **Deferred from:** Step A (multi-exam concept graph), 2026-09-19.
+
+---
+
+## The adaptive engines read `ALL_CONCEPTS` unfiltered, across every exam
+
+**What:** Step A merged every installed pack's concepts into one universe. The
+graph is right to do that. These call sites are not yet, because none of them
+filters by exam:
+
+| Site | What goes wrong with a second pack |
+|---|---|
+| `src/api/readiness-routes.ts` (`allowedNodes`) | `nextBestAction` can hand a GATE student a JEE concept |
+| `src/api/quiz-routes.ts` | same, for the checkpoint quiz pool |
+| `src/gbrain/fire.ts` | encompassing closures span exams, so FIRe credit propagates across them |
+| `src/notebook/notebook-store.ts` | coverage denominator becomes every exam's concepts, silently halving reported coverage |
+| `src/syllabus/generator.ts` | matches by TOPIC STRING, and names like `calculus` recur across exams |
+| `src/curriculum/guardrails.ts`, `src/curriculum/curriculum-repo.ts`, `src/content/build-content-bundle.ts` | same unfiltered read |
+
+**Why this is open:** behaviour is correct today only because exactly one pack
+declares concepts. Scoping each of these is real work with its own blast radius
+(a request needs to carry which exam it is for, which several of these paths do
+not have today), and doing it blind before any second pack exists means guessing
+at the shape.
+
+**The guard that exists meanwhile:** the tripwire in
+`src/constants/__tests__/concept-graph-multi-exam.test.ts` fails the moment a
+second pack declares concepts, names these call sites, and says to scope them
+first. It is not an invariant anyone wants forever — delete it in the PR that
+does the scoping.
+
+**Effort:** M CC.
+**Priority:** P1 — blocks the first real second exam, and the failure mode is
+silent degradation for every existing student.
+**Found by:** adversarial review of PR #173, 2026-09-19.

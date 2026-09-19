@@ -6045,6 +6045,14 @@ second exam still needs its own `concepts:` block with real prerequisites, then
 lessons, practice items and mapped past-exam questions at the standard the CI
 gates enforce. That remains the bulk of the work for any new exam.
 
+**One finding from the adversarial review is deliberately NOT fixed**, and has a
+tripwire instead: every adaptive engine (`readiness-routes`, `quiz-routes`,
+`fire.ts`, `notebook-store`, the topic-string matchers) reads `ALL_CONCEPTS`
+unfiltered. That is correct only while one pack declares concepts. A test in
+`concept-graph-multi-exam.test.ts` fails the moment a second one does and names
+the call sites to scope first, so the next content PR cannot silently degrade
+readiness and coverage for existing students. See TODOS.md.
+
 **Released as `4.84.0`.** Two merged PRs ahead of it had shipped with no
 version bump and no CHANGELOG entry — #171 (Competency Compass + three
 live-QA fixes) and #172 (Concept Anchors) — the same gap that produced the

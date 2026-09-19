@@ -101,9 +101,28 @@ No new env vars (`DEFAULT_EXAM_ID` already existed and was already declared in
   GATE regardless of the active exam. Two of those are lift-ledger keys, so a
   wrong stamp corrupts every lift number computed from them.
 
+### Security
+
+- **A provider endpoint is now validated before it is used.** It arrives from an
+  unauthenticated request header, and `joinProviderUrl` is the one chokepoint
+  every runtime LLM call flows through, so it parses the URL instead of
+  concatenating strings. An endpoint carrying a fragment used to swallow the
+  whole API path — `https://example.test#` + `/v1/messages` became a POST to the
+  bare origin still carrying the caller's key header and prompt body. A query or
+  fragment, a non-absolute URL, or plain `http` to anything but loopback is
+  refused. Gemini's model id is URL-encoded into the path.
+
 **Operator action:** none. `DEFAULT_EXAM_ID` is unset by default and the fallback
 resolves to `gate-ma` exactly as before. Set it only when a second pack is ready
 to serve.
+
+**A note on what a stray file in `data/curriculum/` does.** The concept graph is
+built at module load, so an unparseable YAML or one with no `metadata.id` is
+skipped with a warning rather than taken as an exam pack — a draft or an editor
+artifact in that directory cannot stop the server from booting. Two packs
+declaring the same concept id IS still a hard failure: that is a valid pack
+making a contradictory claim, `ci:boot` catches it before merge, and the
+alternative is silently serving one of two definitions.
 
 ## [4.83.0] — 2026-09-18 — Concept Anchors: one plain sentence per concept saying what the maths is FOR
 

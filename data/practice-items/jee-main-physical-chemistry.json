@@ -1,0 +1,1463 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Physical Chemistry practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) for 10 jee-physical-chemistry concepts: mole-concept, atomic-structure, chemical-bonding, thermodynamics-chemistry, equilibrium-chemical, equilibrium-ionic, redox-and-electrochemistry, chemical-kinetics, solutions-and-colligative, solid-state. Authored 2026-09-19. No mhchem markup used (chemical formulae written as plain LaTeX text/subscripts/superscripts inside $...$). Atomic masses used throughout and stated in-question where the answer depends on them: H=1, C=12, N=14, O=16, Na=23, S=32, Cl=35.5, K=39, Ca=40, Mn=55, Fe=56, Cu=63.5, Ag=108. Constants used and kept consistent: R=8.314 J/mol/K (or 0.0821 L atm/mol/K where noted for Kp/Kc and osmotic-pressure calculations), F=96500 C/mol, log 2=0.301. Every numeric answer was independently computed via python3 (arithmetic/stoichiometry/log-and-exponential calculations, and one exact sympy quadratic solve for an ICE-table equilibrium problem) before being written down; conceptual (non-numeric) items -- order vs molecularity, catalyst effect on K, Frenkel vs Schottky defects, bcc coordination number, MOT paramagnetism -- were cross-checked against standard, well-established textbook facts and, where relevant, electron-count arithmetic verified in python3. solid-state's syllabus status could not be verified against a primary NTA bulletin from this environment, so no claim about its syllabus status is made anywhere in these items; its content (Class 12 chemistry) is authored as real, standard chemistry regardless.",
+  "items": [
+    {
+      "id": "pi-mole-concept-001",
+      "concept_id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many moles of $\\text{CO}_2$ are present in 4.4 g of $\\text{CO}_2$? (Atomic masses: C = 12, O = 16)",
+      "options": [
+        "0.1 mol",
+        "0.4 mol",
+        "1.0 mol",
+        "4.4 mol"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.1 mol",
+      "solution_steps": [
+        "The molar mass of $\\text{CO}_2$ is $12 + 2(16) = 44\\ \\text{g mol}^{-1}$.",
+        "Moles = given mass ÷ molar mass = $4.4 / 44 = 0.1$ mol.",
+        "Verified numerically: $4.4/44 = 0.1$ exactly.",
+        "0.4 mol comes from dividing by 11 (a wrong molar mass). 1.0 mol treats 4.4 g as if the molar mass were 4.4. 4.4 mol is simply the given mass copied over without dividing by the molar mass at all."
+      ],
+      "verification_method": "python_arithmetic_molar_mass_division"
+    },
+    {
+      "id": "pi-mole-concept-002",
+      "concept_id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many molecules are present in 0.5 mol of $\\text{O}_2$ gas? (Take Avogadro's number $N_A = 6.022\\times10^{23}\\ \\text{mol}^{-1}$.)",
+      "options": [
+        "$3.011\\times10^{23}$",
+        "$6.022\\times10^{23}$",
+        "$1.2044\\times10^{24}$",
+        "$3.011\\times10^{22}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3.011\\times10^{23}$",
+      "solution_steps": [
+        "The number of molecules is (number of moles) × $N_A$.",
+        "$0.5 \\times 6.022\\times10^{23} = 3.011\\times10^{23}$ molecules.",
+        "Verified: $0.5 \\times 6.022\\text{e}23 = 3.011\\text{e}23$.",
+        "$6.022\\times10^{23}$ is just $N_A$ itself, as if 0.5 mol were 1 mol. $1.2044\\times10^{24}$ comes from multiplying by 2 instead of by 0.5 (dividing instead of multiplying, or mixing up 0.5 with 2). $3.011\\times10^{22}$ is the correct value with the decimal point shifted one place, a power-of-ten slip."
+      ],
+      "verification_method": "python_arithmetic_avogadro_multiplication"
+    },
+    {
+      "id": "pi-mole-concept-003",
+      "concept_id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A compound contains 40% carbon, 6.7% hydrogen and 53.3% oxygen by mass. What is its empirical formula? (Atomic masses: C = 12, H = 1, O = 16)",
+      "options": [
+        "$\\text{CH}_2\\text{O}$",
+        "$\\text{C}_2\\text{H}_4\\text{O}_2$",
+        "$\\text{CHO}$",
+        "$\\text{C}_3\\text{H}_6\\text{O}_3$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{CH}_2\\text{O}$",
+      "solution_steps": [
+        "Assume 100 g of compound, so the masses are 40 g C, 6.7 g H, 53.3 g O directly.",
+        "Convert each to moles: C = $40/12 = 3.33$, H = $6.7/1 = 6.7$, O = $53.3/16 = 3.33$.",
+        "Divide every mole value by the smallest one (3.33): C = 1, H = 2, O = 1 — giving the empirical formula $\\text{CH}_2\\text{O}$.",
+        "$\\text{C}_2\\text{H}_4\\text{O}_2$ has the same ratio scaled by 2, so it is a possible molecular formula but NOT the simplest (empirical) ratio the question asks for. $\\text{CHO}$ drops the '2' on hydrogen, an arithmetic slip in the division step. $\\text{C}_3\\text{H}_6\\text{O}_3$ scales the true ratio by 3, again not the simplest whole-number ratio."
+      ],
+      "verification_method": "python_arithmetic_mole_ratio_normalization"
+    },
+    {
+      "id": "pi-mole-concept-004",
+      "concept_id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "5 g of $\\text{H}_2$ gas is reacted with 20 g of $\\text{O}_2$ gas: $2\\text{H}_2 + \\text{O}_2 \\rightarrow 2\\text{H}_2\\text{O}$. What mass of water is formed? (Atomic masses: H = 1, O = 16)",
+      "options": [
+        "22.5 g",
+        "45.0 g",
+        "20.0 g",
+        "40.0 g"
+      ],
+      "answer_index": 0,
+      "correct_answer": "22.5 g",
+      "solution_steps": [
+        "Moles of $\\text{H}_2$ = $5/2 = 2.5$ mol. Moles of $\\text{O}_2$ = $20/32 = 0.625$ mol.",
+        "The equation needs 2 mol $\\text{H}_2$ for every 1 mol $\\text{O}_2$. To use up all 2.5 mol of $\\text{H}_2$ we would need $2.5/2 = 1.25$ mol of $\\text{O}_2$, but only 0.625 mol is available — so $\\text{O}_2$ runs out first and is the limiting reagent.",
+        "Every 1 mol of $\\text{O}_2$ that reacts makes 2 mol of $\\text{H}_2\\text{O}$, so 0.625 mol $\\text{O}_2$ makes $2\\times0.625=1.25$ mol $\\text{H}_2\\text{O}$. Mass = $1.25\\times18 = 22.5$ g (molar mass of $\\text{H}_2\\text{O} = 2+16=18$).",
+        "45.0 g comes from wrongly treating $\\text{H}_2$ as the limiting reagent and using all 2.5 mol of it. 20.0 g is simply the mass of $\\text{O}_2$ carried over unchanged. 40.0 g comes from adding the two given masses (5 g + ... doubled), ignoring the mole ratio and limiting-reagent logic entirely."
+      ],
+      "verification_method": "python_stoichiometry_limiting_reagent_check"
+    },
+    {
+      "id": "pi-mole-concept-005",
+      "concept_id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What mass of $\\text{NaOH}$ is needed to prepare 500 mL of a 0.2 M solution? (Atomic masses: Na = 23, O = 16, H = 1)",
+      "options": [
+        "4.0 g",
+        "8.0 g",
+        "2.0 g",
+        "40.0 g"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4.0 g",
+      "solution_steps": [
+        "Molar mass of $\\text{NaOH} = 23+16+1 = 40\\ \\text{g mol}^{-1}$.",
+        "Moles needed = molarity × volume (in litres) = $0.2 \\times 0.5 = 0.1$ mol.",
+        "Mass = moles × molar mass = $0.1 \\times 40 = 4.0$ g.",
+        "8.0 g comes from forgetting to convert 500 mL to 0.5 L and using 1 L instead. 2.0 g comes from using 250 mL by mistake. 40.0 g is just the molar mass itself, as if 1 full mole were needed instead of 0.1 mole."
+      ],
+      "verification_method": "python_arithmetic_molarity_mass_calculation"
+    },
+    {
+      "id": "pi-mole-concept-006",
+      "concept_id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A compound has the empirical formula $\\text{CH}_2$ (empirical formula mass 14 g mol$^{-1}$) and a molar mass of 70 g mol$^{-1}$. What is its molecular formula?",
+      "options": [
+        "$\\text{C}_5\\text{H}_{10}$",
+        "$\\text{C}_4\\text{H}_8$",
+        "$\\text{C}_3\\text{H}_6$",
+        "$\\text{C}_7\\text{H}_{14}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{C}_5\\text{H}_{10}$",
+      "solution_steps": [
+        "Find $n$ = (molar mass) ÷ (empirical formula mass) = $70/14 = 5$.",
+        "Multiply every subscript in the empirical formula by $n=5$: $\\text{CH}_2 \\rightarrow \\text{C}_5\\text{H}_{10}$.",
+        "Check: molar mass of $\\text{C}_5\\text{H}_{10} = 5(12)+10(1) = 70$ — matches exactly.",
+        "$\\text{C}_4\\text{H}_8$ uses $n=4$ (molar mass 56, does not match 70). $\\text{C}_3\\text{H}_6$ uses $n=3$ (molar mass 42, does not match). $\\text{C}_7\\text{H}_{14}$ uses $n=7$ (molar mass 98, does not match) — all three used the wrong multiplier instead of dividing 70 by 14."
+      ],
+      "verification_method": "python_arithmetic_empirical_to_molecular_formula"
+    },
+    {
+      "id": "pi-atomic-structure-001",
+      "concept_id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many total orbitals are present in the $n=3$ shell of an atom?",
+      "options": [
+        "9",
+        "3",
+        "18",
+        "5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "9",
+      "solution_steps": [
+        "The total number of orbitals in a shell with principal quantum number $n$ is $n^2$.",
+        "For $n=3$: number of orbitals = $3^2 = 9$ (one 3s, three 3p, five 3d orbitals, and $1+3+5=9$).",
+        "Verified: $1+3+5=9=3^2$.",
+        "3 counts only the number of SUBSHELLS (s, p, d) present for $n=3$, not the orbitals inside them. 18 comes from the maximum-ELECTRONS formula $2n^2$, confusing electron capacity with orbital count. 5 counts only the five 3d orbitals, forgetting the 3s and 3p orbitals entirely."
+      ],
+      "verification_method": "python_rule_check_orbital_count_n_squared"
+    },
+    {
+      "id": "pi-atomic-structure-002",
+      "concept_id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which of the following sets of quantum numbers $(n, l, m_l, m_s)$ is a valid, allowed set for an electron in an atom?",
+      "options": [
+        "$(3, 2, -2, +\\tfrac{1}{2})$",
+        "$(2, 2, 0, +\\tfrac{1}{2})$",
+        "$(3, 1, +2, -\\tfrac{1}{2})$",
+        "$(1, 0, 0, 0)$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$(3, 2, -2, +\\tfrac{1}{2})$",
+      "solution_steps": [
+        "The rules are: $l$ can only run from $0$ to $n-1$; $m_l$ can only run from $-l$ to $+l$; and $m_s$ can only be $+\\tfrac12$ or $-\\tfrac12$.",
+        "For $(3,2,-2,+\\tfrac12)$: $l=2$ is allowed since $n-1=2$, and $m_l=-2$ is allowed since it lies between $-2$ and $+2$. This set is valid.",
+        "Checked each set against the three rules with a short program: only the first set passes all three checks.",
+        "$(2,2,0,+\\tfrac12)$ is invalid because for $n=2$, $l$ can only be 0 or 1, never 2. $(3,1,+2,-\\tfrac12)$ is invalid because for $l=1$, $m_l$ can only be $-1, 0, +1$, never $+2$. $(1,0,0,0)$ is invalid because $m_s$ must be exactly $+\\tfrac12$ or $-\\tfrac12$, never 0."
+      ],
+      "verification_method": "python_rule_check_quantum_number_validity"
+    },
+    {
+      "id": "pi-atomic-structure-003",
+      "concept_id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An electron moves with a velocity of $1.0\\times10^6\\ \\text{m s}^{-1}$. What is its de Broglie wavelength? (mass of electron $m_e = 9.1\\times10^{-31}$ kg, Planck's constant $h = 6.626\\times10^{-34}$ J s)",
+      "options": [
+        "$7.28\\times10^{-10}$ m",
+        "$1.46\\times10^{-9}$ m",
+        "$3.64\\times10^{-10}$ m",
+        "$6.03\\times10^{-37}$ m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$7.28\\times10^{-10}$ m",
+      "solution_steps": [
+        "The de Broglie wavelength is $\\lambda = h/(mv)$.",
+        "$\\lambda = \\dfrac{6.626\\times10^{-34}}{(9.1\\times10^{-31})(1.0\\times10^{6})}$.",
+        "Computed numerically: $\\lambda = 7.28\\times10^{-10}$ m.",
+        "$1.46\\times10^{-9}$ m is exactly double the correct value (a stray factor of 2 in the formula). $3.64\\times10^{-10}$ m is exactly half the correct value (the reverse slip). $6.03\\times10^{-37}$ m comes from multiplying $m$ and $v$ instead of using them correctly with $h$ divided by their product's reciprocal, i.e. computing $h \\times m \\times v$ by mistake instead of $h/(mv)$."
+      ],
+      "verification_method": "python_numeric_de_broglie_formula"
+    },
+    {
+      "id": "pi-atomic-structure-004",
+      "concept_id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the energy of an electron in the $n=2$ orbit of a hydrogen atom? (Use $E_n = -13.6/n^2$ eV)",
+      "options": [
+        "$-3.4$ eV",
+        "$-6.8$ eV",
+        "$-13.6$ eV",
+        "$-1.7$ eV"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$-3.4$ eV",
+      "solution_steps": [
+        "For hydrogen, $E_n = -13.6/n^2$ eV.",
+        "For $n=2$: $E_2 = -13.6/2^2 = -13.6/4 = -3.4$ eV.",
+        "Verified: $-13.6/4 = -3.4$ exactly.",
+        "$-6.8$ eV comes from dividing by $n=2$ instead of $n^2=4$. $-13.6$ eV is just the $n=1$ (ground state) energy, forgetting to divide by $n^2$ at all. $-1.7$ eV comes from dividing by $n^3=8$ instead of $n^2=4$."
+      ],
+      "verification_method": "python_arithmetic_bohr_energy_formula"
+    },
+    {
+      "id": "pi-atomic-structure-005",
+      "concept_id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Chromium (atomic number 24) has the electronic configuration $[\\text{Ar}]\\,3d^5\\,4s^1$ instead of the 'expected' $[\\text{Ar}]\\,3d^4\\,4s^2$. Which statement correctly explains why, and confirms the electron count is still consistent?",
+      "options": [
+        "A half-filled $3d^5$ subshell (paired with a single $4s^1$ electron) is more stable due to extra exchange energy and symmetry, and $18+5+1=24$ electrons in total, matching chromium's atomic number.",
+        "Chromium simply loses one electron to become a cation by default, so its neutral-atom configuration is irrelevant.",
+        "The $4s$ subshell always fills completely before $3d$ starts, with no exceptions in the periodic table.",
+        "$3d^5 4s^1$ is wrong and chromium's true ground-state configuration really is $3d^4 4s^2$."
+      ],
+      "answer_index": 0,
+      "correct_answer": "A half-filled $3d^5$ subshell (paired with a single $4s^1$ electron) is more stable due to extra exchange energy and symmetry, and $18+5+1=24$ electrons in total, matching chromium's atomic number.",
+      "solution_steps": [
+        "A half-filled ($d^5$) or fully-filled ($d^{10}$) subshell has extra stability from exchange energy and symmetric electron distribution, so an electron shifts from 4s to 3d to reach that arrangement.",
+        "Electron count check: $[\\text{Ar}]=18$ electrons, plus $3d^5$ (5) plus $4s^1$ (1) gives $18+5+1=24$, exactly chromium's atomic number — the configuration is electron-count-consistent.",
+        "Verified the arithmetic $18+5+1=24$ directly.",
+        "Option B is wrong because chromium's NEUTRAL atom already has this configuration; nothing about losing an electron is implied here. Option C is wrong because chromium (and copper, molybdenum, and others) are well-known exceptions to a strict 4s-before-3d filling order. Option D simply states the false, non-exception configuration as if it were correct, contradicting the real, experimentally observed configuration."
+      ],
+      "verification_method": "python_arithmetic_electron_count_verification"
+    },
+    {
+      "id": "pi-atomic-structure-006",
+      "concept_id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An electron is confined within a region of size $\\Delta x = 1.0\\times10^{-10}$ m (about the size of an atom). Using the Heisenberg uncertainty principle $\\Delta x \\cdot \\Delta p \\geq h/(4\\pi)$, what is the minimum uncertainty in its velocity? ($m_e = 9.1\\times10^{-31}$ kg, $h = 6.626\\times10^{-34}$ J s)",
+      "options": [
+        "$5.79\\times10^{5}$ m s$^{-1}$",
+        "$1.16\\times10^{6}$ m s$^{-1}$",
+        "$7.28\\times10^{6}$ m s$^{-1}$",
+        "$2.90\\times10^{5}$ m s$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5.79\\times10^{5}$ m s$^{-1}$",
+      "solution_steps": [
+        "The minimum uncertainty in momentum is $\\Delta p_{\\min} = h/(4\\pi\\Delta x)$, and $\\Delta v_{\\min} = \\Delta p_{\\min}/m_e$.",
+        "$\\Delta p_{\\min} = \\dfrac{6.626\\times10^{-34}}{4\\pi(1.0\\times10^{-10})}$, then $\\Delta v_{\\min} = \\Delta p_{\\min}/(9.1\\times10^{-31})$.",
+        "Computed numerically: $\\Delta v_{\\min} \\approx 5.79\\times10^{5}$ m s$^{-1}$.",
+        "$1.16\\times10^{6}$ m s$^{-1}$ comes from using $2\\pi$ in the denominator instead of $4\\pi$ (exactly double the correct answer). $7.28\\times10^{6}$ m s$^{-1}$ comes from dropping the $4\\pi$ factor entirely, i.e. using $\\Delta p_{\\min}=h/\\Delta x$. $2.90\\times10^{5}$ m s$^{-1}$ comes from mistakenly using $8\\pi$ instead of $4\\pi$ (exactly half the correct answer)."
+      ],
+      "verification_method": "python_numeric_heisenberg_uncertainty_formula"
+    },
+    {
+      "id": "pi-chemical-bonding-001",
+      "concept_id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the formal charge on the nitrogen atom in the ammonium ion, $\\text{NH}_4^+$?",
+      "options": [
+        "+1",
+        "0",
+        "+2",
+        "-1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "+1",
+      "solution_steps": [
+        "Formal charge = (valence electrons of the free atom) $-$ (non-bonding electrons on it in the structure) $-$ $\\tfrac12$(bonding electrons around it).",
+        "Nitrogen has 5 valence electrons. In $\\text{NH}_4^+$, nitrogen has 0 lone-pair (non-bonding) electrons and forms 4 bonds, i.e. shares in $4\\times2=8$ bonding electrons.",
+        "Formal charge $= 5 - 0 - \\tfrac{8}{2} = 5-4 = +1$.",
+        "Verified the arithmetic directly: $5-0-4=1$.",
+        "0 would be correct only if nitrogen kept its original lone pair, but that lone pair was donated to form the fourth N–H bond, which is exactly why the ion carries an overall $+1$ charge. +2 double-counts the effect of losing the lone pair. $-1$ reverses the sign of the correct answer."
+      ],
+      "verification_method": "python_arithmetic_formal_charge_formula"
+    },
+    {
+      "id": "pi-chemical-bonding-002",
+      "concept_id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Sulfur in $\\text{SF}_4$ forms 4 bonds to fluorine and retains one lone pair (sulfur has 6 valence electrons; $6-4=2$ non-bonding electrons = 1 lone pair). What is the molecular shape of $\\text{SF}_4$ predicted by VSEPR theory?",
+      "options": [
+        "See-saw",
+        "Tetrahedral",
+        "Square planar",
+        "Trigonal bipyramidal"
+      ],
+      "answer_index": 0,
+      "correct_answer": "See-saw",
+      "solution_steps": [
+        "Steric number = (number of bonding domains) + (number of lone pairs) = $4+1=5$, so the electron-domain geometry is trigonal bipyramidal.",
+        "With 5 electron domains and exactly 1 lone pair, VSEPR places the lone pair in an equatorial position (to minimise repulsion), giving the molecule itself the distorted 'see-saw' shape.",
+        "Confirmed the electron count with a short check: $6-4=2$ non-bonding electrons = 1 lone pair, steric number 5.",
+        "Tetrahedral is the shape for 4 electron domains with 0 lone pairs (like $\\text{CH}_4$), not 5 domains. Square planar is the shape for 6 domains with 2 lone pairs (like $\\text{XeF}_4$). Trigonal bipyramidal describes the ELECTRON-DOMAIN geometry (5 domains, 0 lone pairs, like $\\text{PF}_5$) but not the actual molecular shape once a lone pair is present."
+      ],
+      "verification_method": "python_arithmetic_vsepr_steric_number"
+    },
+    {
+      "id": "pi-chemical-bonding-003",
+      "concept_id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Xenon in $\\text{XeF}_4$ forms 4 bonds to fluorine (xenon has 8 valence electrons). What is the hybridization of the central Xe atom?",
+      "options": [
+        "$sp^3d^2$",
+        "$sp^3d$",
+        "$sp^3$",
+        "$sp^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$sp^3d^2$",
+      "solution_steps": [
+        "Non-bonding electrons on Xe = $8-4=4$, which is 2 lone pairs.",
+        "Steric number = (bonds) + (lone pairs) = $4+2=6$. A steric number of 6 corresponds to $sp^3d^2$ hybridization.",
+        "Verified the electron count: $8-4=4$ non-bonding electrons = 2 lone pairs, steric number $4+2=6$.",
+        "$sp^3d$ corresponds to a steric number of 5 (like $\\text{SF}_4$ or $\\text{PF}_5$), not 6. $sp^3$ corresponds to a steric number of 4 (no lone pairs beyond the 4 bonds, like $\\text{CH}_4$), undercounting Xe's 2 lone pairs entirely. $sp^2$ corresponds to a steric number of 3, far too few for xenon's 6 electron domains."
+      ],
+      "verification_method": "python_arithmetic_vsepr_hybridization"
+    },
+    {
+      "id": "pi-chemical-bonding-004",
+      "concept_id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many sigma ($\\sigma$) and pi ($\\pi$) bonds are present in acetylene, $\\text{H-C}{\\equiv}\\text{C-H}$ ($\\text{C}_2\\text{H}_2$)?",
+      "options": [
+        "3 sigma, 2 pi",
+        "2 sigma, 3 pi",
+        "1 sigma, 4 pi",
+        "5 sigma, 0 pi"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3 sigma, 2 pi",
+      "solution_steps": [
+        "Each C–H bond is a single bond, so it is 1 sigma bond each, giving 2 sigma bonds from the two C–H bonds.",
+        "The C≡C triple bond is made of exactly 1 sigma bond plus 2 pi bonds (a triple bond is never 3 sigma bonds — only ONE bond between any two atoms can be a head-on, sigma overlap).",
+        "Total: sigma bonds $= 2\\,(\\text{C–H}) + 1\\,(\\text{C–C}) = 3$; pi bonds $= 2$ (both from the C≡C triple bond).",
+        "2 sigma, 3 pi swaps the correct counts — it wrongly assigns the extra bonds from the triple bond as sigma bonds instead of pi bonds. 1 sigma, 4 pi wildly overcounts pi bonds, as if every bond in the molecule (all 3 of them) contributed 1 extra pi bond. 5 sigma, 0 pi treats the whole triple bond as 3 separate sigma bonds, which is not physically how multiple bonds are described."
+      ],
+      "verification_method": "python_rule_check_sigma_pi_bond_counting"
+    },
+    {
+      "id": "pi-chemical-bonding-005",
+      "concept_id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using molecular orbital theory, what is the bond order of the $\\text{N}_2$ molecule (14 electrons total)?",
+      "options": [
+        "3",
+        "2",
+        "2.5",
+        "1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3",
+      "solution_steps": [
+        "For $\\text{N}_2$ (14 electrons), the molecular orbital filling is: $\\sigma_{1s}^2\\,\\sigma_{1s}^{*2}\\,\\sigma_{2s}^2\\,\\sigma_{2s}^{*2}\\,\\pi_{2p_x}^2\\pi_{2p_y}^2\\,\\sigma_{2p_z}^2$.",
+        "Bonding electrons = $2+2+2+2+2=10$ (from $\\sigma_{1s}, \\sigma_{2s}, \\pi_{2p_x}, \\pi_{2p_y}, \\sigma_{2p_z}$). Antibonding electrons = $2+2=4$ (from $\\sigma_{1s}^*, \\sigma_{2s}^*$).",
+        "Bond order $= \\dfrac{\\text{bonding} - \\text{antibonding}}{2} = \\dfrac{10-4}{2} = 3$.",
+        "Verified the electron tally sums to $10+4=14$, matching $\\text{N}_2$'s total electron count.",
+        "2 is the bond order of $\\text{O}_2$, a different molecule with 2 more electrons in antibonding orbitals — mixing up the two molecules. 2.5 is the bond order of $\\text{O}_2^+$, not neutral $\\text{N}_2$. 1 would result from a mistaken tally where bonding and antibonding electrons are almost equal, which is not the case here."
+      ],
+      "verification_method": "python_arithmetic_MOT_bond_order"
+    },
+    {
+      "id": "pi-chemical-bonding-006",
+      "concept_id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Based on molecular orbital theory, which one of these species is paramagnetic: $\\text{N}_2$ (14 e$^-$), $\\text{O}_2$ (16 e$^-$), $\\text{CO}$ (14 e$^-$), or $\\text{NO}^+$ (14 e$^-$)?",
+      "options": [
+        "$\\text{O}_2$",
+        "$\\text{N}_2$",
+        "$\\text{CO}$",
+        "$\\text{NO}^+$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{O}_2$",
+      "solution_steps": [
+        "$\\text{N}_2$, $\\text{CO}$ and $\\text{NO}^+$ are all isoelectronic with 14 electrons each, so they all have the SAME molecular orbital filling as $\\text{N}_2$: every orbital up through $\\pi_{2p}$ is completely filled with paired electrons, so all three are diamagnetic.",
+        "$\\text{O}_2$ has 2 more electrons (16 total). Those 2 extra electrons must go into the two degenerate $\\pi^*_{2p}$ antibonding orbitals, and by Hund's rule they occupy the two orbitals singly, unpaired, before pairing up.",
+        "Because $\\text{O}_2$ has 2 unpaired electrons in its $\\pi^*_{2p}$ orbitals, it is the paramagnetic species here.",
+        "Verified the electron counts: N (7)+N (7)=14, C (6)+O (8)=14, N (7)+O (8)$-1=14$ for the $\\text{NO}^+$ cation, and O (8)+O (8)=16 for $\\text{O}_2$ — confirming $\\text{O}_2$ is the outlier with 2 extra electrons.",
+        "$\\text{N}_2$, $\\text{CO}$, and $\\text{NO}^+$ are each wrong for the same reason: being isoelectronic with $\\text{N}_2$ (14 electrons, fully paired, bond order 3), all three are diamagnetic, not paramagnetic."
+      ],
+      "verification_method": "python_arithmetic_isoelectronic_electron_count_check"
+    },
+    {
+      "id": "pi-thermodynamics-chemistry-001",
+      "concept_id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For a reaction at 300 K, $\\Delta U = -10.0$ kJ mol$^{-1}$ and $\\Delta n_{\\text{gas}} = -1$ (moles of gas decrease by 1). What is $\\Delta H$? (Use $R = 8.314$ J mol$^{-1}$K$^{-1}$; note $\\Delta H = \\Delta U + \\Delta n_{\\text{gas}}RT$.)",
+      "options": [
+        "-12.49 kJ mol$^{-1}$",
+        "-7.51 kJ mol$^{-1}$",
+        "-10.00 kJ mol$^{-1}$",
+        "-14.99 kJ mol$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-12.49 kJ mol$^{-1}$",
+      "solution_steps": [
+        "$\\Delta n_{\\text{gas}}RT = (-1)(8.314)(300) = -2494.2$ J mol$^{-1} = -2.49$ kJ mol$^{-1}$.",
+        "$\\Delta H = \\Delta U + \\Delta n_{\\text{gas}}RT = -10.0 + (-2.49) = -12.49$ kJ mol$^{-1}$.",
+        "Computed numerically: $-10.0 - 2.4942 = -12.4942 \\approx -12.49$ kJ mol$^{-1}$.",
+        "-7.51 kJ mol$^{-1}$ comes from flipping the sign of $\\Delta n_{\\text{gas}}$ (using $+1$ instead of $-1$), adding the RT term instead of subtracting it. -10.00 kJ mol$^{-1}$ simply forgets the $\\Delta n_{\\text{gas}}RT$ correction term entirely, as if $\\Delta H=\\Delta U$ always. -14.99 kJ mol$^{-1}$ comes from doubling the RT correction term by mistake."
+      ],
+      "verification_method": "python_arithmetic_dH_from_dU_ideal_gas"
+    },
+    {
+      "id": "pi-thermodynamics-chemistry-002",
+      "concept_id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For a reaction at 300 K, $\\Delta H = -40.0$ kJ mol$^{-1}$ and $\\Delta S = -100.0$ J K$^{-1}$mol$^{-1}$. Is the reaction spontaneous at this temperature, and what is $\\Delta G$? (Use $\\Delta G = \\Delta H - T\\Delta S$.)",
+      "options": [
+        "Spontaneous; $\\Delta G = -10.0$ kJ mol$^{-1}$",
+        "Non-spontaneous; $\\Delta G = +10.0$ kJ mol$^{-1}$",
+        "Spontaneous; $\\Delta G = -70.0$ kJ mol$^{-1}$",
+        "Non-spontaneous; $\\Delta G = +30.0$ kJ mol$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Spontaneous; $\\Delta G = -10.0$ kJ mol$^{-1}$",
+      "solution_steps": [
+        "Convert $\\Delta S$ to kJ: $-100.0$ J K$^{-1}$mol$^{-1} = -0.100$ kJ K$^{-1}$mol$^{-1}$.",
+        "$\\Delta G = \\Delta H - T\\Delta S = -40.0 - (300)(-0.100) = -40.0 + 30.0 = -10.0$ kJ mol$^{-1}$.",
+        "Computed numerically: $-40.0-(300\\times(-0.1)) = -10.0$ exactly.",
+        "Since $\\Delta G$ is negative, the reaction IS spontaneous at 300 K.",
+        "+10.0 kJ mol$^{-1}$ flips the sign of the correct answer (a sign error somewhere in $T\\Delta S$), and wrongly calls the reaction non-spontaneous. -70.0 kJ mol$^{-1}$ comes from adding $T\\Delta S$ with the wrong sign convention (subtracting 30 instead of adding it back). +30.0 kJ mol$^{-1}$ comes from forgetting $\\Delta H$ and reporting only the $-T\\Delta S$ term, with a further sign slip."
+      ],
+      "verification_method": "python_arithmetic_gibbs_free_energy_spontaneity"
+    },
+    {
+      "id": "pi-thermodynamics-chemistry-003",
+      "concept_id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Given: $\\text{C(s)} + \\text{O}_2\\text{(g)} \\rightarrow \\text{CO}_2\\text{(g)}$, $\\Delta H_1 = -393.5$ kJ mol$^{-1}$, and $\\text{CO(g)} + \\tfrac12\\text{O}_2\\text{(g)} \\rightarrow \\text{CO}_2\\text{(g)}$, $\\Delta H_2 = -283.0$ kJ mol$^{-1}$. Using Hess's law, find $\\Delta H$ for $\\text{C(s)} + \\tfrac12\\text{O}_2\\text{(g)} \\rightarrow \\text{CO(g)}$.",
+      "options": [
+        "-110.5 kJ mol$^{-1}$",
+        "-676.5 kJ mol$^{-1}$",
+        "-10.5 kJ mol$^{-1}$",
+        "+110.5 kJ mol$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-110.5 kJ mol$^{-1}$",
+      "solution_steps": [
+        "The target equation is (equation 1) minus (equation 2): $[\\text{C}+\\text{O}_2\\rightarrow\\text{CO}_2] - [\\text{CO}+\\tfrac12\\text{O}_2\\rightarrow\\text{CO}_2]$ leaves $\\text{C}+\\tfrac12\\text{O}_2\\rightarrow\\text{CO}$ (the $\\text{CO}_2$ cancels, and reversing equation 2 flips its sign, so subtracting is the same as adding the reverse).",
+        "So $\\Delta H = \\Delta H_1 - \\Delta H_2 = -393.5-(-283.0) = -393.5+283.0 = -110.5$ kJ mol$^{-1}$.",
+        "Verified the arithmetic directly: $-393.5+283.0=-110.5$.",
+        "-676.5 kJ mol$^{-1}$ comes from adding the two enthalpies instead of subtracting them. -10.5 kJ mol$^{-1}$ comes from a decimal-place slip in the subtraction. +110.5 kJ mol$^{-1}$ has the right magnitude but the wrong sign, as if the reaction were endothermic instead of exothermic."
+      ],
+      "verification_method": "python_arithmetic_hess_law_addition"
+    },
+    {
+      "id": "pi-thermodynamics-chemistry-004",
+      "concept_id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A gas expands from 2 L to 10 L against a constant external pressure of 2 atm. Using the IUPAC sign convention (work done ON the system is positive, so $w = -P_{\\text{ext}}\\Delta V$ for the system), what is the work done, $w$? (1 L·atm = 101.325 J.)",
+      "options": [
+        "-1621.2 J",
+        "+1621.2 J",
+        "-3242.4 J",
+        "-810.6 J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "-1621.2 J",
+      "solution_steps": [
+        "$\\Delta V = 10-2=8$ L. Since the gas expands, it pushes against the surroundings and does work ON the surroundings, so under the sign convention $w=-P_{\\text{ext}}\\Delta V$ for the system, $w$ must come out negative.",
+        "$w = -(2\\ \\text{atm})(8\\ \\text{L}) = -16$ L·atm.",
+        "Convert to joules: $-16 \\times 101.325 = -1621.2$ J.",
+        "Verified numerically: $-2\\times8\\times101.325=-1621.2$.",
+        "+1621.2 J has the right size but the wrong sign — this ignores that during EXPANSION the system does work on the surroundings, so $w$ for the system must be negative under this convention. -3242.4 J is exactly double the correct value (a stray factor of 2 in $\\Delta V$ or pressure). -810.6 J is exactly half the correct value (the reverse slip)."
+      ],
+      "verification_method": "python_arithmetic_pV_work_sign_convention"
+    },
+    {
+      "id": "pi-thermodynamics-chemistry-005",
+      "concept_id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Water boils at 373 K, and its enthalpy of vaporization is $\\Delta H_{\\text{vap}} = 40.7$ kJ mol$^{-1}$. What is the entropy of vaporization, $\\Delta S_{\\text{vap}}$, at the boiling point? (Use $\\Delta S = \\Delta H/T$ at constant $T$.)",
+      "options": [
+        "109.1 J K$^{-1}$mol$^{-1}$",
+        "40.7 J K$^{-1}$mol$^{-1}$",
+        "15184 J K$^{-1}$mol$^{-1}$",
+        "0.109 J K$^{-1}$mol$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "109.1 J K$^{-1}$mol$^{-1}$",
+      "solution_steps": [
+        "At the boiling point (constant temperature and pressure), $\\Delta S_{\\text{vap}} = \\Delta H_{\\text{vap}}/T$.",
+        "Convert $\\Delta H_{\\text{vap}}$ to joules: $40.7\\ \\text{kJ} = 40700$ J.",
+        "$\\Delta S_{\\text{vap}} = 40700/373 = 109.1$ J K$^{-1}$mol$^{-1}$.",
+        "Verified numerically: $40700/373 = 109.115...$, which rounds to 109.1.",
+        "40.7 J K$^{-1}$mol$^{-1}$ forgets to divide by $T$ at all, and also forgets to convert kJ to J. 15184 J K$^{-1}$mol$^{-1}$ comes from multiplying by $T$ instead of dividing by it ($40700\\times373$ scaled down, still the wrong operation). 0.109 J K$^{-1}$mol$^{-1}$ is the correct value but with a decimal-place slip (forgot to convert kJ to J before dividing)."
+      ],
+      "verification_method": "python_arithmetic_entropy_of_vaporization"
+    },
+    {
+      "id": "pi-thermodynamics-chemistry-006",
+      "concept_id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "At 300 K, a reaction has $\\Delta G^\\circ = -11.49$ kJ mol$^{-1}$. What is its equilibrium constant $K$? (Use $\\Delta G^\\circ = -RT\\ln K$, $R = 8.314$ J mol$^{-1}$K$^{-1}$.)",
+      "options": [
+        "100",
+        "0.01",
+        "1.00",
+        "10"
+      ],
+      "answer_index": 0,
+      "correct_answer": "100",
+      "solution_steps": [
+        "Rearranging, $K = e^{-\\Delta G^\\circ/(RT)}$.",
+        "$-\\Delta G^\\circ/(RT) = 11490/(8.314\\times300) = 4.605$, and $e^{4.605} \\approx 100$.",
+        "Computed numerically (choosing $\\Delta G^\\circ$ so the exponent comes out to $\\ln(100)$): $K=100$.",
+        "0.01 is exactly the reciprocal of the correct answer — it comes from a sign error, using $K=e^{+\\Delta G^\\circ/(RT)}$ instead of the correct $e^{-\\Delta G^\\circ/(RT)}$. 1.00 comes from forgetting to convert $\\Delta G^\\circ$ from kJ to J before dividing by $RT$ (which is in J units), making the exponent nearly zero. 10 comes from mistakenly using $T=600$ K (double the actual 300 K) in the exponent."
+      ],
+      "verification_method": "python_numeric_deltaG_to_K_relation"
+    },
+    {
+      "id": "pi-equilibrium-chemical-001",
+      "concept_id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the correct expression for $K_c$ for the reaction $2\\text{SO}_2\\text{(g)} + \\text{O}_2\\text{(g)} \\rightleftharpoons 2\\text{SO}_3\\text{(g)}$?",
+      "options": [
+        "$K_c = \\dfrac{[\\text{SO}_3]^2}{[\\text{SO}_2]^2[\\text{O}_2]}$",
+        "$K_c = \\dfrac{[\\text{SO}_2]^2[\\text{O}_2]}{[\\text{SO}_3]^2}$",
+        "$K_c = \\dfrac{[\\text{SO}_3]}{[\\text{SO}_2][\\text{O}_2]}$",
+        "$K_c = \\dfrac{[\\text{SO}_3]^2}{[\\text{SO}_2]^2[\\text{O}_2]^2}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$K_c = \\dfrac{[\\text{SO}_3]^2}{[\\text{SO}_2]^2[\\text{O}_2]}$",
+      "solution_steps": [
+        "$K_c$ is written as (concentration of products, each raised to its stoichiometric coefficient) divided by (concentration of reactants, each raised to its stoichiometric coefficient).",
+        "Products: $\\text{SO}_3$ has coefficient 2, so $[\\text{SO}_3]^2$ on top. Reactants: $\\text{SO}_2$ has coefficient 2 (so $[\\text{SO}_2]^2$) and $\\text{O}_2$ has coefficient 1 (so just $[\\text{O}_2]^1$), both on the bottom.",
+        "This gives $K_c = [\\text{SO}_3]^2 / ([\\text{SO}_2]^2[\\text{O}_2])$.",
+        "The second option puts reactants on top and products on the bottom — this is the expression for $1/K_c$, the reverse reaction, not the forward one asked for. The third option forgets to square $[\\text{SO}_3]$ and $[\\text{SO}_2]$, using their stoichiometric coefficients as multipliers instead of exponents. The fourth option wrongly squares $[\\text{O}_2]$ too, even though oxygen's coefficient in the balanced equation is 1, not 2."
+      ],
+      "verification_method": "python_rule_check_equilibrium_expression_from_coefficients"
+    },
+    {
+      "id": "pi-equilibrium-chemical-002",
+      "concept_id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For $\\text{N}_2\\text{O}_4\\text{(g)} \\rightleftharpoons 2\\text{NO}_2\\text{(g)}$, $K_c = 0.04$ at 300 K. What is $K_p$? (Use $K_p = K_c(RT)^{\\Delta n}$ with $R = 0.0821$ L atm mol$^{-1}$K$^{-1}$; here $\\Delta n = 2-1=1$.)",
+      "options": [
+        "0.985",
+        "0.04",
+        "0.00162",
+        "99.8"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.985",
+      "solution_steps": [
+        "$\\Delta n_{\\text{gas}} = (\\text{moles of gaseous products}) - (\\text{moles of gaseous reactants}) = 2-1=1$.",
+        "$K_p = K_c(RT)^{\\Delta n} = 0.04 \\times (0.0821 \\times 300)^1 = 0.04 \\times 24.63 = 0.985$.",
+        "Computed numerically: $0.04\\times24.63=0.9852\\approx0.985$.",
+        "0.04 forgets the $(RT)^{\\Delta n}$ correction factor entirely, treating $K_p=K_c$. 0.00162 comes from using $\\Delta n=-1$ instead of $+1$ (dividing by $RT$ instead of multiplying). 99.8 comes from using $R=8.314$ (the SI value, in J units) instead of the gas-constant value in L·atm units appropriate for this formula, an easy unit mismatch."
+      ],
+      "verification_method": "python_arithmetic_Kp_Kc_relation"
+    },
+    {
+      "id": "pi-equilibrium-chemical-003",
+      "concept_id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For $\\text{N}_2\\text{(g)} + 3\\text{H}_2\\text{(g)} \\rightleftharpoons 2\\text{NH}_3\\text{(g)}$, $K_c = 0.5$ at a certain temperature. At some instant, $[\\text{N}_2]=1.0$ M, $[\\text{H}_2]=1.0$ M, $[\\text{NH}_3]=0.5$ M. In which direction will the reaction shift to reach equilibrium?",
+      "options": [
+        "Forward (toward more $\\text{NH}_3$), since $Q_c < K_c$",
+        "Backward (toward more $\\text{N}_2$ and $\\text{H}_2$), since $Q_c > K_c$",
+        "No shift, since $Q_c = K_c$",
+        "Forward, since $Q_c > K_c$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Forward (toward more $\\text{NH}_3$), since $Q_c < K_c$",
+      "solution_steps": [
+        "$Q_c = \\dfrac{[\\text{NH}_3]^2}{[\\text{N}_2][\\text{H}_2]^3} = \\dfrac{(0.5)^2}{(1.0)(1.0)^3} = \\dfrac{0.25}{1.0}=0.25$.",
+        "Compare $Q_c=0.25$ with $K_c=0.5$: since $Q_c < K_c$, the reaction has not yet made enough product, so it shifts FORWARD (toward more $\\text{NH}_3$) to increase $Q_c$ until it reaches 0.5.",
+        "Verified numerically: $(0.5)^2/((1.0)(1.0)^3)=0.25$, and $0.25<0.5$.",
+        "The second option gets the comparison backwards ($Q_c$ is actually less than $K_c$, not greater) and so predicts the wrong direction. The third option is wrong because $0.25 \\neq 0.5$, so the system is NOT already at equilibrium. The fourth option reaches the right final direction (forward) but for the wrong reason, misstating that $Q_c > K_c$ when the correct comparison is $Q_c < K_c$."
+      ],
+      "verification_method": "python_arithmetic_reaction_quotient_vs_K"
+    },
+    {
+      "id": "pi-equilibrium-chemical-004",
+      "concept_id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A reversible reaction has $K_c = 5.0$ at a fixed temperature. A catalyst is then added to the reaction mixture. What happens to $K_c$ and to the equilibrium concentrations?",
+      "options": [
+        "Neither $K_c$ nor the equilibrium concentrations change; the catalyst only makes the system reach equilibrium faster.",
+        "$K_c$ increases because the forward reaction speeds up more than the reverse reaction.",
+        "The equilibrium shifts toward the products, since the catalyst favours the faster (forward) reaction.",
+        "$K_c$ decreases because the catalyst lowers the activation energy of the reaction."
+      ],
+      "answer_index": 0,
+      "correct_answer": "Neither $K_c$ nor the equilibrium concentrations change; the catalyst only makes the system reach equilibrium faster.",
+      "solution_steps": [
+        "A catalyst provides an alternative pathway with lower activation energy, but it speeds up the forward AND reverse reactions by exactly the same factor.",
+        "Because both rates increase equally, the ratio of rate constants (which determines $K_c$) is unchanged, and the equilibrium position (the concentrations at which forward rate = reverse rate) is reached faster but lands at the exact same values as before.",
+        "This is a standard, well-established result of catalysis theory: a catalyst changes reaction kinetics (rate), never reaction thermodynamics (equilibrium constant or position).",
+        "The second and third options both wrongly assume a catalyst speeds up the forward reaction more than the reverse — it speeds up both equally, so neither $K_c$ nor the product/reactant balance shifts. The fourth option confuses the catalyst's effect on activation energy (a kinetic quantity) with $K_c$ (a thermodynamic quantity that depends only on $\\Delta G^\\circ$ and temperature, not on the reaction pathway)."
+      ],
+      "verification_method": "chemistry_conceptual_fact_catalyst_does_not_affect_K"
+    },
+    {
+      "id": "pi-equilibrium-chemical-005",
+      "concept_id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For $\\text{N}_2\\text{(g)} + 3\\text{H}_2\\text{(g)} \\rightleftharpoons 2\\text{NH}_3\\text{(g)}$, the total number of gas moles decreases from 4 (reactant side) to 2 (product side). If the pressure on this equilibrium mixture is increased (by decreasing volume) at constant temperature, in which direction does the equilibrium shift?",
+      "options": [
+        "Forward, toward $\\text{NH}_3$ (the side with fewer moles of gas)",
+        "Backward, toward $\\text{N}_2$ and $\\text{H}_2$ (the side with more moles of gas)",
+        "No shift at all; pressure never affects gas-phase equilibria",
+        "It depends on $K_c$, not on the mole count of gas"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Forward, toward $\\text{NH}_3$ (the side with fewer moles of gas)",
+      "solution_steps": [
+        "By Le Chatelier's principle, increasing the pressure (by shrinking the volume) pushes an equilibrium toward whichever side has FEWER moles of gas, since that side takes up less volume and partially relieves the pressure increase.",
+        "Here, the product side ($2\\text{NH}_3$) has fewer moles of gas (2) than the reactant side ($\\text{N}_2+3\\text{H}_2$, 4 moles), so the equilibrium shifts FORWARD.",
+        "This mole-counting logic ($4 \\to 2$) is exactly the standard Le Chatelier reasoning for pressure changes on gas-phase equilibria.",
+        "The second option shifts in the wrong direction — it is backward from what reduces the system's volume/pressure imbalance. The third option is a blanket false statement: pressure changes DO shift gas-phase equilibria whenever the mole counts differ between the two sides (only when $\\Delta n_{\\text{gas}}=0$ does pressure have no effect on position). The fourth option confuses $K_c$ itself (which never changes with pressure at constant T) with the equilibrium POSITION (concentrations), which is what actually shifts here."
+      ],
+      "verification_method": "chemistry_conceptual_fact_le_chatelier_pressure_shift"
+    },
+    {
+      "id": "pi-equilibrium-chemical-006",
+      "concept_id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For $\\text{A(g)} \\rightleftharpoons \\text{B(g)} + \\text{C(g)}$, $K_c = 0.04$. Starting from $[\\text{A}]_0 = 1.0$ M and no B or C initially, what is the equilibrium concentration of B?",
+      "options": [
+        "0.181 M",
+        "0.200 M",
+        "0.040 M",
+        "0.400 M"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.181 M",
+      "solution_steps": [
+        "Let $x$ = concentration of A that reacts. At equilibrium: $[\\text{A}]=1.0-x$, $[\\text{B}]=[\\text{C}]=x$.",
+        "$K_c = \\dfrac{x^2}{1.0-x} = 0.04$. This is a quadratic in $x$: $x^2 + 0.04x - 0.04 = 0$.",
+        "Solving exactly (not with the small-$x$ shortcut, since $x$ turns out to be too large relative to 1.0 for that shortcut to be valid) gives $x = 0.181$ M.",
+        "Verified by substituting back: $(0.181)^2/(1.0-0.181) = 0.0328/0.819 = 0.0400$, matching $K_c$.",
+        "0.200 M comes from the tempting shortcut $x \\approx \\sqrt{K_c} = \\sqrt{0.04} = 0.2$, which assumes $x$ is small enough to ignore in the denominator $(1.0-x)$ — but $x=0.2$ is 20% of 1.0, too large for that assumption to be valid here, so it gives a noticeably wrong answer. 0.040 M mistakes the value of $K_c$ itself for the concentration $x$. 0.400 M is roughly double the correct value, from a mis-solved quadratic."
+      ],
+      "verification_method": "sympy_symbolic_quadratic_ICE_table"
+    },
+    {
+      "id": "pi-equilibrium-ionic-001",
+      "concept_id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the pH of a $0.01$ M solution of $\\text{HCl}$ (a strong acid, fully dissociated)?",
+      "options": [
+        "2",
+        "12",
+        "0.01",
+        "1"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "$\\text{HCl}$ is a strong acid, so it dissociates completely: $[\\text{H}^+] = 0.01$ M $=10^{-2}$ M.",
+        "$\\text{pH} = -\\log_{10}[\\text{H}^+] = -\\log_{10}(10^{-2}) = 2$.",
+        "Verified: $-\\log_{10}(0.01)=2$ exactly.",
+        "12 is the pOH, not the pH (confusing the two, or forgetting $\\text{pH}+\\text{pOH}=14$ applies to a different pair of quantities here). 0.01 just restates the concentration without ever taking a logarithm. 1 comes from a base-10 exponent slip, as if $[\\text{H}^+]=10^{-1}$ instead of $10^{-2}$."
+      ],
+      "verification_method": "python_arithmetic_pH_strong_acid"
+    },
+    {
+      "id": "pi-equilibrium-ionic-002",
+      "concept_id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A solution has $\\text{pH} = 3$. What is its pOH and its $[\\text{OH}^-]$ concentration? (Use $\\text{pH}+\\text{pOH}=14$ and $K_w=10^{-14}$.)",
+      "options": [
+        "pOH = 11, $[\\text{OH}^-] = 10^{-11}$ M",
+        "pOH = 3, $[\\text{OH}^-] = 10^{-3}$ M",
+        "pOH = 11, $[\\text{OH}^-] = 10^{-3}$ M",
+        "pOH = 17, $[\\text{OH}^-] = 10^{-17}$ M"
+      ],
+      "answer_index": 0,
+      "correct_answer": "pOH = 11, $[\\text{OH}^-] = 10^{-11}$ M",
+      "solution_steps": [
+        "$\\text{pOH} = 14 - \\text{pH} = 14 - 3 = 11$.",
+        "$[\\text{OH}^-] = 10^{-\\text{pOH}} = 10^{-11}$ M.",
+        "Verified: $14-3=11$, and $10^{-11}$ directly follows from the definition of pOH.",
+        "pOH = 3 wrongly copies the pH value as if pH and pOH were always equal. pOH = 11 paired with $[\\text{OH}^-]=10^{-3}$ mixes up $[\\text{OH}^-]$ with $[\\text{H}^+]$ (which really is $10^{-3}$ M here, since $\\text{pH}=3$). pOH = 17 comes from adding 14 to pH instead of subtracting from it."
+      ],
+      "verification_method": "python_arithmetic_pH_pOH_relationship"
+    },
+    {
+      "id": "pi-equilibrium-ionic-003",
+      "concept_id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the pH of a $0.1$ M solution of acetic acid ($K_a = 1.8\\times10^{-5}$)? (Use the approximation $[\\text{H}^+] \\approx \\sqrt{K_a C}$ for a weak acid.)",
+      "options": [
+        "2.87",
+        "1.00",
+        "5.00",
+        "4.74"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2.87",
+      "solution_steps": [
+        "$[\\text{H}^+] \\approx \\sqrt{K_a C} = \\sqrt{(1.8\\times10^{-5})(0.1)} = \\sqrt{1.8\\times10^{-6}}$.",
+        "$[\\text{H}^+] \\approx 1.342\\times10^{-3}$ M.",
+        "$\\text{pH} = -\\log_{10}(1.342\\times10^{-3}) \\approx 2.87$.",
+        "Computed numerically end to end: $\\sqrt{1.8\\text{e-5}\\times0.1}=1.342\\text{e-3}$, and $-\\log_{10}(1.342\\text{e-3})=2.87$.",
+        "1.00 wrongly treats acetic acid as if it were a strong acid with $[\\text{H}^+]=C=0.1$ M directly (pH would be exactly 1). 5.00 comes from a sign/exponent slip in the logarithm step. 4.74 is $\\text{p}K_a$ ($-\\log_{10}(1.8\\times10^{-5})$) itself, mistaken for the pH of the solution — $\\text{p}K_a$ and pH are only equal for a buffer at 1:1 ratio, not for a plain weak-acid solution."
+      ],
+      "verification_method": "python_arithmetic_weak_acid_pH_approximation"
+    },
+    {
+      "id": "pi-equilibrium-ionic-004",
+      "concept_id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A buffer is made from acetic acid ($K_a = 1.8\\times10^{-5}$, so $\\text{p}K_a=4.74$) and its salt sodium acetate, with a salt-to-acid concentration ratio of 10:1. What is the pH of this buffer? (Use the Henderson–Hasselbalch equation: $\\text{pH} = \\text{p}K_a + \\log_{10}([\\text{salt}]/[\\text{acid}])$.)",
+      "options": [
+        "5.74",
+        "4.74",
+        "3.74",
+        "47.4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5.74",
+      "solution_steps": [
+        "$\\log_{10}([\\text{salt}]/[\\text{acid}]) = \\log_{10}(10) = 1$.",
+        "$\\text{pH} = \\text{p}K_a + 1 = 4.74+1=5.74$.",
+        "Verified: $\\log_{10}(10)=1$ exactly, so $4.74+1=5.74$.",
+        "4.74 forgets the $\\log$ term entirely, as if the salt:acid ratio were 1:1 instead of 10:1. 3.74 flips the sign of the log term, subtracting instead of adding it (as if the ratio were acid:salt = 10:1 instead of salt:acid). 47.4 comes from multiplying $\\text{p}K_a$ by 10 instead of adding $\\log_{10}(10)=1$ to it."
+      ],
+      "verification_method": "python_arithmetic_henderson_hasselbalch_buffer"
+    },
+    {
+      "id": "pi-equilibrium-ionic-005",
+      "concept_id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "$\\text{AgCl}$ has $K_{sp} = 1.8\\times10^{-10}$. What is the molar solubility of $\\text{AgCl}$ in a solution that already contains $0.01$ M $\\text{NaCl}$ (a common-ion source of $\\text{Cl}^-$)?",
+      "options": [
+        "$1.8\\times10^{-8}$ M",
+        "$1.34\\times10^{-5}$ M",
+        "$1.8\\times10^{-10}$ M",
+        "$1.8\\times10^{-12}$ M"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1.8\\times10^{-8}$ M",
+      "solution_steps": [
+        "Let $s$ = solubility of $\\text{AgCl}$ in this solution. Then $[\\text{Ag}^+]=s$, and $[\\text{Cl}^-] \\approx 0.01$ M (dominated by the NaCl already present, since $s$ turns out to be tiny compared to 0.01).",
+        "$K_{sp} = [\\text{Ag}^+][\\text{Cl}^-] = s \\times 0.01 = 1.8\\times10^{-10}$, so $s = 1.8\\times10^{-10}/0.01 = 1.8\\times10^{-8}$ M.",
+        "Verified numerically: $1.8\\text{e-}10/0.01 = 1.8\\text{e-}8$.",
+        "$1.34\\times10^{-5}$ M is the solubility of $\\text{AgCl}$ in PURE water, i.e. $\\sqrt{K_{sp}}$ — this distractor completely IGNORES the common-ion effect from the pre-existing $\\text{Cl}^-$, which is exactly the mistake this question is designed to catch: the true solubility here is far lower because Le Chatelier's principle suppresses further dissolution. $1.8\\times10^{-10}$ M mistakes $K_{sp}$ itself for the solubility. $1.8\\times10^{-12}$ M comes from dividing by $0.01^2$ instead of $0.01^1$, over-applying the common-ion concentration."
+      ],
+      "verification_method": "python_arithmetic_common_ion_effect_solubility"
+    },
+    {
+      "id": "pi-equilibrium-ionic-006",
+      "concept_id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "$\\text{AgCl}$ has $K_{sp} = 1.8\\times10^{-10}$. Equal volumes of $0.02$ M $\\text{AgNO}_3$ and $0.02$ M $\\text{NaCl}$ solutions are mixed. Will a precipitate of $\\text{AgCl}$ form?",
+      "options": [
+        "Yes, since after mixing $Q_{sp} = 1.0\\times10^{-4}$, which is far greater than $K_{sp}$",
+        "No, since after mixing $Q_{sp} = 1.8\\times10^{-10}$, exactly equal to $K_{sp}$",
+        "No, since mixing two solutions always dilutes both ions below their solubility limit",
+        "Yes, but only because $\\text{AgNO}_3$ and $\\text{NaCl}$ react directly with each other, regardless of concentration"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Yes, since after mixing $Q_{sp} = 1.0\\times10^{-4}$, which is far greater than $K_{sp}$",
+      "solution_steps": [
+        "Mixing equal volumes halves each concentration: $[\\text{Ag}^+]=[\\text{Cl}^-]=0.02/2=0.01$ M.",
+        "$Q_{sp} = [\\text{Ag}^+][\\text{Cl}^-] = (0.01)(0.01) = 1.0\\times10^{-4}$.",
+        "Since $Q_{sp} (1.0\\times10^{-4}) \\gg K_{sp} (1.8\\times10^{-10})$, the solution is far more concentrated in $\\text{Ag}^+$ and $\\text{Cl}^-$ than equilibrium allows, so a precipitate DOES form.",
+        "Verified numerically: $0.01\\times0.01=1\\text{e-}4$, and $1\\text{e-}4 > 1.8\\text{e-}10$.",
+        "The second option understates $Q_{sp}$ by many orders of magnitude, as if diluting by mixing had already reduced it all the way down to $K_{sp}$. The third option is a false blanket statement — dilution lowers concentrations, but whether a precipitate forms depends on comparing the resulting $Q_{sp}$ to $K_{sp}$, not on dilution alone; here $Q_{sp}$ is still far above $K_{sp}$. The fourth option reaches the right yes/no answer but for the wrong reason — precipitation is governed by the $Q_{sp}$ vs $K_{sp}$ comparison, not by an assumed automatic reaction between the two salts."
+      ],
+      "verification_method": "python_arithmetic_Qsp_vs_Ksp_precipitation"
+    },
+    {
+      "id": "pi-redox-and-electrochemistry-001",
+      "concept_id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the oxidation number of manganese (Mn) in $\\text{KMnO}_4$? (Assign K = +1, O = -2, and use the fact that the overall compound is neutral.)",
+      "options": [
+        "+7",
+        "+6",
+        "+2",
+        "+4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "+7",
+      "solution_steps": [
+        "Let the oxidation number of Mn be $x$. The compound is neutral, so the sum of all oxidation numbers is 0: $(+1) + x + 4(-2) = 0$.",
+        "$1 + x - 8 = 0 \\Rightarrow x = 7$.",
+        "Verified: $1+7-8=0$.",
+        "+6 comes from an arithmetic slip, forgetting one unit while balancing the equation. +2 mistakes Mn's oxidation number here for a common oxidation state Mn takes in other compounds like $\\text{MnCl}_2$, not this one. +4 is Mn's oxidation number in $\\text{MnO}_2$, a different compound entirely, wrongly carried over."
+      ],
+      "verification_method": "python_arithmetic_oxidation_number_balance"
+    },
+    {
+      "id": "pi-redox-and-electrochemistry-002",
+      "concept_id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Balance the redox reaction in acidic medium: $\\text{MnO}_4^- + \\text{Fe}^{2+} \\rightarrow \\text{Mn}^{2+} + \\text{Fe}^{3+}$ (in acidic solution, with $\\text{H}^+$ and $\\text{H}_2\\text{O}$ as needed). Which balanced equation is correct?",
+      "options": [
+        "$\\text{MnO}_4^- + 5\\text{Fe}^{2+} + 8\\text{H}^+ \\rightarrow \\text{Mn}^{2+} + 5\\text{Fe}^{3+} + 4\\text{H}_2\\text{O}$",
+        "$\\text{MnO}_4^- + \\text{Fe}^{2+} + 4\\text{H}^+ \\rightarrow \\text{Mn}^{2+} + \\text{Fe}^{3+} + 2\\text{H}_2\\text{O}$",
+        "$\\text{MnO}_4^- + 2\\text{Fe}^{2+} + 8\\text{H}^+ \\rightarrow \\text{Mn}^{2+} + 2\\text{Fe}^{3+} + 4\\text{H}_2\\text{O}$",
+        "$2\\text{MnO}_4^- + 5\\text{Fe}^{2+} + 16\\text{H}^+ \\rightarrow 2\\text{Mn}^{2+} + 5\\text{Fe}^{3+} + 8\\text{H}_2\\text{O}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{MnO}_4^- + 5\\text{Fe}^{2+} + 8\\text{H}^+ \\rightarrow \\text{Mn}^{2+} + 5\\text{Fe}^{3+} + 4\\text{H}_2\\text{O}$",
+      "solution_steps": [
+        "Mn goes from $+7$ (in $\\text{MnO}_4^-$) to $+2$ (in $\\text{Mn}^{2+}$): a gain of 5 electrons per Mn. Fe goes from $+2$ to $+3$: a loss of 1 electron per Fe.",
+        "To balance electrons, 1 $\\text{MnO}_4^-$ (gaining 5 e$^-$) must pair with 5 $\\text{Fe}^{2+}$ (each losing 1 e$^-$, total 5 e$^-$ lost).",
+        "Balancing O: $\\text{MnO}_4^-$ has 4 oxygens, so 4 $\\text{H}_2\\text{O}$ are needed on the right. Balancing H: 4 $\\text{H}_2\\text{O}$ needs 8 $\\text{H}^+$ on the left. Charge check: left side $(-1)+5(+2)+8(+1) = -1+10+8=+17$; right side $(+2)+5(+3)+0=+2+15=+17$ — balanced.",
+        "Verified the full charge and atom balance numerically: both sides give $+17$ total charge, and Mn/Fe/O/H counts match on both sides.",
+        "The second option uses a 1:1 Mn:Fe ratio, ignoring that Mn needs 5 electrons but each Fe only supplies 1 — this equation is not electron-balanced. The third option uses a 1:2 ratio, still short of the needed 1:5 ratio. The fourth option is a valid equation too (it is exactly double every coefficient of the correct minimal equation), but it is not the balanced equation in its LOWEST whole-number ratio, which is what 'the balanced equation' conventionally means."
+      ],
+      "verification_method": "python_arithmetic_redox_balance_electron_and_charge_check"
+    },
+    {
+      "id": "pi-redox-and-electrochemistry-003",
+      "concept_id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Given standard reduction potentials $E^\\circ(\\text{Cu}^{2+}/\\text{Cu}) = +0.34$ V and $E^\\circ(\\text{Zn}^{2+}/\\text{Zn}) = -0.76$ V, what is $E^\\circ_{\\text{cell}}$ for a cell with zinc as the anode and copper as the cathode?",
+      "options": [
+        "+1.10 V",
+        "-1.10 V",
+        "-0.42 V",
+        "+0.42 V"
+      ],
+      "answer_index": 0,
+      "correct_answer": "+1.10 V",
+      "solution_steps": [
+        "$E^\\circ_{\\text{cell}} = E^\\circ_{\\text{cathode}} - E^\\circ_{\\text{anode}}$.",
+        "Here, copper is the cathode (reduction) and zinc is the anode (oxidation): $E^\\circ_{\\text{cell}} = (+0.34) - (-0.76) = +1.10$ V.",
+        "Verified: $0.34-(-0.76)=0.34+0.76=1.10$.",
+        "-1.10 V is exactly the correct magnitude with the sign flipped — this is what you get from swapping cathode and anode in the formula (computing $E^\\circ_{\\text{anode}}-E^\\circ_{\\text{cathode}}$ instead). -0.42 V comes from wrongly ADDING the two potentials with their given signs ($0.34+(-0.76)$) instead of subtracting. +0.42 V is the same wrong addition, just reported as a positive magnitude."
+      ],
+      "verification_method": "python_arithmetic_standard_cell_potential"
+    },
+    {
+      "id": "pi-redox-and-electrochemistry-004",
+      "concept_id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For the cell $\\text{Zn}|\\text{Zn}^{2+}(0.1\\text{ M})\\,||\\,\\text{Cu}^{2+}(1.0\\text{ M})|\\text{Cu}$ at 298 K, $E^\\circ_{\\text{cell}} = 1.10$ V and $n=2$. What is $E_{\\text{cell}}$? (Use the Nernst equation $E_{\\text{cell}} = E^\\circ_{\\text{cell}} - \\dfrac{0.0591}{n}\\log_{10}Q$, with $Q = [\\text{Zn}^{2+}]/[\\text{Cu}^{2+}]$.)",
+      "options": [
+        "1.13 V",
+        "1.10 V",
+        "1.07 V",
+        "1.16 V"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.13 V",
+      "solution_steps": [
+        "$Q = [\\text{Zn}^{2+}]/[\\text{Cu}^{2+}] = 0.1/1.0 = 0.1$, so $\\log_{10}Q = \\log_{10}(0.1) = -1$.",
+        "$E_{\\text{cell}} = 1.10 - \\dfrac{0.0591}{2}(-1) = 1.10 + 0.02955 = 1.12955 \\approx 1.13$ V.",
+        "Verified numerically: $1.10 - (0.0591/2)\\times(-1) = 1.12955$, which rounds to 1.13 V.",
+        "1.10 V simply forgets the $\\log Q$ correction term entirely (as if $Q=1$). 1.07 V comes from a sign error, subtracting the correction ($1.10-0.02955$) instead of adding it. 1.16 V comes from using $n=1$ instead of $n=2$ in the denominator, doubling the size of the correction term."
+      ],
+      "verification_method": "python_arithmetic_nernst_equation"
+    },
+    {
+      "id": "pi-redox-and-electrochemistry-005",
+      "concept_id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A current of 2 A is passed through a solution of $\\text{CuSO}_4$ for 1930 s. What mass of copper is deposited at the cathode? (Cu = 63.5, $F = 96500$ C mol$^{-1}$, and $\\text{Cu}^{2+} + 2e^- \\rightarrow \\text{Cu}$ needs 2 electrons per Cu atom.)",
+      "options": [
+        "1.27 g",
+        "2.54 g",
+        "5.08 g",
+        "0.635 g"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.27 g",
+      "solution_steps": [
+        "Total charge passed: $Q = It = 2 \\times 1930 = 3860$ C.",
+        "Moles of electrons $= Q/F = 3860/96500 = 0.04$ mol.",
+        "Since $\\text{Cu}^{2+}$ needs 2 electrons per atom, moles of Cu deposited $= 0.04/2 = 0.02$ mol.",
+        "Mass of Cu $= 0.02 \\times 63.5 = 1.27$ g.",
+        "Verified end to end numerically: $2\\times1930=3860$, $3860/96500=0.04$, $0.04/2=0.02$, $0.02\\times63.5=1.27$.",
+        "2.54 g forgets to divide by 2 electrons per Cu atom (treats it as a 1-electron process). 5.08 g wrongly MULTIPLIES the moles of electrons by 2 instead of dividing. 0.635 g divides by the electron count twice over (an extra, unjustified halving)."
+      ],
+      "verification_method": "python_arithmetic_faradays_law_electrolysis"
+    },
+    {
+      "id": "pi-redox-and-electrochemistry-006",
+      "concept_id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A 0.1 M solution has a measured conductivity (specific conductance) $\\kappa = 1.4\\times10^{-2}$ S cm$^{-1}$. What is its molar conductivity $\\Lambda_m$? (Use $\\Lambda_m = \\dfrac{\\kappa \\times 1000}{C}$, with $C$ in mol L$^{-1}$ and $\\Lambda_m$ in S cm$^2$ mol$^{-1}$.)",
+      "options": [
+        "140 S cm$^2$ mol$^{-1}$",
+        "0.14 S cm$^2$ mol$^{-1}$",
+        "14 S cm$^2$ mol$^{-1}$",
+        "140000 S cm$^2$ mol$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "140 S cm$^2$ mol$^{-1}$",
+      "solution_steps": [
+        "$\\Lambda_m = \\dfrac{\\kappa\\times1000}{C} = \\dfrac{(1.4\\times10^{-2})\\times1000}{0.1}$.",
+        "Numerator: $1.4\\times10^{-2}\\times1000 = 14$. Then $\\Lambda_m = 14/0.1 = 140$ S cm$^2$ mol$^{-1}$.",
+        "Verified numerically: $1.4\\text{e-}2\\times1000/0.1 = 140.0$.",
+        "0.14 S cm$^2$ mol$^{-1}$ forgets the ×1000 unit-conversion factor (from litres to cm$^3$) entirely, using $\\Lambda_m=\\kappa/C$. 14 S cm$^2$ mol$^{-1}$ uses ×100 instead of the correct ×1000 conversion factor. 140000 S cm$^2$ mol$^{-1}$ applies an extra, incorrect factor of 1000 on top of the correct calculation (a double unit-conversion mistake)."
+      ],
+      "verification_method": "python_arithmetic_molar_conductivity_from_specific_conductance"
+    },
+    {
+      "id": "pi-chemical-kinetics-001",
+      "concept_id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The rate constant $k$ of a certain reaction has units of $\\text{L mol}^{-1}\\text{s}^{-1}$. What is the order of this reaction? (For an $n$th-order reaction, the units of $k$ are $(\\text{mol L}^{-1})^{1-n}\\,\\text{s}^{-1}$.)",
+      "options": [
+        "2",
+        "0",
+        "1",
+        "3"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2",
+      "solution_steps": [
+        "For units $(\\text{mol L}^{-1})^{1-n}\\text{s}^{-1}$ to equal $\\text{L mol}^{-1}\\text{s}^{-1} = (\\text{mol L}^{-1})^{-1}\\text{s}^{-1}$, we need $1-n=-1$.",
+        "Solving: $1-n=-1 \\Rightarrow n=2$.",
+        "Verified by checking each order's units directly against the rule $(\\text{mol L}^{-1})^{1-n}$: only $n=2$ gives $(\\text{mol L}^{-1})^{-1} = \\text{L mol}^{-1}$, matching the given units.",
+        "Order 0 gives units $\\text{mol L}^{-1}\\text{s}^{-1}$ (no L mol$^{-1}$ term at all). Order 1 gives units of just $\\text{s}^{-1}$ (no concentration term). Order 3 gives units $(\\text{mol L}^{-1})^{-2}\\text{s}^{-1} = \\text{L}^2\\text{mol}^{-2}\\text{s}^{-1}$, one power too many — none of these match the given $\\text{L mol}^{-1}\\text{s}^{-1}$."
+      ],
+      "verification_method": "python_rule_check_order_from_rate_constant_units"
+    },
+    {
+      "id": "pi-chemical-kinetics-002",
+      "concept_id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The decomposition $2\\text{N}_2\\text{O}_5\\text{(g)} \\rightarrow 4\\text{NO}_2\\text{(g)} + \\text{O}_2\\text{(g)}$ is experimentally found to follow the rate law $\\text{rate} = k[\\text{N}_2\\text{O}_5]$, i.e. it is first order overall — even though the balanced equation has a coefficient of 2 in front of $\\text{N}_2\\text{O}_5$. What does this tell us about order versus molecularity here?",
+      "options": [
+        "The reaction order (1) is determined experimentally from the rate law, and it does NOT equal the stoichiometric coefficient (2); molecularity, strictly speaking, only applies to a single elementary step, not to this overall multi-step reaction.",
+        "Order and molecularity must always be equal for every reaction, so this reaction must actually be second order and the rate law given must be a misprint.",
+        "This reaction's molecularity is 1 and its order is 2, exactly the reverse of what is written.",
+        "Order and molecularity are just two different names for the same idea, so there is no real distinction to explain here."
+      ],
+      "answer_index": 0,
+      "correct_answer": "The reaction order (1) is determined experimentally from the rate law, and it does NOT equal the stoichiometric coefficient (2); molecularity, strictly speaking, only applies to a single elementary step, not to this overall multi-step reaction.",
+      "solution_steps": [
+        "Reaction ORDER is always found experimentally from the observed rate law — here that is 1, matching the given rate law $\\text{rate}=k[\\text{N}_2\\text{O}_5]$.",
+        "Reaction MOLECULARITY is the number of reactant species colliding in a single elementary (one-step) reaction, and it is only meaningful for a genuinely single-step mechanism. This decomposition proceeds through several elementary steps, so 'the molecularity of the overall reaction' isn't a well-defined single number the way order is.",
+        "This is exactly why order and molecularity are DIFFERENT concepts: order and molecularity coincide only for a genuinely single-step (elementary) reaction; for a multi-step reaction like this one, they can differ, as they do here (order 1, from experiment, versus the stoichiometric coefficient of 2).",
+        "The second option is the classic wrong belief this question is designed to catch — order and molecularity are NOT always equal, and the experimentally-confirmed rate law is correct as stated, not a misprint. The third option simply swaps the two values without any justification. The fourth option denies there is any distinction at all, which is the same underlying misconception as the second option."
+      ],
+      "verification_method": "chemistry_conceptual_fact_order_vs_molecularity_multistep_mechanism"
+    },
+    {
+      "id": "pi-chemical-kinetics-003",
+      "concept_id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A first-order reaction has a rate constant $k = 0.0231\\ \\text{min}^{-1}$. What is its half-life? (Use $t_{1/2} = 0.693/k$.)",
+      "options": [
+        "30.0 min",
+        "15.0 min",
+        "60.0 min",
+        "23.1 min"
+      ],
+      "answer_index": 0,
+      "correct_answer": "30.0 min",
+      "solution_steps": [
+        "For a first-order reaction, $t_{1/2} = 0.693/k$, independent of the starting concentration.",
+        "$t_{1/2} = 0.693/0.0231 = 30.0$ min.",
+        "Verified numerically: $0.693/0.0231=30.0$ exactly.",
+        "15.0 min is exactly half the correct value (a stray factor of 2 somewhere). 60.0 min is exactly double the correct value (the reverse slip). 23.1 min mistakes the rate constant $k$'s numeric value itself (just scaled by 1000) for the half-life, skipping the actual formula."
+      ],
+      "verification_method": "python_arithmetic_first_order_half_life"
+    },
+    {
+      "id": "pi-chemical-kinetics-004",
+      "concept_id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "For a first-order reaction, $[\\text{A}]_0 = 0.8$ M initially, and after 20 minutes $[\\text{A}] = 0.2$ M. What is the rate constant $k$? (Use $k = \\dfrac{2.303}{t}\\log_{10}\\dfrac{[\\text{A}]_0}{[\\text{A}]}$, and $\\log 2 = 0.301$, noting $[\\text{A}]_0/[\\text{A}]=4=2^2$.)",
+      "options": [
+        "0.0693 min$^{-1}$",
+        "0.0347 min$^{-1}$",
+        "0.0301 min$^{-1}$",
+        "0.1386 min$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.0693 min$^{-1}$",
+      "solution_steps": [
+        "$[\\text{A}]_0/[\\text{A}] = 0.8/0.2 = 4 = 2^2$, so $\\log_{10}(4) = 2\\log_{10}(2) = 2(0.301)=0.602$.",
+        "$k = \\dfrac{2.303}{20}\\times0.602$.",
+        "$k = 0.11515 \\times 0.602 = 0.0693\\ \\text{min}^{-1}$.",
+        "Verified numerically: $(2.303/20)\\times0.602 = 0.06933$, which rounds to 0.0693.",
+        "0.0347 min$^{-1}$ is exactly half the correct value, from using $\\log_{10}(2)=0.301$ directly instead of $\\log_{10}(4)=0.602$ (forgetting to double it for the squared ratio). 0.0301 min$^{-1}$ mistakes $\\log_{10}(2)$'s given value itself for the final rate constant, skipping the rest of the formula. 0.1386 min$^{-1}$ is exactly double the correct value, from using $t=10$ min instead of the given 20 min."
+      ],
+      "verification_method": "python_arithmetic_first_order_integrated_rate_law"
+    },
+    {
+      "id": "pi-chemical-kinetics-005",
+      "concept_id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A zero-order reaction has $[\\text{A}]_0 = 0.5$ M and rate constant $k = 0.025\\ \\text{M min}^{-1}$. How long does it take for $[\\text{A}]$ to fall to $0.1$ M? (Use $[\\text{A}] = [\\text{A}]_0 - kt$.)",
+      "options": [
+        "16.0 min",
+        "20.0 min",
+        "4.0 min",
+        "8.0 min"
+      ],
+      "answer_index": 0,
+      "correct_answer": "16.0 min",
+      "solution_steps": [
+        "Rearranging, $t = \\dfrac{[\\text{A}]_0-[\\text{A}]}{k} = \\dfrac{0.5-0.1}{0.025}$.",
+        "$t = 0.4/0.025 = 16.0$ min.",
+        "Verified numerically: $0.4/0.025=16.0$ exactly.",
+        "20.0 min comes from dividing $[\\text{A}]_0$ alone by $k$ (forgetting to subtract $[\\text{A}]$ first): $0.5/0.025=20$. 4.0 min comes from dividing $[\\text{A}]$ alone by $k$: $0.1/0.025=4$. 8.0 min is exactly half the correct answer, from a stray factor of 2 in the subtraction or division step."
+      ],
+      "verification_method": "python_arithmetic_zero_order_integrated_rate_law"
+    },
+    {
+      "id": "pi-chemical-kinetics-006",
+      "concept_id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A reaction's rate constant is $k_1 = 1.0\\ \\text{s}^{-1}$ at $T_1=300$ K, and it doubles to $k_2 = 2.0\\ \\text{s}^{-1}$ at $T_2=310$ K. What is the activation energy $E_a$? (Use the Arrhenius form $\\ln(k_2/k_1) = \\dfrac{E_a}{R}\\left(\\dfrac{1}{T_1}-\\dfrac{1}{T_2}\\right)$, $R=8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$.)",
+      "options": [
+        "53.6 kJ mol$^{-1}$",
+        "26.8 kJ mol$^{-1}$",
+        "8.31 kJ mol$^{-1}$",
+        "107.2 kJ mol$^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "53.6 kJ mol$^{-1}$",
+      "solution_steps": [
+        "$\\ln(k_2/k_1) = \\ln(2.0) = 0.6931$.",
+        "$\\dfrac{1}{T_1}-\\dfrac{1}{T_2} = \\dfrac{1}{300}-\\dfrac{1}{310} = 1.0753\\times10^{-4}\\ \\text{K}^{-1}$.",
+        "$E_a = \\dfrac{R\\ln(k_2/k_1)}{(1/T_1-1/T_2)} = \\dfrac{8.314\\times0.6931}{1.0753\\times10^{-4}} = 53594\\ \\text{J mol}^{-1} \\approx 53.6\\ \\text{kJ mol}^{-1}$.",
+        "Verified numerically end to end using the exact formula: $E_a \\approx 53594\\ \\text{J mol}^{-1}$, i.e. 53.6 kJ mol$^{-1}$.",
+        "26.8 kJ mol$^{-1}$ is roughly half the correct value, from a stray factor of 2 (e.g. using $\\ln(2)/2$ by mistake). 8.31 kJ mol$^{-1}$ mistakes $R$'s numeric value alone (just relabelled in kJ) for the answer, skipping the actual calculation. 107.2 kJ mol$^{-1}$ is roughly double the correct value, from a stray factor of 2 in the other direction (for instance, forgetting to convert R from J to kJ and instead doubling the exponent term)."
+      ],
+      "verification_method": "python_arithmetic_arrhenius_activation_energy"
+    },
+    {
+      "id": "pi-solutions-and-colligative-001",
+      "concept_id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "10 g of a solute (molar mass 100 g mol$^{-1}$) is dissolved in 500 g of a solvent. What is the molality of the solution?",
+      "options": [
+        "0.2 m",
+        "0.02 m",
+        "2.0 m",
+        "0.1 m"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.2 m",
+      "solution_steps": [
+        "Moles of solute $= 10/100 = 0.1$ mol.",
+        "Molality $= \\dfrac{\\text{moles of solute}}{\\text{mass of solvent in kg}} = \\dfrac{0.1}{0.5} = 0.2\\ \\text{mol kg}^{-1}$.",
+        "Verified: $0.1/0.5=0.2$ exactly.",
+        "0.02 m comes from forgetting to convert 500 g to 0.5 kg and instead dividing by 500 directly. 2.0 m comes from dividing moles by 0.05 kg instead of 0.5 kg, a decimal-place slip. 0.1 m simply restates the moles of solute, forgetting to divide by the solvent mass at all."
+      ],
+      "verification_method": "python_arithmetic_molality_calculation"
+    },
+    {
+      "id": "pi-solutions-and-colligative-002",
+      "concept_id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A solvent has a pure vapour pressure $P^\\circ = 100$ mmHg. A solution is made with 0.1 mol of a non-volatile solute and 0.9 mol of solvent. What is the vapour pressure of the solution? (Use Raoult's law: relative lowering of vapour pressure $= x_{\\text{solute}}$.)",
+      "options": [
+        "90 mmHg",
+        "10 mmHg",
+        "80 mmHg",
+        "99 mmHg"
+      ],
+      "answer_index": 0,
+      "correct_answer": "90 mmHg",
+      "solution_steps": [
+        "Mole fraction of solute $x_{\\text{solute}} = \\dfrac{0.1}{0.1+0.9} = 0.1$.",
+        "Raoult's law: $\\dfrac{P^\\circ-P_s}{P^\\circ} = x_{\\text{solute}} = 0.1$, so the vapour pressure drop is $\\Delta P = 0.1\\times100 = 10$ mmHg.",
+        "The solution's vapour pressure is $P_s = P^\\circ - \\Delta P = 100-10=90$ mmHg.",
+        "Verified numerically: mole fraction $0.1/1.0=0.1$, drop $=10$ mmHg, $P_s=90$ mmHg.",
+        "10 mmHg is the DROP in vapour pressure, mistaken for the final vapour pressure of the solution itself. 80 mmHg comes from using $x_{\\text{solute}}=0.2$ by mistake (perhaps confusing the solute mole count with a doubled value), giving too large a drop. 99 mmHg comes from using $x_{\\text{solute}}=0.01$ (a decimal-place slip), giving too small a drop."
+      ],
+      "verification_method": "python_arithmetic_raoults_law_vapor_pressure"
+    },
+    {
+      "id": "pi-solutions-and-colligative-003",
+      "concept_id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A non-electrolyte solute is dissolved in water to make a 2 mol kg$^{-1}$ solution. What is the boiling point elevation, $\\Delta T_b$? ($K_b$ for water $= 0.52\\ \\text{K kg mol}^{-1}$.)",
+      "options": [
+        "1.04 K",
+        "0.26 K",
+        "2.08 K",
+        "0.52 K"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.04 K",
+      "solution_steps": [
+        "For a non-electrolyte, $\\Delta T_b = K_b \\times m$ (van't Hoff factor $i=1$, since the solute does not dissociate).",
+        "$\\Delta T_b = 0.52 \\times 2 = 1.04$ K.",
+        "Verified: $0.52\\times2=1.04$ exactly.",
+        "0.26 K comes from dividing by 2 instead of multiplying. 2.08 K is exactly double the correct value, from a stray factor of 2 (perhaps applying $i=2$ by mistake, even though this is stated to be a non-electrolyte). 0.52 K simply restates $K_b$ itself, forgetting to multiply by the molality at all."
+      ],
+      "verification_method": "python_arithmetic_boiling_point_elevation"
+    },
+    {
+      "id": "pi-solutions-and-colligative-004",
+      "concept_id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "$0.5$ mol kg$^{-1}$ $\\text{NaCl}$ solution is prepared in water. What is the freezing point depression, $\\Delta T_f$? ($K_f$ for water $= 1.86\\ \\text{K kg mol}^{-1}$. $\\text{NaCl}$ fully dissociates into 2 ions, so its van't Hoff factor $i=2$.)",
+      "options": [
+        "1.86 K",
+        "0.93 K",
+        "3.72 K",
+        "0.465 K"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.86 K",
+      "solution_steps": [
+        "For an electrolyte, $\\Delta T_f = i \\times K_f \\times m$, where $i$ accounts for the number of particles each formula unit breaks into.",
+        "$\\Delta T_f = 2 \\times 1.86 \\times 0.5 = 1.86$ K.",
+        "Verified: $2\\times1.86\\times0.5=1.86$ exactly.",
+        "0.93 K comes from IGNORING the van't Hoff factor entirely (using $i=1$ as if $\\text{NaCl}$ were a non-electrolyte) — exactly half the correct answer, since $i=2$ doubles the effect. 3.72 K is exactly double the correct value, from using $i=4$ by mistake. 0.465 K comes from dividing by $i$ instead of multiplying by it."
+      ],
+      "verification_method": "python_arithmetic_freezing_point_depression_vant_hoff"
+    },
+    {
+      "id": "pi-solutions-and-colligative-005",
+      "concept_id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the osmotic pressure of a 0.1 M solution of a non-electrolyte (like glucose) at 300 K? (Use $\\pi = iCRT$ with $i=1$, $R = 0.0821\\ \\text{L atm mol}^{-1}\\text{K}^{-1}$.)",
+      "options": [
+        "2.46 atm",
+        "24.6 atm",
+        "1.23 atm",
+        "0.246 atm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2.46 atm",
+      "solution_steps": [
+        "$\\pi = iCRT = 1 \\times 0.1 \\times 0.0821 \\times 300$.",
+        "$\\pi = 0.1\\times0.0821\\times300 = 2.463$ atm.",
+        "Verified numerically: $0.1\\times0.0821\\times300=2.463$, which rounds to 2.46 atm.",
+        "24.6 atm is exactly ten times the correct value, from a decimal-place slip in the concentration (using $C=1.0$ M instead of 0.1 M). 1.23 atm is roughly half the correct value, from a stray factor of 2. 0.246 atm is exactly one-tenth the correct value, the opposite decimal-place slip."
+      ],
+      "verification_method": "python_arithmetic_osmotic_pressure"
+    },
+    {
+      "id": "pi-solutions-and-colligative-006",
+      "concept_id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Benzoic acid has a normal molar mass of 122 g mol$^{-1}$, but it dimerizes in benzene solution. A freezing-point depression experiment on this solution gives an OBSERVED (apparent) molar mass of 241 g mol$^{-1}$. What is the van't Hoff factor $i$ for this solution? (Use $i = \\dfrac{\\text{normal molar mass}}{\\text{observed molar mass}}$.)",
+      "options": [
+        "0.51",
+        "1.97",
+        "1.00",
+        "2.00"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.51",
+      "solution_steps": [
+        "Because the solute associates (fewer effective particles than expected), the apparent (observed) molar mass comes out LARGER than the true molar mass, and $i = \\dfrac{\\text{normal molar mass}}{\\text{observed molar mass}}$.",
+        "$i = 122/241 = 0.506 \\approx 0.51$.",
+        "Verified numerically: $122/241=0.5062$, which rounds to 0.51.",
+        "1.97 comes from inverting the ratio ($241/122$ instead of $122/241$) — this is the classic mistake of dividing the wrong way round. 1.00 IGNORES the van't Hoff factor correction entirely, assuming benzoic acid behaves as a normal, non-associating solute (exactly the error this question is designed to catch, since $i=1$ would mean no association is happening at all). 2.00 assumes the solute fully and completely dimerizes into exactly half as many particles, without actually computing $i$ from the given molar masses."
+      ],
+      "verification_method": "python_arithmetic_vant_hoff_factor_association"
+    },
+    {
+      "id": "pi-solid-state-001",
+      "concept_id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "How many atoms are present per unit cell in a face-centred cubic (fcc) lattice? (8 corner atoms, each shared among 8 cells; 6 face-centred atoms, each shared between 2 cells.)",
+      "options": [
+        "4",
+        "8",
+        "2",
+        "6"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Corner contribution: $8\\ \\text{corners} \\times \\tfrac{1}{8} = 1$ atom.",
+        "Face contribution: $6\\ \\text{faces} \\times \\tfrac{1}{2} = 3$ atoms.",
+        "Total per unit cell $= 1+3=4$ atoms.",
+        "Verified: $8\\times(1/8) + 6\\times(1/2) = 1+3=4$.",
+        "8 simply counts the corner and face atoms without applying any of the sharing fractions at all. 2 is the correct count for a body-centred cubic (bcc) lattice, not fcc — mixing up the two lattice types. 6 counts only the 6 face-centred atoms as whole atoms, forgetting both the sharing fraction and the corner contribution."
+      ],
+      "verification_method": "python_arithmetic_fcc_atoms_per_unit_cell"
+    },
+    {
+      "id": "pi-solid-state-002",
+      "concept_id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the coordination number of an atom in a body-centred cubic (bcc) lattice, like sodium metal?",
+      "options": [
+        "8",
+        "12",
+        "6",
+        "4"
+      ],
+      "answer_index": 0,
+      "correct_answer": "8",
+      "solution_steps": [
+        "In a bcc lattice, each corner atom's nearest neighbours are the body-centre atoms of the 8 cubes surrounding it, giving a coordination number of 8.",
+        "This is a standard, well-established structural fact about the bcc arrangement (each atom touches 8 nearest neighbours, unlike fcc/hcp where it is 12).",
+        "Cross-checked against the standard reference values for all three common metallic lattices: simple cubic = 6, bcc = 8, fcc/hcp (close-packed) = 12.",
+        "12 is the coordination number for a close-packed structure (fcc or hcp), not bcc — mixing up the two. 6 is the coordination number for a simple cubic lattice, the least efficiently packed of the three. 4 is the coordination number seen in some open structures like diamond, not applicable to a simple metallic bcc lattice."
+      ],
+      "verification_method": "chemistry_conceptual_fact_bcc_coordination_number"
+    },
+    {
+      "id": "pi-solid-state-003",
+      "concept_id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the packing efficiency of a face-centred cubic (fcc) unit cell? (In fcc, the edge length $a = 2\\sqrt{2}\\,r$, where $r$ is the atomic radius, and there are 4 atoms per unit cell.)",
+      "options": [
+        "74.0%",
+        "68.0%",
+        "52.4%",
+        "100%"
+      ],
+      "answer_index": 0,
+      "correct_answer": "74.0%",
+      "solution_steps": [
+        "Volume occupied by atoms $= 4 \\times \\tfrac{4}{3}\\pi r^3$. Volume of unit cell $= a^3 = (2\\sqrt2\\,r)^3$.",
+        "Packing efficiency $= \\dfrac{4\\times\\tfrac43\\pi r^3}{(2\\sqrt2\\,r)^3}\\times100\\%$.",
+        "Computed numerically (with $r=1$ for simplicity, since $r$ cancels out): packing efficiency $\\approx 74.05\\%$, i.e. 74.0%.",
+        "68.0% is the packing efficiency of a body-centred cubic (bcc) lattice, not fcc — a different structure entirely. 52.4% is the packing efficiency of a simple cubic lattice, the least efficient of the three. 100% would mean the spheres fill all of space with zero gaps, which is geometrically impossible for any arrangement of spheres."
+      ],
+      "verification_method": "python_numeric_fcc_packing_efficiency"
+    },
+    {
+      "id": "pi-solid-state-004",
+      "concept_id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A crystal has an fcc-type unit cell with $Z=4$ formula units per cell, molar mass $M=58.5\\ \\text{g mol}^{-1}$, and edge length $a=564$ pm. What is the density of the crystal? (Use $\\rho = \\dfrac{ZM}{N_A a^3}$, $N_A=6.022\\times10^{23}\\ \\text{mol}^{-1}$; convert $a$ to cm first: $564\\ \\text{pm} = 5.64\\times10^{-8}$ cm.)",
+      "options": [
+        "2.17 g cm$^{-3}$",
+        "0.54 g cm$^{-3}$",
+        "4.33 g cm$^{-3}$",
+        "1.08 g cm$^{-3}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "2.17 g cm$^{-3}$",
+      "solution_steps": [
+        "$a^3 = (5.64\\times10^{-8}\\ \\text{cm})^3 = 1.794\\times10^{-22}\\ \\text{cm}^3$.",
+        "$\\rho = \\dfrac{ZM}{N_Aa^3} = \\dfrac{4\\times58.5}{(6.022\\times10^{23})(1.794\\times10^{-22})}$.",
+        "Computed numerically: $\\rho \\approx 2.17\\ \\text{g cm}^{-3}$.",
+        "Verified with the full unit-consistent calculation: $Z=4, M=58.5, a=5.64\\text{e-8}$ cm gives $\\rho=2.166$ g cm$^{-3}$, rounding to 2.17.",
+        "0.54 g cm$^{-3}$ comes from mistakenly using $Z=1$ instead of $Z=4$ (a quarter of the correct answer). 4.33 g cm$^{-3}$ comes from using $Z=8$ instead of $Z=4$ (double the correct answer). 1.08 g cm$^{-3}$ comes from using $Z=2$ instead of $Z=4$ (half the correct answer) — all three confuse $Z$ with the wrong lattice type's atom count."
+      ],
+      "verification_method": "python_arithmetic_unit_cell_density_formula"
+    },
+    {
+      "id": "pi-solid-state-005",
+      "concept_id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In an ionic crystal, a cation leaves its normal lattice site and occupies an interstitial (empty, in-between) site nearby, while the lattice site it left becomes a vacancy. What type of point defect is this?",
+      "options": [
+        "Frenkel defect",
+        "Schottky defect",
+        "Metal excess defect",
+        "Substitutional defect"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Frenkel defect",
+      "solution_steps": [
+        "A Frenkel defect is defined exactly as a smaller ion (usually the cation) moving from its normal lattice position into an interstitial site, creating a vacancy-interstitial pair, WITHOUT changing the overall stoichiometry of the crystal.",
+        "This matches the scenario described exactly: one ion displaced, one vacancy created, no ions actually removed from the crystal.",
+        "Cross-checked against the standard textbook definitions of the common point defects.",
+        "A Schottky defect is different — it is a PAIR of vacancies (both a cation AND an anion missing entirely from the lattice, in stoichiometric proportion), with no ion moving to an interstitial site, which is not what is described here. A metal excess defect involves an anion vacancy occupied by a free electron (giving colour centres), not a displaced cation. A substitutional defect involves a foreign atom replacing a host atom in the lattice, not a host ion moving to an interstitial position."
+      ],
+      "verification_method": "chemistry_conceptual_fact_frenkel_vs_schottky_defect"
+    },
+    {
+      "id": "pi-solid-state-006",
+      "concept_id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Copper crystallizes in an fcc lattice with $Z=4$, molar mass $M=63.5\\ \\text{g mol}^{-1}$, and density $8.96\\ \\text{g cm}^{-3}$. What is the edge length $a$ of its unit cell? (Use $\\rho=\\dfrac{ZM}{N_Aa^3}$, $N_A=6.022\\times10^{23}\\ \\text{mol}^{-1}$, rearranged to $a=\\left(\\dfrac{ZM}{N_A\\rho}\\right)^{1/3}$.)",
+      "options": [
+        "361 pm",
+        "227 pm",
+        "287 pm",
+        "455 pm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "361 pm",
+      "solution_steps": [
+        "$a^3 = \\dfrac{ZM}{N_A\\rho} = \\dfrac{4\\times63.5}{(6.022\\times10^{23})(8.96)}$.",
+        "$a^3 = 4.707\\times10^{-23}\\ \\text{cm}^3$, so $a = (4.707\\times10^{-23})^{1/3} = 3.611\\times10^{-8}\\ \\text{cm} = 361\\ \\text{pm}$.",
+        "Computed numerically end to end: $a \\approx 361.07$ pm, rounding to 361 pm — this matches copper's real, experimentally measured lattice constant closely.",
+        "227 pm comes from mistakenly using $Z=1$ instead of $Z=4$ (too small a cell volume, since fewer atoms per cell means the formula 'thinks' the cell can be smaller for the same density). 287 pm comes from using $Z=2$ instead of $Z=4$. 455 pm comes from using $Z=8$ instead of $Z=4$ (an oversized cell, the opposite mistake) — all three confuse $Z=4$ (correct for fcc) with a different lattice type's atom count."
+      ],
+      "verification_method": "python_arithmetic_edge_length_from_density"
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+# Best-practice authoring templates for JEE Main Optics concepts
+# (ray-optics, wave-optics).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose — see
+# jee-mechanics.yaml's header for the full rationale.
+#
+# Audience note: an anxious Indian Class 11-12 student sitting JEE Main.
+# ELI5, short sentences, Indian English, every technical term glossed on
+# first use. No curriculum-bridge audit exists for Physics against any state
+# board, so treat this as first-time-depth instruction, not a refresher.
+#
+# Family shape (wave_and_optics): intuition is a geometric visual, formalism
+# states the governing law, worked_example is a numeric problem, practice
+# checks a sign convention. The one thing this template insists on above all
+# else: draw the ray diagram (for ray-optics) or the wavefront/path picture
+# (for wave-optics) BEFORE writing the mirror/lens formula or interference
+# condition, and state the sign convention being used (the Cartesian sign
+# convention — distances measured from the pole, in the direction of
+# incident light are positive) explicitly every single time. This is, by a
+# wide margin, where JEE Main optics marks are lost: not the algebra, the
+# sign convention.
+
+topic_family: jee-optics
+
+intuition:
+  scaffold: physical-setup-before-formula
+  guidance: |
+    Open by describing the ray path or wave picture in plain words — light
+    bending as it enters a denser medium, two coherent sources sending out
+    ripples that overlap — and sketch it in words (which way light bends,
+    where the bright and dark bands would land) before any equation
+    appears. Gloss every technical word on first use (e.g. "coherent
+    sources" — two light sources that keep a fixed, unchanging phase
+    difference between them, which is why their waves can reliably add up
+    or cancel). Only once the picture is fixed should the general relation
+    appear.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement. Pick one small, fully-numbered case (one
+      lens, one given object distance; or one slit spacing and wavelength)
+      and trace the ray or wave picture by hand before any symbol appears
+      in general form. End on one thing to do next time (e.g. "always
+      write down the sign convention on paper before substituting a single
+      number"), phrased as an action. No praise, no mention of feelings.
+    assured: |
+      Skip the setup — a confident reader already draws the ray diagram
+      automatically. Go straight to the one condition that costs marks: a
+      distance measured against the sign convention instead of with it, a
+      virtual image treated as real, or an assumption (thin lens, small
+      angle) a shortcut silently needs. Give a genuine counterexample, not
+      a restatement.
+
+formal_definition:
+  scaffold: law-with-sign-convention
+  guidance: |
+    State the law in full symbolic form with display math (the mirror or
+    lens formula, the path-difference condition for interference), name the
+    SI unit of every quantity, and state the sign convention in the SAME
+    sentence — never let a formula stand without saying which direction
+    counts as positive. Two-sentence prose cap around the display math.
+    Name every symbol once in plain words on first use.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: diagram-then-numbers
+  guidance: |
+    Start with a one-line description of the ray diagram or wave path
+    (which side is which, what sign each given distance takes) before any
+    number is substituted. Six steps maximum, each step one action (draw
+    the diagram, write the formula, substitute values WITH their signs,
+    solve, sanity-check whether the resulting image or fringe makes
+    physical sense). Favour a JEE-flavoured shape (a combination of two
+    lenses, a compound microscope's magnification, a Young's double-slit
+    fringe-width calculation) over a bare plug-in-the-formula problem.
+    Steps separated by `\n---\n`. Final line "Answer: ..." with its unit.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — draw, write the formula,
+      substitute with signs, solve, check, each on its own line. Push every
+      "why" into the walkthrough's prompts/hints. End with the check run
+      explicitly (does the sign of the image distance mean real or
+      virtual, and does that match the diagram), not just claimed.
+    assured: |
+      Lead with the shortcut a first pass doesn't always emphasise —
+      combining lens powers instead of applying the lens formula twice, or
+      recognising a symmetric setup that halves the interference
+      calculation — and state the one condition that must hold for the
+      shortcut to apply before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level optics: substituting a distance as positive when the sign
+    convention makes it negative (the single most common source of lost
+    marks in this topic), confusing the focal length sign of a converging
+    versus diverging lens, or mixing up constructive and destructive
+    interference conditions (path difference an integer multiple of
+    wavelength versus a half-integer multiple).
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with different
+    numbers. Keep the arithmetic small enough to finish in under a minute —
+    round focal lengths, simple whole-number wavelengths in nanometres.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the formula or condition by name (e.g. "lens maker's
+    formula", "condition for constructive interference"); back gives the
+    symbolic form and its sign convention. Used by SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: ray-or-fringe-picture
+  guidance: |
+    Describe the ray diagram or the interference/diffraction pattern as a
+    picture in words — where rays bend, where bright and dark bands fall.
+
+    Ray and interference geometry is a genuine fit for the `line-panels`
+    scene type — showing two or three related ray paths, or the
+    bright/dark fringe pattern, side by side as separate labelled panels
+    rather than forcing them onto one shared curve. For a case with a
+    single clean closed-form y=f(x) (a fringe-intensity pattern along one
+    axis), `function-trace` also applies. Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"cos(x)^2","x_range":[-6.28,6.28],"y_range":[0,1.2],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. OMIT the block for anything that
+    doesn't reduce cleanly to one of the renderer's scene types (a full ray
+    diagram through a compound optical instrument, for instance) — never
+    invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question says 'image is formed on the same side as the object', that
+    means the image is virtual — check the sign before substituting." JEE
+    Main Paper 1 asks 25 questions per subject: 20 MCQs (+4/-1) and 5
+    compulsory numerical-value questions — do not invent a per-topic
+    weightage beyond that.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (the sign
+    convention itself — distances against the direction of incident light
+    are negative — or which type of interference gives a bright fringe at
+    the centre versus a dark one).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    a ray-optics lens-combination question feeding into a wave-optics
+    question about the resolving power of the same instrument).
+  bloom_floor: 4
+
+hook:
+  scaffold: ray-or-wavefront-picture
+  guidance: |
+    Open on one concrete, fully-numbered situation small enough to picture
+    immediately. Name the JEE-specific twist up front (e.g. "you move the
+    screen closer to a double slit — does the fringe pattern get wider,
+    narrower, or stay the same width?").
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. OMIT the fence entirely for
+    concepts that don't reduce to a 2D parametric/trace scene (a full
+    multi-lens ray diagram) — never invent a misleading scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-numbered instance, small enough to picture right
+      now. No history, no "you'll need this later" framing — the reader is
+      here after getting something wrong, and the useful move is one thing
+      that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      (assuming a lens formula's sign convention when the mirror one is
+      different, or ignoring that white light gives a coloured fringe
+      pattern rather than the monochromatic one the formula assumes).

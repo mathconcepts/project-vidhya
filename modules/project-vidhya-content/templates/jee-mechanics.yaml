@@ -1,0 +1,238 @@
+# Best-practice authoring templates for JEE Main Mechanics concepts
+# (units-and-measurements, kinematics-1d, kinematics-2d, newtons-laws,
+# work-energy-power, rotational-mechanics, gravitation, properties-of-matter).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose. That key is
+# the signal loadTopicsWithStancesBlock() reads to add a topic's concepts to
+# the content-maturity report's rollout denominator — it means "every concept
+# here carries a shaken and an assured body for hook/intuition/worked_example,
+# right now." That is not true yet: atom content for jee-mechanics is being
+# authored by other agents concurrently with this template. Adding the key
+# would make the rollout figure claim a completion that hasn't happened.
+# Add it once a real audit (the same kind linear-algebra.yaml passed) confirms
+# every concept below actually has both stance bodies for all three types.
+#
+# Audience note (shared by all nine new JEE Physics/Chemistry templates): the
+# reader is an anxious Indian Class 11-12 student sitting JEE Main. ELI5
+# reasoning, short sentences, Indian English, and every technical term glossed
+# in plain words the first time it appears — an anxious student re-reading
+# this at 11pm should not have to look anything up. Unlike jee-algebra.yaml,
+# there is no curriculum-bridge audit for Physics against any state board
+# (only data/registry/curriculum-bridges/tn-hse-12-math.yml exists, and it
+# covers Mathematics only), so this content should NOT assume the reader has
+# already met the mechanics of a given rule the way jee-algebra can assume
+# familiarity with the quadratic formula. Teach the physics properly, then
+# sharpen toward the exam-specific edge.
+#
+# Family shape (mechanics, data/curriculum/gate-em/template-families.yml):
+# intuition sets up the PHYSICAL SITUATION before any formula, formalism is a
+# free-body diagram, worked_example is a numeric problem, practice checks
+# sign or unit handling. The one thing every guidance block below insists on,
+# because it is where JEE Main mechanics marks are actually lost: draw the
+# situation (a free-body diagram, a labelled displacement-time sketch, a
+# rotation axis) and state the sign convention and units BEFORE writing a
+# single equation of motion.
+
+topic_family: jee-mechanics
+
+intuition:
+  scaffold: physical-setup-before-formula
+  guidance: |
+    Open by describing the physical situation in plain words — what object,
+    what forces or motion, what is being asked — and sketch it in words
+    ("picture a block sliding down a ramp, with the ramp angle marked from
+    the horizontal") before any equation appears. Only once the picture is
+    fixed should the general relation show up, and it should feel like the
+    picture wrote it, not the other way round. Gloss every technical word
+    the first time it's used (e.g. "moment of inertia" — how hard it is to
+    change an object's spin, the rotational stand-in for mass). ELI5, Indian
+    English throughout, because this reader may be seeing the topic taught
+    in English for the first time this year.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general setup. Pick one small, fully-numbered situation (one
+      block, one incline, one given angle and mass) and walk it by hand —
+      draw the forces, name each one, resolve it — before any symbol appears
+      in general form. End on the one thing to do next time (e.g. "always
+      draw the normal force perpendicular to the surface, not vertical"),
+      phrased as an action, not a summary. No praise, no mention of how the
+      reader might be feeling — a worked small win does that job better than
+      being told to feel better.
+    assured: |
+      Skip re-deriving the setup — a confident reader already draws the
+      diagram automatically. Go straight to the one condition that costs
+      marks under time pressure: a sign convention silently flipped, a
+      component resolved along the wrong axis, an assumption (massless
+      string, frictionless pulley) the question has quietly removed. Give a
+      genuine counterexample, not a restatement of the law.
+
+formal_definition:
+  scaffold: law-with-units
+  guidance: |
+    State the law or relation in full symbolic form with display math, and
+    name the SI unit of every quantity that appears (a mistake JEE loves to
+    test: mixing g in cm/s^2 with a distance in metres). Two-sentence prose
+    cap around the display math. Name every symbol once, in plain words, the
+    first time it appears (e.g. "tau is torque — a twisting force, measured
+    in newton-metres, not the same unit as force itself").
+  bloom_floor: 3
+
+worked_example:
+  scaffold: diagram-then-numbers
+  guidance: |
+    Start with a one-line description of the free-body diagram or motion
+    diagram (what forces act, in which direction, on what) before any
+    number is substituted. Six steps maximum, each step one action (draw
+    the diagram, write the equation of motion along an axis, substitute
+    values with units, solve, sanity-check the sign of the answer). Favour a
+    JEE-flavoured problem shape (a connected-body pulley system, projectile
+    range on an incline, a rolling-without-slipping condition) over a bare
+    plug-in-the-formula problem. Steps separated by `\n---\n` so
+    scaffold-fade can blank trailing steps on revisit. Final line
+    "Answer: ..." with its unit, so :::verify can confirm.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — draw, then resolve, then
+      substitute, then solve, then check, each on its own line. Push every
+      "why does this step work" explanation into the walkthrough's
+      prompts/hints, not onto the page. End with the check run explicitly
+      (does the sign of the acceleration make physical sense; does the unit
+      come out right), not just claimed.
+    assured: |
+      Lead with the shortcut a first pass through the chapter doesn't always
+      emphasise — energy conservation instead of resolving forces along an
+      incline, the centre-of-mass frame instead of tracking two bodies
+      separately, a symmetry that halves the work — and state the one
+      condition that must hold (no friction, no external torque) for the
+      shortcut to be valid before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level mechanics: taking the normal force as always equal to weight
+    (it isn't, on an incline or in a lift), mixing up weight and mass units,
+    forgetting that friction can act UP a slope for a body being pushed
+    down, treating angular quantities with the same formula as linear ones
+    without the moment-of-inertia factor, or dropping the sign of
+    displacement in a graphical velocity-time problem.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with different
+    numbers. Keep the arithmetic small enough to finish in under a minute —
+    round masses, angles from a small named set (30, 37, 45, 53, 60 degrees).
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the law, formula, or theorem by name (e.g. "work-energy
+    theorem", "parallel axis theorem"); back gives the symbolic form and its
+    one governing condition. Used by SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: diagram-or-graph
+  guidance: |
+    Use a labelled free-body or motion diagram in words for anything
+    force-based; use a displacement/velocity/acceleration-vs-time picture
+    for kinematics.
+
+    When the concept has a clean closed-form y=f(x) or a genuine 2D
+    parametric path — a projectile's trajectory (kinematics-2d), a uniformly
+    accelerated velocity-time line (kinematics-1d) — emit a fenced gif-scene
+    block at the end of the body. Projectile motion is a strong fit for the
+    `parametric` type (x(t), y(t) both functions of time). Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"20*x - 0.5*9.8*x^2","x_range":[0,4],"y_range":[0,25],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. NO function definitions, NO
+    semicolons, NO identifiers other than these. OMIT the block for anything
+    that doesn't reduce cleanly to a 2D plot — a free-body diagram, a
+    rotational-mechanics torque argument, a three-dimensional orbit
+    (gravitation) — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question says 'just leaves the surface', set the normal force to zero
+    and solve." JEE Main Paper 1 asks 25 questions per subject: 20 MCQs
+    (+4/-1) and 5 compulsory numerical-value questions — do not invent a
+    per-topic weightage beyond that; NTA publishes only the subject-level
+    split.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (the direction
+    of friction versus the direction of motion, the sign convention for
+    work done BY vs ON a system, which quantity is conserved in an elastic
+    versus an inelastic collision).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    a connected-bodies problem that needs both Newton's second law and the
+    work-energy theorem to check the answer, or a rolling-body problem
+    mixing rotational-mechanics with linear kinematics).
+  bloom_floor: 4
+
+hook:
+  scaffold: predict-the-motion
+  guidance: |
+    Open on one concrete, fully-numbered situation small enough to picture
+    immediately — not a restatement of the textbook definition. Name the
+    JEE-specific twist up front (e.g. "the string goes slack before the ball
+    reaches the top of the circle — what does that tell you about the
+    minimum speed needed?").
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. OMIT the fence entirely for
+    concepts that don't reduce to a 2D parametric/trace scene (a free-body
+    diagram, a rotational torque argument, a three-body gravitational
+    setup) — never invent a misleading scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-numbered instance, small enough to picture right
+      now. No history, no "you'll need this later" framing — the reader is
+      here after getting something wrong, and the useful move is one thing
+      that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      on an edge case (a "smooth" surface that isn't frictionless in the
+      way they assumed, a pulley that isn't massless).

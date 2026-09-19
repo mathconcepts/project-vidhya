@@ -45,8 +45,8 @@
 # CI failure (check-intent-catalogue.ts B10), not a silent drift.
 #
 # Coverage below maps every concept in the concept graph
-# (src/constants/concept-graph.ts, 124 concepts / 16 topics across the
-# gate-ma and jee-main packs) onto exactly one of these 17 families — `coverage.topic_defaults` (7 topics whose
+# (src/constants/concept-graph.ts, 170 concepts / 25 topics across the
+# gate-ma and jee-main packs) onto exactly one of these 24 families — `coverage.topic_defaults` (7 topics whose
 # concepts are family-homogeneous) plus `coverage.concept_overrides` (34
 # concepts split across families or belonging to a "cluster" the source
 # table treats specially, e.g. the eigen-decomposition cluster inside
@@ -105,6 +105,7 @@ presentation_vocabulary:
   - error_visual
   - formal_condition
   - formal_definition
+  - free_body_diagram
   - geometric_intuition
   - geometric_visual
   - graph_or_table
@@ -113,17 +114,26 @@ presentation_vocabulary:
   - independence_or_multiplicity_check
   - initial_or_boundary_check
   - interpretation_or_assumption_check
+  - law_statement
   - locus_picture
+  - mechanism_arrows
   - mode_variant
+  - named_reaction_table
+  - numeric_substitution_check
   - operation_rule
   - operator_definition
   - path_or_singularity_check
+  - periodic_trend_visual
   - physical_or_geometric_intuition
+  - physical_setup_visual
+  - product_prediction_check
   - property_or_invariant_check
+  - quantitative_setup
   - rule_or_theorem
   - sample_space_visual
   - second_order_or_boundary_check
   - separation_or_series_steps
+  - sign_convention_check
   - sign_or_units_check
   - small_counterexample
   - small_numeric_case
@@ -131,6 +141,8 @@ presentation_vocabulary:
   - standard_form
   - step_by_step_solution
   - structural_rule
+  - structure_visual
+  - trend_or_exception_check
   - unit_circle_visual
   - visual_intuition
   - visual_landscape
@@ -144,10 +156,13 @@ presentation_vocabulary:
   - worked_locus
   - worked_manipulation
   - worked_matrix
+  - worked_numeric_problem
   - worked_probability
   - worked_solution
   - worked_statistic
+  - worked_stoichiometry
   - worked_structure
+  - worked_synthesis
 
 families:
   matrix:
@@ -345,6 +360,94 @@ families:
       - { id: worked_example, atom_kind: worked_example,       presentation: worked_manipulation }
       - { id: practice,       atom_kind: mcq,                  presentation: boundary_or_count_check }
 
+  # --- Physics and Chemistry families -------------------------------------
+  #
+  # The 17 families above come from the founder's 116-topic GATE ENGINEERING
+  # MATHEMATICS corpus. That corpus is postgraduate engineering maths, so by
+  # construction it contains no mechanics, no reaction mechanisms and no
+  # periodic trends — the JEE Physics and Chemistry subjects arrived with no
+  # honest family to land in, exactly as coordinate geometry, trigonometry and
+  # school algebra did when the JEE Mathematics pack landed.
+  #
+  # Filing a free-body-diagram concept under `vector`, or an organic
+  # mechanism under `algebra`, would satisfy B12's completeness check while
+  # describing a teaching shape those concepts do not have. These seven are
+  # APPENDED (never interleaved, so the corpus families keep their source
+  # order) and are labelled as this repo's own extrapolation — there is no
+  # `source_sequence` line on them because no source sequence exists to cite,
+  # which is the honest form of that field's absence.
+  #
+  # Each earns its place by a genuinely different shape, not by subject label:
+  # `mechanics` and `field_and_circuit` both set up a physical situation
+  # before any formula, but one resolves it with a free-body diagram and the
+  # other with a circuit/field configuration; `chemistry_reaction` is the only
+  # family whose formalism stage is a MECHANISM rather than an equation, which
+  # is why organic chemistry cannot share `chemistry_quantitative`'s shape.
+
+  mechanics:
+    label: Mechanics
+    hooks: [physical_situation_first, predict_the_motion]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: physical_setup_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: free_body_diagram }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_numeric_problem }
+      - { id: practice,       atom_kind: mcq,                  presentation: sign_or_units_check }
+
+  field_and_circuit:
+    label: Field and Circuit
+    hooks: [configuration_before_formula, what_does_the_meter_read]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: physical_setup_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: law_statement }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_numeric_problem }
+      - { id: practice,       atom_kind: mcq,                  presentation: sign_convention_check }
+
+  wave_and_optics:
+    label: Wave and Optics
+    hooks: [path_difference_story, ray_or_wavefront_picture]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: geometric_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: law_statement }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_numeric_problem }
+      - { id: practice,       atom_kind: mcq,                  presentation: sign_convention_check }
+
+  modern_physics:
+    label: Modern Physics
+    hooks: [experiment_that_broke_the_old_model, quantised_not_continuous]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: data_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: law_statement }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_numeric_problem }
+      - { id: practice,       atom_kind: mcq,                  presentation: numeric_substitution_check }
+
+  chemistry_quantitative:
+    label: Chemistry (Quantitative)
+    hooks: [count_before_formula, what_is_conserved]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: quantitative_setup }
+      - { id: formalism,      atom_kind: worked_example,       presentation: rule_or_theorem }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_stoichiometry }
+      - { id: practice,       atom_kind: mcq,                  presentation: numeric_substitution_check }
+
+  chemistry_structure:
+    label: Chemistry (Structure and Periodicity)
+    hooks: [structure_explains_property, exception_first]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: structure_visual }
+      - { id: formalism,      atom_kind: worked_example,       presentation: periodic_trend_visual }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_structure }
+      - { id: practice,       atom_kind: mcq,                  presentation: trend_or_exception_check }
+
+  chemistry_reaction:
+    label: Chemistry (Reactions and Mechanisms)
+    hooks: [where_do_the_electrons_go, same_reagent_different_product]
+    stages:
+      - { id: intuition,      atom_kind: visual_analogy,      presentation: structure_visual }
+      - { id: discovery,      atom_kind: guided_walkthrough,   presentation: decision_tree }
+      - { id: formalism,      atom_kind: worked_example,       presentation: mechanism_arrows }
+      - { id: worked_example, atom_kind: worked_example,       presentation: worked_synthesis }
+      - { id: practice,       atom_kind: mcq,                  presentation: product_prediction_check }
+
 # ---------------------------------------------------------------------------
 # Coverage — maps every concept-graph concept (src/constants/concept-graph.ts)
 # onto exactly one family above. Resolution order: concept_overrides wins;
@@ -375,6 +478,24 @@ coverage:
     jee-coordinate-geometry: coordinate_geometry
     jee-trigonometry: trigonometry
     jee-vectors-3d: vector
+    # jee-main Physics and Chemistry. All nine topics are family-homogeneous:
+    # each was carved as a section precisely because its concepts share a
+    # teaching shape, so none needs a concept_overrides split. Two deliberate
+    # cross-subject assignments: `jee-thermal-physics` sits on `mechanics`
+    # (a gas law is set up and resolved the same way a pulley problem is, and
+    # a separate two-concept family would be a label, not a shape), and
+    # `jee-modern-physics` keeps `semiconductor-electronics` on the modern
+    # family rather than `field_and_circuit` — its hook is the band model,
+    # not a circuit configuration.
+    jee-mechanics: mechanics
+    jee-thermal-physics: mechanics
+    jee-oscillations-waves: wave_and_optics
+    jee-electromagnetism: field_and_circuit
+    jee-optics: wave_and_optics
+    jee-modern-physics: modern_physics
+    jee-physical-chemistry: chemistry_quantitative
+    jee-organic-chemistry: chemistry_reaction
+    jee-inorganic-chemistry: chemistry_structure
     # calculus: NO default — the source splits it across limit / derivative
     #   / integral (and optimization, currently unused); every concept below.
     # transform-theory: NO default — splits across ode (Laplace) / pde

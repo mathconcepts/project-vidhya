@@ -1,0 +1,33 @@
+---
+id: ray-optics.mnemonic
+concept_id: ray-optics
+atom_type: mnemonic
+bloom_level: 2
+difficulty: 0.3
+exam_ids: ["*"]
+modality: mnemonic
+---
+
+**"Against the light, it's a fight — negative."** Any distance measured *against* the direction the incident light travels gets a minus sign. A real object is always measured this way, so $u$ is negative, always, for both mirrors and lenses.
+
+**"Lens has no minus, mirror insists on one."** Lens magnification: $m=+v/u$. Mirror magnification: $m=-v/u$. Whichever formula is in play decides whether that extra minus sign belongs.
+
+**"Dense to rare, or nowhere."** Total internal reflection only ever happens going from a denser medium into a rarer one — never the other way, at any angle.
+
+```interactive-spec
+{
+  "v": 1,
+  "kind": "manipulable",
+  "title": "Drag the object distance and focal length for a convex lens",
+  "why": "Image distance and magnification are read straight off u and f -- drag the sliders and watch real, inverted images turn virtual and upright once the object crosses the focal length.",
+  "inputs": [
+    {"id": "u", "label": "Object distance u (cm, negative)", "min": -53, "max": -11, "step": 6, "initial": -29},
+    {"id": "f", "label": "Focal length f (cm, positive for convex)", "min": 10, "max": 30, "step": 5, "initial": 20}
+  ],
+  "outputs": [
+    {"label": "Image distance v (cm) = 1 / (1/f + 1/u)", "formula": "1 / ((1/f) + (1/u))", "digits": 2},
+    {"label": "Magnification m = v/u", "formula": "(1 / ((1/f) + (1/u))) / u", "digits": 2}
+  ],
+  "caption": "Start at u=-29, f=20 (close to this concept's worked example): v should read about 64 and m about -2.2 -- real, inverted, magnified. Drag u to -17 with f=20 instead: v flips negative and m turns positive -- the image has flipped to virtual, upright, on the same side as the object."
+}
+```

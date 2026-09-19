@@ -1,0 +1,910 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Physics practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) across three topics: jee-thermal-physics (kinetic-theory, thermodynamics-physics), jee-oscillations-waves (oscillations-shm, waves-mechanical), jee-optics (ray-optics, wave-optics). Authored 2026-09-19. Every answer was solved algebraically and then independently cross-verified via python3 (sympy for symbolic/exact solves — e.g. prism minimum-deviation Newton solve, ideal-gas/thermodynamics substitutions; plain float arithmetic for direct formula substitutions) before being written down. Thermal items use R = 8.314 J mol⁻¹K⁻¹ and state the heat/work sign convention (work done BY the gas is positive) inline wherever the answer's sign depends on it. Ray-optics items state the Cartesian sign convention (distances against incident light are negative; u always negative; f negative for concave mirrors, positive for convex lenses) inline wherever the answer's sign depends on it.",
+  "items": [
+    {
+      "id": "pi-kinetic-theory-001",
+      "concept_id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Oxygen gas ($\\text{O}_2$, molar mass $M = 32\\ \\text{g mol}^{-1} = 0.032\\ \\text{kg mol}^{-1}$) is at a temperature of 300 K. Using $R = 8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$, what is the root-mean-square (rms) speed of an $\\text{O}_2$ molecule?",
+      "options": [
+        "483.6 m/s",
+        "279.2 m/s",
+        "15.3 m/s",
+        "445.5 m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "483.6 m/s",
+      "solution_steps": [
+        "The rms speed formula is $v_{rms} = \\sqrt{\\dfrac{3RT}{M}}$, where $M$ is the molar mass in kilograms per mole (this matters — mixing up grams and kilograms is a classic slip).",
+        "Substitute: $v_{rms} = \\sqrt{\\dfrac{3 \\times 8.314 \\times 300}{0.032}} = \\sqrt{233,\\!831.25} \\approx 483.6\\ \\text{m/s}$.",
+        "279.2 m/s comes from dropping the factor of 3 and computing $\\sqrt{RT/M}$ instead — that formula does not describe rms speed at all.",
+        "15.3 m/s comes from plugging in $M = 32$ (grams) directly instead of converting to $0.032$ kg — a units slip that makes the molecule look almost stationary, which is physically absurd for a room-temperature gas.",
+        "445.5 m/s is the MEAN (average) speed formula, $\\sqrt{8RT/(\\pi M)}$, confused with the rms speed formula — the two speeds are close but not identical."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinetic-theory-002",
+      "concept_id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A rigid container of volume $V = 10\\ \\text{L} = 0.01\\ \\text{m}^3$ holds an ideal gas at pressure $P = 2 \\times 10^5\\ \\text{Pa}$ and temperature $T = 300\\ \\text{K}$. Using $R = 8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$, how many moles of gas are present?",
+      "options": [
+        "≈0.80 mol",
+        "≈1.20 mol",
+        "≈0.40 mol",
+        "≈2.41 mol"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈0.80 mol",
+      "solution_steps": [
+        "The ideal gas equation is $PV = nRT$, so $n = \\dfrac{PV}{RT}$.",
+        "Substitute: $n = \\dfrac{2\\times10^5 \\times 0.01}{8.314 \\times 300} = \\dfrac{2000}{2494.2} \\approx 0.80\\ \\text{mol}$.",
+        "≈1.20 mol comes from using $V$ in litres (10) directly in the SI formula instead of converting to $0.01\\ \\text{m}^3$ and then making a separate arithmetic slip that partially cancels the units error — a reminder to always convert to SI before substituting.",
+        "≈0.40 mol comes from using $2V$ in the denominator by mistakenly doubling $V$ during the volume-unit conversion.",
+        "≈2.41 mol comes from swapping $P$ and $T$ inside the formula, i.e. computing $\\dfrac{T \\cdot V}{R \\cdot P}$-shaped nonsense that happens to look like a 'formula' but isn't dimensionally $PV=nRT$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinetic-theory-003",
+      "concept_id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An ideal diatomic gas molecule (rigid, no vibrational modes — 5 degrees of freedom total: 3 translational + 2 rotational) is heated at constant volume. Using $R = 8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$ and the equipartition theorem, what is its molar specific heat at constant volume, $C_v$?",
+      "options": [
+        "≈20.79 J mol⁻¹K⁻¹",
+        "≈12.47 J mol⁻¹K⁻¹",
+        "≈29.10 J mol⁻¹K⁻¹",
+        "≈8.31 J mol⁻¹K⁻¹"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈20.79 J mol⁻¹K⁻¹",
+      "solution_steps": [
+        "The equipartition theorem gives each degree of freedom an energy of $\\dfrac{1}{2}RT$ per mole, so with $f = 5$ degrees of freedom, the internal energy per mole is $U = \\dfrac{f}{2}RT = \\dfrac{5}{2}RT$.",
+        "Since $C_v = \\dfrac{dU}{dT}$ at constant volume, $C_v = \\dfrac{5}{2}R = 2.5 \\times 8.314 \\approx 20.79\\ \\text{J mol}^{-1}\\text{K}^{-1}$.",
+        "≈12.47 J mol⁻¹K⁻¹ is $\\dfrac{3}{2}R$ — this is the MONATOMIC gas value (3 translational degrees of freedom only), wrongly applied to a diatomic molecule that also rotates.",
+        "≈29.10 J mol⁻¹K⁻¹ is $\\dfrac{7}{2}R$ — this would be correct only if 2 vibrational degrees of freedom were also counted, which the question rules out by stating 'no vibrational modes'.",
+        "≈8.31 J mol⁻¹K⁻¹ is just $R$ itself, mistakenly used as if $C_v = R$ with no degrees-of-freedom factor at all."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinetic-theory-004",
+      "concept_id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using the Boltzmann constant $k = 1.381 \\times 10^{-23}\\ \\text{J K}^{-1}$, what is the average translational kinetic energy of ONE gas molecule at $T = 500\\ \\text{K}$?",
+      "options": [
+        "≈1.04 × 10⁻²⁰ J",
+        "≈2.07 × 10⁻²⁰ J",
+        "≈6.91 × 10⁻²¹ J",
+        "≈1.38 × 10⁻²⁰ J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈1.04 × 10⁻²⁰ J",
+      "solution_steps": [
+        "The average translational kinetic energy per molecule is $\\bar{KE} = \\dfrac{3}{2}kT$ — this comes from 3 translational degrees of freedom, each contributing $\\dfrac{1}{2}kT$.",
+        "Substitute: $\\bar{KE} = \\dfrac{3}{2} \\times 1.381\\times10^{-23} \\times 500 \\approx 1.04 \\times 10^{-20}\\ \\text{J}$.",
+        "≈2.07 × 10⁻²⁰ J comes from using $\\dfrac{3}{2}kT$ but with $T$ mistakenly doubled (or equivalently, using $3kT$ instead of $\\dfrac{3}{2}kT$).",
+        "≈6.91 × 10⁻²¹ J comes from using only $\\dfrac{1}{2}kT$ — the energy contributed by a SINGLE degree of freedom, not all three translational ones together.",
+        "≈1.38 × 10⁻²⁰ J comes from using $kT$ with no factor of $\\dfrac{3}{2}$ at all, as if there were only 2 degrees of freedom."
+      ],
+      "verification_method": "python_numeric_substitution"
+    },
+    {
+      "id": "pi-kinetic-theory-005",
+      "concept_id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "At the same temperature $T$, hydrogen gas ($\\text{H}_2$, molar mass $2\\ \\text{g mol}^{-1}$) and oxygen gas ($\\text{O}_2$, molar mass $32\\ \\text{g mol}^{-1}$) are compared. What is the ratio $\\dfrac{v_{rms}(\\text{H}_2)}{v_{rms}(\\text{O}_2)}$?",
+      "options": [
+        "4",
+        "16",
+        "1/4",
+        "2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4",
+      "solution_steps": [
+        "Since $v_{rms} = \\sqrt{\\dfrac{3RT}{M}}$ and $T$ (and $R$) are the same for both gases, the ratio depends only on molar mass: $\\dfrac{v_{rms}(\\text{H}_2)}{v_{rms}(\\text{O}_2)} = \\sqrt{\\dfrac{M(\\text{O}_2)}{M(\\text{H}_2)}}$.",
+        "Substitute: $\\sqrt{\\dfrac{32}{2}} = \\sqrt{16} = 4$. The lighter gas moves faster — hydrogen molecules are 16 times lighter, and speed scales as the square root of that mass ratio.",
+        "16 comes from forgetting the square root and just using the mass ratio $32/2$ directly.",
+        "1/4 comes from inverting the ratio — putting the heavier gas's molar mass in the numerator and the lighter gas's in the denominator by mistake, i.e. computing $v_{rms}(\\text{O}_2)/v_{rms}(\\text{H}_2)$ instead of what was asked.",
+        "2 comes from taking the square root of the mass ratio $32/2=16$ incorrectly as $\\sqrt{16}/2 = 2$, an arithmetic slip while simplifying."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-kinetic-theory-006",
+      "concept_id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A gas has density $\\rho = 1.2\\ \\text{kg/m}^3$ and its molecules have an rms speed of $500\\ \\text{m/s}$. Using the kinetic theory result relating pressure, density, and rms speed, what is the pressure exerted by the gas?",
+      "options": [
+        "1.0 × 10⁵ Pa",
+        "3.0 × 10⁵ Pa",
+        "3.6 × 10⁵ Pa",
+        "0.72 × 10⁵ Pa"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.0 × 10⁵ Pa",
+      "solution_steps": [
+        "The kinetic theory of gases gives $P = \\dfrac{1}{3}\\rho v_{rms}^2$, derived by counting molecular collisions with the container wall.",
+        "Substitute: $P = \\dfrac{1}{3} \\times 1.2 \\times 500^2 = \\dfrac{1}{3} \\times 1.2 \\times 250000 = \\dfrac{300000}{3} \\times 1 = 1.0\\times10^5\\ \\text{Pa}$.",
+        "3.0 × 10⁵ Pa comes from dropping the factor of $\\dfrac{1}{3}$ entirely, computing $\\rho v_{rms}^2$ directly.",
+        "3.6 × 10⁵ Pa comes from using $P = \\rho v_{rms}^2$ with $\\rho$ mistakenly taken as $1.2\\times 3 = 3.6$ during a botched attempt to 'account for' the factor of 3 by multiplying instead of dividing.",
+        "0.72 × 10⁵ Pa comes from using $\\dfrac{1}{3}\\rho v_{rms}$ (forgetting to square the rms speed) and then multiplying by an extra stray factor, a common exponent-handling slip."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-thermodynamics-physics-001",
+      "concept_id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "2 mol of an ideal gas at temperature 300 K expands isothermally and reversibly from a volume of 10 L to 20 L. Using $R = 8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$ and the sign convention that work done BY the gas (i.e. during expansion) is positive, what is the work done in this process?",
+      "options": [
+        "≈3458 J",
+        "≈1729 J",
+        "−3458 J",
+        "≈6915 J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈3458 J",
+      "solution_steps": [
+        "For an isothermal process, the work done BY an ideal gas is $W = nRT\\ln\\!\\left(\\dfrac{V_2}{V_1}\\right)$.",
+        "Substitute: $W = 2 \\times 8.314 \\times 300 \\times \\ln(20/10) = 4988.4 \\times \\ln 2 \\approx 4988.4 \\times 0.6931 \\approx 3458\\ \\text{J}$.",
+        "≈1729 J comes from using $n=1$ instead of $n=2$ mol — halving the answer by dropping the mole count.",
+        "−3458 J has the right magnitude but the wrong sign — since the gas EXPANDS, it does positive work on the surroundings under the stated convention; a negative sign here would (wrongly) describe compression.",
+        "≈6915 J comes from doubling the correct answer, e.g. by mistakenly using $\\ln(V_2/V_1)$ in base-10 form scaled incorrectly, or by double-counting the mole factor."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-thermodynamics-physics-002",
+      "concept_id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "1 mol of a monatomic ideal gas ($\\gamma = 5/3$) at $T_1 = 300\\ \\text{K}$ occupies volume $V_1$. It expands to volume $V_2 = 2V_1$, once isothermally and once adiabatically (two separate experiments, same starting state). Using $R = 8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$, which process does MORE work (BY the gas) during this expansion, and why?",
+      "options": [
+        "Isothermal — the gas stays at 300 K throughout, while the adiabatic gas cools to ≈189 K as it expands, leaving less internal energy available to convert into work.",
+        "Adiabatic — since no heat can escape in an adiabatic process, all of it converts into extra work, making the adiabatic work larger.",
+        "They do exactly the same work, because both start at the same $T_1$ and reach the same $V_2$.",
+        "Isothermal — but only because isothermal processes are always slower, and slower processes always do more work."
+      ],
+      "answer_index": 0,
+      "correct_answer": "Isothermal — the gas stays at 300 K throughout, while the adiabatic gas cools to ≈189 K as it expands, leaving less internal energy available to convert into work.",
+      "solution_steps": [
+        "Isothermal work: $W_{iso} = nRT_1\\ln(V_2/V_1) = 1\\times8.314\\times300\\times\\ln2 \\approx 1729\\ \\text{J}$.",
+        "Adiabatic: using $T_1V_1^{\\gamma-1}=T_2V_2^{\\gamma-1}$ with $\\gamma=5/3$ gives $T_2 = T_1(V_1/V_2)^{2/3} = 300\\times(0.5)^{2/3}\\approx 189.0\\ \\text{K}$. The work done by the gas is $W_{adia}=\\dfrac{nR(T_1-T_2)}{\\gamma-1}\\approx\\dfrac{1\\times8.314\\times(300-189.0)}{2/3}\\approx 1384\\ \\text{J}$.",
+        "$1729\\ \\text{J} > 1384\\ \\text{J}$: the isothermal process does more work. The key physical reason is that an isothermal expansion is continuously topped up with heat from a reservoir to keep $T$ constant, while an adiabatic gas has no heat supply, so its temperature (and hence internal energy) drops as it does work — leaving less energy convertible into work for the same volume change.",
+        "Option (b) has the reasoning backwards: with NO heat input, an adiabatic gas can only do work by spending its own internal energy, which runs out faster, not slower — it does LESS work, not more.",
+        "Option (c) ignores that the two curves (isotherm vs adiabat) on a $P$–$V$ diagram have different slopes and enclose different areas even between the same two volumes.",
+        "Option (d) states a false general rule (speed of the process is not what determines the work done here — the constraint 'no heat exchange' vs 'constant temperature' is)."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-thermodynamics-physics-003",
+      "concept_id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An external agent compresses a gas, doing 500 J of work ON the gas. Using the sign convention that work done BY the gas is positive (so work done ON the gas is negative), what is the work done BY the gas in this process?",
+      "options": [
+        "−500 J",
+        "+500 J",
+        "−250 J",
+        "0 J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "−500 J",
+      "solution_steps": [
+        "Work done BY the gas and work done ON the gas are always equal in magnitude and opposite in sign — they describe the same energy transfer from two points of view.",
+        "Since the agent does $+500\\ \\text{J}$ of work ON the gas, the work done BY the gas is $W_{by} = -500\\ \\text{J}$.",
+        "+500 J drops the sign flip entirely, treating 'work done on' and 'work done by' as the same signed quantity — they are not, they are negatives of each other.",
+        "−250 J comes from mistakenly halving the value, perhaps by confusing this with an average-of-two-states calculation that doesn't apply here.",
+        "0 J would only be correct if the gas did not move at all against any resisting pressure, which is not the case during a compression."
+      ],
+      "verification_method": "python_sign_convention_check"
+    },
+    {
+      "id": "pi-thermodynamics-physics-004",
+      "concept_id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A Carnot engine operates between a hot reservoir at $T_h = 600\\ \\text{K}$ and a cold reservoir at $T_c = 300\\ \\text{K}$. What is its efficiency?",
+      "options": [
+        "50%",
+        "100%",
+        "25%",
+        "200%"
+      ],
+      "answer_index": 0,
+      "correct_answer": "50%",
+      "solution_steps": [
+        "Carnot efficiency is $\\eta = 1 - \\dfrac{T_c}{T_h}$ (temperatures must be in kelvin).",
+        "Substitute: $\\eta = 1 - \\dfrac{300}{600} = 1 - 0.5 = 0.5 = 50\\%$.",
+        "100% would require $T_c = 0\\ \\text{K}$ (absolute zero), which is unreachable and not the case here.",
+        "25% comes from computing $\\dfrac{T_c}{2T_h}$ or an equivalent extra-halving slip instead of $1 - T_c/T_h$.",
+        "200% is physically impossible for any heat engine (efficiency can never exceed 100%) and signals a sign or formula error, such as computing $\\dfrac{T_h}{T_c}-1$ instead of $1-\\dfrac{T_c}{T_h}$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-thermodynamics-physics-005",
+      "concept_id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A heat engine has an efficiency of 40% and absorbs 1000 J of heat from the hot reservoir in one cycle. How much heat does it reject to the cold reservoir?",
+      "options": [
+        "600 J",
+        "400 J",
+        "1400 J",
+        "250 J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "600 J",
+      "solution_steps": [
+        "Efficiency is $\\eta = \\dfrac{W}{Q_{in}} = 1 - \\dfrac{Q_{out}}{Q_{in}}$, so $Q_{out} = Q_{in}(1-\\eta)$.",
+        "Substitute: $Q_{out} = 1000\\times(1-0.40) = 1000\\times0.60 = 600\\ \\text{J}$.",
+        "400 J is actually the WORK done ($W=Q_{in}\\times\\eta=1000\\times0.40=400\\ \\text{J}$) — mistaking the work output for the rejected heat, which are two different quantities that together must add up to $Q_{in}$.",
+        "1400 J comes from adding $Q_{in}$ and the (correctly computed) work instead of subtracting it, i.e. $1000+400$ instead of $1000-400$.",
+        "250 J comes from dividing $Q_{in}$ by $(1+\\eta)$ instead of multiplying by $(1-\\eta)$ — an unrelated, incorrect manipulation of the efficiency formula."
+      ],
+      "verification_method": "python_numeric_substitution"
+    },
+    {
+      "id": "pi-thermodynamics-physics-006",
+      "concept_id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "2 mol of a monatomic ideal gas ($C_v = \\tfrac{3}{2}R$) is heated at constant volume, raising its temperature by 50 K. Using $R = 8.314\\ \\text{J mol}^{-1}\\text{K}^{-1}$, how much heat must be supplied?",
+      "options": [
+        "≈1247 J",
+        "≈831 J",
+        "≈2077 J",
+        "≈2494 J"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈1247 J",
+      "solution_steps": [
+        "At constant volume, no work is done ($W=0$ since $\\Delta V = 0$), so by the first law all supplied heat becomes internal energy: $Q = \\Delta U = nC_v\\Delta T$.",
+        "With $C_v = \\dfrac{3}{2}R = \\dfrac{3}{2}\\times8.314 = 12.471\\ \\text{J mol}^{-1}\\text{K}^{-1}$, we get $Q = 2\\times12.471\\times50 \\approx 1247\\ \\text{J}$.",
+        "≈831 J comes from using $C_v = R$ (dropping the $\\tfrac{3}{2}$ factor for a monatomic gas) instead of $\\tfrac{3}{2}R$.",
+        "≈2077 J comes from using $n=1$ but $C_v = \\tfrac{5}{2}R$ (the DIATOMIC value) instead of $n=2$ with the correct monatomic $C_v=\\tfrac{3}{2}R$ — mixing up which gas the degrees-of-freedom count applies to.",
+        "≈2494 J comes from using $C_v = 5R/2$ AND the correct $n=2$, i.e. applying the diatomic specific heat to a gas the question explicitly states is monatomic."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-oscillations-shm-001",
+      "concept_id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A block of mass 2 kg is attached to a spring of force constant $k = 200\\ \\text{N/m}$ and set into simple harmonic motion. What is the time period of oscillation?",
+      "options": [
+        "≈0.628 s",
+        "≈1.257 s",
+        "≈0.1 s",
+        "≈6.28 s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈0.628 s",
+      "solution_steps": [
+        "The time period of a spring-mass system is $T = 2\\pi\\sqrt{\\dfrac{m}{k}}$.",
+        "Substitute: $T = 2\\pi\\sqrt{\\dfrac{2}{200}} = 2\\pi\\sqrt{0.01} = 2\\pi\\times0.1 \\approx 0.628\\ \\text{s}$.",
+        "≈1.257 s is exactly double the correct value — comes from forgetting to take the square root of $m/k$ and instead using $2\\pi\\times(m/k)$ scaled incorrectly, or doubling by mistake elsewhere.",
+        "≈0.1 s is just $\\sqrt{m/k}$ with the $2\\pi$ factor dropped entirely.",
+        "≈6.28 s comes from inverting the ratio inside the root, computing $2\\pi\\sqrt{k/m}$ instead of $2\\pi\\sqrt{m/k}$ — this would actually be the angular frequency $\\omega$ in rad/s, not the time period in seconds."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-oscillations-shm-002",
+      "concept_id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A particle executes SHM with amplitude $A = 0.1\\ \\text{m}$ and time period $T = 2\\ \\text{s}$. What is its speed when its displacement from the mean position is $x = 0.06\\ \\text{m}$?",
+      "options": [
+        "≈0.251 m/s",
+        "≈0.314 m/s",
+        "≈0.188 m/s",
+        "≈0.096 m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈0.251 m/s",
+      "solution_steps": [
+        "The speed in SHM at displacement $x$ is $v = \\omega\\sqrt{A^2 - x^2}$, where $\\omega = \\dfrac{2\\pi}{T}$.",
+        "Here $\\omega = \\dfrac{2\\pi}{2} = \\pi\\ \\text{rad/s} \\approx 3.1416\\ \\text{rad/s}$.",
+        "Substitute: $v = \\pi\\sqrt{0.1^2 - 0.06^2} = \\pi\\sqrt{0.01-0.0036} = \\pi\\sqrt{0.0064} = \\pi\\times0.08 \\approx 0.251\\ \\text{m/s}$.",
+        "≈0.314 m/s is the MAXIMUM speed $v_{max}=\\omega A = \\pi\\times0.1$, which applies only at $x=0$ — using it at a nonzero displacement ignores that speed drops as the particle moves away from the mean position.",
+        "≈0.188 m/s comes from computing $\\omega(A-x)$ instead of $\\omega\\sqrt{A^2-x^2}$ — a common shortcut that isn't how SHM speed actually depends on displacement.",
+        "≈0.096 m/s comes from computing $\\omega\\sqrt{(A-x)^2}$, i.e. still not taking $A^2-x^2$ under the root correctly."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-oscillations-shm-003",
+      "concept_id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A particle in SHM has amplitude $A = 0.05\\ \\text{m}$ and angular frequency $\\omega = 4\\ \\text{rad/s}$. What is its MAXIMUM speed?",
+      "options": [
+        "0.2 m/s",
+        "0.05 m/s",
+        "0.032 m/s",
+        "0.2π m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.2 m/s",
+      "solution_steps": [
+        "The maximum speed in SHM occurs at the mean position and is $v_{max} = A\\omega$ (amplitude times ANGULAR frequency, not amplitude alone and not amplitude times ordinary frequency).",
+        "Substitute: $v_{max} = 0.05\\times4 = 0.2\\ \\text{m/s}$.",
+        "0.05 m/s is just the amplitude $A$ itself, mistaking the AMPLITUDE for the maximum velocity — these are different physical quantities with different units-worth of meaning (position vs speed), even though a rushed reading of the SHM equations can conflate them.",
+        "0.032 m/s comes from using the ORDINARY frequency $f = \\omega/(2\\pi) \\approx 0.637\\ \\text{Hz}$ in place of $\\omega$: $A\\times f = 0.05\\times0.637\\approx0.032\\ \\text{m/s}$ — confusing frequency with angular frequency, which differ by a factor of $2\\pi$.",
+        "0.2π m/s comes from correctly finding $v_{max}=A\\omega=0.2$ but then, in a moment of overcorrection, multiplying by an extra stray $\\pi$ meant for a units conversion that isn't needed here."
+      ],
+      "verification_method": "python_numeric_substitution"
+    },
+    {
+      "id": "pi-oscillations-shm-004",
+      "concept_id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A simple pendulum has length $L = 2.45\\ \\text{m}$. Using $g = 9.8\\ \\text{m/s}^2$, what is its time period?",
+      "options": [
+        "≈3.14 s",
+        "≈1.57 s",
+        "≈6.28 s",
+        "≈9.87 s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈3.14 s",
+      "solution_steps": [
+        "The time period of a simple pendulum is $T = 2\\pi\\sqrt{\\dfrac{L}{g}}$.",
+        "Substitute: $T = 2\\pi\\sqrt{\\dfrac{2.45}{9.8}} = 2\\pi\\sqrt{0.25} = 2\\pi\\times0.5 = \\pi \\approx 3.14\\ \\text{s}$.",
+        "≈1.57 s is half the correct answer — comes from using $\\pi\\sqrt{L/g}$ instead of $2\\pi\\sqrt{L/g}$, dropping a factor of 2.",
+        "≈6.28 s is double the correct answer — comes from forgetting to take the square root of $L/g$ and instead multiplying $2\\pi \\times L/g$ directly by an extra factor.",
+        "≈9.87 s comes from computing $2\\pi\\sqrt{L/g}$ but squaring $\\pi$ by mistake somewhere in a rushed calculation ($\\pi^2 \\approx 9.87$), giving a nonsensical result disconnected from the actual formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-oscillations-shm-005",
+      "concept_id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A particle of mass attached to a spring ($k = 100\\ \\text{N/m}$) executes SHM with amplitude $A = 0.2\\ \\text{m}$. What fraction of its total mechanical energy is kinetic energy when its displacement is $x = A/2$ from the mean position?",
+      "options": [
+        "3/4",
+        "1/2",
+        "1/4",
+        "1/√2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "3/4",
+      "solution_steps": [
+        "Total energy in SHM is $E = \\dfrac{1}{2}kA^2$ (constant throughout the motion). Potential energy at displacement $x$ is $U = \\dfrac{1}{2}kx^2$, so kinetic energy is $KE = E - U = \\dfrac{1}{2}k(A^2-x^2)$.",
+        "At $x = A/2$: $KE = \\dfrac{1}{2}k\\left(A^2 - \\dfrac{A^2}{4}\\right) = \\dfrac{1}{2}k\\times\\dfrac{3A^2}{4} = \\dfrac{3}{4}\\times\\dfrac{1}{2}kA^2 = \\dfrac{3}{4}E$.",
+        "Numerically, with $k=100$, $A=0.2$: $E = \\tfrac{1}{2}\\times100\\times0.04 = 2\\ \\text{J}$, and $KE$ at $x=0.1$ is $\\tfrac{1}{2}\\times100\\times(0.04-0.01)=1.5\\ \\text{J}$, and $1.5/2 = 3/4$. ✓",
+        "1/2 comes from wrongly assuming KE and PE split the total energy equally at every displacement, which is only true at one specific point ($x=A/\\sqrt2$), not at $x=A/2$.",
+        "1/4 mistakenly reports the fraction of energy that is POTENTIAL, not kinetic, at this displacement (swapping $KE$ and $PE$'s roles).",
+        "1/√2 comes from confusing this energy-fraction question with the separate (unrelated) result that displacement equals $A/\\sqrt2$ when KE and PE are equal."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-oscillations-shm-006",
+      "concept_id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two springs of force constants $k_1 = 200\\ \\text{N/m}$ and $k_2 = 300\\ \\text{N/m}$ are connected in SERIES and attached to a block of mass 3 kg. What is the time period of the resulting SHM?",
+      "options": [
+        "≈0.993 s",
+        "≈0.487 s",
+        "≈0.688 s",
+        "≈0.770 s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈0.993 s",
+      "solution_steps": [
+        "For springs in series, the effective spring constant is $\\dfrac{1}{k_{eff}} = \\dfrac{1}{k_1}+\\dfrac{1}{k_2}$, i.e. $k_{eff} = \\dfrac{k_1 k_2}{k_1+k_2}$ (series springs combine like resistors in PARALLEL — the effective constant is always smaller than either individual spring).",
+        "Substitute: $k_{eff} = \\dfrac{200\\times300}{200+300} = \\dfrac{60000}{500} = 120\\ \\text{N/m}$.",
+        "Then $T = 2\\pi\\sqrt{\\dfrac{m}{k_{eff}}} = 2\\pi\\sqrt{\\dfrac{3}{120}} = 2\\pi\\sqrt{0.025} \\approx 0.993\\ \\text{s}$.",
+        "≈0.487 s comes from wrongly ADDING the spring constants ($k_1+k_2=500\\ \\text{N/m}$) as if the springs were in parallel instead of series — series and parallel spring combinations use opposite rules from series/parallel resistors, which is the easy mix-up here.",
+        "≈0.688 s comes from using the ARITHMETIC MEAN of $k_1,k_2$ (i.e. $250\\ \\text{N/m}$) as $k_{eff}$, a plausible-sounding shortcut that isn't how springs combine at all.",
+        "≈0.770 s comes from ignoring the second spring entirely and using only $k_1=200\\ \\text{N/m}$, as if there were just one spring in the system."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-waves-mechanical-001",
+      "concept_id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A string is under a tension of 100 N and has a mass per unit length (linear mass density) of $0.01\\ \\text{kg/m}$. What is the speed of a transverse wave on this string?",
+      "options": [
+        "100 m/s",
+        "10 m/s",
+        "1 m/s",
+        "10000 m/s"
+      ],
+      "answer_index": 0,
+      "correct_answer": "100 m/s",
+      "solution_steps": [
+        "The speed of a transverse wave on a stretched string is $v = \\sqrt{\\dfrac{T}{\\mu}}$, where $T$ is tension and $\\mu$ is linear mass density.",
+        "Substitute: $v = \\sqrt{\\dfrac{100}{0.01}} = \\sqrt{10000} = 100\\ \\text{m/s}$.",
+        "10 m/s comes from forgetting the square root and instead computing $T/\\mu$ divided by 10 in an attempt to 'fix' the units by guesswork.",
+        "1 m/s comes from inverting the ratio, computing $\\sqrt{\\mu/T}$ instead of $\\sqrt{T/\\mu}$.",
+        "10000 m/s is simply $T/\\mu$ with the square root skipped entirely."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-waves-mechanical-002",
+      "concept_id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two tuning forks of frequencies 256 Hz and 260 Hz are sounded together. What beat frequency is heard?",
+      "options": [
+        "4 Hz",
+        "258 Hz",
+        "516 Hz",
+        "2 Hz"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4 Hz",
+      "solution_steps": [
+        "Beat frequency is the magnitude of the difference between the two individual frequencies: $f_{beat} = |f_1 - f_2|$.",
+        "Substitute: $f_{beat} = |256-260| = 4\\ \\text{Hz}$.",
+        "258 Hz is the AVERAGE of the two frequencies — this is the frequency of the resulting tone one actually hears, but it is NOT the beat frequency (the rate at which loudness rises and falls).",
+        "516 Hz comes from ADDING the two frequencies instead of subtracting them.",
+        "2 Hz comes from taking HALF the correct difference, perhaps by confusing beat frequency with 'half the number of beats per cycle' or a similar mid-calculation halving slip."
+      ],
+      "verification_method": "python_numeric_substitution"
+    },
+    {
+      "id": "pi-waves-mechanical-003",
+      "concept_id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A source of sound emitting a frequency of 500 Hz moves TOWARD a stationary observer at a speed of 34 m/s, in a medium where the speed of sound is 340 m/s. Using the Doppler effect formula for a source approaching a stationary observer, $f' = f\\dfrac{v}{v - v_s}$, what frequency does the observer hear?",
+      "options": [
+        "≈555.6 Hz",
+        "≈454.5 Hz",
+        "500 Hz",
+        "≈466.0 Hz"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈555.6 Hz",
+      "solution_steps": [
+        "For a source APPROACHING a stationary observer, the correct Doppler formula is $f' = f\\dfrac{v}{v-v_s}$ — the denominator SHRINKS as the source approaches, which correctly makes the observed frequency HIGHER.",
+        "Substitute: $f' = 500\\times\\dfrac{340}{340-34} = 500\\times\\dfrac{340}{306} \\approx 555.6\\ \\text{Hz}$.",
+        "≈454.5 Hz comes from flipping the sign in the denominator — using $f' = f\\dfrac{v}{v+v_s}$, the formula for a source RECEDING from the observer, even though this source is approaching. That sign flip wrongly predicts a LOWER frequency for an approaching source, which contradicts the basic Doppler effect (approaching = higher pitch).",
+        "500 Hz assumes there is no Doppler shift at all, ignoring the source's motion entirely.",
+        "≈466.0 Hz comes from using $f' = f\\dfrac{v-v_s}{v}$ — a formula shape that looks similar but is dimensionally-flavoured wrong for this scenario (it doesn't come from the actual moving-source derivation), and it even predicts a decrease in frequency for an approaching source, the same qualitative error as the sign-flip distractor."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-waves-mechanical-004",
+      "concept_id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An organ pipe of length 0.5 m is CLOSED at one end. Using the speed of sound as 340 m/s, what is its fundamental frequency?",
+      "options": [
+        "170 Hz",
+        "340 Hz",
+        "680 Hz",
+        "85 Hz"
+      ],
+      "answer_index": 0,
+      "correct_answer": "170 Hz",
+      "solution_steps": [
+        "A pipe closed at one end supports only ODD harmonics, and its fundamental frequency is $f_0 = \\dfrac{v}{4L}$ (a closed pipe fits a quarter-wavelength into its length at the fundamental).",
+        "Substitute: $f_0 = \\dfrac{340}{4\\times0.5} = \\dfrac{340}{2} = 170\\ \\text{Hz}$.",
+        "340 Hz comes from using the OPEN-pipe formula $f_0=\\dfrac{v}{2L}$ instead of the closed-pipe formula $\\dfrac{v}{4L}$ — an open pipe fits a half-wavelength, not a quarter-wavelength, into its length.",
+        "680 Hz comes from using $f_0 = \\dfrac{v}{L/2}$, i.e. inverting where the factor of 2 or 4 should appear in the denominator.",
+        "85 Hz comes from using $f_0 = \\dfrac{v}{8L}$, doubling the denominator beyond even the closed-pipe formula, perhaps by confusing this with a second-overtone relation."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-waves-mechanical-005",
+      "concept_id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two waves of the same frequency, with amplitudes $A_1 = 3$ and $A_2 = 4$ (same units), meet at a point with a phase difference of $90°$ between them. What is the resultant amplitude?",
+      "options": [
+        "5",
+        "7",
+        "1",
+        "3.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "5",
+      "solution_steps": [
+        "The resultant amplitude when two waves of the same frequency superpose is $A = \\sqrt{A_1^2+A_2^2+2A_1A_2\\cos\\phi}$, where $\\phi$ is the phase difference.",
+        "Substitute with $\\phi=90°$ (so $\\cos\\phi=0$): $A = \\sqrt{3^2+4^2+0} = \\sqrt{9+16} = \\sqrt{25} = 5$.",
+        "7 is the answer for PERFECTLY IN-PHASE waves ($\\phi=0°$, so $A=A_1+A_2=7$) — a common shortcut of just adding amplitudes, which only holds at zero phase difference, not $90°$.",
+        "1 is the answer for waves EXACTLY OUT OF PHASE ($\\phi=180°$, so $A=|A_1-A_2|=1$) — again only valid at that specific phase difference, not $90°$.",
+        "3.5 comes from simply averaging the two amplitudes, $(A_1+A_2)/2$, which has no basis in the actual superposition formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-waves-mechanical-006",
+      "concept_id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A sound source of frequency 400 Hz moves TOWARD a listener at 20 m/s, while the listener also moves TOWARD the source at 10 m/s. Using the speed of sound as 340 m/s and the general Doppler formula $f' = f\\dfrac{v+v_o}{v-v_s}$ (observer's speed added in the numerator when the observer approaches the source, source's speed subtracted in the denominator when the source approaches the observer), what frequency does the listener hear?",
+      "options": [
+        "437.5 Hz",
+        "≈366.7 Hz",
+        "400 Hz",
+        "425 Hz"
+      ],
+      "answer_index": 0,
+      "correct_answer": "437.5 Hz",
+      "solution_steps": [
+        "With both the source and the observer moving toward each other, the observed frequency INCREASES from both effects combined: $f' = f\\dfrac{v+v_o}{v-v_s}$.",
+        "Substitute: $f' = 400\\times\\dfrac{340+10}{340-20} = 400\\times\\dfrac{350}{320} = 437.5\\ \\text{Hz}$.",
+        "≈366.7 Hz comes from flipping BOTH signs — using $f'=f\\dfrac{v-v_o}{v+v_s}$, the formula that would apply if both source and observer were moving AWAY from each other instead of toward each other, which incorrectly predicts a frequency DROP even though both are actually approaching.",
+        "400 Hz ignores both motions and assumes no Doppler shift at all.",
+        "425 Hz comes from accounting for the SOURCE's motion only ($f\\dfrac{v}{v-v_s}=400\\times340/320=425$) and forgetting that the observer is moving too — a partial application of the general formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-ray-optics-001",
+      "concept_id": "ray-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using the Cartesian sign convention (distances against the incident light are negative; object distance $u$ is always negative), an object is placed 30 cm in front of a concave mirror of focal length 15 cm (so $u=-30\\ \\text{cm}$, $f=-15\\ \\text{cm}$). Using the mirror formula $\\dfrac{1}{v}+\\dfrac{1}{u}=\\dfrac{1}{f}$, find the image distance $v$.",
+      "options": [
+        "−30 cm",
+        "+30 cm",
+        "−10 cm",
+        "−45 cm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "−30 cm",
+      "solution_steps": [
+        "Mirror formula: $\\dfrac{1}{v} = \\dfrac{1}{f}-\\dfrac{1}{u} = \\dfrac{1}{-15}-\\dfrac{1}{-30} = -\\dfrac{1}{15}+\\dfrac{1}{30} = -\\dfrac{2}{30}+\\dfrac{1}{30}=-\\dfrac{1}{30}$.",
+        "So $v = -30\\ \\text{cm}$. Since the object sits exactly at the centre of curvature ($R=2f=-30\\ \\text{cm}$, same magnitude as $u$), the image forms at the SAME point — a useful sanity check that confirms this negative value.",
+        "+30 cm has the correct magnitude but the wrong sign — under this convention, a REAL image formed by a concave mirror (on the same side as the object) must come out negative, not positive; a positive value here would (wrongly) place the image behind the mirror.",
+        "−10 cm comes from using the mirror formula for a THIN LENS instead, $\\dfrac{1}{v}-\\dfrac{1}{u}=\\dfrac{1}{f}$ (subtracting instead of adding reciprocals), which is the wrong formula for a mirror.",
+        "−45 cm comes from an arithmetic slip while combining the fractions, e.g. computing $\\dfrac{1}{f}-\\dfrac{1}{u}$ as $\\dfrac{1}{f-u}$ instead of properly combining the reciprocals term by term."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-ray-optics-002",
+      "concept_id": "ray-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using the Cartesian sign convention (object distance $u$ is always negative; focal length $f$ is positive for a convex lens), an object is placed 30 cm in front of a convex lens of focal length 20 cm (so $u=-30\\ \\text{cm}$, $f=+20\\ \\text{cm}$). Using the lens formula $\\dfrac{1}{v}-\\dfrac{1}{u}=\\dfrac{1}{f}$, find the image distance $v$.",
+      "options": [
+        "+60 cm",
+        "−60 cm",
+        "+12 cm",
+        "+50 cm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "+60 cm",
+      "solution_steps": [
+        "Lens formula: $\\dfrac{1}{v} = \\dfrac{1}{f}+\\dfrac{1}{u} = \\dfrac{1}{20}+\\dfrac{1}{-30} = \\dfrac{3}{60}-\\dfrac{2}{60} = \\dfrac{1}{60}$.",
+        "So $v = +60\\ \\text{cm}$. The positive sign means the image forms on the opposite side of the lens from the object — a real, inverted image, as expected since the object lies beyond the focal length.",
+        "−60 cm has the right magnitude but the wrong sign — this would (wrongly) place the image on the SAME side as the object, which does not happen for an object outside the focal length of a convex lens.",
+        "+12 cm comes from using the MIRROR formula $\\dfrac{1}{v}+\\dfrac{1}{u}=\\dfrac{1}{f}$ (adding instead of subtracting reciprocals) — the wrong formula for a lens.",
+        "+50 cm comes from wrongly adding $u$ and $f$ directly ($30+20$) instead of correctly combining their reciprocals."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-ray-optics-003",
+      "concept_id": "ray-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Light travels from glass (refractive index $n = 1.5$) toward air. What is the critical angle for total internal reflection at this glass-air interface?",
+      "options": [
+        "≈41.8°",
+        "≈48.6°",
+        "≈33.6°",
+        "60°"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈41.8°",
+      "solution_steps": [
+        "The critical angle is the angle of incidence (in the denser medium) at which the angle of refraction becomes exactly $90°$. By Snell's law, $n\\sin\\theta_c = 1\\times\\sin90° = 1$, so $\\sin\\theta_c = \\dfrac{1}{n}$.",
+        "Substitute: $\\sin\\theta_c = \\dfrac{1}{1.5} \\approx 0.667$, so $\\theta_c = \\sin^{-1}(0.667) \\approx 41.8°$.",
+        "≈48.6° comes from computing $\\cos\\theta_c = 1/n$ instead of $\\sin\\theta_c = 1/n$ — using the wrong trig function in Snell's law.",
+        "≈33.6° comes from computing $\\sin\\theta_c = n$ (i.e. $1.5$) which is impossible ($>1$), and then wrongly 'fixing it' via an unrelated arithmetic manipulation — this distractor represents the class of error where the ratio $1/n$ is inverted to $n$ inside the wrong place.",
+        "60° is a round, memorized-looking number with no derivation from this specific refractive index — a guess rather than a calculation."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-ray-optics-004",
+      "concept_id": "ray-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using the Cartesian sign convention (object distance $u$ always negative; $f$ positive for a convex lens), an object is placed 15 cm in front of a convex lens of focal length 10 cm ($u=-15\\ \\text{cm}$, $f=+10\\ \\text{cm}$). Using the lens formula and magnification $m=\\dfrac{v}{u}$, what is the magnification of the image?",
+      "options": [
+        "−2",
+        "+2",
+        "−0.5",
+        "+0.5"
+      ],
+      "answer_index": 0,
+      "correct_answer": "−2",
+      "solution_steps": [
+        "Lens formula: $\\dfrac{1}{v}=\\dfrac{1}{f}+\\dfrac{1}{u}=\\dfrac{1}{10}+\\dfrac{1}{-15}=\\dfrac{3}{30}-\\dfrac{2}{30}=\\dfrac{1}{30}$, so $v=+30\\ \\text{cm}$.",
+        "Magnification: $m=\\dfrac{v}{u}=\\dfrac{30}{-15}=-2$. The negative sign means the image is INVERTED, and $|m|=2$ means it is magnified (twice the object's size) — consistent with a real object placed between $f$ and $2f$ of a convex lens.",
+        "+2 comes from using the SIGN-FLIPPED image distance $v=-30\\ \\text{cm}$ (as if forgetting that a real image on a convex lens forms on the positive side under this convention) and dividing by $u=-15$, giving $(-30)/(-15)=+2$ — the magnitude is right but this hides the fact that the image is inverted, not upright.",
+        "−0.5 comes from computing $m=u/v$ instead of $v/u$ — inverting the magnification formula.",
+        "+0.5 combines both mistakes above: an inverted magnification formula AND a sign-flipped $v$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-ray-optics-005",
+      "concept_id": "ray-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two thin convex lenses of focal lengths $f_1 = 10\\ \\text{cm}$ and $f_2 = 15\\ \\text{cm}$ are placed in contact. What is the focal length of the combination?",
+      "options": [
+        "6 cm",
+        "25 cm",
+        "12.5 cm",
+        "3 cm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "6 cm",
+      "solution_steps": [
+        "For thin lenses in contact, powers add: $P = P_1+P_2 = \\dfrac{1}{f_1}+\\dfrac{1}{f_2}$ (with focal lengths in metres to get power in dioptres, though the ratio works the same in any consistent unit).",
+        "Substitute (in cm, then invert): $\\dfrac{1}{f} = \\dfrac{1}{10}+\\dfrac{1}{15} = \\dfrac{3}{30}+\\dfrac{2}{30}=\\dfrac{5}{30}=\\dfrac{1}{6}$, so $f = 6\\ \\text{cm}$.",
+        "25 cm comes from simply ADDING the two focal lengths ($10+15$) instead of combining their reciprocals — treating focal lengths like they add directly, which they don't.",
+        "12.5 cm comes from taking the ARITHMETIC MEAN of the two focal lengths, $(10+15)/2$, instead of the correct power-addition rule.",
+        "3 cm comes from combining the focal lengths using the SERIES-RESISTOR-style formula $\\dfrac{f_1f_2}{f_1+f_2}$ scaled incorrectly, or equivalently applying the 'series springs' combination rule from an unrelated topic to lens focal lengths, where the actual rule is reciprocals of focal length (i.e. powers) simply ADD."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-ray-optics-006",
+      "concept_id": "ray-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A prism has an apex angle of $A = 60°$ and refractive index $n = 1.5$. Using the minimum-deviation relation $n = \\dfrac{\\sin\\left(\\dfrac{A+D_m}{2}\\right)}{\\sin\\left(\\dfrac{A}{2}\\right)}$, find the angle of minimum deviation $D_m$.",
+      "options": [
+        "≈37.2°",
+        "≈30°",
+        "≈60°",
+        "≈48.6°"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈37.2°",
+      "solution_steps": [
+        "Rearranging: $\\sin\\left(\\dfrac{A+D_m}{2}\\right) = n\\sin\\left(\\dfrac{A}{2}\\right) = 1.5\\times\\sin(30°) = 1.5\\times0.5 = 0.75$.",
+        "So $\\dfrac{A+D_m}{2} = \\sin^{-1}(0.75) \\approx 48.59°$, giving $A+D_m \\approx 97.18°$, so $D_m \\approx 97.18°-60° \\approx 37.2°$.",
+        "≈30° comes from wrongly assuming $D_m = A/2$, a made-up shortcut with no basis in the minimum-deviation formula.",
+        "≈60° comes from wrongly assuming the minimum deviation equals the apex angle itself.",
+        "≈48.6° stops halfway through the calculation — it reports $\\sin^{-1}(0.75)\\approx48.59°$ itself (which is $\\dfrac{A+D_m}{2}$, an intermediate quantity) instead of finishing the algebra to solve for $D_m$."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-wave-optics-001",
+      "concept_id": "wave-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a Young's double-slit experiment, the wavelength of light used is 600 nm, the slit separation is 1 mm, and the screen is 1 m away. What is the fringe width?",
+      "options": [
+        "0.6 mm",
+        "0.06 mm",
+        "6 mm",
+        "1.6 mm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "0.6 mm",
+      "solution_steps": [
+        "Fringe width in YDSE is $\\beta = \\dfrac{\\lambda D}{d}$, where $\\lambda$ is wavelength, $D$ is slit-to-screen distance, and $d$ is slit separation.",
+        "Substitute (all in SI units): $\\beta = \\dfrac{600\\times10^{-9}\\times1}{1\\times10^{-3}} = 6\\times10^{-4}\\ \\text{m} = 0.6\\ \\text{mm}$.",
+        "0.06 mm comes from a units slip — treating $d=1\\ \\text{mm}$ as if it were $1\\ \\text{cm}=10^{-2}\\ \\text{m}$, making the fringe width 10 times too small.",
+        "6 mm comes from the opposite units slip — treating $d$ as $0.1\\ \\text{mm}$, making the fringe width 10 times too large.",
+        "1.6 mm comes from adding $\\lambda D$ and $d$ in some ad hoc combined-units way instead of dividing correctly, an arithmetic slip disconnected from the actual formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-wave-optics-002",
+      "concept_id": "wave-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "At a certain point on the screen in a YDSE setup using light of wavelength 600 nm, the path difference between the two interfering waves is measured to be $1.5\\ \\mu\\text{m}$. Is the resulting fringe bright (constructive interference) or dark (destructive interference)?",
+      "options": [
+        "Dark — the path difference is 2.5 wavelengths, a half-integer multiple, which is the condition for destructive interference.",
+        "Bright — any path difference greater than the wavelength always produces a bright fringe.",
+        "Dark — the path difference exceeds the wavelength, and any path difference larger than $\\lambda$ automatically means destructive interference.",
+        "Bright — the path difference is 2.5 wavelengths, and since 2.5 rounds to a whole number of wavelengths, this counts as constructive interference."
+      ],
+      "answer_index": 0,
+      "correct_answer": "Dark — the path difference is 2.5 wavelengths, a half-integer multiple, which is the condition for destructive interference.",
+      "solution_steps": [
+        "Constructive interference (bright fringe) occurs when the path difference is a WHOLE-NUMBER multiple of the wavelength: $\\Delta = n\\lambda$. Destructive interference (dark fringe) occurs when it is a HALF-INTEGER multiple: $\\Delta = (n+\\tfrac{1}{2})\\lambda$.",
+        "Here $\\dfrac{\\Delta}{\\lambda} = \\dfrac{1.5\\times10^{-6}}{600\\times10^{-9}} = \\dfrac{1500\\ \\text{nm}}{600\\ \\text{nm}} = 2.5$.",
+        "Since $2.5 = 2+\\tfrac{1}{2}$ is a half-integer multiple of the wavelength, this point lies on a DARK fringe (destructive interference) — this is the key idea: deciding bright vs dark comes directly from how many whole or half wavelengths fit into the path difference, not from plugging into the fringe-width formula $\\beta=\\lambda D/d$ (which finds fringe SPACING, not the nature of a specific point given its path difference).",
+        "Option (b) and option (c) both state a false blanket rule ('any/larger path difference is automatically dark or automatically bright') — the actual deciding factor is always whether $\\Delta/\\lambda$ works out to a whole number or a half-integer, checked case by case.",
+        "Option (d) makes an arithmetic-flavoured error, treating 2.5 as if it 'rounds' to a whole number (3, say) and then wrongly concluding constructive interference — 2.5 wavelengths is exactly a half-integer, not close to a whole number in any sense that matters physically."
+      ],
+      "verification_method": "python_numeric_ratio_check"
+    },
+    {
+      "id": "pi-wave-optics-003",
+      "concept_id": "wave-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A thin soap film (refractive index $\\mu = 1.33$, surrounded by air on both sides) is illuminated by light of wavelength 600 nm. Light reflecting off the FIRST (air-to-film) surface undergoes a phase shift of $\\pi$ (since it reflects off a higher-index medium), while light reflecting off the SECOND (film-to-air) surface undergoes no phase shift. Using the resulting condition for constructive interference in reflection, $2\\mu t = \\left(m+\\tfrac{1}{2}\\right)\\lambda$, what is the MINIMUM non-zero film thickness $t$ for constructive interference (bright reflection)?",
+      "options": [
+        "≈112.8 nm",
+        "≈225.6 nm",
+        "≈150.0 nm",
+        "≈450.0 nm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈112.8 nm",
+      "solution_steps": [
+        "The minimum non-zero thickness occurs at $m=0$: $2\\mu t = \\dfrac{\\lambda}{2}$, so $t = \\dfrac{\\lambda}{4\\mu}$.",
+        "Substitute: $t = \\dfrac{600}{4\\times1.33} \\approx \\dfrac{600}{5.32} \\approx 112.8\\ \\text{nm}$.",
+        "≈225.6 nm is exactly double the correct value — comes from using $t=\\lambda/(2\\mu)$ instead of $t=\\lambda/(4\\mu)$, dropping a factor of 2 from the '$2\\mu t$' term on the left-hand side.",
+        "≈150.0 nm comes from using $t=\\lambda/4$ and forgetting to divide by the refractive index $\\mu$ at all, as if the light travelled through vacuum inside the film.",
+        "≈450.0 nm comes from using the DESTRUCTIVE-interference condition ($2\\mu t = m\\lambda$, minimum non-zero at... actually a full-wavelength-style condition) with a mismatched combination of $m$ and $\\mu$, illustrating the mistake of applying the wrong (bright vs dark) condition for this phase-shift situation."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-wave-optics-004",
+      "concept_id": "wave-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In single-slit diffraction, light of wavelength 600 nm passes through a slit of width 0.2 mm, and the screen is 2 m away. What is the width of the central bright maximum (called the central maximum, spanning from the first dark fringe on one side to the first dark fringe on the other)?",
+      "options": [
+        "12 mm",
+        "6 mm",
+        "24 mm",
+        "3 mm"
+      ],
+      "answer_index": 0,
+      "correct_answer": "12 mm",
+      "solution_steps": [
+        "The linear width of the central maximum in single-slit diffraction is $w = \\dfrac{2\\lambda D}{a}$, where $a$ is the slit width (this is TWICE the distance to just the first minimum on one side, since the central maximum spans both sides).",
+        "Substitute (SI units): $w = \\dfrac{2\\times600\\times10^{-9}\\times2}{0.2\\times10^{-3}} = \\dfrac{2.4\\times10^{-6}}{2\\times10^{-4}} = 0.012\\ \\text{m} = 12\\ \\text{mm}$.",
+        "6 mm is HALF the correct answer — comes from computing only the distance to the first minimum on ONE side ($\\lambda D/a$) and reporting that as the full width of the central maximum, rather than doubling it to cover both sides.",
+        "24 mm is DOUBLE the correct answer — comes from using $w=\\dfrac{4\\lambda D}{a}$, an extra unjustified factor of 2 on top of the already-correct formula.",
+        "3 mm comes from using the double-slit fringe-width formula $\\beta=\\lambda D/d$ with $d$ mistakenly set to $4a$, confusing this single-slit diffraction question with the double-slit interference formula."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-wave-optics-005",
+      "concept_id": "wave-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Unpolarised light of intensity $I_0 = 8\\ \\text{W/m}^2$ is first passed through a polariser, and the resulting polarised light (intensity $I_0/2$ by Malus's setup for unpolarised input) is then passed through a second polariser (analyser) whose axis is at $60°$ to the first. Using Malus's law for the SECOND polariser, $I = I_1\\cos^2\\theta$, and taking $I_1 = I_0/2 = 4\\ \\text{W/m}^2$ as the intensity after the first polariser, what intensity emerges from the analyser?",
+      "options": [
+        "1.0 W/m²",
+        "2.0 W/m²",
+        "3.46 W/m²",
+        "4.0 W/m²"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1.0 W/m²",
+      "solution_steps": [
+        "Malus's law: $I = I_1\\cos^2\\theta$, with $I_1 = 4\\ \\text{W/m}^2$ (intensity after the first polariser) and $\\theta=60°$.",
+        "Substitute: $\\cos60° = 0.5$, so $\\cos^2 60° = 0.25$, giving $I = 4\\times0.25 = 1.0\\ \\text{W/m}^2$.",
+        "2.0 W/m² comes from using $\\cos\\theta$ (not squared) instead of $\\cos^2\\theta$: $4\\times0.5=2.0$ — forgetting that Malus's law involves the SQUARE of the cosine.",
+        "3.46 W/m² comes from using $\\sin\\theta$ instead of $\\cos\\theta$ (and forgetting to square it): $4\\times\\sin60°\\approx4\\times0.866\\approx3.46$ — using the wrong trig function for Malus's law.",
+        "4.0 W/m² comes from ignoring the second polariser's angle entirely and reporting only the intensity after the FIRST polariser, $I_1$, as if the analyser had no effect."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-wave-optics-006",
+      "concept_id": "wave-optics",
+      "topic": "jee-optics",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Light travels from air ($n_1 = 1$) toward a glass surface ($n_2 = 1.5$). Using Brewster's law, $\\tan\\theta_B = \\dfrac{n_2}{n_1}$, what is the Brewster angle (the angle of incidence at which the reflected light is completely polarised)?",
+      "options": [
+        "≈56.3°",
+        "≈48.6°",
+        "≈33.7°",
+        "45°"
+      ],
+      "answer_index": 0,
+      "correct_answer": "≈56.3°",
+      "solution_steps": [
+        "Brewster's law states $\\tan\\theta_B = \\dfrac{n_2}{n_1}$.",
+        "Substitute: $\\tan\\theta_B = \\dfrac{1.5}{1} = 1.5$, so $\\theta_B = \\tan^{-1}(1.5) \\approx 56.3°$.",
+        "≈48.6° comes from computing $\\sin^{-1}(n_2/n_1)$ instead of $\\tan^{-1}(n_2/n_1)$, wait more precisely from mixing this up with the critical-angle-style calculation $\\sin^{-1}(1/n)$ applied to the wrong ratio — using the wrong trig function for Brewster's law.",
+        "≈33.7° is the COMPLEMENT of the correct Brewster angle ($90°-56.3°=33.7°$) — this comes from a common confusion between the angle of incidence and the angle of refraction at the Brewster condition (at Brewster's angle, the reflected and refracted rays are perpendicular to each other, and mixing up which of the two angles is being asked for gives this complementary value).",
+        "45° is a round, memorized-looking number that doesn't follow from actually applying Brewster's law to this specific refractive index."
+      ],
+      "verification_method": "sympy_symbolic_then_numeric_substitution"
+    }
+  ]
+}

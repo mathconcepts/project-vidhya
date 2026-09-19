@@ -77,8 +77,8 @@ const DIFFICULTY_MIX_BY_TARGET = {
 // CONCEPT_TEMPLATE_FAMILY.
 //
 // Precedence (E11, locked): when a concept resolves to a template family
-// (CONCEPT_TEMPLATE_FAMILY covers all 101 concept-graph concepts as of
-// 2026-08-27), the family's stage TOPOLOGY (stage ids, atom_kinds, order)
+// (CONCEPT_TEMPLATE_FAMILY covers all 170 concept-graph concepts across the
+// gate-ma and jee-main packs), the family's stage TOPOLOGY (stage ids, atom_kinds, order)
 // REPLACES this file's old 3-way GEOMETRIC/ALGEBRAIC/COMPUTATIONAL heuristic
 // below (pickIntuitionAtom/pickDiscoveryAtom + inferTopicFamily) — that
 // heuristic now serves ONLY concept_ids the family table doesn't cover
@@ -108,6 +108,13 @@ const RATIONALE_ID_BY_FAMILY: Record<TemplateFamilyId, string> = {
   coordinate_geometry: 'family_coordinate_geometry',
   trigonometry: 'family_trigonometry',
   algebra: 'family_algebra',
+  mechanics: 'family_mechanics',
+  field_and_circuit: 'family_field_and_circuit',
+  wave_and_optics: 'family_wave_and_optics',
+  modern_physics: 'family_modern_physics',
+  chemistry_quantitative: 'family_chemistry_quantitative',
+  chemistry_structure: 'family_chemistry_structure',
+  chemistry_reaction: 'family_chemistry_reaction',
 };
 
 /** The family a concept resolves to, or null when uncovered (legacy fallback applies). */

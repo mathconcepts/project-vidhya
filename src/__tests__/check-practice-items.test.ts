@@ -14,6 +14,7 @@ import {
   checkPhraseRule,
   checkProvenanceVerificationMethod,
   checkPyqBank,
+  checkLatexEscaping,
   loadPyqBank,
   type PyqBankFile,
 } from '../../scripts/check-practice-items';
@@ -556,5 +557,46 @@ describe('loadPyqBank', () => {
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('checkLatexEscaping', () => {
+  // Real defect, found in a freshly authored bank: 16 of 36 items carried
+  // `\\dfrac` where they meant `\dfrac`, because the content was written
+  // through shell heredocs and one block escaped backslashes the other did
+  // not. The item was schema-valid AND re-graded to full marks, so both
+  // existing checks passed it — KaTeX would have rendered the student their
+  // own question's source.
+  it('catches a double-escaped LaTeX command', () => {
+    const out = checkLatexEscaping({ question_text: 'Find $\\\\dfrac{1}{2}$' });
+    expect(out).toHaveLength(1);
+    expect(out[0]).toContain('question_text');
+    expect(out[0]).toContain('double-escaped');
+  });
+
+  it('leaves a correctly escaped command alone', () => {
+    expect(checkLatexEscaping({ question_text: 'Find $\\dfrac{1}{2}$' })).toEqual([]);
+  });
+
+  it('does NOT flag a lone \\\\ line break inside display math', () => {
+    // The rule has to be narrow: inside a $$...$$ block `\\` is a legitimate
+    // line break, and flagging it would make the check unusable on exactly
+    // the multi-line solutions worth writing.
+    expect(
+      checkLatexEscaping({ solution_steps: ['$$a = 1 \\\\ b = 2$$'] }),
+    ).toEqual([]);
+  });
+
+  it('reports the path when the defect is nested in options', () => {
+    const out = checkLatexEscaping({ options: ['fine', '$\\\\alpha$'] });
+    expect(out).toHaveLength(1);
+    expect(out[0]).toContain('options[1]');
+  });
+
+  it('ignores fields that are not student-visible content', () => {
+    // `verification_method` and ids are never rendered through KaTeX.
+    expect(
+      checkLatexEscaping({ verification_method: 'regex_\\\\d_check', id: 'pi-x-001' }),
+    ).toEqual([]);
   });
 });

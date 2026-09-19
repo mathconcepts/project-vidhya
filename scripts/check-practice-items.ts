@@ -244,6 +244,59 @@ export function validateItemSchema(raw: unknown): string[] {
     }
   }
 
+  problems.push(...checkLatexEscaping(it));
+
+  return problems;
+}
+
+/**
+ * Catch LaTeX that was double-escaped on its way into the JSON.
+ *
+ * Found in a freshly authored bank: 16 of 36 items carried `\\dfrac` where
+ * they meant `\dfrac`, because the content was written through shell heredocs
+ * and one block escaped backslashes that the other did not. KaTeX renders
+ * `\\dfrac` as literal text, so the student sees the source of their own
+ * question.
+ *
+ * Neither existing gate could see it. `ci:katex-fences` walks concept-atom
+ * markdown and never opens practice-item JSON; the schema check and the
+ * deterministic re-grade both treat these fields as opaque strings, and a
+ * doubled backslash changes nothing either of them compares. So the item was
+ * schema-valid, re-graded to full marks, and still would have rendered broken
+ * in the app — the exact shape of defect this file's header says the re-grade
+ * exists to stop ("whatever its schema says").
+ *
+ * The rule is narrow on purpose: a doubled backslash IMMEDIATELY BEFORE a
+ * letter is a LaTeX command that will not run. `\\` alone is left alone,
+ * because inside a display block it is a legitimate line break.
+ */
+export function checkLatexEscaping(it: Record<string, unknown>): string[] {
+  const problems: string[] = [];
+  const DOUBLED = /\\\\[a-zA-Z]/;
+
+  const walk = (value: unknown, path: string): void => {
+    if (typeof value === 'string') {
+      const m = value.match(/\\\\[a-zA-Z]+/);
+      if (m && DOUBLED.test(value)) {
+        problems.push(
+          `${path}: double-escaped LaTeX ${JSON.stringify(m[0])} — KaTeX renders this as literal text, ` +
+            `not a command (a lone "\\\\" line break is fine; this is "\\\\" followed by a letter)`,
+        );
+      }
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((v, i) => walk(v, `${path}[${i}]`));
+      return;
+    }
+    if (value && typeof value === 'object') {
+      for (const [k, v] of Object.entries(value as Record<string, unknown>)) walk(v, `${path}.${k}`);
+    }
+  };
+
+  for (const field of ['question_text', 'options', 'solution_steps', 'correct_answer']) {
+    if (field in it) walk(it[field], field);
+  }
   return problems;
 }
 

@@ -49,16 +49,19 @@ describe('merged concept universe', () => {
     // The number that must never silently regress is gate-ma's OWN share.
     // The universe total moves whenever a pack is added, by design — this
     // assertion used to read `expect(ALL_CONCEPTS).toHaveLength(101)`, which
-    // was the same statement only while one pack declared concepts.
+    // was the same statement only while one pack declared concepts. gate-ma's
+    // 101 has now survived jee-main growing 0 -> 23 -> 69 around it, which is
+    // exactly what this pairing exists to prove.
     expect(conceptsDeclaredByExam('gate-ma')).toHaveLength(101);
-    expect(ALL_CONCEPTS).toHaveLength(124);
+    expect(ALL_CONCEPTS).toHaveLength(170);
   });
 
-  it('reports jee-main\'s own 23 — the Mathematics half it has migrated', () => {
-    // jee-main was a Phase-1 stub owning nothing; its Mathematics concepts
-    // are now real nodes. Physics and Chemistry are still stubs, so this
-    // number is the migrated half and not the pack's whole syllabus.
-    expect(conceptsDeclaredByExam('jee-main')).toHaveLength(23);
+  it('reports jee-main\'s own 69 — all three subjects, no stubs left', () => {
+    // jee-main was a Phase-1 stub owning nothing, then owned its Mathematics
+    // half (23). Physics (24) and Chemistry (22) followed, so this is now the
+    // pack's WHOLE declared syllabus rather than a migrated fraction of it —
+    // the separate stub-exam-rule test is what holds `stub_concepts:` empty.
+    expect(conceptsDeclaredByExam('jee-main')).toHaveLength(69);
   });
 
   it('partitions the universe — both packs together account for every concept', () => {

@@ -28,8 +28,22 @@
  * invariants: no new column, no behavioural signal, nothing inferred.
  *
  * Adding a board: one YAML file under data/registry/curriculum-bridges/,
- * named for its `track_id`, covering every concept its `target_exam`
- * declares. `npm run ci:curriculum-bridge` refuses a partial one.
+ * named for its `track_id`, declaring which of its `target_exam`'s TOPICS it
+ * speaks for (`covers_topics:`) and covering every concept in them.
+ * `npm run ci:curriculum-bridge` refuses a partial one.
+ *
+ * WHY `covers_topics:` AND NOT THE WHOLE PACK. Coverage was originally
+ * checked against every concept the target exam declares, which was right
+ * while jee-main declared Mathematics only. The moment Physics and Chemistry
+ * were promoted out of `stub_concepts:`, that rule asked a Class 12
+ * MATHEMATICS track to make a claim about coordination compounds. A board
+ * track is one school SUBJECT; an exam pack spans several. So the file names
+ * the topics it claims, and the gate holds it to exactly those — the coverage
+ * rule is unchanged in strength (cover everything you claim, a silent omission
+ * is the failure this exists to stop), only in what "everything" means.
+ * Topics a pack declares that NO bridge file claims are simply unbridged:
+ * `bridgeFor` returns null and the lesson renders nothing, the same honest
+ * degradation a student on an unbridged board already gets.
  */
 
 import fs from 'fs';
@@ -96,6 +110,12 @@ export interface CurriculumBridgeFile {
   track_id: string;
   board_label: string;
   target_exam: string;
+  /**
+   * The `target_exam` topic strings this file speaks for — the scope its
+   * coverage is checked against. Non-empty; every value must be a topic the
+   * target exam actually declares.
+   */
+  covers_topics: string[];
   concepts: Record<string, ConceptBridge>;
   surplus_board_topics: SurplusBoardTopic[];
   /** Where it was read from — for error messages, never rendered. */
@@ -175,6 +195,14 @@ export function loadBridgeFile(filePath: string): CurriculumBridgeFile {
     }
   }
 
+  if (!Array.isArray(raw.covers_topics) || raw.covers_topics.length === 0) {
+    throw new Error(
+      `${rel}: covers_topics is required and must be a non-empty list of ` +
+        `${String(raw.target_exam)} topic strings — a bridge states which subject it speaks for`,
+    );
+  }
+  const coversTopics = (raw.covers_topics as unknown[]).map((t) => String(t));
+
   const concepts: Record<string, ConceptBridge> = {};
   for (const [cid, value] of Object.entries((raw.concepts ?? {}) as Record<string, unknown>)) {
     concepts[cid] = coerceEntry(cid, value);
@@ -192,6 +220,7 @@ export function loadBridgeFile(filePath: string): CurriculumBridgeFile {
     track_id: raw.track_id as string,
     board_label: raw.board_label as string,
     target_exam: raw.target_exam as string,
+    covers_topics: coversTopics,
     concepts,
     surplus_board_topics: surplus,
     source_file: rel,
@@ -275,10 +304,11 @@ export interface BridgeAuditProblem {
  * Full audit, shared by the CI gate and its tests.
  *
  * Checks, in order: the track resolves to a real KnowledgeTrack; the target
- * exam declares concepts at all; every concept the exam declares has an
- * entry (COVERAGE — a partial bridge is worse than none, because the
- * concepts it silently omits are exactly the ones nobody thought about);
- * no entry names a concept outside that exam; and every entry passes
+ * exam declares concepts at all; every topic in `covers_topics` is one the
+ * exam actually declares; every concept in those topics has an entry
+ * (COVERAGE — a partial bridge is worse than none, because the concepts it
+ * silently omits are exactly the ones nobody thought about); no entry names
+ * a concept outside the claimed topics; and every entry passes
  * `validateBridge`.
  */
 export function auditBridges(bridges = loadAllBridges(true)): BridgeAuditProblem[] {
@@ -306,13 +336,30 @@ export function auditBridges(bridges = loadAllBridges(true)): BridgeAuditProblem
       continue;
     }
 
-    const examIds = new Set(examConcepts.map((c) => c.id));
+    const examTopics = new Set(examConcepts.map((c) => c.topic));
+    for (const t of file.covers_topics) {
+      if (!examTopics.has(t)) {
+        problems.push({
+          file: where,
+          concept_id: null,
+          message:
+            `covers_topics names "${t}", which ${file.target_exam} does not declare ` +
+            `(it declares: ${[...examTopics].sort().join(', ')})`,
+        });
+      }
+    }
+
+    const claimed = new Set(file.covers_topics);
+    const inScope = examConcepts.filter((c) => claimed.has(c.topic));
+    const examIds = new Set(inScope.map((c) => c.id));
     for (const cid of examIds) {
       if (!file.concepts[cid]) {
         problems.push({
           file: where,
           concept_id: cid,
-          message: `no bridge entry — every concept ${file.target_exam} declares needs one`,
+          message:
+            `no bridge entry — every concept in a claimed topic needs one ` +
+            `(covers_topics: ${file.covers_topics.join(', ')})`,
         });
       }
     }
@@ -323,10 +370,14 @@ export function auditBridges(bridges = loadAllBridges(true)): BridgeAuditProblem
         continue;
       }
       if (!examIds.has(cid)) {
+        const node = CONCEPT_MAP.get(cid);
         problems.push({
           file: where,
           concept_id: cid,
-          message: `belongs to another exam pack, not ${file.target_exam}`,
+          message:
+            node && node.topic && !claimed.has(node.topic)
+              ? `topic "${node.topic}" is not in this file's covers_topics`
+              : `belongs to another exam pack, not ${file.target_exam}`,
         });
         continue;
       }

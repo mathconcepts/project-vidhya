@@ -1,0 +1,582 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Chemistry practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) for four jee-inorganic-chemistry concepts: periodic-table-trends, p-block-elements, d-and-f-block, coordination-compounds. Authored 2026-09-19. At least half the items turn on a named exception or structural reason rather than plain trend recall (N-vs-O and Be-vs-B ionisation enthalpy dips, F-vs-Cl electron gain enthalpy anomaly, the diagonal relationship, N-cannot-form-NCl5, HX acid strength reversal, H3PO2 basicity, white/red phosphorus reactivity, Cr and Cu anomalous configurations, Sc3+ colourlessness, lanthanoid contraction, tetrahedral-vs-square-planar isomerism, and the VBT/CFT colour contrast). Every numeric claim (spin-only magnetic moments, oxidation states via charge balance, VSEPR electron-domain counts, electron configurations) was independently verified via python3 (sympy symbolic solve for charge-balance and the spin-only formula, plain arithmetic for VSEPR domain counting and aufbau-vs-actual configuration comparison) before being written down; qualitative claims (electronegativity/radius/bond-enthalpy/ionic-radius reference values, isomerism definitions) were cross-checked against standard textbook reference data rather than computed, and are labelled as such in each item's verification_method.",
+  "items": [
+    {
+      "id": "pi-periodic-table-trends-001",
+      "concept_id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Across Period 3, from sodium to chlorine, which property GENERALLY increases steadily from left to right?",
+      "options": [
+        "Electronegativity",
+        "Atomic radius",
+        "Metallic character",
+        "Number of electron shells"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Electronegativity",
+      "solution_steps": [
+        "Moving left to right across a period, the number of protons in the nucleus increases by one at every step, while the new electron added each time goes into the SAME outer shell.",
+        "Extra electrons in the same shell barely shield each other from the extra proton, so the effective pull felt by the outermost electrons (effective nuclear charge) rises steadily across the period.",
+        "A stronger pull on shared electrons means the atom attracts a bonded pair more strongly, so electronegativity rises across a period (fluorine is the most electronegative element on the whole periodic table, at the far right of Period 2).",
+        "Atomic radius does the OPPOSITE — it shrinks across a period, since the same shell is being pulled in tighter, not stretched out, so that option is wrong. Metallic character also falls across a period (elements become more non-metallic left to right), the reverse of 'increases'. The number of electron shells stays exactly the same across one period by definition — a new shell is only added when moving DOWN to the next period, not across."
+      ],
+      "verification_method": "reference_value_crosscheck_pauling_electronegativity_scale"
+    },
+    {
+      "id": "pi-periodic-table-trends-002",
+      "concept_id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Which of these correctly ranks the sizes of a sodium atom ($\\text{Na}$), a sodium cation ($\\text{Na}^+$), a chlorine atom ($\\text{Cl}$), and a chloride anion ($\\text{Cl}^-$)?",
+      "options": [
+        "$\\text{Na} > \\text{Na}^+$ and $\\text{Cl}^- > \\text{Cl}$",
+        "$\\text{Na}^+ > \\text{Na}$ and $\\text{Cl} > \\text{Cl}^-$",
+        "$\\text{Na} > \\text{Na}^+$ and $\\text{Cl} > \\text{Cl}^-$",
+        "$\\text{Na}^+ > \\text{Na}$ and $\\text{Cl}^- > \\text{Cl}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{Na} > \\text{Na}^+$ and $\\text{Cl}^- > \\text{Cl}$",
+      "solution_steps": [
+        "A cation forms by REMOVING an electron. $\\text{Na}$ ($1s^22s^22p^63s^1$) loses its lone outer $3s^1$ electron to form $\\text{Na}^+$, which is left with only the $1s^22s^22p^6$ shell — one whole shell smaller AND the remaining electrons feel a stronger net pull from the same 11 protons with one fewer electron pushing back. Both effects shrink it, so $\\text{Na} > \\text{Na}^+$.",
+        "An anion forms by ADDING an electron into the SAME outer shell. $\\text{Cl}$ gains one electron to become $\\text{Cl}^-$; the shell does not change, but there is now one more electron repelling all the others (extra electron-electron repulsion) with no extra proton to compensate, so the electron cloud spreads out and $\\text{Cl}^- > \\text{Cl}$.",
+        "So the correct pairing is: cation smaller than its parent atom, anion larger than its parent atom — exactly option A.",
+        "Option B reverses both relationships. Option C gets the cation right but wrongly shrinks the anion too (as if adding an electron always shrinks, which only happens for a cation losing one, not gaining one). Option D gets the anion right but wrongly grows the cation."
+      ],
+      "verification_method": "reference_value_crosscheck_electron_configuration_reasoning"
+    },
+    {
+      "id": "pi-periodic-table-trends-003",
+      "concept_id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "First ionisation enthalpy of beryllium is 899 kJ/mol and of boron is 801 kJ/mol, even though boron has one more proton than beryllium. What is the correct reason boron's value is LOWER?",
+      "options": [
+        "Beryllium's outermost electron sits in a completely filled $2s^2$ subshell (extra stable), while boron's newest electron sits alone in a higher-energy $2p$ orbital that is easier to remove",
+        "Boron is a metalloid and beryllium is a metal, and metalloids always have lower ionisation enthalpy than metals",
+        "Boron has a larger atomic radius than beryllium, so its outer electron is simply farther from the nucleus",
+        "The value for boron given here must be a measurement error, since ionisation enthalpy can never fall across a period"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Beryllium's outermost electron sits in a completely filled $2s^2$ subshell (extra stable), while boron's newest electron sits alone in a higher-energy $2p$ orbital that is easier to remove",
+      "solution_steps": [
+        "Beryllium's configuration is $1s^22s^2$ — the $2s$ subshell is completely filled, and a filled subshell is unusually stable (no partially-filled orbital pushing electrons apart), so it resists losing an electron.",
+        "Boron's configuration is $1s^22s^22p^1$ — its newest, outermost electron is alone in a $2p$ orbital, which lies at slightly higher energy than $2s$ and is even a little shielded by the $2s^2$ pair beneath it, so it comes off more easily than one of beryllium's paired $2s$ electrons, DESPITE boron having one extra proton.",
+        "This is one of the two standard, named exceptions to the 'ionisation enthalpy rises across a period' rule (filled-subshell-to-next dip); the general rising trend still holds everywhere else in the period.",
+        "'Metalloid vs metal' is not the reason at all — the anomaly is about subshell filling, not chemical classification, so that option is a made-up rule. Boron does NOT have a larger radius than beryllium (radius shrinks across a period, so boron is actually slightly smaller), which rules out that option too. It is not a measurement error — this dip is a real, reproducible, well-documented exception, not a mistake in the trend."
+      ],
+      "verification_method": "python_electron_configuration_check_and_reference_ie1_values"
+    },
+    {
+      "id": "pi-periodic-table-trends-004",
+      "concept_id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Nitrogen and oxygen sit next to each other in Period 2, with oxygen to nitrogen's right. Which correctly compares their first ionisation enthalpies?",
+      "options": [
+        "$IE_1(\\text{N}) > IE_1(\\text{O})$, because nitrogen's half-filled $2p^3$ is extra stable, while oxygen's fourth $2p$ electron must pair up and is easier to remove",
+        "$IE_1(\\text{O}) > IE_1(\\text{N})$, following the general rule that ionisation enthalpy always rises across a period",
+        "$IE_1(\\text{N}) = IE_1(\\text{O})$, since both elements are in the same $2p$ subshell",
+        "$IE_1(\\text{O}) > IE_1(\\text{N})$, because oxygen has a smaller atomic radius and therefore always binds its electrons more tightly than any lighter atom in the same period"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$IE_1(\\text{N}) > IE_1(\\text{O})$, because nitrogen's half-filled $2p^3$ is extra stable, while oxygen's fourth $2p$ electron must pair up and is easier to remove",
+      "solution_steps": [
+        "Nitrogen's configuration ends in $2p^3$: one electron in each of the three $2p$ orbitals, with no pairing at all — this half-filled arrangement is unusually stable because there is no extra electron-electron repulsion inside any single orbital.",
+        "Oxygen's configuration ends in $2p^4$: the fourth electron must pair up inside an orbital that already holds one electron, and two electrons crammed into the same orbital repel each other. That repulsion makes this paired electron easier to pull out than any of nitrogen's three unpaired electrons.",
+        "So oxygen's first ionisation enthalpy is LOWER than nitrogen's, even though oxygen has one more proton. This is the second of the two standard exceptions to the 'rises across a period' rule — right where a half-filled subshell is followed by a paired one.",
+        "Option B is exactly the naive trend-following answer that ignores this named exception — it is the most tempting wrong choice. Option C is wrong because being in the same subshell type does not mean equal stability; the electron count inside that subshell (half-filled vs paired) is what matters. Option D invents a 'smaller radius always wins' rule that is not how ionisation enthalpy works — the electron configuration effect here overrides the raw nuclear-charge/radius trend."
+      ],
+      "verification_method": "python_electron_configuration_check_and_reference_ie1_values"
+    },
+    {
+      "id": "pi-periodic-table-trends-005",
+      "concept_id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Electron gain enthalpy becomes more negative across a period and less negative down a group — but fluorine's electron gain enthalpy is actually LESS negative than chlorine's, even though fluorine sits above chlorine in the same group. What causes this exception?",
+      "options": [
+        "Fluorine's very small $2p$ subshell is already electron-dense, so the incoming electron faces extra electron-electron repulsion there, partly cancelling the energy released",
+        "Fluorine is simply an anomaly with no structural cause, unlike every other element on the periodic table",
+        "Chlorine has a higher nuclear charge than fluorine, so it always attracts an incoming electron more strongly than any lighter halogen",
+        "Fluorine's electron gain enthalpy is not actually an exception; chlorine's value in standard tables is a misprint"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Fluorine's very small $2p$ subshell is already electron-dense, so the incoming electron faces extra electron-electron repulsion there, partly cancelling the energy released",
+      "solution_steps": [
+        "Fluorine's incoming electron must enter its small, compact $2p$ subshell, which is already crowded with electrons close to the nucleus. The extra electron-electron repulsion there works against the energy released by adding the electron, so less net energy is released than the raw nuclear-charge trend would predict.",
+        "Chlorine's incoming electron enters the larger $3p$ subshell, which is roomier and experiences less of this crowding effect, so more net energy is released — making chlorine's electron gain enthalpy MORE negative than fluorine's, breaking the naive 'smaller atom, higher up the group, should win' expectation.",
+        "This is a genuine, well-documented structural exception (fluorine and oxygen, the smallest members of their groups, both show this same 'less negative than the element below' pattern) — it is not random and not a data error.",
+        "'No structural cause' is wrong — there is a specific, named reason (electron crowding in a small subshell), so this option just avoids explaining anything. 'Chlorine's higher nuclear charge always wins' cannot be the reason either, since fluorine actually has a HIGHER nuclear charge felt by its outer electrons than chlorine does within its own shell — the issue is subshell size/crowding, not raw nuclear charge. Calling chlorine's value a misprint dismisses a real, reproducible measurement without justification."
+      ],
+      "verification_method": "reference_value_crosscheck_electron_gain_enthalpy_data"
+    },
+    {
+      "id": "pi-periodic-table-trends-006",
+      "concept_id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Lithium's chemistry resembles magnesium's more closely than it resembles sodium's or potassium's, even though lithium sits in the same GROUP as sodium and potassium, not the same group as magnesium. What is this diagonal relationship actually caused by?",
+      "options": [
+        "Lithium and magnesium have a similar charge-to-radius ratio (polarising power), which drives much of an element's chemical behaviour more strongly than the group number does",
+        "Lithium and magnesium were discovered in the same year, so early chemists grouped their chemistry together by convention",
+        "Lithium and magnesium have exactly the same number of electron shells, which is the only thing that determines chemical similarity between any two elements",
+        "This is a coincidence with no consistent explanation, and it applies only to lithium and magnesium and no other pair of elements"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Lithium and magnesium have a similar charge-to-radius ratio (polarising power), which drives much of an element's chemical behaviour more strongly than the group number does",
+      "solution_steps": [
+        "Moving one group to the right and one period down from lithium lands on magnesium. Moving right increases nuclear charge (and hence ionic charge); moving down increases ionic radius. For this specific diagonal step, the two effects happen to roughly cancel, leaving lithium's $\\text{Li}^+$ and magnesium's $\\text{Mg}^{2+}$ with a very similar ratio of charge to radius.",
+        "Charge-to-radius ratio controls how strongly an ion polarises (distorts) a neighbouring ion's electron cloud, which in turn controls properties like covalent character, solubility of certain salts, and thermal stability of carbonates/nitrides — so a similar ratio produces genuinely similar chemistry, not just a coincidence.",
+        "This same diagonal pattern repeats for beryllium-aluminium and boron-silicon, each one group right, one period down from a Period 2 element — it is a recognised, structural relationship across the whole periodic table, not a one-off between lithium and magnesium alone.",
+        "'Discovered in the same year' is a historical claim with no chemical basis and does not even need to be true to be irrelevant to reactivity. 'Same number of electron shells' is false here — magnesium (Period 3) has one more shell than lithium (Period 2), and shell count is not, by itself, a complete determinant of chemistry anyway. Calling it a coincidence contradicts the fact that the same pattern repeats for other diagonal pairs (Be–Al, B–Si) for the identical structural reason."
+      ],
+      "verification_method": "reference_value_crosscheck_diagonal_relationship_pairs"
+    },
+    {
+      "id": "pi-p-block-elements-001",
+      "concept_id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the molecular shape of $\\text{XeF}_4$?",
+      "options": [
+        "Square planar",
+        "Tetrahedral",
+        "Trigonal bipyramidal",
+        "Octahedral"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Square planar",
+      "solution_steps": [
+        "Xenon has 8 valence electrons. Forming 4 $\\text{Xe–F}$ bonds uses 4 of them, leaving $8 - 4 = 4$ electrons on xenon, which pair up into 2 lone pairs.",
+        "Total electron domains around xenon = 4 bonding pairs + 2 lone pairs = 6 domains, which arrange themselves in an OCTAHEDRAL electron geometry to stay as far apart as possible.",
+        "With 6 domains arranged octahedrally, the 2 lone pairs go to opposite (axial-type) positions to minimise repulsion, leaving the 4 fluorine atoms in one plane around xenon — the observed MOLECULAR shape (ignoring the invisible lone pairs) is therefore square planar, with $sp^3d^2$ hybridisation.",
+        "Tetrahedral would be the shape if xenon had only 4 total electron domains with no lone pairs (like $\\text{CH}_4$) — but xenon has 2 extra lone pairs here, ruled out. Trigonal bipyramidal comes from 5 total domains, not 6. Octahedral describes the ELECTRON geometry correctly, but is the wrong answer for the visible MOLECULAR shape once the 2 lone pairs are excluded from the description."
+      ],
+      "verification_method": "python_vsepr_electron_domain_count"
+    },
+    {
+      "id": "pi-p-block-elements-002",
+      "concept_id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Phosphorus forms $\\text{PCl}_5$, but nitrogen — directly above phosphorus in the same group — does NOT form $\\text{NCl}_5$. What is the correct reason for this?",
+      "options": [
+        "Nitrogen's valence shell ($n=2$) has no $d$ subshell available at all, so it cannot expand its octet the way phosphorus can using its accessible $3d$ subshell",
+        "Nitrogen simply follows the group trend less reliably than phosphorus does, for no particular reason",
+        "Chlorine refuses to bond with nitrogen because nitrogen is a gas at room temperature",
+        "Nitrogen already has 5 valence electrons, which is one too many to ever form 5 bonds"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Nitrogen's valence shell ($n=2$) has no $d$ subshell available at all, so it cannot expand its octet the way phosphorus can using its accessible $3d$ subshell",
+      "solution_steps": [
+        "To form 5 bonds, the central atom must expand beyond an octet (8 electrons) — this needs an available $d$ subshell to promote an electron into.",
+        "Nitrogen's valence shell is $n=2$, and the $n=2$ shell has only $2s$ and $2p$ subshells — there is no $2d$ subshell in existence for any element, so nitrogen has genuinely nowhere to expand into, no matter how the bonding is arranged.",
+        "Phosphorus's valence shell is $n=3$, which DOES include an accessible $3d$ subshell, so phosphorus can promote an electron and form 5 bonds, as in $\\text{PCl}_5$. This is the standard 'anomalous behaviour of the first member of a group' pattern in the p-block — the first member is often more restricted than the elements below it.",
+        "'Follows the trend less reliably, no particular reason' is not an answer at all — there is a specific, checkable structural cause (no $2d$ subshell). Chlorine's willingness to bond has nothing to do with nitrogen's physical state as a gas. Having 5 valence electrons is exactly what nitrogen needs to attempt 5 bonds in principle — the number of valence electrons is not the blocker; the absence of a $d$ subshell to expand the octet into is."
+      ],
+      "verification_method": "python_electron_shell_subshell_availability_check"
+    },
+    {
+      "id": "pi-p-block-elements-003",
+      "concept_id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Fluorine is the most electronegative element of all. Based on electronegativity alone, $\\text{HF}$ should be the strongest acid among the hydrogen halides. In reality, which is the correct acid strength order in water, and why?",
+      "options": [
+        "$\\text{HI} > \\text{HBr} > \\text{HCl} \\gg \\text{HF}$, because the $\\text{H–X}$ bond gets weaker down the group, and a weaker bond breaks (ionises) more easily, which outweighs the electronegativity trend",
+        "$\\text{HF} > \\text{HCl} > \\text{HBr} > \\text{HI}$, exactly as electronegativity alone predicts, since electronegativity is the only factor that governs acid strength",
+        "All four hydrogen halides are equally strong acids in water, since they all release one $\\text{H}^+$ ion",
+        "$\\text{HF} > \\text{HI} > \\text{HCl} > \\text{HBr}$, in no particular predictable order"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{HI} > \\text{HBr} > \\text{HCl} \\gg \\text{HF}$, because the $\\text{H–X}$ bond gets weaker down the group, and a weaker bond breaks (ionises) more easily, which outweighs the electronegativity trend",
+      "solution_steps": [
+        "Bond dissociation enthalpy of $\\text{H–X}$ falls sharply down the group ($\\text{H–F}$ around 565 kJ/mol, all the way down to $\\text{H–I}$ around 297 kJ/mol) because the halogen atom gets larger, so its orbital overlap with hydrogen's small 1s orbital gets weaker.",
+        "Acid strength in water depends on how easily the $\\text{H–X}$ bond breaks apart to release $\\text{H}^+$ — a WEAKER bond ionises more easily. So even though fluorine pulls electron density hardest (highest electronegativity), the $\\text{H–F}$ bond is so strong that it resists breaking, on top of extra stabilising hydrogen bonding in $\\text{HF}$ itself.",
+        "So the real order is $\\text{HI} > \\text{HBr} > \\text{HCl} \\gg \\text{HF}$ — the opposite of what electronegativity alone would suggest, with $\\text{HI}, \\text{HBr}, \\text{HCl}$ all essentially fully ionising (strong acids) in water while $\\text{HF}$ is a comparatively weak acid.",
+        "Option B is exactly the trap of extending the electronegativity trend without checking bond strength — it is the most tempting wrong choice. Claiming all four are equally strong ignores that they release $\\text{H}^+$ with very different ease. The random-order option offers no structural reasoning and does not match the smooth bond-strength trend down the group at all."
+      ],
+      "verification_method": "reference_value_crosscheck_hx_bond_dissociation_enthalpy"
+    },
+    {
+      "id": "pi-p-block-elements-004",
+      "concept_id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Hypophosphorous acid, $\\text{H}_3\\text{PO}_2$, has 3 hydrogen atoms in its formula. What is its actual basicity (number of replaceable/ionisable hydrogens)?",
+      "options": [
+        "1, because only one hydrogen is attached through oxygen (as $\\text{P–O–H}$); the other two are bonded directly to phosphorus and do not ionise",
+        "3, because basicity always equals the number of hydrogen atoms shown in the molecular formula",
+        "2, because phosphorus can only stabilise two negative charges at once",
+        "0, because $\\text{H}_3\\text{PO}_2$ does not behave as an acid at all"
+      ],
+      "answer_index": 0,
+      "correct_answer": "1, because only one hydrogen is attached through oxygen (as $\\text{P–O–H}$); the other two are bonded directly to phosphorus and do not ionise",
+      "solution_steps": [
+        "Basicity of an oxoacid is the number of ionisable $\\text{–O–H}$ hydrogens, NOT the total hydrogen count in the formula — a hydrogen bonded directly to the central atom (a $\\text{P–H}$ bond) does not release as $\\text{H}^+$ under normal conditions.",
+        "$\\text{H}_3\\text{PO}_2$'s actual structure has phosphorus bonded to: one $\\text{–OH}$ group, two direct $\\text{P–H}$ bonds, and one $\\text{P=O}$ double bond. Only the single $\\text{–OH}$ hydrogen is ionisable.",
+        "So $\\text{H}_3\\text{PO}_2$ is MONOBASIC (basicity = 1), even though its formula visually suggests three acidic hydrogens — this is the classic trap in p-block oxoacid basicity questions.",
+        "Assuming basicity always equals the hydrogen count in the formula is exactly this trap (it works for $\\text{H}_2\\text{SO}_4$ and $\\text{H}_3\\text{PO}_4$, where every H is on an $\\text{OH}$ group, but fails here). 'Phosphorus can only stabilise two negative charges' is not a real rule of oxoacid chemistry. $\\text{H}_3\\text{PO}_2$ does behave as a genuine (if weak, monobasic) acid — it is not inert."
+      ],
+      "verification_method": "reference_value_crosscheck_oh_group_count_from_structure"
+    },
+    {
+      "id": "pi-p-block-elements-005",
+      "concept_id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the molecular shape of the interhalogen compound $\\text{ClF}_3$?",
+      "options": [
+        "T-shaped",
+        "Trigonal planar",
+        "Pyramidal",
+        "See-saw"
+      ],
+      "answer_index": 0,
+      "correct_answer": "T-shaped",
+      "solution_steps": [
+        "Chlorine has 7 valence electrons. Forming 3 $\\text{Cl–F}$ bonds uses 3 of them, leaving $7 - 3 = 4$ electrons on chlorine, which pair up into 2 lone pairs.",
+        "Total electron domains around chlorine = 3 bonding pairs + 2 lone pairs = 5 domains, arranging themselves in a TRIGONAL BIPYRAMIDAL electron geometry ($sp^3d$ hybridisation).",
+        "To minimise repulsion, both lone pairs occupy equatorial positions (lone pairs need more room than bonding pairs, and equatorial positions have fewer close neighbours). That leaves the 3 fluorine atoms in a bent, T-shaped arrangement — 2 in the remaining equatorial/axial pattern that together trace out a 'T'.",
+        "Trigonal planar would need exactly 3 domains with NO lone pairs (like $\\text{BF}_3$) — chlorine has 2 extra lone pairs here, ruling that out. Pyramidal comes from 4 domains with 1 lone pair (like $\\text{NH}_3$), not 5 domains with 2. See-saw is the shape for 5 domains with only ONE lone pair (like $\\text{SF}_4$), not two."
+      ],
+      "verification_method": "python_vsepr_electron_domain_count"
+    },
+    {
+      "id": "pi-p-block-elements-006",
+      "concept_id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "White phosphorus ($\\text{P}_4$, a tetrahedral molecule with $\\text{P–P–P}$ bond angles of $60°$) is far more chemically reactive than red phosphorus (a polymeric network). What structural reason correctly explains this difference?",
+      "options": [
+        "White phosphorus's $60°$ bond angles are much smaller than phosphorus's preferred bonding angle, so its bonds carry high angular strain that is released on reaction, making it more reactive",
+        "White phosphorus is simply a purer form of the element, and purer substances always react faster than impure ones",
+        "White phosphorus has more valence electrons per molecule than red phosphorus, so it is automatically more reactive",
+        "Red phosphorus is chemically identical to white phosphorus; the reactivity difference is only a matter of colour, with no structural cause"
+      ],
+      "answer_index": 0,
+      "correct_answer": "White phosphorus's $60°$ bond angles are much smaller than phosphorus's preferred bonding angle, so its bonds carry high angular strain that is released on reaction, making it more reactive",
+      "solution_steps": [
+        "In the $\\text{P}_4$ tetrahedron, every $\\text{P–P–P}$ bond angle is exactly $60°$, forced by the tetrahedral geometry (four phosphorus atoms, each bonded to the other three, at the corners of a regular tetrahedron).",
+        "Phosphorus's orbitals prefer to bond at angles closer to $\\sim 90°$–$109°$, so squeezing them into $60°$ puts real angular (ring) strain on every bond in the $\\text{P}_4$ cage — energy that is stored in the strained bonds and released the moment a bond breaks during a reaction, making white phosphorus highly reactive (it even undergoes spontaneous combustion in air).",
+        "Red phosphorus is a polymeric chain structure with much closer-to-normal bond angles and no such strain, so its bonds are stronger and it is far less reactive (and far more thermally stable) than white phosphorus, despite being made of the exact same element.",
+        "'Purer form reacts faster' invents a rule that has nothing to do with actual bonding — reactivity here is about strain, not purity. Valence electron COUNT is identical either way (both are pure phosphorus), so that cannot be the differentiator. Claiming the two allotropes are chemically identical directly contradicts the well-documented difference in their reactivity and structure (discrete strained tetrahedra vs. an unstrained polymer network)."
+      ],
+      "verification_method": "reference_value_crosscheck_p4_bond_angle_geometry"
+    },
+    {
+      "id": "pi-d-and-f-block-001",
+      "concept_id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Following the normal aufbau filling order, chromium (atomic number 24) is expected to have the configuration $[\\text{Ar}]3d^44s^2$. What is chromium's ACTUAL ground-state configuration, and why?",
+      "options": [
+        "$[\\text{Ar}]3d^54s^1$ — a half-filled $3d^5$ together with a half-filled $4s^1$ is more stable than $3d^44s^2$",
+        "$[\\text{Ar}]3d^44s^2$, exactly as the simple aufbau filling order predicts, with no exceptions",
+        "$[\\text{Ar}]3d^64s^0$ — all 6 remaining electrons are pushed into the $3d$ subshell, leaving $4s$ empty",
+        "$[\\text{Ar}]3d^34s^3$ — an extra electron is borrowed by the $4s$ subshell instead of $3d$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$[\\text{Ar}]3d^54s^1$ — a half-filled $3d^5$ together with a half-filled $4s^1$ is more stable than $3d^44s^2$",
+      "solution_steps": [
+        "The simple aufbau order fills $4s$ before $3d$ and would give chromium (Z=24, so 6 electrons beyond argon) $3d^44s^2$.",
+        "But moving one electron from $4s$ into $3d$ gives $3d^54s^1$: BOTH the $3d$ and $4s$ subshells become exactly half-filled. A half-filled subshell has extra stability (each electron sits alone, with no electron-pair repulsion, and there is extra 'exchange energy' between electrons of parallel spin in different orbitals of the same subshell), and having TWO half-filled subshells at once outweighs the small energy cost of promoting the electron.",
+        "So chromium's real, experimentally confirmed ground state is $[\\text{Ar}]3d^54s^1$, not $[\\text{Ar}]3d^44s^2$ — this is one of the two classic exceptions to naive aufbau filling in the first transition series (the other being copper).",
+        "Option B is exactly the naive aufbau prediction that ignores this well-known exception. Option C wrongly empties $4s$ completely and overfills $3d$ past 5 electrons, which does not match chromium's real spectroscopic configuration. Option D's '$4s^3$' is not physically possible — an $s$ subshell can hold at most 2 electrons, never 3."
+      ],
+      "verification_method": "python_electron_configuration_aufbau_vs_actual_check"
+    },
+    {
+      "id": "pi-d-and-f-block-002",
+      "concept_id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Following the normal aufbau filling order, copper (atomic number 29) is expected to have the configuration $[\\text{Ar}]3d^94s^2$. What is copper's ACTUAL ground-state configuration, and why?",
+      "options": [
+        "$[\\text{Ar}]3d^{10}4s^1$ — a completely filled $3d^{10}$ together with a half-filled $4s^1$ is more stable than $3d^94s^2$",
+        "$[\\text{Ar}]3d^94s^2$, exactly as the simple aufbau filling order predicts, with no exceptions",
+        "$[\\text{Ar}]3d^84s^3$ — an extra electron is borrowed by the $4s$ subshell instead of $3d$",
+        "$[\\text{Ar}]3d^{11}4s^0$ — all 11 remaining electrons are pushed into the $3d$ subshell"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$[\\text{Ar}]3d^{10}4s^1$ — a completely filled $3d^{10}$ together with a half-filled $4s^1$ is more stable than $3d^94s^2$",
+      "solution_steps": [
+        "The simple aufbau order fills $4s$ before $3d$ and would give copper (Z=29, so 11 electrons beyond argon) $3d^94s^2$.",
+        "But moving one electron from $4s$ into $3d$ gives $3d^{10}4s^1$: the $3d$ subshell becomes COMPLETELY filled (all orbitals paired, maximum symmetry and stability), while $4s$ becomes half-filled. This fully-filled-plus-half-filled combination is more stable than the $3d^94s^2$ arrangement, so nature takes the more stable configuration.",
+        "So copper's real, experimentally confirmed ground state is $[\\text{Ar}]3d^{10}4s^1$, not $[\\text{Ar}]3d^94s^2$ — the second classic exception to naive aufbau filling in the first transition series (alongside chromium).",
+        "Option B is exactly the naive aufbau prediction that ignores this well-known exception. Option C's '$4s^3$' is not physically possible, since an $s$ subshell holds at most 2 electrons. Option D pushes a $d$ subshell past its maximum of 10 electrons, which is not physically possible either."
+      ],
+      "verification_method": "python_electron_configuration_aufbau_vs_actual_check"
+    },
+    {
+      "id": "pi-d-and-f-block-003",
+      "concept_id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "$\\text{Sc}^{3+}$ ions are colourless in solution, while most other first-row transition-metal ions (like $\\text{Ti}^{3+}$ or $\\text{Cu}^{2+}$) are coloured. What correctly explains why $\\text{Sc}^{3+}$ has no colour?",
+      "options": [
+        "$\\text{Sc}^{3+}$ has a $3d^0$ configuration (zero $d$ electrons), so there is no electron available to make a $d$-$d$ transition, and hence no visible-light absorption from that mechanism",
+        "$\\text{Sc}^{3+}$ has a full $3d^{10}$ configuration, so all its $d$-$d$ transitions are already 'used up' and cannot absorb any more light",
+        "Colour in transition-metal ions depends only on charge, and $\\text{Sc}^{3+}$'s $+3$ charge happens to be an exception with no absorbing transitions",
+        "$\\text{Sc}^{3+}$ is colourless because scandium is not classified as a true transition metal in any sense"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$\\text{Sc}^{3+}$ has a $3d^0$ configuration (zero $d$ electrons), so there is no electron available to make a $d$-$d$ transition, and hence no visible-light absorption from that mechanism",
+      "solution_steps": [
+        "Scandium (Z=21) has ground-state configuration $[\\text{Ar}]3d^14s^2$. Forming $\\text{Sc}^{3+}$ removes all 3 outer electrons (the two $4s$ electrons first, then the one $3d$ electron), leaving $[\\text{Ar}]$ — a $3d^0$ ion.",
+        "Colour in transition-metal complexes arises from a $d$-$d$ electronic transition: an electron absorbs a specific wavelength of visible light and jumps from a lower-energy split $d$ orbital to a higher-energy one. This requires the $d$ subshell to be PARTIALLY filled (somewhere between $d^1$ and $d^9$) — there must be both an occupied orbital an electron can leave and an empty (or lower-occupancy) orbital for it to jump into.",
+        "With $3d^0$, there are simply no $d$ electrons to make any transition at all, so $\\text{Sc}^{3+}$ cannot absorb visible light this way, and appears colourless. (The same reasoning correctly predicts $\\text{Zn}^{2+}$, which is $3d^{10}$ — fully filled, also colourless, for the mirror-image reason: no empty orbital left to jump into.)",
+        "$\\text{Sc}^{3+}$ is $3d^0$, not $3d^{10}$, so the 'full and used up' explanation describes the wrong ion (that reasoning would actually apply to $\\text{Zn}^{2+}$, not $\\text{Sc}^{3+}$). Colour does not depend on ionic charge alone — $\\text{Fe}^{2+}$ and $\\text{Fe}^{3+}$ are both coloured despite different charges, so 'charge is the only factor' is false. Scandium IS a $d$-block/transition element by the standard IUPAC definition (an element whose atom or common ion has a partially filled $d$ subshell) — the atom itself is $d^1$, it is specifically the $+3$ ION that has emptied the $d$ subshell."
+      ],
+      "verification_method": "python_electron_configuration_ion_check"
+    },
+    {
+      "id": "pi-d-and-f-block-004",
+      "concept_id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A high-spin octahedral $\\text{Fe}^{2+}$ complex ($3d^6$) has its 6 $d$-electrons arranged as $t_{2g}^4e_g^2$ (4 unpaired electrons). Using the spin-only formula $\\mu = \\sqrt{n(n+2)}$ BM, what is its magnetic moment?",
+      "options": [
+        "4.90 BM",
+        "3.87 BM",
+        "5.92 BM",
+        "2.83 BM"
+      ],
+      "answer_index": 0,
+      "correct_answer": "4.90 BM",
+      "solution_steps": [
+        "$\\text{Fe}^{2+}$ is $3d^6$. In a high-spin octahedral field, Hund's rule fills all 5 $d$ orbitals singly before any pairing happens: the first 5 electrons go into $t_{2g}$ (3 orbitals) and $e_g$ (2 orbitals) one each, and only the 6th electron is forced to pair up, in a $t_{2g}$ orbital — leaving $n = 4$ unpaired electrons.",
+        "Substituting $n = 4$ into $\\mu = \\sqrt{n(n+2)} = \\sqrt{4 \\times 6} = \\sqrt{24} \\approx 4.90$ BM.",
+        "So the correct magnetic moment is 4.90 BM, matching real experimental values for high-spin $\\text{Fe}^{2+}$ octahedral complexes.",
+        "3.87 BM corresponds to $n=3$ unpaired electrons — the mistake of undercounting by one (as if only 5 electrons filled singly and the 6th just did not count). 5.92 BM corresponds to $n=5$ — the mistake of assuming every one of the 6 electrons sits unpaired, which is impossible with only 5 orbitals available. 2.83 BM corresponds to $n=2$ — this is the LOW-spin $3d^6$ answer ($t_{2g}^6e_g^0$, all pairs in $t_{2g}$), which applies under a strong-field ligand, not the high-spin case this question specifies."
+      ],
+      "verification_method": "sympy_symbolic_spin_only_formula_computation"
+    },
+    {
+      "id": "pi-d-and-f-block-005",
+      "concept_id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Going down a group, atomic and ionic radius normally increases (a new shell is added). But zirconium ($\\text{Zr}$, 4d series) and hafnium ($\\text{Hf}$, 5d series, directly below it) have almost IDENTICAL atomic and ionic radii. What causes this exception?",
+      "options": [
+        "The 14 lanthanoid elements, which fill the poorly-shielding $4f$ subshell, sit between $\\text{Zr}$'s row and $\\text{Hf}$'s row, and the resulting 'lanthanoid contraction' cancels out the radius increase normally expected from adding a new shell",
+        "$\\text{Zr}$ and $\\text{Hf}$ are simply a rare coincidence with no shared cause across the periodic table",
+        "$\\text{Zr}$ and $\\text{Hf}$ have identical radii because they have the same number of valence electrons, which is true of every pair of elements in the same group",
+        "Hafnium's radius is actually smaller than zirconium's because hafnium has a much higher nuclear charge, following the group trend exactly as expected"
+      ],
+      "answer_index": 0,
+      "correct_answer": "The 14 lanthanoid elements, which fill the poorly-shielding $4f$ subshell, sit between $\\text{Zr}$'s row and $\\text{Hf}$'s row, and the resulting 'lanthanoid contraction' cancels out the radius increase normally expected from adding a new shell",
+      "solution_steps": [
+        "Going from the 4d series ($\\text{Zr}$) to the 5d series ($\\text{Hf}$), 14 lanthanoid elements (from lanthanum to lutetium) are filled in between, each adding one more $4f$ electron.",
+        "$4f$ electrons shield the nucleus very poorly (their orbital shape leaves the nucleus more exposed), so as they fill up, the effective nuclear charge felt by the outer electrons steadily increases across the whole lanthanoid series — this is called the lanthanoid contraction, and it noticeably shrinks the atoms/ions across that row.",
+        "By the time the table reaches hafnium, this accumulated contraction almost exactly cancels the radius increase that would normally come from adding a whole new principal shell (going from period 5 to period 6) — so $\\text{Zr}$ and $\\text{Hf}$ end up with nearly identical sizes. A direct consequence: $\\text{Zr}$ and $\\text{Hf}$ are chemically very hard to separate and are often found together in the same ores.",
+        "'Rare coincidence with no cause' is wrong — the lanthanoid contraction is a well-established, structural, reproducible cause, and this same near-identical-radius effect shows up for other 4d/5d pairs (like $\\text{Nb}$/$\\text{Ta}$) for exactly the same reason. Equal valence-electron count is true for MANY pairs of group-mates (that is what makes them the same group) and by itself never makes radii identical — normally radius still grows down a group despite equal valence count; it is specifically the lanthanoid contraction that is unusual here. Hafnium's radius is NOT smaller than zirconium's — they are essentially equal, not following a 'higher nuclear charge always shrinks it further down the group' pattern."
+      ],
+      "verification_method": "reference_value_crosscheck_zr_hf_ionic_radius_data"
+    },
+    {
+      "id": "pi-d-and-f-block-006",
+      "concept_id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In potassium dichromate, $\\text{K}_2\\text{Cr}_2\\text{O}_7$, what is the oxidation state of chromium?",
+      "options": [
+        "+6",
+        "+3",
+        "+7",
+        "+2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "+6",
+      "solution_steps": [
+        "$\\text{K}_2\\text{Cr}_2\\text{O}_7$ is a neutral compound, so the sum of all oxidation states must equal 0. Potassium is always $+1$ in its compounds, and oxygen is almost always $-2$ (no peroxide or superoxide linkage here).",
+        "Let chromium's oxidation state be $x$. There are 2 potassium atoms, 2 chromium atoms, and 7 oxygen atoms: $2(+1) + 2(x) + 7(-2) = 0$, which gives $2 + 2x - 14 = 0$.",
+        "Solving: $2x = 12$, so $x = +6$. Each chromium atom in dichromate is in the $+6$ oxidation state — this is chromium's highest common oxidation state, and the reason $\\text{K}_2\\text{Cr}_2\\text{O}_7$ is such a strong oxidising agent (it gets reduced from $+6$ down to the much more stable $+3$).",
+        "$+3$ is chromium's other very common, more STABLE oxidation state (as in $\\text{Cr}_2\\text{O}_3$ or $\\text{Cr}^{3+}$ salts) — it is what dichromate gets reduced TO in reactions, not what it starts at. $+7$ is manganese's highest oxidation state (as in $\\text{KMnO}_4$), not chromium's — a common mix-up between the two classic oxidising agents. $+2$ is far too low and does not balance the charge equation at all for this specific compound."
+      ],
+      "verification_method": "sympy_symbolic_charge_balance_equation_solve"
+    },
+    {
+      "id": "pi-coordination-compounds-001",
+      "concept_id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the coordination number of cobalt in $[\\text{Co(NH}_3\\text{)}_6]\\text{Cl}_3$?",
+      "options": [
+        "6",
+        "3",
+        "9",
+        "2"
+      ],
+      "answer_index": 0,
+      "correct_answer": "6",
+      "solution_steps": [
+        "Coordination number counts only the ligand donor atoms directly bonded to the central metal INSIDE the square brackets — it does NOT count ions sitting outside the brackets.",
+        "Inside the brackets, cobalt is surrounded by 6 separate $\\text{NH}_3$ (ammine) ligands, each donating one lone pair through its nitrogen atom (monodentate) — that is 6 direct metal–ligand bonds.",
+        "So the coordination number is 6. The 3 chloride ions outside the bracket are counter-ions balancing charge in the crystal lattice; they are not bonded to cobalt and play no part in the coordination number.",
+        "'3' comes from counting only the chloride ions outside the bracket, exactly backwards. '9' comes from wrongly adding the 6 ammine ligands to the 3 chlorides, treating everything in the formula as if it were bonded to cobalt. '2' does not correspond to any sensible count of anything in this formula at all."
+      ],
+      "verification_method": "reference_value_crosscheck_ligand_donor_atom_count"
+    },
+    {
+      "id": "pi-coordination-compounds-002",
+      "concept_id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.35,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the correct IUPAC name of $[\\text{Co(NH}_3\\text{)}_6]\\text{Cl}_3$?",
+      "options": [
+        "Hexaamminecobalt(III) chloride",
+        "Hexaamminecobalt(II) chloride",
+        "Cobalt hexaammine(III) chloride",
+        "Hexaamminecobalt(III) trichloride"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Hexaamminecobalt(III) chloride",
+      "solution_steps": [
+        "First find cobalt's oxidation state: the compound is neutral, and 3 chloride ions ($-1$ each) balance the complex cation, so the complex ion carries a $+3$ charge; since $\\text{NH}_3$ is a neutral ligand, cobalt itself must be $+3$.",
+        "IUPAC naming rule: name the ligands first (with a multiplying prefix — 'hexa' for 6 — attached directly to the ligand name 'ammine' for $\\text{NH}_3$), then the metal name, then its oxidation state in Roman numerals in brackets immediately after the metal name with no space, and finally the counter-ion's name as a separate word.",
+        "Putting it together: 'hexaammine' + 'cobalt' + '(III)' + ' chloride' = 'Hexaamminecobalt(III) chloride'.",
+        "'Hexaamminecobalt(II) chloride' gets the oxidation state wrong (should be III, not II, from the charge-balance calculation above). 'Cobalt hexaammine(III) chloride' puts the metal name before the ligand name, breaking the IUPAC ordering rule (ligands always come first). 'Hexaamminecobalt(III) trichloride' wrongly adds a multiplying prefix ('tri-') to a simple ionic counter-ion name — multiplying prefixes are used for ligands inside the complex, not for a plain counter-ion named outside it."
+      ],
+      "verification_method": "sympy_symbolic_charge_balance_for_oxidation_state"
+    },
+    {
+      "id": "pi-coordination-compounds-003",
+      "concept_id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "What is the oxidation state of iron in $[\\text{Fe(CN)}_6]^{4-}$?",
+      "options": [
+        "+2",
+        "+3",
+        "+4",
+        "+6"
+      ],
+      "answer_index": 0,
+      "correct_answer": "+2",
+      "solution_steps": [
+        "Cyanide, $\\text{CN}^-$, is a $-1$ charged ligand. Let iron's oxidation state be $x$. The overall charge on the complex ion is $-4$.",
+        "Charge balance: $x + 6(-1) = -4$, which gives $x - 6 = -4$.",
+        "Solving: $x = -4 + 6 = +2$. So iron is in the $+2$ oxidation state in this complex (this is the ferrocyanide ion, as found in $\\text{K}_4[\\text{Fe(CN)}_6]$).",
+        "$+3$ would be correct for the related ferricyanide ion, $[\\text{Fe(CN)}_6]^{3-}$ (one less negative charge overall) — a common mix-up between the two very similar-looking hexacyanoferrate ions. $+4$ and $+6$ do not satisfy the charge-balance equation for a $6\\times(-1)$ ligand set summing to an overall $-4$ charge at all."
+      ],
+      "verification_method": "sympy_symbolic_charge_balance_equation_solve"
+    },
+    {
+      "id": "pi-coordination-compounds-004",
+      "concept_id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "$[\\text{Pt(NH}_3\\text{)}_2\\text{Cl}_2]$ is square planar and exists as two distinct geometrical isomers, cis and trans. If a complex with the exact same formula, $\\text{MA}_2\\text{B}_2$, were TETRAHEDRAL instead, how many geometrical isomers would it show?",
+      "options": [
+        "Only one arrangement — no cis/trans isomerism is possible, since every pair of vertices in a tetrahedron is equally adjacent",
+        "Two, cis and trans, exactly the same as the square planar case",
+        "Three distinct geometrical isomers",
+        "Four distinct geometrical isomers, one for each vertex chosen as the starting point"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Only one arrangement — no cis/trans isomerism is possible, since every pair of vertices in a tetrahedron is equally adjacent",
+      "solution_steps": [
+        "In a SQUARE PLANAR complex, the 4 ligand positions are not all equivalent to each other: two ligands can sit next to each other (adjacent, 90° apart — the 'cis' arrangement) or directly across from each other (opposite, 180° apart — the 'trans' arrangement). These are genuinely different, non-superimposable structures, giving 2 isomers.",
+        "In a TETRAHEDRON, all 4 vertices are exactly equidistant from and adjacent to every other vertex — there is no 'opposite corner' the way there is in a square. Any two vertices you pick to place the two A ligands are related to each other in exactly the same geometric way as any other pair.",
+        "So placing 2 A ligands and 2 B ligands on a tetrahedron's 4 vertices gives only ONE distinct three-dimensional structure (any arrangement can be rotated into any other) — geometrical (cis/trans) isomerism simply does not exist for a tetrahedral $\\text{MA}_2\\text{B}_2$ complex, unlike the square planar case with the identical formula.",
+        "Saying 'two, same as square planar' is exactly the tempting but wrong assumption that isomer count carries over regardless of geometry — it does not; geometry is precisely what creates or removes the cis/trans distinction. 'Three' and 'four' both overcount by inventing extra structures that are actually just the same tetrahedron rotated in space, which do not count as separate isomers."
+      ],
+      "verification_method": "reference_value_crosscheck_tetrahedral_vertex_symmetry"
+    },
+    {
+      "id": "pi-coordination-compounds-005",
+      "concept_id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "The ligand $\\text{NO}_2^-$ can bond to a metal through either its nitrogen atom or one of its oxygen atoms, giving two different complexes from the same formula — for example $[\\text{Co(NH}_3\\text{)}_5(\\text{NO}_2)]^{2+}$ can exist as a nitro form (bonded via N) and a nitrito form (bonded via O). What type of isomerism is this?",
+      "options": [
+        "Linkage isomerism",
+        "Ionisation isomerism",
+        "Hydrate (solvate) isomerism",
+        "Coordination isomerism"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Linkage isomerism",
+      "solution_steps": [
+        "Linkage isomerism happens specifically when an AMBIDENTATE ligand (one that has two different atoms it could use to bond to the metal) attaches through one of its donor atoms in one isomer and through the other donor atom in a different isomer, while everything else about the formula stays identical.",
+        "$\\text{NO}_2^-$ is a classic ambidentate ligand: it can bond through nitrogen (giving the 'nitro' isomer, $\\text{–NO}_2$) or through an oxygen atom (giving the 'nitrito' isomer, $\\text{–ONO}$) — exactly the situation described.",
+        "So this is linkage isomerism, named after the different LINKING atom used, not a difference in what is inside vs. outside the coordination sphere, or in how many water molecules are attached, or in how ligands are distributed between two different metal centres.",
+        "Ionisation isomerism is when a counter-ion and a ligand swap places (e.g. $[\\text{Co(NH}_3\\text{)}_5\\text{Br}]\\text{SO}_4$ vs. $[\\text{Co(NH}_3\\text{)}_5\\text{SO}_4]\\text{Br}$) — no ambidentate ligand or change of donor atom is involved there. Hydrate isomerism specifically involves water molecules moving between the coordination sphere and being free outside it (as in the classic $\\text{CrCl}_3 \\cdot 6\\text{H}_2\\text{O}$ family), which is not what is happening here. Coordination isomerism involves ligands being redistributed between TWO different metal centres in a compound with two complex ions, which also does not apply to this single-metal example."
+      ],
+      "verification_method": "reference_value_crosscheck_isomerism_classification_definitions"
+    },
+    {
+      "id": "pi-coordination-compounds-006",
+      "concept_id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "$[\\text{Ti(H}_2\\text{O)}_6]^{3+}$ is violet-coloured in aqueous solution, because its single $3d$ electron absorbs a specific wavelength of visible light and jumps to a higher energy level. Valence bond theory explains this complex's octahedral shape using $d^2sp^3$ hybridisation, but it cannot explain WHY the complex is coloured. Which theory correctly explains the colour, and how?",
+      "options": [
+        "Crystal Field Theory — it splits the $d$ orbitals into two distinct energy levels ($t_{2g}$ and $e_g$) under the ligand field, and colour arises from the electron absorbing light to jump between these levels",
+        "Valence Bond Theory itself — since it already explains the hybridisation and geometry, it automatically accounts for the colour too",
+        "Werner's coordination theory — its idea of primary and secondary valency directly explains the energy gap responsible for absorbing visible light",
+        "VSEPR theory — electron pair repulsion around titanium directly determines which wavelength of light is absorbed"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Crystal Field Theory — it splits the $d$ orbitals into two distinct energy levels ($t_{2g}$ and $e_g$) under the ligand field, and colour arises from the electron absorbing light to jump between these levels",
+      "solution_steps": [
+        "Valence bond theory only describes bonding and geometry through hybrid orbitals (here, $d^2sp^3$ for an octahedral shape) — it treats all 5 $d$ orbitals as equivalent and has no mechanism at all for describing different ENERGY LEVELS among them, so it has nothing to say about light absorption or colour.",
+        "Crystal Field Theory instead treats the ligands as point charges that repel the metal's $d$ orbitals unevenly depending on each orbital's orientation, splitting the originally-equal 5 $d$ orbitals into a lower-energy set ($t_{2g}$, 3 orbitals) and a higher-energy set ($e_g$, 2 orbitals) in an octahedral field.",
+        "$\\text{Ti}^{3+}$ is $3d^1$: its single electron sits in $t_{2g}$ in the ground state, and absorbing a photon of visible light (leaving the complementary colour, violet, transmitted) promotes it to $e_g$ — this $d$-$d$ transition, and the specific energy gap $\\Delta_o$ that sets which wavelength is absorbed, is exactly what Crystal Field Theory (and not VBT) describes.",
+        "Saying VBT 'automatically' explains colour just because it explains geometry conflates two separate questions (shape vs. energy-level splitting) — VBT genuinely has no orbital-energy framework to draw on. Werner's theory (primary/secondary valency, the very first coordination bonding model) predates any orbital-energy concept and does not address electron transitions either. VSEPR is a tool for predicting the SHAPE of simple molecules from electron-pair repulsion around a central atom — it is not designed for, and does not describe, $d$-orbital energy splitting or light absorption in transition-metal complexes."
+      ],
+      "verification_method": "python_electron_configuration_ion_check_and_reference_cft_theory"
+    }
+  ]
+}

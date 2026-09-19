@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "exported_at": "2026-09-19T11:01:55.221Z",
+  "exported_at": "2026-09-19T16:15:18.545Z",
   "concepts": [
     {
       "id": "sequences",
@@ -1653,7 +1653,511 @@
       "prerequisites": [
         "sequences-series"
       ]
+    },
+    {
+      "id": "units-and-measurements",
+      "topic": "jee-mechanics",
+      "label": "Units, Dimensions and Measurement",
+      "description": "SI units, dimensional analysis and dimensional formulae, significant figures, errors in measurement and their combination",
+      "difficulty_base": 0.2,
+      "gate_frequency": "medium",
+      "prerequisites": []
+    },
+    {
+      "id": "kinematics-1d",
+      "topic": "jee-mechanics",
+      "label": "Motion in a Straight Line",
+      "description": "Displacement velocity and acceleration, uniformly accelerated motion, graphical analysis of motion, relative velocity in one dimension",
+      "difficulty_base": 0.3,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "units-and-measurements"
+      ]
+    },
+    {
+      "id": "kinematics-2d",
+      "topic": "jee-mechanics",
+      "label": "Motion in a Plane",
+      "description": "Vector addition and resolution, projectile motion, uniform circular motion, relative velocity in two dimensions",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "kinematics-1d"
+      ]
+    },
+    {
+      "id": "newtons-laws",
+      "topic": "jee-mechanics",
+      "label": "Laws of Motion",
+      "description": "Newton's three laws, free-body diagrams, friction, connected bodies and pulleys, dynamics of circular motion",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "kinematics-2d"
+      ]
+    },
+    {
+      "id": "work-energy-power",
+      "topic": "jee-mechanics",
+      "label": "Work, Energy and Power",
+      "description": "Work by constant and variable forces, kinetic and potential energy, work-energy theorem, conservation of mechanical energy, elastic and inelastic collisions",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "newtons-laws"
+      ]
+    },
+    {
+      "id": "rotational-mechanics",
+      "topic": "jee-mechanics",
+      "label": "Rotational Motion",
+      "description": "Centre of mass, torque and angular momentum, moment of inertia and its theorems, rolling motion, conservation of angular momentum",
+      "difficulty_base": 0.55,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "work-energy-power"
+      ]
+    },
+    {
+      "id": "gravitation",
+      "topic": "jee-mechanics",
+      "label": "Gravitation",
+      "description": "Universal law of gravitation, gravitational field and potential, escape and orbital velocity, satellite motion, Kepler's laws",
+      "difficulty_base": 0.45,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "newtons-laws"
+      ]
+    },
+    {
+      "id": "properties-of-matter",
+      "topic": "jee-mechanics",
+      "label": "Properties of Solids and Liquids",
+      "description": "Elasticity and moduli, pressure and Pascal's law, buoyancy, Bernoulli's principle, viscosity and Stokes' law, surface tension and capillarity, heat transfer",
+      "difficulty_base": 0.4,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "newtons-laws"
+      ]
+    },
+    {
+      "id": "kinetic-theory",
+      "topic": "jee-thermal-physics",
+      "label": "Kinetic Theory of Gases",
+      "description": "Ideal gas equation from molecular assumptions, pressure and kinetic energy, degrees of freedom and equipartition, mean free path, rms and average speeds",
+      "difficulty_base": 0.4,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "units-and-measurements"
+      ]
+    },
+    {
+      "id": "thermodynamics-physics",
+      "topic": "jee-thermal-physics",
+      "label": "Thermodynamics",
+      "description": "Zeroth and first law, work done in thermodynamic processes, isothermal and adiabatic changes, second law, heat engines and refrigerators, Carnot cycle",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "kinetic-theory"
+      ]
+    },
+    {
+      "id": "oscillations-shm",
+      "topic": "jee-oscillations-waves",
+      "label": "Oscillations",
+      "description": "Simple harmonic motion and its differential equation, energy in SHM, simple and spring pendulums, damped and forced oscillations, resonance",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "newtons-laws"
+      ]
+    },
+    {
+      "id": "waves-mechanical",
+      "topic": "jee-oscillations-waves",
+      "label": "Waves",
+      "description": "Travelling and standing waves, superposition, speed of a wave on a string and in a gas, beats, organ pipes, Doppler effect in sound",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "oscillations-shm"
+      ]
+    },
+    {
+      "id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "label": "Electrostatics",
+      "description": "Coulomb's law, electric field and dipoles, Gauss's law and its applications, electric potential and potential energy, conductors in a field",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "newtons-laws"
+      ]
+    },
+    {
+      "id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "label": "Capacitance",
+      "description": "Parallel-plate and spherical capacitors, series and parallel combinations, dielectrics, energy stored in a capacitor, charge redistribution",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "electrostatics-coulomb"
+      ]
+    },
+    {
+      "id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "label": "Current Electricity",
+      "description": "Ohm's law and resistivity, series and parallel networks, Kirchhoff's rules, Wheatstone bridge, potentiometer, cells and internal resistance",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "electrostatics-coulomb"
+      ]
+    },
+    {
+      "id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "label": "Magnetic Effects of Current and Magnetism",
+      "description": "Biot-Savart and Ampere's circuital law, force on a moving charge and a current-carrying wire, torque on a loop, moving-coil galvanometer, magnetic materials",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "current-electricity"
+      ]
+    },
+    {
+      "id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "label": "Electromagnetic Induction",
+      "description": "Faraday's law and Lenz's law, motional emf, self and mutual inductance, energy stored in an inductor, eddy currents",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "magnetic-effects"
+      ]
+    },
+    {
+      "id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "label": "Alternating Current",
+      "description": "Peak and rms values, phasors, reactance and impedance, LCR series circuits, resonance and quality factor, power factor, transformers",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "electromagnetic-induction",
+        "oscillations-shm"
+      ]
+    },
+    {
+      "id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "label": "Electromagnetic Waves",
+      "description": "Displacement current, transverse nature of electromagnetic waves, energy and momentum transported, the electromagnetic spectrum and its uses",
+      "difficulty_base": 0.3,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "alternating-current"
+      ]
+    },
+    {
+      "id": "ray-optics",
+      "topic": "jee-optics",
+      "label": "Ray Optics and Optical Instruments",
+      "description": "Reflection at plane and spherical surfaces, refraction and total internal reflection, lens and mirror formulae, prisms and dispersion, microscopes and telescopes",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "units-and-measurements"
+      ]
+    },
+    {
+      "id": "wave-optics",
+      "topic": "jee-optics",
+      "label": "Wave Optics",
+      "description": "Huygens' principle, Young's double-slit interference, thin-film interference, single-slit diffraction, resolving power, polarisation and Brewster's law",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "waves-mechanical",
+        "ray-optics"
+      ]
+    },
+    {
+      "id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "label": "Dual Nature of Matter and Radiation",
+      "description": "Photoelectric effect and Einstein's equation, stopping potential, work function, photon momentum, de Broglie wavelength of matter waves",
+      "difficulty_base": 0.35,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "wave-optics"
+      ]
+    },
+    {
+      "id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "label": "Atoms and Nuclei",
+      "description": "Rutherford scattering and Bohr's model, hydrogen spectral series, nuclear size and binding energy, radioactive decay laws, fission and fusion",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "dual-nature-matter"
+      ]
+    },
+    {
+      "id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "label": "Semiconductor Electronics",
+      "description": "Energy bands, intrinsic and extrinsic semiconductors, p-n junction and diode characteristics, rectifiers, Zener diodes, logic gates",
+      "difficulty_base": 0.35,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "atoms-and-nuclei"
+      ]
+    },
+    {
+      "id": "mole-concept",
+      "topic": "jee-physical-chemistry",
+      "label": "Some Basic Concepts of Chemistry",
+      "description": "Mole and Avogadro's number, empirical and molecular formulae, stoichiometry and limiting reagent, concentration terms, percentage yield",
+      "difficulty_base": 0.3,
+      "gate_frequency": "high",
+      "prerequisites": []
+    },
+    {
+      "id": "atomic-structure",
+      "topic": "jee-physical-chemistry",
+      "label": "Atomic Structure",
+      "description": "Bohr model and hydrogen spectrum, de Broglie and Heisenberg relations, quantum numbers, shapes of orbitals, Aufbau, Pauli and Hund rules",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "mole-concept"
+      ]
+    },
+    {
+      "id": "chemical-bonding",
+      "topic": "jee-physical-chemistry",
+      "label": "Chemical Bonding and Molecular Structure",
+      "description": "Ionic and covalent bonding, Lewis structures and formal charge, VSEPR shapes, hybridisation, molecular orbital theory, bond parameters, hydrogen bonding",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "atomic-structure"
+      ]
+    },
+    {
+      "id": "thermodynamics-chemistry",
+      "topic": "jee-physical-chemistry",
+      "label": "Chemical Thermodynamics",
+      "description": "System and surroundings, internal energy and enthalpy, Hess's law, bond and formation enthalpies, entropy, Gibbs free energy and spontaneity",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "mole-concept"
+      ]
+    },
+    {
+      "id": "equilibrium-chemical",
+      "topic": "jee-physical-chemistry",
+      "label": "Chemical Equilibrium",
+      "description": "Reversible reactions and dynamic equilibrium, Kc and Kp, reaction quotient, Le Chatelier's principle, relation of K to Gibbs free energy",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "thermodynamics-chemistry"
+      ]
+    },
+    {
+      "id": "equilibrium-ionic",
+      "topic": "jee-physical-chemistry",
+      "label": "Ionic Equilibrium",
+      "description": "Acid-base theories, Ka Kb and pH, common-ion effect, buffers and the Henderson equation, salt hydrolysis, solubility product",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "equilibrium-chemical"
+      ]
+    },
+    {
+      "id": "redox-and-electrochemistry",
+      "topic": "jee-physical-chemistry",
+      "label": "Redox Reactions and Electrochemistry",
+      "description": "Oxidation numbers and balancing redox equations, electrochemical cells, standard electrode potentials, Nernst equation, conductance, Faraday's laws of electrolysis",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "equilibrium-ionic"
+      ]
+    },
+    {
+      "id": "chemical-kinetics",
+      "topic": "jee-physical-chemistry",
+      "label": "Chemical Kinetics",
+      "description": "Rate of reaction and rate law, order and molecularity, integrated rate equations for zero and first order, half-life, Arrhenius equation and activation energy",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "equilibrium-chemical"
+      ]
+    },
+    {
+      "id": "solutions-and-colligative",
+      "topic": "jee-physical-chemistry",
+      "label": "Solutions",
+      "description": "Concentration units, Raoult's law and ideal solutions, relative lowering of vapour pressure, boiling-point elevation and freezing-point depression, osmotic pressure, van't Hoff factor",
+      "difficulty_base": 0.4,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "mole-concept"
+      ]
+    },
+    {
+      "id": "solid-state",
+      "topic": "jee-physical-chemistry",
+      "label": "Solid State",
+      "description": "Crystal lattices and unit cells, packing efficiency, density of a unit cell, voids, point defects, electrical and magnetic properties of solids",
+      "difficulty_base": 0.35,
+      "gate_frequency": "low",
+      "prerequisites": [
+        "chemical-bonding"
+      ]
+    },
+    {
+      "id": "organic-basic-principles",
+      "topic": "jee-organic-chemistry",
+      "label": "Basic Principles of Organic Chemistry",
+      "description": "IUPAC nomenclature, structural and stereo isomerism, inductive resonance and hyperconjugation effects, reaction intermediates, types of organic reactions, purification methods",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "chemical-bonding"
+      ]
+    },
+    {
+      "id": "hydrocarbons",
+      "topic": "jee-organic-chemistry",
+      "label": "Hydrocarbons",
+      "description": "Alkanes alkenes and alkynes, conformations, Markovnikov and anti-Markovnikov addition, ozonolysis, aromaticity and Huckel's rule, electrophilic aromatic substitution",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "organic-basic-principles"
+      ]
+    },
+    {
+      "id": "haloalkanes-haloarenes",
+      "topic": "jee-organic-chemistry",
+      "label": "Haloalkanes and Haloarenes",
+      "description": "Preparation and physical properties, SN1 and SN2 mechanisms and their stereochemistry, elimination versus substitution, reactivity of aryl halides, Grignard reagents",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "hydrocarbons"
+      ]
+    },
+    {
+      "id": "alcohols-phenols-ethers",
+      "topic": "jee-organic-chemistry",
+      "label": "Alcohols, Phenols and Ethers",
+      "description": "Preparation and reactions of alcohols, acidity of phenols and substituent effects, Reimer-Tiemann and Kolbe reactions, Williamson ether synthesis, ether cleavage",
+      "difficulty_base": 0.45,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "haloalkanes-haloarenes"
+      ]
+    },
+    {
+      "id": "aldehydes-ketones-acids",
+      "topic": "jee-organic-chemistry",
+      "label": "Aldehydes, Ketones and Carboxylic Acids",
+      "description": "Nucleophilic addition to the carbonyl group, aldol and Cannizzaro reactions, oxidation and reduction, distinguishing tests, acidity of carboxylic acids and their derivatives",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "alcohols-phenols-ethers"
+      ]
+    },
+    {
+      "id": "amines-and-diazonium",
+      "topic": "jee-organic-chemistry",
+      "label": "Amines and Diazonium Salts",
+      "description": "Preparation and basicity of amines, Hofmann and Gabriel syntheses, carbylamine and Hinsberg tests, diazotisation and coupling, Sandmeyer reactions",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "aldehydes-ketones-acids"
+      ]
+    },
+    {
+      "id": "biomolecules",
+      "topic": "jee-organic-chemistry",
+      "label": "Biomolecules",
+      "description": "Classification of carbohydrates and their glycosidic linkages, amino acids and the peptide bond, protein structure, enzymes, vitamins, nucleic acids",
+      "difficulty_base": 0.3,
+      "gate_frequency": "medium",
+      "prerequisites": [
+        "alcohols-phenols-ethers"
+      ]
+    },
+    {
+      "id": "polymers",
+      "topic": "jee-organic-chemistry",
+      "label": "Polymers",
+      "description": "Addition and condensation polymerisation, copolymers, natural and synthetic rubber, commercially important polymers and their monomers, biodegradable polymers",
+      "difficulty_base": 0.25,
+      "gate_frequency": "low",
+      "prerequisites": [
+        "hydrocarbons"
+      ]
+    },
+    {
+      "id": "periodic-table-trends",
+      "topic": "jee-inorganic-chemistry",
+      "label": "Classification of Elements and Periodicity",
+      "description": "Modern periodic law and blocks, atomic and ionic radii, ionisation enthalpy, electron gain enthalpy, electronegativity, diagonal relationship and anomalous behaviour",
+      "difficulty_base": 0.3,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "atomic-structure"
+      ]
+    },
+    {
+      "id": "p-block-elements",
+      "topic": "jee-inorganic-chemistry",
+      "label": "p-Block Elements",
+      "description": "Group trends across groups 13 to 18, oxides oxyacids and halides, allotropy, interhalogens, noble-gas compounds, named preparations and structures",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "periodic-table-trends"
+      ]
+    },
+    {
+      "id": "d-and-f-block",
+      "topic": "jee-inorganic-chemistry",
+      "label": "d- and f-Block Elements",
+      "description": "Variable oxidation states, colour magnetic moment and catalytic behaviour, potassium dichromate and permanganate, lanthanoid contraction, actinoids",
+      "difficulty_base": 0.4,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "periodic-table-trends"
+      ]
+    },
+    {
+      "id": "coordination-compounds",
+      "topic": "jee-inorganic-chemistry",
+      "label": "Coordination Compounds",
+      "description": "Werner's theory and nomenclature, isomerism in complexes, valence bond and crystal field theories, colour and magnetic properties, stability and applications",
+      "difficulty_base": 0.5,
+      "gate_frequency": "high",
+      "prerequisites": [
+        "d-and-f-block"
+      ]
     }
   ],
-  "total": 124
+  "total": 170
 }

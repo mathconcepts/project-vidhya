@@ -250,7 +250,7 @@ function lintFile(file: string): void {
 
   specCount++;
   const spec: InteractiveSpec = parsed.spec;
-  const censusKey =
+  const figureKey =
     spec.kind === 'guided_walkthrough' && spec.branches
       ? 'guided_walkthrough (branching)'
       : spec.kind === 'simulation'
@@ -260,6 +260,14 @@ function lintFile(file: string): void {
             ? 'simulation (graph)'
             : 'simulation (parametric)'
         : spec.kind;
+  // `reality` is not a figure mode — it composes with all three (types.ts's
+  // RealitySceneSpec doc comment) — so it is reported as a suffix on whichever
+  // mode the scene actually uses rather than as a bucket of its own, which
+  // would double-count every split scene. It needs no `exercise*` pass: a
+  // reality stage is literal coordinates only, never `compileExpression`, the
+  // same no-new-eval-surface discipline `discrete-bars` and `line-panels`
+  // follow, and the shared validator does the full geometry check.
+  const censusKey = spec.kind === 'simulation' && spec.reality ? `${figureKey} + reality` : figureKey;
   census[censusKey] = (census[censusKey] ?? 0) + 1;
 
   if (spec.kind === 'manipulable') exerciseManipulable(file, spec);
@@ -292,7 +300,7 @@ function main(): void {
   if (argv.includes('--census')) {
     console.log('\ninteractive-spec census:');
     for (const [kind, n] of Object.entries(census).sort((a, b) => b[1] - a[1])) {
-      console.log(`  ${kind.padEnd(20)} ${n}`);
+      console.log(`  ${kind.padEnd(32)} ${n}`);
     }
   }
 

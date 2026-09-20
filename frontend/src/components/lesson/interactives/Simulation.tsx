@@ -29,7 +29,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, RotateCcw, ChevronRight, AlertTriangle } from 'lucide-react';
-import { evalFormula, type SimulationSpec, type LinearMapSceneSpec, type GraphSceneSpec, type Mat2 } from './types';
+import {
+  evalFormula,
+  REALITY_STAGE_W,
+  REALITY_STAGE_H,
+  type SimulationSpec,
+  type LinearMapSceneSpec,
+  type GraphSceneSpec,
+  type Mat2,
+  type RealitySceneSpec,
+  type RealityObject,
+  type RealityObjectOverride,
+  type RealityBeat,
+  type RealityRole,
+} from './types';
 import { MarkdownAtomRenderer } from '../MarkdownAtomRenderer';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useEngagementGate } from '@/hooks/useEngagementGate';
@@ -393,6 +406,7 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
     [spec, linearMap, graphSpec],
   );
   const referencePoints = spec.reference_points ?? null;
+  const realityScene = spec.reality ?? null;
   const viewBox = useMemo(
     () =>
       spec.view_box ??
@@ -557,6 +571,20 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   const resolvedId = atomId ?? spec.title;
   const showStoryboard = hasBeats && reducedMotion;
   const showLiveBeatUI = hasBeats && !reducedMotion;
+  // The split only makes sense beside beats — the validator already refuses
+  // `reality` on a beat-less scene, so this is the render-side echo of that
+  // rule rather than a second policy.
+  const realitySplit = realityScene !== null && hasBeats;
+  // Both halves share one height budget. The pinned figure's 42vh cap (see
+  // the SVG's own comment below) now has to cover TWO figures plus the
+  // concrete caption, so the split subtracts more chrome — without it the
+  // reality sentence is the thing that falls off the bottom of a phone,
+  // which is exactly the sentence the split exists to put on screen.
+  const figureMaxHeight = showLiveBeatUI
+    ? realitySplit
+      ? 'max(96px, calc(42vh - 132px))'
+      : 'max(120px, calc(42vh - 112px))'
+    : undefined;
   // Linear-map payoff styling turns on the moment the first emphasized beat
   // is reached — that beat IS the reveal ("these two never turn"). A scene
   // with no emphasized beat has no reveal moment, so the styling is on from
@@ -597,6 +625,132 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
   // whenever activeIdx changes (a new beat holds).
   const activeBeatText = activeIdx != null ? resolveBeatText(sortedSteps[activeIdx], servedStance) : '';
   const continueGateReady = useEngagementGate(activeBeatText, activeIdx ?? -1);
+
+  // Hoisted out of the JSX so the split can place it in a flex column
+  // without a second copy — and so a scene with no `reality` block renders
+  // exactly the markup it did before the split existed, no pass-through
+  // wrapper divs between the sticky pin and the figure.
+  const mathsFigure = (
+        <svg
+      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+      width="100%"
+      className="rounded-md border"
+      style={{
+        background: 'var(--surface-fill)',
+        borderColor: 'var(--separator)',
+        // The 42vh pinned-figure budget, minus the ~112px the beat bar, the
+        // 44px control row, the slider and their gaps occupy below. The
+        // `max(120px, …)` floor keeps the figure from collapsing to nothing
+        // on a very short viewport, where the calc would go negative.
+        // preserveAspectRatio letterboxes rather than crops.
+        ...(figureMaxHeight ? { maxHeight: figureMaxHeight } : {}),
+      }}
+      preserveAspectRatio="xMidYMid meet"
+      aria-label={
+        hasBeats ? spec.title : graphSpec ? `Graph diagram: ${spec.title}` : `Animated trace: ${spec.title}`
+      }
+    >
+      <Axes viewBox={viewBox} projector={projector} />
+      {/* Fixed reference markers (/investigate, live-QA: "u1 info is
+          missing... highlight is mentioned in text but not visible") —
+          always visible for the scene's whole runtime, unlike
+          focus_point/focus_eigen's beat-gated highlight, since a fixed
+          anchor the narrative refers to throughout (gram-schmidt's own
+          u1, held fixed while v2 is traced against it) needs to stay on
+          screen throughout, not flash in per beat. Ink, halo-labeled —
+          same technique as every other coordinate label in this file. */}
+      {referencePoints?.map((rp) => {
+        const [px, py] = projector(rp.x, rp.y);
+        return (
+          <g key={rp.id}>
+            <circle cx={px} cy={py} r={4} fill="var(--ink)" />
+            <text
+              x={px} y={py - 10}
+              textAnchor="middle" dominantBaseline="middle"
+              fontSize={12} fontWeight={600} fill="var(--text-primary)"
+              stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+            >
+              {rp.label}
+            </text>
+          </g>
+        );
+      })}
+      {linearMap && (
+        <LinearMapScene
+          lm={linearMap}
+          projector={projector}
+          viewBox={viewBox}
+          progress={effectiveProgress}
+          eigenRevealed={eigenRevealed}
+          emphasizeActive={emphasizeActive}
+          focusedEigenIndices={focusedEigenIndices}
+          trapRevealed={trapRevealed}
+        />
+      )}
+      {graphSpec && <GraphScene graph={graphSpec} projector={projector} highlight={activeGraphHighlight} />}
+      {trapRevealed && ghostPoints && (
+        <path
+          d={pathD(ghostPoints, projector)}
+          stroke="var(--grey-6)"
+          strokeWidth={2}
+          strokeDasharray="4 4"
+          fill="none"
+        />
+      )}
+      {/* Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06):
+          the ghost path IS the wrong answer trap.avoid names, but until
+          now it was a bare dashed line with no coordinate on it — the
+          one attention point in this file that drew a value without
+          ever labeling it. Its endpoint (the ghost's stable, well-
+          defined point — the path itself is a static full reveal, not
+          progress-linked) gets the same halo-label treatment as the
+          real head, in the ghost's own grey so it never reads as a
+          confirmed answer. Italicized (/autoplan follow-up,
+          2026-09-06) so "this is the wrong one" survives even when
+          grey is hard to distinguish from ink — color is never the
+          only signal. */}
+      {trapRevealed && ghostPoints && ghostPoints.length > 0 && (() => {
+        const gp = ghostPoints[ghostPoints.length - 1];
+        const [gx, gy] = projector(gp.x, gp.y);
+        return (
+          <text
+            x={gx} y={gy - 12}
+            textAnchor="middle" dominantBaseline="middle"
+            fontSize={12} fontWeight={600} fontStyle="italic" fill="var(--grey-6)"
+            stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+          >
+            {`(${formatSignificant(gp.x)}, ${formatSignificant(gp.y)})`}
+          </text>
+        );
+      })()}
+      {segments.map((seg) => (
+        <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
+      ))}
+      {head && (() => {
+        const [hx, hy] = projector(head.x, head.y);
+        return (
+          <>
+            <circle cx={hx} cy={hy} r={focusPointActive ? 6 : 4} fill="var(--green)" />
+            {/* "Look here" coordinate label — the focus_eigen mechanism's
+                plain-curve counterpart (types.ts's focus_point doc
+                comment). Same halo-stroke treatment as the linear_map
+                eigen label above, ink (not green — nothing about this
+                point is a payoff, it's just what's being discussed). */}
+            {focusPointActive && (
+              <text
+                x={hx} y={hy - 12}
+                textAnchor="middle" dominantBaseline="middle"
+                fontSize={12} fontWeight={600} fill="var(--text-primary)"
+                stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
+              >
+                {`(${formatSignificant(head.x)}, ${formatSignificant(head.y)})`}
+              </text>
+            )}
+          </>
+        );
+      })()}
+    </svg>
+  );
 
   return (
     <div
@@ -682,125 +836,34 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
             : undefined
         }
       >
-        <svg
-          viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-          width="100%"
-          className="rounded-md border"
-          style={{
-            background: 'var(--surface-fill)',
-            borderColor: 'var(--separator)',
-            // The 42vh pinned-figure budget, minus the ~112px the beat bar, the
-            // 44px control row, the slider and their gaps occupy below. The
-            // `max(120px, …)` floor keeps the figure from collapsing to nothing
-            // on a very short viewport, where the calc would go negative.
-            // preserveAspectRatio letterboxes rather than crops.
-            ...(showLiveBeatUI ? { maxHeight: 'max(120px, calc(42vh - 112px))' } : {}),
-          }}
-          preserveAspectRatio="xMidYMid meet"
-          aria-label={
-            hasBeats ? spec.title : graphSpec ? `Graph diagram: ${spec.title}` : `Animated trace: ${spec.title}`
-          }
-        >
-          <Axes viewBox={viewBox} projector={projector} />
-          {/* Fixed reference markers (/investigate, live-QA: "u1 info is
-              missing... highlight is mentioned in text but not visible") —
-              always visible for the scene's whole runtime, unlike
-              focus_point/focus_eigen's beat-gated highlight, since a fixed
-              anchor the narrative refers to throughout (gram-schmidt's own
-              u1, held fixed while v2 is traced against it) needs to stay on
-              screen throughout, not flash in per beat. Ink, halo-labeled —
-              same technique as every other coordinate label in this file. */}
-          {referencePoints?.map((rp) => {
-            const [px, py] = projector(rp.x, rp.y);
-            return (
-              <g key={rp.id}>
-                <circle cx={px} cy={py} r={4} fill="var(--ink)" />
-                <text
-                  x={px} y={py - 10}
-                  textAnchor="middle" dominantBaseline="middle"
-                  fontSize={12} fontWeight={600} fill="var(--text-primary)"
-                  stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
-                >
-                  {rp.label}
-                </text>
-              </g>
-            );
-          })}
-          {linearMap && (
-            <LinearMapScene
-              lm={linearMap}
-              projector={projector}
-              viewBox={viewBox}
-              progress={effectiveProgress}
-              eigenRevealed={eigenRevealed}
-              emphasizeActive={emphasizeActive}
-              focusedEigenIndices={focusedEigenIndices}
-              trapRevealed={trapRevealed}
+        {/* Split panel (/investigate, live QA 2026-09-20: "theoretical steps
+            and what happens in reality together... shown simultaneously step
+            by step"). Two figures, one beat index — the maths on the left,
+            the concrete thing on the right, both advancing off the SAME
+            `activeIdx`. Side by side rather than stacked because the whole
+            point is seeing them at once; `min-w-0 flex-1` on each half lets
+            them shrink evenly to ~155px on a 375px phone instead of one
+            pushing the other off the card. A scene with no `reality` block
+            renders `mathsFigure` alone, with no wrapper at all, so its DOM
+            is byte-identical to before this existed. */}
+        {realitySplit && realityScene ? (
+          <div className="flex gap-2 items-start">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[11px]" style={REALITY_EYEBROW_STYLE}>
+                The maths
+              </p>
+              {mathsFigure}
+            </div>
+            <RealityPanel
+              reality={realityScene}
+              activeIdx={activeIdx}
+              atomId={resolvedId}
+              svgMaxHeight={figureMaxHeight}
             />
-          )}
-          {graphSpec && <GraphScene graph={graphSpec} projector={projector} highlight={activeGraphHighlight} />}
-          {trapRevealed && ghostPoints && (
-            <path
-              d={pathD(ghostPoints, projector)}
-              stroke="var(--grey-6)"
-              strokeWidth={2}
-              strokeDasharray="4 4"
-              fill="none"
-            />
-          )}
-          {/* Reference Highlighting Framework (/ui-ux-pro-max, 2026-09-06):
-              the ghost path IS the wrong answer trap.avoid names, but until
-              now it was a bare dashed line with no coordinate on it — the
-              one attention point in this file that drew a value without
-              ever labeling it. Its endpoint (the ghost's stable, well-
-              defined point — the path itself is a static full reveal, not
-              progress-linked) gets the same halo-label treatment as the
-              real head, in the ghost's own grey so it never reads as a
-              confirmed answer. Italicized (/autoplan follow-up,
-              2026-09-06) so "this is the wrong one" survives even when
-              grey is hard to distinguish from ink — color is never the
-              only signal. */}
-          {trapRevealed && ghostPoints && ghostPoints.length > 0 && (() => {
-            const gp = ghostPoints[ghostPoints.length - 1];
-            const [gx, gy] = projector(gp.x, gp.y);
-            return (
-              <text
-                x={gx} y={gy - 12}
-                textAnchor="middle" dominantBaseline="middle"
-                fontSize={12} fontWeight={600} fontStyle="italic" fill="var(--grey-6)"
-                stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
-              >
-                {`(${formatSignificant(gp.x)}, ${formatSignificant(gp.y)})`}
-              </text>
-            );
-          })()}
-          {segments.map((seg) => (
-            <path key={seg.key} d={seg.d} stroke="var(--ink)" strokeWidth={seg.strokeWidth} fill="none" />
-          ))}
-          {head && (() => {
-            const [hx, hy] = projector(head.x, head.y);
-            return (
-              <>
-                <circle cx={hx} cy={hy} r={focusPointActive ? 6 : 4} fill="var(--green)" />
-                {/* "Look here" coordinate label — the focus_eigen mechanism's
-                    plain-curve counterpart (types.ts's focus_point doc
-                    comment). Same halo-stroke treatment as the linear_map
-                    eigen label above, ink (not green — nothing about this
-                    point is a payoff, it's just what's being discussed). */}
-                {focusPointActive && (
-                  <text
-                    x={hx} y={hy - 12}
-                    textAnchor="middle" dominantBaseline="middle"
-                    fontSize={12} fontWeight={600} fill="var(--text-primary)"
-                    stroke="var(--surface-fill)" strokeWidth={3} paintOrder="stroke"
-                  >
-                    {`(${formatSignificant(head.x)}, ${formatSignificant(head.y)})`}
-                  </text>
-                )}
-              </>
-            );
-          })()}
-        </svg>
+          </div>
+        ) : (
+          mathsFigure
+        )}
 
         {/* Controls sit directly under the SVG, before any text — a
             /design-review finding (2026-09-02): "the control must be near
@@ -936,6 +999,10 @@ export function Simulation({ spec, atomId, servedStance }: Props) {
             </motion.div>
           </AnimatePresence>
         </div>
+      )}
+
+      {realitySplit && realityScene && (
+        <RealityCaption reality={realityScene} activeIdx={activeIdx} atomId={resolvedId} />
       )}
 
       {showLiveBeatUI && trapRevealed && trapStep && <TrapRow trap={trapStep.trap!} atomId={`${resolvedId}::trap`} />}
@@ -1495,6 +1562,219 @@ function GraphScene({
   );
 }
 
+// ============================================================================
+// Reality panel — the concrete half of a split scene
+// ============================================================================
+
+/**
+ * Type sizes for the concrete panel, in stage units — which ARE this panel's
+ * viewBox units, so one stage unit is one SVG user unit and nothing is
+ * rescaled between authoring and drawing.
+ *
+ * The sizes look large next to the maths panel's 11-12 and that is the point.
+ * Measured live at 375px: each half of the split is ~113 CSS px wide, so a
+ * 320-unit-wide box renders at 0.35 CSS px per unit and an 11-unit label came
+ * out at 3.9 CSS px — present in the DOM, unreadable on the device. Drawing
+ * the 160-unit stage directly puts one unit at 0.71 CSS px, and REALITY_LABEL
+ * of 11 lands at ~7.8 CSS px on a phone and ~21 on a desktop. Strokes are
+ * chunkier than the maths panel's for the same reason: this is meant to read
+ * as a picture at a glance, not as a precise plot.
+ */
+const REALITY_LABEL = 11;
+const REALITY_HALO = 2.5;
+
+/**
+ * The concrete state to draw right now: the LAST reality beat whose
+ * `at_beat` is at or before the maths panel's active beat — the same
+ * "last one at or before" rule `activeNarrationStep` uses for captions, so
+ * a reality beat authored at 0 and another at 3 holds the first picture
+ * across maths beats 0-2 instead of blanking on the beats it skipped.
+ */
+export function activeRealityBeat(
+  beats: RealitySceneSpec['beats'],
+  activeIdx: number | null,
+): RealitySceneSpec['beats'][number] | null {
+  if (activeIdx == null) return null;
+  let found: RealitySceneSpec['beats'][number] | null = null;
+  for (const b of beats) {
+    if (b.at_beat <= activeIdx) found = b;
+    else break;
+  }
+  return found;
+}
+
+/**
+ * Base objects with this beat's overrides applied. Applied to the BASE,
+ * never to the previous beat's result (types.ts's `RealityObjectOverride`
+ * doc comment) — each beat is a full snapshot, so seeking backwards can
+ * never leave a stale mutation behind.
+ */
+export function mergeRealityObjects(
+  objects: RealitySceneSpec['objects'],
+  set: RealityBeat['set'] | undefined,
+): Array<RealityObject & { role: RealityRole }> {
+  const overrides = new Map((set ?? []).map((o) => [o.id, o]));
+  return objects.map((o) => {
+    const ov = overrides.get(o.id);
+    const { role, ...geometry } = ov ?? ({} as RealityObjectOverride);
+    return { ...o, ...geometry, id: o.id, kind: o.kind, role: role ?? 'idle' };
+  });
+}
+
+/**
+ * Both halves' eyebrows reserve the same two lines. Without the reserve the
+ * right-hand title wrapped to a second line while "The maths" stayed on one,
+ * and the two figures started 16px apart — measured live at 375px, where a
+ * split whose halves do not line up reads as two unrelated pictures rather
+ * than one comparison.
+ */
+const REALITY_EYEBROW_STYLE: React.CSSProperties = {
+  margin: 0,
+  // lineHeight is pinned alongside minHeight on purpose: the reserve only
+  // equalises the two columns if a two-line title occupies EXACTLY the
+  // reserved box. With the inherited line-height it overflowed it by ~4px and
+  // the figures still started at different heights.
+  lineHeight: 1.3,
+  minHeight: '2.6em',
+  color: 'var(--text-tertiary)',
+  fontWeight: 'var(--weight-semibold)',
+};
+
+const REALITY_ROLE_COLOR: Record<RealityRole, string> = {
+  idle: GRAPH_ROLE_COLOR.default,
+  current: GRAPH_ROLE_COLOR.current,
+  confirmed: GRAPH_ROLE_COLOR.confirmed,
+  wrong: GRAPH_ROLE_COLOR.trap,
+};
+
+function RealityPanel({
+  reality,
+  activeIdx,
+  atomId,
+  svgMaxHeight,
+}: {
+  reality: RealitySceneSpec;
+  activeIdx: number | null;
+  atomId: string;
+  svgMaxHeight?: string;
+}) {
+  const beat = activeRealityBeat(reality.beats, activeIdx);
+  const objects = mergeRealityObjects(reality.objects, beat?.set);
+
+  return (
+    <div className="min-w-0 flex-1 space-y-1" data-testid="reality-panel">
+      <p className="text-[11px]" style={REALITY_EYEBROW_STYLE}>
+        {reality.title}
+      </p>
+      <svg
+        viewBox={`0 0 ${REALITY_STAGE_W} ${REALITY_STAGE_H}`}
+        width="100%"
+        className="rounded-md border"
+        style={{
+          background: 'var(--surface-fill)',
+          borderColor: 'var(--separator)',
+          ...(svgMaxHeight ? { maxHeight: svgMaxHeight } : {}),
+        }}
+        preserveAspectRatio="xMidYMid meet"
+        aria-label={`In real life: ${reality.title}`}
+      >
+        {objects.map((o) => {
+          if (o.hidden) return null;
+          const stroke = REALITY_ROLE_COLOR[o.role];
+          const strong = o.role === 'current' || o.role === 'confirmed';
+          const strokeWidth = strong ? 2 : 1.2;
+          const dash = o.role === 'wrong' ? '3 3' : undefined;
+          const italic = o.role === 'wrong' ? 'italic' : undefined;
+          let shape: JSX.Element | null = null;
+          let labelAt: [number, number] = [o.x, o.y];
+
+          if (o.kind === 'box' && o.w != null && o.h != null) {
+            shape = (
+              <rect
+                x={o.x} y={o.y} width={o.w} height={o.h} rx={2}
+                fill="var(--surface-fill)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash}
+              />
+            );
+            labelAt = [o.x + o.w / 2, o.y + o.h / 2];
+          } else if (o.kind === 'disc' && o.r != null) {
+            shape = (
+              <circle
+                cx={o.x} cy={o.y} r={o.r}
+                fill="var(--surface-fill)" stroke={stroke} strokeWidth={strokeWidth} strokeDasharray={dash}
+              />
+            );
+          } else if (o.kind === 'arrow' && o.to_x != null && o.to_y != null) {
+            shape = (
+              <ArrowGlyph
+                from={[o.x, o.y]} to={[o.to_x, o.to_y]}
+                stroke={stroke} strokeWidth={strokeWidth} dash={dash}
+              />
+            );
+            labelAt = [(o.x + o.to_x) / 2, (o.y + o.to_y) / 2 - REALITY_LABEL * 0.7];
+          }
+
+          return (
+            <g key={o.id}>
+              {shape}
+              {o.label && (
+                <text
+                  x={labelAt[0]} y={labelAt[1]}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fontSize={REALITY_LABEL} fontWeight={600} fontStyle={italic}
+                  fill={stroke}
+                  stroke="var(--surface-fill)" strokeWidth={REALITY_HALO} paintOrder="stroke"
+                >
+                  {o.label}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * The concrete sentence, rendered FULL WIDTH beneath both figures rather
+ * than inside the narrow right-hand column.
+ *
+ * Measured in a real browser at 375px before this was split out: a 17px body
+ * sentence (the design system's floor for anything a student reads) inside a
+ * ~113px half-panel wraps at roughly ten characters a line, so the
+ * five-year-old sentence — the whole reason the panel exists — was the least
+ * readable text on the card. The two FIGURES side by side are what carry the
+ * simultaneity; the two sentences stacked directly under them, both changing
+ * on the same beat, still read as one pair and are actually legible.
+ */
+function RealityCaption({
+  reality,
+  activeIdx,
+  atomId,
+}: {
+  reality: RealitySceneSpec;
+  activeIdx: number | null;
+  atomId: string;
+}) {
+  const beat = activeRealityBeat(reality.beats, activeIdx);
+  if (!beat) return null;
+  return (
+    <div data-testid="reality-caption" aria-live="polite">
+      <p
+        className="text-[11px]"
+        style={{ margin: '0 0 2px', color: 'var(--text-tertiary)', fontWeight: 'var(--weight-semibold)' }}
+      >
+        In real life
+      </p>
+      <MarkdownAtomRenderer
+        atomId={`${atomId}::reality-${beat.at_beat}`}
+        content={beat.text}
+        className="vidhya-atom-body--beat-caption"
+      />
+    </div>
+  );
+}
+
 /** One arrow: shaft + solid head, all in screen coordinates. */
 function ArrowGlyph({
   from,
@@ -1658,6 +1938,21 @@ function ReducedMotionStoryboard({
             content={resolveBeatText(step, servedStance)}
             className="vidhya-atom-body--beat-caption"
           />
+          {/* The concrete half, in the storyboard too. Under reduced motion the
+              split panel shows only its FINAL state (progress is pinned at 1),
+              so without this line every reality beat but the last would be
+              unreachable for exactly the students who opted out of motion. */}
+          {(() => {
+            const rb = spec.reality?.beats.find((r) => r.at_beat === i);
+            if (!rb) return null;
+            return (
+              <MarkdownAtomRenderer
+                atomId={`${atomId}::reality-${i}`}
+                content={`In real life: ${rb.text}`}
+                className="vidhya-atom-body--beat-caption"
+              />
+            );
+          })()}
           {step.trap && <TrapRow trap={step.trap} atomId={`${atomId}::beat-${i}::trap`} />}
         </li>
       ))}

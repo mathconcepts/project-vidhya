@@ -6540,3 +6540,102 @@ frontend **4111** across 107. `tsc --noEmit` clean both sides.
 7 → 6 → 5 → OK) with **no threshold relaxed** — the root cause was the
 authoring brief's own wording being copied as stock vocabulary by every batch
 that read it.
+
+---
+
+### The demo deck follows the chosen exam, and a hook can show the maths and the real thing at once (v4.88.0)
+
+One `/investigate` pass, two findings, root-caused separately.
+
+**Every demo journey was GATE's, whichever exam the viewer picked.** The
+header read "JEE Main", the deck offered *"Three weeks to GATE, weak in linear
+algebra"*, and tapping it landed in GATE-MA's `determinants` lesson — whose
+`exam_pattern` atom then correctly said "How GATE actually asks this." Three
+GATE surfaces in a row.
+
+One cause, not three: every `data/personas/*.yaml` has declared `seed.exam_id`
+since the personas were written, `handleGetRails` (`src/api/demo-routes.ts`)
+was already loading the persona one line before building each card, and the
+field was never read. The atom heading is correct content reached via the wrong
+rail — a consequence, not a second defect (all 101 committed intent slices are
+GATE-declared, zero are JEE).
+
+`GET /api/demo/rails` now takes `?exam_id=` and filters on the persona's own
+exam. Deriving it from the persona rather than adding a card field makes a
+mismatch impossible to express. An exam with no authored journey gets `200`
+plus a `reason` naming the gap, never the pre-existing `503` blaming persona
+loading — `DemoDeckPage` renders that reason instead of a blank page.
+`config/demo-rails.json` gains two JEE journeys on `limits-jee` (4 → 6 cards).
+`ci:demo-rails` gained two checks, each proven to FAIL on a deliberately broken
+fixture first: a card must teach a concept its own persona's exam declares
+(via `CONCEPT_DECLARED_BY`), and every concept-declaring exam must have a
+student journey. The same leak, found twice more and fixed before it could
+fire: `ProblemStatementBlock`'s eyebrow and
+`practice-item-factory/prompt.ts`'s "GATE-style problem" instruction both name
+the exam now. Admin-only `gate-ma` defaults and literal GATE sample content
+were audited and deliberately left alone.
+
+**`SimulationSpec.reality` — the concrete half of a split scene.** Reported
+verbatim: *"Students are young and may not be able to imagine much... how a 5
+year old will understand — theoretical steps and what happens in reality
+together... shown simultaneously step by step."* Every field a beat carries
+(`text`, `emphasize`, `focus_eigen`, `focus_point`, `graph_highlight`, `trap`)
+speaks in one register: the mathematics. Concept anchors (v4.83.0) carry the
+real-world sentence, but once, in prose, at the top of the concept.
+
+`reality` is a genuinely second figure, not a second caption: a small stage of
+named objects (`box`/`disc`/`arrow`/`label`) whose geometry, labels and roles
+change per beat, rendered beside the maths panel, both advancing off the same
+`activeIdx`.
+
+- **Not a fourth figure mode.** `linear_map`/`graph`/parametric are mutually
+  exclusive because they answer the same question three ways; `reality`
+  answers a different one and composes with all three. The reported concept
+  (`determinants`) is a `linear_map` scene, so a panel that only worked on
+  plain traces would have missed the screenshot that prompted it.
+- **Lockstep is schema-enforced**, not an authoring convention: `at_beat` must
+  index into `narration_steps[]`, entries ascend strictly, the first must be
+  beat 0. A maths beat with no entry HOLDS the previous picture rather than
+  blanking.
+- **No new hue.** `idle`/`current`/`confirmed`/`wrong` is `graph_highlight`'s
+  own vocabulary mapped to the same colours — ink for "look here", green for a
+  settled result, grey + dashed + italic for the wrong one.
+- **Overrides apply to the base, never cumulatively** (the `graph_highlight`
+  snapshot rule), so seeking backwards cannot leave a stale mutation behind.
+  `hidden` lets a thing appear partway through; geometry is validated on a
+  hidden object too, so it is not a way to park one off-stage. Geometry is
+  re-checked **per beat, as merged** — an override that pushes a disc past the
+  stage edge is the same silent off-canvas clipping the ghost label was fixed
+  for on 2026-09-06.
+
+**Three layout defects, each found by measuring a real browser at 375px
+rather than by reading the code.** The stage began square and was letterboxed
+into the maths panel's 320×200 box, throwing away 37% of each half-panel (a
+71px drawing where 113px was available); it is 160×100 now and fills it. That
+stage is also its own viewBox, because drawing it inside the 320-unit box put
+an 11-unit label at **3.9 CSS px** — in the DOM, unreadable on the device. And
+the five-year-old sentence, inside its own 113px column, wrapped at about ten
+characters a line, so it moved to full width beneath both figures: the two
+FIGURES carry the simultaneity, the two sentences read as a pair underneath.
+Both eyebrows reserve a fixed two-line box with the line-height pinned (without
+the pin a two-line title overflowed the reserve and the figures still started
+4px apart).
+
+**Pilot: two concepts, one per exam, every claim checked.** `determinants`
+(GATE, `linear_map`) — a floor tile and one tin of paint, stretched into a
+patch that takes three; the drawn boxes are 36×36 and 54×72, exactly 3:1 in
+area, so the picture is not merely suggestive of the determinant.
+`oscillations-shm` (JEE Main Physics, parametric) — a child on a swing, still
+at the top of the arc, fastest through the bottom, stepping with the
+displacement-velocity trace beside it.
+
+**Scope, named honestly.** The mechanism reaches every concept by
+construction; the other 649 interactive-spec blocks carry no `reality` panel
+yet, and authoring one means inventing an honest concrete analogy per concept.
+That wave is in TODOS.md with these two as the template.
+
+**Tests:** backend unchanged (5005 + 1 todo, 378 files). Frontend 4113 → 4149
+(107 files). `tsc --noEmit` clean both sides. `npm run ci` green across 21
+gates; `ci:interactive-specs` 651 blocks, census now splits `simulation
+(<mode>) + reality` as a suffix rather than a bucket of its own, so a split
+scene is never double-counted.

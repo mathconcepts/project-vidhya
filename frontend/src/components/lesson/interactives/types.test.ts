@@ -17,6 +17,9 @@ import {
   MAX_BEAT_TEXT_CHARS,
   MAX_GHOST_EXPR_CHARS,
   MAX_WHY_CHARS,
+  MIN_REALITY_OBJECTS,
+  MAX_REALITY_OBJECTS,
+  MAX_REALITY_BEAT_TEXT_CHARS,
   __testing,
 } from './types';
 import type { SimulationSpec } from './types';
@@ -1472,5 +1475,242 @@ describe('validateSimulation — reference_points (/investigate: "u1 info is mis
     const result = parse(spec);
     expect(result.ok).toBe(false);
     expect((result as { reason: string }).reason).toContain('only valid on a plain parametric scene');
+  });
+});
+
+/**
+ * `reality` — the concrete half of a split scene (/investigate, live QA
+ * 2026-09-20: "theoretical steps and what happens in reality together...
+ * shown simultaneously step by step"). The rules worth pinning are the ones
+ * that make the split HONEST rather than merely well-formed: lockstep with
+ * the maths beats, and geometry that is checked as it will actually be drawn
+ * (base merged with the beat's own override), so a correction can never be
+ * clipped off the stage the way the ghost label once was.
+ */
+describe('validateSimulation — reality panel', () => {
+  const STEPS = [
+    { at_progress: 0, text: 'first' },
+    { at_progress: 0.5, text: 'second' },
+    { at_progress: 1, text: 'third' },
+  ];
+  const BASE = {
+    v: INTERACTIVE_SPEC_VERSION,
+    kind: 'simulation',
+    title: 'Split scene',
+    x_expr: 't',
+    y_expr: 't',
+    t_min: 0,
+    t_max: 1,
+    narration_steps: STEPS,
+    reality: {
+      title: 'A child on a swing',
+      objects: [
+        { id: 'seat', kind: 'disc', x: 50, y: 50, r: 6 },
+        { id: 'rope', kind: 'arrow', x: 50, y: 10, to_x: 50, to_y: 50 },
+        { id: 'tag', kind: 'label', x: 50, y: 70, label: 'still' },
+      ],
+      beats: [
+        { at_beat: 0, text: 'The swing hangs still.', set: [{ id: 'seat', role: 'current' }] },
+        { at_beat: 2, text: 'Now it rushes through the bottom.', set: [{ id: 'seat', x: 20, role: 'confirmed' }] },
+      ],
+    },
+  };
+
+  function parse(spec: unknown) {
+    return parseInteractiveSpec('```interactive-spec\n' + JSON.stringify(spec) + '\n```');
+  }
+
+  it('accepts a well-formed reality panel on a parametric scene', () => {
+    expect(parse(BASE).ok).toBe(true);
+  });
+
+  it('composes with linear_map — NOT a fourth mutually-exclusive figure mode', () => {
+    // The reported concept (`determinants`) is a linear_map scene, so a
+    // reality panel that only worked on plain traces would have missed the
+    // very screenshot that prompted it.
+    const { x_expr, y_expr, t_min, t_max, ...rest } = BASE;
+    const spec = {
+      ...rest,
+      linear_map: { matrix: [[2, 1], [0, 1.5]], num_vectors: 12, unit_square: true },
+    };
+    expect(parse(spec).ok).toBe(true);
+  });
+
+  it('composes with graph mode too', () => {
+    const { x_expr, y_expr, t_min, t_max, ...rest } = BASE;
+    const spec = {
+      ...rest,
+      graph: {
+        nodes: [{ id: 'A', label: 'A', x: 0, y: 0 }, { id: 'B', label: 'B', x: 1, y: 0 }],
+        edges: [{ from: 'A', to: 'B' }],
+      },
+    };
+    expect(parse(spec).ok).toBe(true);
+  });
+
+  it('refuses a reality panel on a beat-less scene — there is nothing to step with', () => {
+    const { narration_steps, ...rest } = BASE;
+    const result = parse(rest);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('narration_steps');
+  });
+
+  it('refuses an at_beat that does not index into narration_steps', () => {
+    const bad = {
+      ...BASE,
+      reality: { ...BASE.reality, beats: [{ at_beat: 0, text: 'ok' }, { at_beat: 9, text: 'off the end' }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('0..2');
+  });
+
+  it('refuses beats authored out of order', () => {
+    const bad = {
+      ...BASE,
+      reality: { ...BASE.reality, beats: [{ at_beat: 0, text: 'a' }, { at_beat: 2, text: 'b' }, { at_beat: 1, text: 'c' }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('ascending');
+  });
+
+  it('refuses a panel that does not start at beat 0 — it would open blank', () => {
+    const bad = { ...BASE, reality: { ...BASE.reality, beats: [{ at_beat: 1, text: 'late' }] } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('at_beat 0');
+  });
+
+  it('refuses a set[] entry naming an object that does not exist, by name', () => {
+    const bad = {
+      ...BASE,
+      reality: { ...BASE.reality, beats: [{ at_beat: 0, text: 'a', set: [{ id: 'nope' }] }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('"nope"');
+  });
+
+  it('refuses overriding kind — an object keeps its kind for the whole run', () => {
+    const bad = {
+      ...BASE,
+      reality: { ...BASE.reality, beats: [{ at_beat: 0, text: 'a', set: [{ id: 'seat', kind: 'box' }] }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('kind cannot be overridden');
+  });
+
+  it('refuses a base object drawn off the stage', () => {
+    const bad = {
+      ...BASE,
+      reality: {
+        ...BASE.reality,
+        objects: [{ id: 'seat', kind: 'disc', x: 157, y: 50, r: 6 }],
+        beats: [{ at_beat: 0, text: 'a' }],
+      },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('off the stage');
+  });
+
+  it('refuses an OVERRIDE that pushes an object off the stage — geometry is re-checked per beat', () => {
+    // The base is fine; only the merged beat-2 state is off-canvas. SVG would
+    // clip it silently, so the correction the narration promises never appears.
+    const bad = {
+      ...BASE,
+      reality: {
+        ...BASE.reality,
+        beats: [{ at_beat: 0, text: 'a' }, { at_beat: 1, text: 'b', set: [{ id: 'seat', x: 158 }] }],
+      },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('off the stage');
+  });
+
+  it('refuses an unknown role', () => {
+    const bad = {
+      ...BASE,
+      reality: { ...BASE.reality, beats: [{ at_beat: 0, text: 'a', set: [{ id: 'seat', role: 'urgent' }] }] },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('idle/current/confirmed/wrong');
+  });
+
+  it('refuses more objects than the stage can carry', () => {
+    const many = Array.from({ length: MAX_REALITY_OBJECTS + 1 }, (_, i) => ({
+      id: `o${i}`, kind: 'disc', x: 50, y: 50, r: 2,
+    }));
+    const bad = { ...BASE, reality: { ...BASE.reality, objects: many, beats: [{ at_beat: 0, text: 'a' }] } };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain(`${MIN_REALITY_OBJECTS}-${MAX_REALITY_OBJECTS}`);
+  });
+
+  it('caps the five-year-old sentence harder than a maths beat', () => {
+    expect(MAX_REALITY_BEAT_TEXT_CHARS).toBeLessThan(MAX_BEAT_TEXT_CHARS);
+    const bad = {
+      ...BASE,
+      reality: { ...BASE.reality, beats: [{ at_beat: 0, text: 'x'.repeat(MAX_REALITY_BEAT_TEXT_CHARS + 1) }] },
+    };
+    expect(parse(bad).ok).toBe(false);
+  });
+
+  it('accepts hidden on a base object and un-hiding it in a later beat', () => {
+    const spec = {
+      ...BASE,
+      reality: {
+        ...BASE.reality,
+        objects: [{ id: 'patch', kind: 'box', x: 10, y: 10, w: 20, h: 20, hidden: true }],
+        beats: [{ at_beat: 0, text: 'nothing yet' }, { at_beat: 1, text: 'here it is', set: [{ id: 'patch', hidden: false }] }],
+      },
+    };
+    expect(parse(spec).ok).toBe(true);
+  });
+
+  it('still geometry-checks a hidden object — hidden is not a way to park it off-stage', () => {
+    const bad = {
+      ...BASE,
+      reality: {
+        ...BASE.reality,
+        objects: [{ id: 'patch', kind: 'box', x: 150, y: 10, w: 40, h: 20, hidden: true }],
+        beats: [{ at_beat: 0, text: 'a' }],
+      },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('off the stage');
+  });
+
+  it('refuses a degenerate arrow with head and tail at the same point', () => {
+    const bad = {
+      ...BASE,
+      reality: {
+        ...BASE.reality,
+        objects: [{ id: 'a', kind: 'arrow', x: 20, y: 20, to_x: 20, to_y: 20 }],
+        beats: [{ at_beat: 0, text: 'a' }],
+      },
+    };
+    const result = parse(bad);
+    expect(result.ok).toBe(false);
+    expect((result as { reason: string }).reason).toContain('head and tail');
+  });
+
+  it('refuses more reality beats than the scene has narration_steps', () => {
+    const bad = {
+      ...BASE,
+      reality: {
+        ...BASE.reality,
+        beats: [
+          { at_beat: 0, text: 'a' }, { at_beat: 1, text: 'b' },
+          { at_beat: 2, text: 'c' }, { at_beat: 2, text: 'd' },
+        ],
+      },
+    };
+    expect(parse(bad).ok).toBe(false);
   });
 });

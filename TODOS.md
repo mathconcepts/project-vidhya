@@ -4,6 +4,49 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Reality panels for the rest of the corpus (2026-09-20)
+
+`SimulationSpec.reality` shipped in v4.88.0 with two pilots — `determinants`
+(GATE, `linear_map` mode) and `oscillations-shm` (JEE Main Physics, parametric
+mode). The mechanism composes with all three figure modes and reaches every
+concept by construction, but **649 of the 651 committed interactive-spec
+blocks carry no panel**, so today exactly two hooks show the maths and the
+real thing at once.
+
+This is authoring work, not engineering work, and it is the expensive half:
+each concept needs an honest concrete analogy whose drawn quantities really do
+match the mathematics. The `determinants` pilot is the bar — its two boxes are
+36×36 and 54×72, exactly 3:1 in area, because a picture that merely *suggests*
+"three times bigger" while drawing 2.7:1 teaches the wrong number. A vague
+analogy is worse than no panel.
+
+**Do it in batches, the way every other corpus pass in CLAUDE.md was done:**
+5-6 concepts per Sonnet subagent, disjoint files, each batch validating
+`ci:interactive-specs` + `ci:variant-agreement` on its own concepts before
+reporting, nothing committed until every batch has actually reported back.
+Propagate the fence byte-identically across `hook.md`/`-shaken`/`-assured`
+with a `re.DOTALL` Python splice — never `grep -o` (silently fails on
+multi-line JSON; it has deleted a fence outright in this repo before) and
+never `re.sub` with a callback that re-escapes backslashes (quadruple-escapes
+every LaTeX command).
+
+**Start where the payoff is highest:** concepts whose hooks are already the
+most abstract. `eigenvalues`, `rank-nullity` and `trace` on the GATE side;
+`limits-jee`, `dual-nature-matter` and `trigonometric-functions` on the JEE
+side — all five carry beat-bearing hooks today.
+
+**Check the layout numbers before authoring, they are tight.** Each half-panel
+is ~113 CSS px on a 375px phone. `MAX_REALITY_LABEL_CHARS` is 12 and a label
+runs roughly 7% of the stage width per character, so "3 tins" is already a
+third of the panel; two labels near each other collide (the `determinants`
+pilot dropped its arrow's "stretch" label for exactly that reason and let the
+caption carry it). The validator refuses off-stage geometry but knows nothing
+about text width — that check is still the author's eye on a real browser.
+
+**Trigger:** any pass that is already touching hook content at scale. There is
+no gate forcing this and there should not be one yet — a coverage gate here
+would fail 649 concepts at once with no way to fix them in a single pass.
+
 ## JEE Main pack: what it still needs (2026-09-19, revised 2026-09-20)
 
 The pack went live in v4.85.0 (23 Mathematics concepts) and completed in

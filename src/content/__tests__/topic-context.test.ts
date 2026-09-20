@@ -147,3 +147,37 @@ describe('loader shadow paths', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });
+
+/**
+ * The loader used to index ONE hardcoded course (`data/courses/gate-em/topics`)
+ * while `ci:syllabus-floor`'s own teaching-tips index walked the whole of
+ * `data/courses`. A non-GATE pack's strategy card could therefore satisfy the
+ * gate and never be served to a student — the gate measuring something the
+ * runtime does not do. These lock the scan across every course.
+ */
+describe('every course under data/courses is indexed, not just gate-em', () => {
+  it('resolves a topic that belongs to a different course', () => {
+    resetTopicContextCache();
+    const ctx = getTopicContext('jee-calculus');
+    expect(ctx).not.toBeNull();
+    expect(ctx!.topic_id).toBe('jee-calculus');
+    expect(ctx!.sections.length).toBeGreaterThan(0);
+  });
+
+  it('still resolves gate-em topics alongside them', () => {
+    resetTopicContextCache();
+    for (const id of ALL_TOPIC_IDS) {
+      expect(getTopicContext(id), `${id} should still resolve`).not.toBeNull();
+    }
+  });
+
+  // Proves the case above is not vacuous: pinned to one course's topics dir —
+  // which is exactly what the loader used to do unconditionally — the foreign
+  // topic goes back to null while that course's own topics keep resolving.
+  it('pinned to a single course dir, a topic from another course is null', () => {
+    process.env.VIDHYA_TOPICS_DIR = 'data/courses/gate-em/topics';
+    resetTopicContextCache();
+    expect(getTopicContext('jee-calculus')).toBeNull();
+    expect(getTopicContext('linear-algebra')).not.toBeNull();
+  });
+});

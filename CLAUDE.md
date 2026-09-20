@@ -6639,3 +6639,69 @@ That wave is in TODOS.md with these two as the template.
 gates; `ci:interactive-specs` 651 blocks, census now splits `simulation
 (<mode>) + reality` as a suffix rather than a bucket of its own, so a split
 scene is never double-counted.
+
+### The syllabus floor is met for every concept, and the loader serves what the gate counts (v4.89.0)
+
+Three asks: settle JEE's numerical-value marking, map JEE past-exam questions,
+fill the 69 missing explainers. The third was fully doable here; the other two
+hinge on a document this environment cannot fetch, and are reported as blocked
+rather than papered over.
+
+**The floor: 69 violations → 0.** Every JEE Main concept tripped
+`ci:syllabus-floor` in report-only mode (`explainers: need >=1, have 0` plus a
+missing teaching-tips source entry). Now `Checked 170 concepts | Floor
+violations: 0`. 69 explainers merged into `frontend/public/data/explainers.json`
+(101 → 170 concepts in `by_concept`) and 15 topic strategy cards under
+`data/courses/jee-main/topics/<NN>-<topic>/teaching-tips.md`, authored by 15
+parallel Sonnet batches — one per topic, each owning its own files, so no two
+could collide (the concurrent-write hazard this doc records twice). Every
+numeric claim verified before writing: sympy for maths and physics,
+brute-force sample-space enumeration for probability, explicit isomer counting
+for chemistry. Several batches correctly declined to state something rather
+than guess it — no named-compound stereoisomer count, no solvent-specific
+cryoscopic constants, no Doppler formula whose sign convention could not be
+re-derived.
+
+**A real defect found while doing it, fixed in the same pass.**
+`ci:syllabus-floor`'s `loadTeachingTipsIndex` walks ALL of `data/courses`, but
+`src/content/topic-context.ts` — the loader that actually puts a strategy card
+in front of a student — read one hardcoded directory,
+`data/courses/gate-em/topics`. All 15 new files would have satisfied the gate
+and never been served. Same class as the v4.33.0 "the gates were measuring
+wrong" finding. The loader now scans every `<course>/topics` directory; safe
+as a FLAT topic_id index precisely because `ci:topic-namespace` refuses a topic
+string claimed by two packs, so that gate is this scan's precondition. Course
+order is sorted so a hypothetical collision resolves identically on every
+machine rather than following readdir order. `VIDHYA_TOPICS_DIR` still names a
+single directory, which is how tests point at a fixture. Three tests, one of
+which pins the loader back to one course and confirms the foreign topic returns
+to `null` — the new coverage is demonstrably not vacuous.
+
+**JEE numerical-value marking: still unsettled, no longer unresearched.** Every
+NTA domain is refused by this environment's egress proxy; the one reader that
+reaches them returns extracts truncated immediately before Section B's marking
+table. What it established is that the conflict is NOT inside NTA's documents —
+their own notices show the rule changed once, in 2022 (2021: "no negative
+marking for Section B"; 2022 and 2023: "negative marking for both Section A and
+Section B"), and the 2021 line is what secondary sources still repeat. The
+chain, both 2026 notice PDF urls and the exact string to search for, is recorded
+in `jee-main.yml`'s `scoring:` block so the remaining job is one line. Nothing
+was encoded from it: those quotes are a lead, not the 2026 source, and
+`JEE_MAIN_COMPILED_CONTRACT` still has no `nat` row.
+
+**JEE past-exam questions: attempted, blocked, not faked.** Same wall. Also
+surfaced: the existing 241-row bank is itself mixed provenance
+(`GATE-EM-Topic-MCQs` 164, `GATE-PYQs-Seed` 50, `Supabase-PYQs-Seed` 27), so
+only 77 rows are seeded from actual papers. A JEE mapping pass should decide
+what `source` value it is honestly entitled to before writing its first row.
+
+**One comment correction.** `check-practice-items.ts`'s double-escape rule
+claims a lone `\\` is exempt. It is not — a matrix row break written tight
+against the next entry (`\\a_1`) also matches, and that is valid LaTeX. Zero
+committed items trip it today and the authoring fix is one space, so the rule
+stays strict (a false positive costs a space; a false negative ships a
+question's own source to the student) and only the comment changed.
+
+**Tests:** backend 5005 → **5008** + 1 todo (378 files). Frontend **4149** (107
+files, unchanged — backend and content only). `tsc --noEmit` clean both sides.
+`npm run ci` green across all 21 gates.

@@ -959,8 +959,51 @@ stub_concepts: []
 # name what it blocks.
 #
 # WHAT IT BLOCKS: authoring `nat` practice items for this pack, and any
-# mock-exam or quiz that grades one. Read the current JEE Main information
-# bulletin PDF at jeemain.nta.nic.in, then add the strategy.
+# mock-exam or quiz that grades one.
+#
+# ---------------------------------------------------------------------------
+# Evidence gathered 2026-09-20, so the operator's remaining job is one line
+# ---------------------------------------------------------------------------
+# Every nta.ac.in and jeemain.nta.nic.in domain is refused by this
+# environment's egress proxy (curl: CONNECT tunnel failed, 403), so the
+# quotes below were obtained as SEARCH-INDEX EXTRACTS of NTA-hosted notice
+# PDFs, not by reading the PDFs. Treat them as a strong pointer, never as the
+# verified rule — that distinction is exactly why no `nat` row was added.
+#
+# NTA's own public notices show the Section B rule CHANGED once, in 2022:
+#
+#   2021 — nta.ac.in/Download/Notice/Notice_20201216000000.pdf
+#          "In Section B, candidates have to attempt any five questions out
+#           of 10. There will be no negative marking for Section B."
+#   2022 — nta.ac.in/Download/Notice/Notice_20220301200421.pdf
+#          "In Section B, candidates have to attempt any 05 (five) questions
+#           out of 10. There will be negative marking for both Section A and
+#           Section B."
+#   2023 — nta.ac.in/Download/Notice/Notice_20221216113222.pdf
+#          "There will be negative marking for both Section A and Section B."
+#
+# The 2021 "no negative marking" line is the stale rule that most coaching
+# sites still repeat, which is where the apparent conflict in secondary
+# sources comes from. It is not a conflict inside NTA's own documents.
+#
+# For 2026 the extract confirms Section A marking (+4 / 0 / -1) and that
+# Section B now holds "five (5) questions for each subject, all must be
+# attempted" — the optional 10-choose-5 accommodation is gone. The extract
+# stops immediately before Section B's own marking table, which is the one
+# line still needed.
+#
+# THE ONE LINE TO READ, in either of these two NTA-hosted PDFs:
+#   Session 1: https://www.nta.ac.in/Download/Notice/Notice_20260120102259.pdf
+#   Session 2: https://nta.ac.in/Download/Notice/Notice_20260401211359.pdf
+# Find "SECTION B (Maximum Marks:20)" and read the marking scheme printed
+# under it. It will say either "Zero Marks : 0 In all other cases" (no
+# negative marking) or "Negative Marks : -1 In all other cases".
+#
+# THEN: add a `nat` row to JEE_MAIN_COMPILED_CONTRACT in
+# src/exams/marking-constants.ts with the marks-to-penalty mapping you read,
+# and record the PDF url + the date you read it as `official_source_url` /
+# `verified_at`. Do not transcribe the quotes above into that row — they are
+# a lead, not a source.
 scoring:
   marks_per_correct: 4
   marks_per_incorrect: -1      # MCQ (Section A) only — see the note above

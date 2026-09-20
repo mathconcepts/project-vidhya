@@ -63,30 +63,70 @@ settle it. There is deliberately no `jee_main` MarkingStrategy in
 `src/exams/marking-constants.ts` and no `assessment_contracts` row, so
 nothing grades against a JEE contract and nothing is quietly wrong. The
 dispute is recorded in `jee-main.yml`'s own `scoring:` block.
-**Trigger:** someone can open the current JEE Main information bulletin PDF.
-Read the marking section, then add the strategy (it must pass
-`marking-strategy-contract.ts`) and a contract row with the real
-`official_source_url` and `verified_at`.
+**Researched 2026-09-20, still not settled — but the remaining job is one
+line.** Every NTA domain is refused by this environment's egress proxy
+(`curl: CONNECT tunnel failed, 403`), and the one reader that does reach them
+returns extracts truncated immediately before Section B's marking table. What
+that did establish is that **the conflict is not inside NTA's own documents**:
+their notices show the rule changed once, in 2022 (2021 — "There will be no
+negative marking for Section B"; 2022 and 2023 — "There will be negative
+marking for both Section A and Section B"). The 2021 line is what most
+secondary sources still repeat. For 2026 the extract confirms Section A
+(+4/0/−1) and that Section B is now five compulsory questions, then stops.
+The full chain, both 2026 notice PDF urls and the exact string to search for,
+is in `jee-main.yml`'s `scoring:` block. Nothing was encoded from it —
+those quotes are a lead, not the 2026 source.
+**Trigger:** someone can open either 2026 notice PDF. Find
+`SECTION B (Maximum Marks:20)` and read the marking scheme printed under it,
+then add the strategy (it must pass `marking-strategy-contract.ts`) and a
+contract row with the real `official_source_url` and `verified_at`.
 
 **2. Practice items — CLOSED (v4.86.0 Mathematics, v4.87.0 Physics and
 Chemistry).** 427 JEE items across 14 banks, all MCQ, every answer key
 recomputed by a second independent method before shipping. `nat` items still
 wait on item 1, and cannot ship before it: `JEE_MAIN_COMPILED_CONTRACT` has
 no `nat` row, so such an item is refused by name at grading time.
-What replaces this entry: **explainers and strategy cards.** All 69 JEE
-concepts trip `ci:syllabus-floor` in report-only mode — `explainers: need >=1,
-have 0` plus a missing teaching-tips source entry, each. Not blocking
-(`enforce_topics: [linear-algebra]`), not a regression (no GATE-MA concept is
-among them). **Trigger:** before adding `jee-main` to `enforce_topics`, or
-before any claim that a JEE topic is walkable end to end.
+What replaced this entry — **explainers and strategy cards — CLOSED
+(2026-09-20).** All 69 JEE concepts used to trip `ci:syllabus-floor` in
+report-only mode (`explainers: need >=1, have 0` plus a missing teaching-tips
+source entry, each). Now `Checked 170 concepts | Floor violations: 0`. 69
+explainers merged into `explainers.json` (101 → 170 concepts) and 15 strategy
+cards under `data/courses/jee-main/topics/`, authored by 15 parallel batches,
+every numeric claim verified with sympy or brute-force enumeration first.
+
+A real defect surfaced doing it and was fixed in the same pass:
+`ci:syllabus-floor`'s `loadTeachingTipsIndex` walks ALL of `data/courses`,
+but `topic-context.ts` — the loader that actually puts a strategy card in
+front of a student — read only `data/courses/gate-em/topics`. Every one of
+those 15 files would have satisfied the gate and never been served. The
+loader now scans every course; a test pins it back to a single course to
+prove the new coverage is not vacuous.
+
+**Trigger, now that the floor is met:** adding `jee-main` to `enforce_topics`
+in the floor manifest is defensible for the explainer and strategy-card legs.
+It is NOT yet defensible overall — `ci:la-walkthrough --topic=jee-*` still has
+no test leg, because of item 3.
 
 **3. Past-exam questions mapped to JEE concepts.**
 `frontend/public/data/pyq-bank.json` has none, so a JEE concept's
 walkthrough rail has no test leg and `check-la-walkthrough.ts --topic=jee-*`
-cannot report on it. **Trigger:** when real JEE papers are available to map.
-Note `exam_tested: false` exists for concepts real papers assume rather than
-test — use it rather than writing a question and filing it as past-exam
-material.
+cannot report on it.
+
+**Attempted 2026-09-20, blocked on the same wall as item 1.** NTA hosts its
+own question papers and the search index reaches them, but returns snippets
+rather than full text, so verbatim past-paper content cannot be obtained
+here. Authoring questions from memory and filing them as "the actual 2023
+paper" is the exact fabrication the note below already forbids, so nothing
+was written. Worth knowing before someone starts: the existing 241-row bank
+is itself mixed provenance — `GATE-EM-Topic-MCQs` 164, `GATE-PYQs-Seed` 50,
+`Supabase-PYQs-Seed` 27 — so only 77 rows are seeded from actual papers. A
+JEE mapping pass should decide what `source` value it is honestly entitled
+to before writing the first row.
+
+**Trigger:** when real JEE papers are available to map — an operator upload,
+or an environment whose egress reaches NTA. Note `exam_tested: false` exists
+for concepts real papers assume rather than test — use it rather than writing
+a question and filing it as past-exam material.
 
 **4. Physics and Chemistry — CLOSED (v4.87.0).** `stub_concepts:` is `[]`;
 69 concepts across 15 sections, all with 11 base atoms, an anchor, a template

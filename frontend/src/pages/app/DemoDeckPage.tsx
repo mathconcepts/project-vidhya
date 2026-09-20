@@ -23,6 +23,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setDemoPersona, clearDemoPersona, setDemoCaptions, setDemoRail } from '@/lib/demoPersona';
+import { withExamChoice } from '@/lib/exam-choice';
 
 interface AtomRail {
   kind: 'atoms';
@@ -67,7 +68,7 @@ type LoadState =
   | { status: 'loading' }
   | { status: 'off' }
   | { status: 'error'; message: string }
-  | { status: 'ready'; cards: DemoCard[] };
+  | { status: 'ready'; cards: DemoCard[]; reason?: string };
 
 /** Where a card sends the visitor. Kept next to the type it switches on. */
 export function railDestination(card: DemoCard): string {
@@ -127,7 +128,11 @@ export default function DemoDeckPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/demo/rails')
+    // withExamChoice, not a bare path: this page is the ONE surface where
+    // serving the wrong exam's cards is most visible, and it was the one that
+    // opted out of the central appender. A GATE persona shown to a viewer who
+    // switched to JEE Main is what live QA caught (2026-09-20).
+    fetch(withExamChoice('/api/demo/rails'))
       .then(async (r) => {
         if (cancelled) return;
         if (r.status === 404) {
@@ -140,7 +145,7 @@ export default function DemoDeckPage() {
           return;
         }
         const body = await r.json();
-        setState({ status: 'ready', cards: body.cards ?? [] });
+        setState({ status: 'ready', cards: body.cards ?? [], reason: body.reason });
       })
       .catch((e) => {
         if (!cancelled) setState({ status: 'error', message: String(e?.message ?? e) });
@@ -184,7 +189,19 @@ export default function DemoDeckPage() {
         </p>
       )}
 
-      {state.status === 'ready' && (
+      {state.status === 'ready' && state.cards.length === 0 && (
+        // A blank area under the heading is the dead-end this page's own CI
+        // gate exists to prevent. If an exam has no authored journey, say that
+        // plainly rather than silently falling back to another exam's students.
+        <p
+          data-testid="rails-empty"
+          style={{ margin: 0, fontSize: 17, lineHeight: 1.45, color: 'var(--text-secondary)' }}
+        >
+          {state.reason ?? 'No demo journey has been authored for this exam yet.'}
+        </p>
+      )}
+
+      {state.status === 'ready' && state.cards.length > 0 && (
         <div role="list">
           {state.cards.map((card, i) => (
             <button

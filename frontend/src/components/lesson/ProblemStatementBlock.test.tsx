@@ -47,7 +47,7 @@ describe('ProblemStatementBlock', () => {
     expect(slice).toBeDefined();
     render(<ProblemStatementBlock conceptId="eigenvalues" enabled />);
     // Visible immediately: the one actionable, non-wounding fact.
-    expect(screen.getByText('What GATE actually asks')).toBeInTheDocument();
+    expect(screen.getByText(/actually asks$/)).toBeInTheDocument();
     expect(screen.getByText(slice.exam_intent)).toBeInTheDocument();
     // Off the first screen until asked for: the pain point.
     expect(screen.queryByText(slice.pain_point)).toBeNull();
@@ -116,7 +116,7 @@ describe('ProblemStatementBlock', () => {
     render(<ProblemStatementBlock conceptId="eigenvalues" enabled />);
     await user.click(screen.getByTestId('dps-more-trigger'));
     expect(screen.getByText('Common slips on this topic')).toBeInTheDocument();
-    expect(screen.getByText('What GATE actually asks')).toBeInTheDocument();
+    expect(screen.getByText(/actually asks$/)).toBeInTheDocument();
     expect(screen.queryByText(/marks die/i)).toBeNull();
   });
 });

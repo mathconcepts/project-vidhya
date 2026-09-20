@@ -4,6 +4,118 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.88.0] — 2026-09-20 — The demo deck follows the chosen exam, and a hook can show the maths and the real thing at once
+
+**Operator action** — none. No new ENV vars, no migrations.
+
+Two findings from one live-QA pass, root-caused separately.
+
+### 1. Every demo journey was GATE's, whichever exam you picked
+
+Reported verbatim: "For jee main, I get 3 weeks too gate." The header read
+**JEE Main**, the deck offered *"Three weeks to GATE, weak in linear
+algebra"*, and tapping it dropped the visitor into GATE-MA's `determinants`
+lesson — whose `exam_pattern` atom then correctly said *"How GATE actually
+asks this."* Three GATE surfaces in a row for someone who had asked for JEE.
+
+**One cause, not three.** Every `data/personas/*.yaml` has declared
+`seed.exam_id` since the personas were written, and `handleGetRails`
+(`src/api/demo-routes.ts`) was already loading the persona one line before it
+built each card. The field was simply never read. So all four GATE journeys
+went to every viewer, and the atom heading — which is correct content, reached
+via the wrong rail — was a consequence, not a second defect (all 101 committed
+intent slices are GATE-declared; zero are JEE).
+
+- `GET /api/demo/rails` now takes `?exam_id=` and filters by the persona's own
+  exam. Deriving it from the persona rather than adding a field to the card
+  makes a mismatch impossible to express: a card cannot claim an exam its own
+  student is not sitting.
+- An exam with no authored journey gets `200` with a `reason` naming the gap,
+  not the pre-existing `503` blaming persona loading — two very different
+  causes, and saying the wrong one sends an operator hunting a file that is
+  fine. `DemoDeckPage` renders that reason instead of a blank page.
+- `config/demo-rails.json` gains two real JEE journeys on `limits-jee`
+  (4 cards → 6).
+- `ci:demo-rails` gained two checks, both proven to FAIL on a deliberately
+  broken fixture before being trusted: a card must teach a concept its own
+  persona's exam declares (checked against `CONCEPT_DECLARED_BY`), and every
+  concept-declaring exam must have at least one student journey.
+
+**The same leak, found twice more and fixed before it could fire.**
+`ProblemStatementBlock`'s eyebrow read "What GATE actually asks"
+unconditionally, and `practice-item-factory/prompt.ts` asked every generator
+for a "GATE-style practice problem" regardless of which exam declared the
+concept. Both are latent today (every intent slice is GATE's) and both now
+resolve the exam by name. Audited and deliberately NOT changed: admin-only
+surfaces that default to `gate-ma`, and literal GATE sample content.
+
+### 2. A hook showed the maths and nothing else
+
+Reported verbatim: *"Students are young and may not be able to imagine much.
+What we need in hook is how a 5 year old will understand — theoretical steps
+and what happens in reality together. This needs to be shown simultaneously
+step by step."*
+
+Every field a beat carries — `text`, `emphasize`, `focus_eigen`,
+`focus_point`, `graph_highlight`, `trap` — speaks in exactly ONE register: the
+mathematics. Concept anchors (v4.83.0) carry the real-world sentence, but once,
+at the top of the concept, in prose. Nothing could show the sheet of dough
+being stretched beside the parallelogram.
+
+`SimulationSpec.reality` is a genuinely second figure, not a second caption: a
+small stage of named objects whose geometry, labels and roles change per beat,
+rendered beside the maths panel, both advancing off the same `activeIdx`.
+
+- **Not a fourth figure mode.** `linear_map`/`graph`/parametric are mutually
+  exclusive because they answer the same question three ways; `reality`
+  answers a different one and composes with all three. The reported concept
+  (`determinants`) is a `linear_map` scene, so a panel that only worked on
+  plain traces would have missed the screenshot that prompted it.
+- **Lockstep is schema-enforced**, not an authoring convention: each entry's
+  `at_beat` must index into `narration_steps[]`, entries ascend strictly, and
+  the first must be beat 0 so the panel is never blank on arrival. A beat with
+  no entry of its own HOLDS the previous picture rather than blanking.
+- **No new hue.** The role vocabulary (`idle`/`current`/`confirmed`/`wrong`)
+  is `graph_highlight`'s, mapped to the same colours — ink for "look here",
+  green for a settled result, grey + dashed + italic for the wrong one.
+- **Overrides apply to the base, never cumulatively** (the `graph_highlight`
+  snapshot rule), so seeking backwards can never leave a stale mutation
+  behind. `hidden` lets a thing appear partway through; geometry is still
+  validated on a hidden object, so it cannot be used to park one off-stage.
+- Geometry is re-checked **per beat, as merged** — an override that pushes a
+  disc past the stage edge is the same silent off-canvas clipping the ghost
+  label was fixed for in the 2026-09-06 audit.
+
+**Three layout defects, each found by measuring a real browser at 375px, not
+by reading the code.** The concrete stage started square and was letterboxed
+into the maths panel's 320×200 box, throwing away 37% of each half-panel — a
+71px drawing where 113px was available; it is 160×100 now and fills it. That
+stage is also its own viewBox, because drawing it inside the 320-unit box put
+an 11-unit label at **3.9 CSS px** — present in the DOM, unreadable on the
+device. And the five-year-old sentence, rendered inside its own 113px column,
+wrapped at about ten characters a line, so it moved out to full width beneath
+both figures: the two FIGURES carry the simultaneity, the two sentences read
+as a pair underneath. The eyebrows reserve a fixed two-line box (with the
+line-height pinned, or a two-line title overflows it) so the figures start at
+the same y — measured, not assumed.
+
+**Pilot: two concepts, one per exam, every claim checked.** `determinants`
+(GATE, `linear_map`): a floor tile and one tin of paint, stretched into a
+patch that takes three — the drawn boxes are 36×36 and 54×72, exactly 3:1 in
+area, so the picture is not merely suggestive of the determinant. And
+`oscillations-shm` (JEE Main Physics, parametric): a child on a swing, still
+at the top of the arc, fastest through the bottom, stepping with the
+displacement-velocity trace beside it.
+
+The mechanism reaches every concept by construction; the other 649
+interactive-spec blocks carry no `reality` panel yet. That wave is in
+TODOS.md, with the two pilots as the template.
+
+**Tests:** backend unchanged (5005 + 1 todo, 378 files). Frontend 4113 → 4149
+(107 files). `npm run ci` green across
+21 gates. Verified live in a real headless Chromium at 375px on both pilot
+concepts, before and after each layout fix.
+
 ## [4.87.0] — 2026-09-20 — JEE Main Physics and Chemistry: the stub list empties, 46 concepts get a full course
 
 **Operator action** — none. No new ENV vars, no migrations. `DEFAULT_EXAM_ID`

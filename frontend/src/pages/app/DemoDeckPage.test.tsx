@@ -11,6 +11,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import DemoDeckPage, { railDestination, railSteps, entryHref, type DemoCard } from './DemoDeckPage';
+import { storeExamChoice } from '@/lib/exam-choice';
 
 const navigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -150,5 +151,50 @@ describe('entryHref', () => {
     expect(entryHref(CARD)).toBe(
       '/demo-login?role=meera-gate-la-anxious&next=%2Flesson%2Feigenvalues',
     );
+  });
+});
+
+/**
+ * Exam scoping (live QA, 2026-09-20).
+ *
+ * The deck showed "Three weeks to GATE, weak in linear algebra" to a viewer
+ * who had switched the header to JEE Main. This page was the one surface that
+ * fetched with a bare path instead of the central exam-choice appender, so the
+ * server was never told which exam to scope to.
+ */
+describe('DemoDeckPage exam scoping', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  it('asks the server for the exam the viewer chose', async () => {
+    storeExamChoice('jee-main');
+    const spy = vi.fn(async (_url: string) => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ cards: [CARD] }),
+    }));
+    vi.stubGlobal('fetch', spy);
+    renderPage();
+    await screen.findByText(CARD.title);
+    const url = String(spy.mock.calls[0][0]);
+    expect(url).toContain('/api/demo/rails');
+    expect(url).toContain('exam_id=jee-main');
+  });
+
+  it('shows an honest empty state rather than a blank page when an exam has no journey', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        cards: [],
+        exam_id: 'jee-main',
+        reason: 'no demo journey has been authored for "jee-main" yet',
+      }),
+    }));
+    renderPage();
+    const empty = await screen.findByTestId('rails-empty');
+    expect(empty.textContent).toMatch(/no demo journey/i);
   });
 });

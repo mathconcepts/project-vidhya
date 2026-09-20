@@ -104,7 +104,21 @@ describe('practiceItemSpecToAtomSpec', () => {
   it('carries a rendered_prompt (the real practice-item prompt, not the generic atom fallback)', () => {
     const atomSpec = practiceItemSpecToAtomSpec(baseSpec);
     expect(typeof atomSpec.prompt_vars.rendered_prompt).toBe('string');
-    expect(atomSpec.prompt_vars.rendered_prompt as string).toContain('GATE-style practice problem');
+    // The exam is named from the concept's own declaring pack, not hardcoded.
+    // This asserted the literal 'GATE-style practice problem' until 2026-09-20,
+    // which is exactly what made a generated JEE item ask the model for GATE
+    // idiom. baseSpec's concept is GATE-declared, so GATE is still correct here
+    // — what changed is that it is now DERIVED, which the next case proves.
+    expect(atomSpec.prompt_vars.rendered_prompt as string).toContain(
+      'GATE Engineering Mathematics-style practice problem',
+    );
+  });
+
+  it('names the concept\'s OWN exam — a JEE concept never asks for GATE idiom', () => {
+    const jee = practiceItemSpecToAtomSpec({ ...baseSpec, concept_id: 'limits-jee', topic: 'jee-calculus' });
+    const prompt = jee.prompt_vars.rendered_prompt as string;
+    expect(prompt).toContain('JEE Main');
+    expect(prompt).not.toContain('GATE');
   });
 
   it('is deterministic — the same spec always produces the same AtomSpec', () => {

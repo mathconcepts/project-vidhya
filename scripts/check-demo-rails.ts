@@ -40,6 +40,7 @@ import { fileURLToPath } from 'url';
 import { parse as parseYaml } from 'yaml';
 import { parseInteractiveSpec } from '../frontend/src/components/lesson/interactives/types';
 import { VARIANT_STANCES } from '../src/content/stance-variants';
+import { CONCEPT_DECLARED_BY } from '../src/constants/concept-graph';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -167,6 +168,8 @@ const fail = (cardId: string, msg: string) => errors.push(`  card "${cardId}"\n 
  * the file that carries them rather than by a card id. */
 const failDeploy = (msg: string) =>
   errors.push(`  ${path.relative(ROOT, RENDER_BLUEPRINT)}\n      ${msg}`);
+/** Deck-level gaps belong to the rails file, not to any single card in it. */
+const failDeck = (msg: string) => errors.push(`  ${path.relative(ROOT, RAILS)}\n      ${msg}`);
 
 const INTENT_LANES_KEY = 'VIDHYA_INTENT_LANES';
 const INTENT_LANES_EXPECTED = 'on';
@@ -270,6 +273,78 @@ function personaMasteryKeys(personaId: string): string[] | null {
     if (entry) keys.push(entry[1]);
   }
   return keys;
+}
+
+/**
+ * The persona's own declared exam. Every persona YAML has carried `exam_id`
+ * since the personas were written; nothing read it, which is exactly how a
+ * deck of four GATE journeys came to be served to a viewer who had switched to
+ * JEE Main (live QA, 2026-09-20). Read by hand rather than through the loader
+ * for the same reason personaMasteryKeys does: this script must keep working
+ * on a hand-edited venue copy that the strict loader would reject outright.
+ */
+function personaExamId(personaId: string): string | null {
+  const file = path.join(PERSONAS, `${personaId}.yaml`);
+  if (!fs.existsSync(file)) return null;
+  const m = fs.readFileSync(file, 'utf8').match(/^\s*exam_id:\s*([A-Za-z0-9._-]+)\s*$/m);
+  return m ? m[1] : null;
+}
+
+/**
+ * A card's exam is its persona's exam, and the concept it teaches must belong
+ * to that same exam.
+ *
+ * This is the check whose absence let the bug ship green. Every OTHER property
+ * of those four cards was validated — the persona resolved, the atoms existed,
+ * the interactive blocks parsed, the practice item was real, the mastery vector
+ * covered the concept — because each of those is true of a GATE card in
+ * isolation. Nothing asked the one question that mattered once a second exam
+ * existed: whose exam is this, and does the concept agree?
+ */
+function checkCardExamCoherence(card: any, rail: any): void {
+  const examId = personaExamId(card.persona);
+  if (!examId) {
+    fail(card.id, `persona "${card.persona}" declares no exam_id — the card's exam is undecidable`);
+    return;
+  }
+  if (!rail?.concept_id) return; // concept validity is reported by checkAtomRail
+  const owner = CONCEPT_DECLARED_BY.get(rail.concept_id);
+  if (!owner) return; // unknown concept is checkAtomRail's finding, not a second one
+  if (owner !== examId) {
+    fail(
+      card.id,
+      `persona "${card.persona}" sits "${examId}" but rail.concept_id "${rail.concept_id}" is ` +
+        `declared by "${owner}" — the card would teach one exam's concept to another exam's student`,
+    );
+  }
+}
+
+/**
+ * Every exam a student can actually switch to needs a journey of its own.
+ *
+ * The filter in `GET /api/demo/rails` is now honest — it will not serve GATE's
+ * students to a JEE viewer — but honest and empty is still a dead end, and a
+ * dead end in the first ten seconds is what this whole script exists to stop.
+ * Scoped to exams that DECLARE concepts: a pack that declares none has nothing
+ * to build a journey out of yet, and failing on it would make an in-progress
+ * pack impossible to have on disk.
+ */
+function checkDeckCoversEveryExam(cards: any[]): void {
+  const examsWithConcepts = new Set(CONCEPT_DECLARED_BY.values());
+  const covered = new Set<string>();
+  for (const card of cards ?? []) {
+    if (card?.audience && card.audience !== 'student') continue;
+    const examId = personaExamId(card?.persona);
+    if (examId) covered.add(examId);
+  }
+  for (const examId of [...examsWithConcepts].sort()) {
+    if (!covered.has(examId)) {
+      failDeck(
+        `no student card resolves to exam "${examId}", so a visitor who switches to it gets an ` +
+          `empty deck. Author a card whose persona declares exam_id: ${examId}.`,
+      );
+    }
+  }
 }
 
 function checkAtomRail(card: any, rail: any): void {
@@ -599,8 +674,10 @@ function main(): void {
     else checkCompareRail(card, rail);
     checkReachability(card);
     checkCaptions(card);
+    checkCardExamCoherence(card, rail);
   }
 
+  checkDeckCoversEveryExam(config.cards);
   checkIntentLanes();
 
   if (errors.length > 0) {

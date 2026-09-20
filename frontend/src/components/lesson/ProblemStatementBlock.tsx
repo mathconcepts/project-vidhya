@@ -70,6 +70,8 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 import { INTENT_SLICES, type IntentId } from '@/generated/intent-slices.gen';
+import { useActiveExam } from '@/hooks/useActiveExam';
+import { shortExamName } from '@/components/app/ExamSwitcher';
 
 /** Plain-language framing per dominant intent — "why this page opens the
  * way it does for most students". Locked wording lives here, not derived,
@@ -112,6 +114,7 @@ export interface ProblemStatementBlockProps {
 }
 
 export function ProblemStatementBlock({ conceptId, enabled, onSeeWhatsNext }: ProblemStatementBlockProps) {
+  const { exam } = useActiveExam();
   const [open, setOpen] = useState(false);
   if (!enabled) return null;
   const slice = INTENT_SLICES[conceptId];
@@ -133,7 +136,16 @@ export function ProblemStatementBlock({ conceptId, enabled, onSeeWhatsNext }: Pr
     >
       {/* The lead — always visible, always first. */}
       <div>
-        <p style={eyebrowStyle}>What GATE actually asks</p>
+        {/* The exam is named, never assumed. This eyebrow read "What GATE
+            actually asks" unconditionally — correct while GATE was the only
+            pack, and a lie the moment a second one shipped. Unreachable for
+            JEE today (all 78 intent slices are GATE-declared), so this is the
+            latent half of the 2026-09-20 exam-leak finding: fixed before it
+            can fire rather than after. shortExamName is the switcher's own
+            helper, not a second copy of the shortening rule. */}
+        <p style={eyebrowStyle}>
+          What {exam ? shortExamName(exam.name) : 'the exam'} actually asks
+        </p>
         <p style={bodyStyle}>{slice.exam_intent}</p>
       </div>
 

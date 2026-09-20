@@ -34,6 +34,8 @@ import {
   formatSignificant,
   beatHighlightKind,
   highlightNounForSpec,
+  activeRealityBeat,
+  mergeRealityObjects,
 } from './Simulation';
 import type { SimulationSpec, Mat2 } from './types';
 
@@ -1671,5 +1673,182 @@ describe('Simulation — pinned figure cannot swallow the caption (live-QA 2026-
     // scroll to recover them.
     expect(wrapper.style.maxHeight).toBe('');
     expect(wrapper.style.overflow).not.toBe('hidden');
+  });
+});
+
+// ============================================================================
+// Reality panel — the concrete half of a split scene
+// ============================================================================
+
+const REALITY_SPEC: SimulationSpec = {
+  ...BEAT_SPEC,
+  reality: {
+    title: 'A child on a swing',
+    objects: [
+      { id: 'seat', kind: 'disc', x: 126, y: 58, r: 6 },
+      { id: 'rope', kind: 'arrow', x: 80, y: 12, to_x: 126, to_y: 58 },
+      { id: 'tag', kind: 'label', x: 126, y: 69, label: 'still' },
+      { id: 'patch', kind: 'box', x: 10, y: 10, w: 20, h: 20, label: 'later', hidden: true },
+    ],
+    beats: [
+      { at_beat: 0, text: 'The swing hangs still at the top.', set: [{ id: 'seat', role: 'current' }] },
+      {
+        at_beat: 1,
+        text: 'Now it rushes through the bottom.',
+        set: [
+          { id: 'seat', x: 80, y: 77, role: 'confirmed' },
+          { id: 'tag', x: 80, y: 89, label: 'fastest', role: 'confirmed' },
+          { id: 'patch', hidden: false },
+        ],
+      },
+    ],
+  },
+};
+
+describe('activeRealityBeat', () => {
+  const beats = REALITY_SPEC.reality!.beats;
+
+  it('returns null before any beat is active', () => {
+    expect(activeRealityBeat(beats, null)).toBeNull();
+  });
+
+  it('returns the beat authored at the active index', () => {
+    expect(activeRealityBeat(beats, 0)?.text).toContain('hangs still');
+    expect(activeRealityBeat(beats, 1)?.text).toContain('rushes through');
+  });
+
+  it('HOLDS the last concrete picture across maths beats it skipped', () => {
+    // beats are authored at 0 and 1; maths beat 2 has no reality entry of its
+    // own, so the panel must keep showing beat 1 rather than blanking.
+    expect(activeRealityBeat(beats, 2)?.text).toContain('rushes through');
+  });
+});
+
+describe('mergeRealityObjects', () => {
+  const objects = REALITY_SPEC.reality!.objects;
+
+  it('defaults every object to the idle role with no overrides', () => {
+    const merged = mergeRealityObjects(objects, undefined);
+    expect(merged.every((o) => o.role === 'idle')).toBe(true);
+  });
+
+  it('applies a beat override on top of the base object', () => {
+    const merged = mergeRealityObjects(objects, REALITY_SPEC.reality!.beats[1].set);
+    const seat = merged.find((o) => o.id === 'seat')!;
+    expect(seat.x).toBe(80);
+    expect(seat.y).toBe(77);
+    expect(seat.role).toBe('confirmed');
+    // r was never overridden, so it survives from the base.
+    expect(seat.r).toBe(6);
+  });
+
+  it('applies overrides to the BASE, never cumulatively', () => {
+    // Beat 1 moves the seat to (50, 67). Re-applying beat 0's set must put it
+    // back at the authored base position, not leave beat 1's mutation behind —
+    // otherwise seeking backwards shows a state that was never authored.
+    const afterBeat1 = mergeRealityObjects(objects, REALITY_SPEC.reality!.beats[1].set);
+    expect(afterBeat1.find((o) => o.id === 'seat')!.x).toBe(80);
+    const backToBeat0 = mergeRealityObjects(objects, REALITY_SPEC.reality!.beats[0].set);
+    expect(backToBeat0.find((o) => o.id === 'seat')!.x).toBe(126);
+  });
+});
+
+describe('reality stage is drawn 1:1', () => {
+  it('uses the stage as its own viewBox so labels are not shrunk to illegibility', () => {
+    // Measured live at 375px: drawing the 160-unit stage inside the maths
+    // panel's 320-unit box put an 11-unit label at 3.9 CSS px. Stage units ARE
+    // viewBox units now, which doubles that without touching any content.
+    const { container } = render(<Simulation spec={REALITY_SPEC} />);
+    const svgs = Array.from(container.querySelectorAll('svg'));
+    const realitySvg = svgs.find((el) => (el.getAttribute('aria-label') ?? '').startsWith('In real life'))!;
+    expect(realitySvg.getAttribute('viewBox')).toBe('0 0 160 100');
+  });
+
+  it('places an object at its authored stage coordinates, with no rescaling', () => {
+    const { container } = render(<Simulation spec={REALITY_SPEC} />);
+    const panel = screen.getByTestId('reality-panel');
+    const disc = panel.querySelector('circle')!;
+    expect(disc.getAttribute('cx')).toBe('126');
+    expect(disc.getAttribute('cy')).toBe('58');
+    expect(disc.getAttribute('r')).toBe('6');
+  });
+});
+
+describe('Simulation — reality split panel', () => {
+  it('renders nothing extra for a scene with no reality block', () => {
+    render(<Simulation spec={BEAT_SPEC} />);
+    expect(screen.queryByTestId('reality-panel')).toBeNull();
+  });
+
+  it('renders the concrete panel beside the maths, both labelled', () => {
+    render(<Simulation spec={REALITY_SPEC} />);
+    expect(screen.getByTestId('reality-panel')).toBeTruthy();
+    expect(screen.getByText('The maths')).toBeTruthy();
+    expect(screen.getAllByText('A child on a swing').length).toBeGreaterThan(0);
+  });
+
+  it('puts both figures in ONE flex row so they are seen at once, not stacked apart', () => {
+    const { container } = render(<Simulation spec={REALITY_SPEC} />);
+    const panel = screen.getByTestId('reality-panel');
+    const row = panel.parentElement!;
+    expect(row.className).toContain('flex');
+    // Both SVGs must live in the SAME row, not one above the other.
+    expect(row.querySelectorAll('svg').length).toBe(2);
+    expect(container.querySelectorAll('svg').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('draws the beat-0 state and hides an object the author has not revealed yet', () => {
+    render(<Simulation spec={REALITY_SPEC} />);
+    const panel = screen.getByTestId('reality-panel');
+    expect(within(panel).getByText('still')).toBeTruthy();
+    expect(within(panel).queryByText('later')).toBeNull();
+  });
+
+  it('shows the concrete sentence for the active beat', () => {
+    render(<Simulation spec={REALITY_SPEC} />);
+    expect(screen.getByText(/hangs still at the top/)).toBeTruthy();
+  });
+
+  it('steps with the maths — seeking to beat 1 moves the concrete picture too', () => {
+    const { container } = render(<Simulation spec={REALITY_SPEC} />);
+    const slider = container.querySelector('input[type="range"]') as HTMLInputElement;
+    fireEvent.change(slider, { target: { value: '0.6' } });
+    const panel = screen.getByTestId('reality-panel');
+    expect(within(panel).getByText('fastest')).toBeTruthy();
+    expect(within(panel).queryByText('still')).toBeNull();
+    // The object revealed by that beat's override is now drawn.
+    expect(within(panel).getByText('later')).toBeTruthy();
+    expect(screen.getByText(/rushes through the bottom/)).toBeTruthy();
+  });
+
+  it('colours a confirmed object green and an idle one ink — no new hue enters the palette', () => {
+    const { container } = render(<Simulation spec={REALITY_SPEC} />);
+    const slider = container.querySelector('input[type="range"]') as HTMLInputElement;
+    fireEvent.change(slider, { target: { value: '0.6' } });
+    const panel = screen.getByTestId('reality-panel');
+    expect(within(panel).getByText('fastest').getAttribute('fill')).toBe('var(--green)');
+    expect(within(panel).getByText('later').getAttribute('fill')).toBe('var(--ink)');
+  });
+
+  it('announces the concrete step politely, like the maths caption does', () => {
+    render(<Simulation spec={REALITY_SPEC} />);
+    expect(screen.getByTestId('reality-caption').getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('renders the concrete sentence full width, NOT inside the narrow half-panel', () => {
+    // At 375px a 17px sentence in a ~113px column wraps at about ten
+    // characters a line — measured in a real browser, which is why the
+    // caption lives beside the maths caption rather than under its own figure.
+    render(<Simulation spec={REALITY_SPEC} />);
+    const caption = screen.getByTestId('reality-caption');
+    expect(screen.getByTestId('reality-panel').contains(caption)).toBe(false);
+  });
+
+  it('lines the two figures up by reserving the same eyebrow height on both', () => {
+    render(<Simulation spec={REALITY_SPEC} />);
+    const maths = screen.getByText('The maths');
+    const concrete = screen.getAllByText('A child on a swing')[0];
+    expect(maths.style.minHeight).toBe('2.6em');
+    expect(concrete.style.minHeight).toBe('2.6em');
   });
 });

@@ -4,7 +4,8 @@
  * the returned prompt is what a caller hands to an LLM client elsewhere.
  */
 
-import { CONCEPT_MAP } from '../../constants/concept-graph';
+import { CONCEPT_MAP, CONCEPT_DECLARED_BY } from '../../constants/concept-graph';
+import { getExam } from '../../curriculum/exam-loader';
 import type { PracticeItemSpec } from './types';
 
 /**
@@ -51,9 +52,19 @@ export function buildPracticeItemPrompt(spec: PracticeItemSpec): string {
   const conceptLabel = concept?.label ?? spec.concept_id;
   const conceptDescription = concept?.description ?? '';
   const difficultyLabel = DIFFICULTY_LABEL(spec.difficulty);
+  const declaringExam = CONCEPT_DECLARED_BY.get(spec.concept_id);
+  // The pack's own declared name, not a second copy of it kept here — a
+  // local id->name map is exactly the drift class this repo keeps closing.
+  const examName = declaringExam ? getExam(declaringExam)?.metadata?.name : undefined;
+  const examStyle = examName ? `${examName}-style` : 'exam-style';
 
   const lines: string[] = [
-    `Generate one GATE-style practice problem for the concept "${conceptLabel}"`,
+    // The exam is derived from the concept, never assumed. This line said
+    // "GATE-style" unconditionally, so generating a JEE item instructed the
+    // model to write it in the wrong exam's idiom — the generation-side half
+    // of the 2026-09-20 exam-leak finding. An unattributed concept falls back
+    // to a neutral phrasing rather than naming an exam it does not belong to.
+    `Generate one ${examStyle} practice problem for the concept "${conceptLabel}"`,
     `(topic: ${spec.topic}; concept id: ${spec.concept_id}).`,
   ];
   if (conceptDescription) lines.push(`Concept context: ${conceptDescription}`);

@@ -156,6 +156,122 @@ export interface GraphSceneSpec {
 }
 
 /**
+ * The concrete half of a split scene — "what this actually is, in the real
+ * world", drawn as a second picture that steps in lockstep with the maths.
+ *
+ * Root cause (/investigate, live QA 2026-09-20, verbatim: "Students are
+ * young and may not be able to imagine much. What we need in hook is how a
+ * 5 year old will understand - theoretical steps and what happens in
+ * reality together. This needs to be shown simultaneously step by step").
+ * Every existing beat field — `text`, `emphasize`, `focus_eigen`,
+ * `focus_point`, `graph_highlight`, `trap` — speaks in exactly ONE
+ * register: the mathematics. A beat could say "the unit square's area is
+ * now 3x" and highlight the parallelogram, and nothing in the schema could
+ * also show the sheet of dough being stretched beside it. Concept anchors
+ * (v4.83.0) carry the real-world sentence, but once, at the top of the
+ * concept, in prose — not stepping beside the figure.
+ *
+ * So this is a genuinely SECOND figure, not a second caption: a small
+ * stage of named objects whose geometry, labels and roles change per beat,
+ * rendered to the right of (or, on a narrow phone, beneath) the maths
+ * panel, both advancing together off the same `narration_steps[]` index.
+ *
+ * Deliberately NOT a fourth figure mode. `linear_map`/`graph`/parametric
+ * are mutually exclusive because they answer the same question three ways;
+ * `reality` answers a DIFFERENT question and therefore composes with all
+ * three — the reported concept (`determinants`) is a `linear_map` scene,
+ * so a reality panel that only worked on plain traces would have missed
+ * the very screenshot that prompted it.
+ *
+ * The stage is unit-free: `x` runs 0..REALITY_STAGE_W, `y` runs
+ * 0..REALITY_STAGE_H, with y increasing DOWNWARD (screen convention, no axes
+ * drawn, no y-flip). This panel draws a picture, not a graph — giving it
+ * math-space semantics would invite authors to plot on it, which is the
+ * abstract panel's job. The stage is 160x100 rather than square because it
+ * has to FILL a panel that is 320x200: a square stage letterboxed into that
+ * box threw away 37% of the width to empty margins, which on a 375px phone
+ * (where each half is ~113px) is the difference between a 71px drawing and a
+ * 113px one — measured in a real browser, not assumed.
+ */
+export type RealityObjectKind = 'box' | 'disc' | 'arrow' | 'label';
+
+/**
+ * Reused verbatim from `graph_highlight`'s vocabulary rather than invented
+ * here, and mapped to the SAME colours (see Simulation.tsx's
+ * `GRAPH_ROLE_COLOR`): ink = "look here, unconfirmed", green = a settled
+ * result, grey + dashed + italic = the wrong one. No new hue enters the
+ * palette — DESIGN-SYSTEM.md's two-accent law holds on this panel exactly
+ * as it does on every other figure in this file.
+ */
+export type RealityRole = 'idle' | 'current' | 'confirmed' | 'wrong';
+
+/** One fixed thing on the concrete stage. `kind` is fixed for the scene's whole run — a box never becomes a disc, it would just be a different object. */
+export interface RealityObject {
+  id: string;
+  kind: RealityObjectKind;
+  /** `box`: top-left corner. `disc`: centre. `arrow`: tail. `label`: text anchor. */
+  x: number;
+  y: number;
+  /** `box` only, both required. */
+  w?: number;
+  h?: number;
+  /** `disc` only, required. */
+  r?: number;
+  /** `arrow` only, both required — the head. */
+  to_x?: number;
+  to_y?: number;
+  /** Required on `label`; optional (and drawn alongside) on the other three. */
+  label?: string;
+  /**
+   * Declared but not drawn until a beat un-hides it. A concrete story
+   * almost always has a thing that APPEARS partway through (the stretched
+   * patch, the second trolley), and without this the author's only options
+   * were to draw it from the start — spoiling the reveal the maths panel
+   * is busy building — or park it off-stage, which the geometry check
+   * rightly refuses. Geometry is still validated on a hidden object, so
+   * `hidden` can never be used to smuggle one off the canvas.
+   */
+  hidden?: boolean;
+}
+
+/**
+ * A per-beat override, applied on top of the BASE object — never on top of
+ * the previous beat's state. Same snapshot discipline as
+ * `graph_highlight`: an author restates whatever should still be true, so
+ * a beat can be read in isolation and seeking backwards can never leave a
+ * stale mutation behind.
+ */
+export interface RealityObjectOverride {
+  id: string;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  r?: number;
+  to_x?: number;
+  to_y?: number;
+  label?: string;
+  hidden?: boolean;
+  role?: RealityRole;
+}
+
+export interface RealityBeat {
+  /** Index into `narration_steps[]` — this is what makes the two panels step together. */
+  at_beat: number;
+  /** The five-year-old sentence for this step. Capped harder than a maths beat on purpose (see MAX_REALITY_BEAT_TEXT_CHARS). */
+  text: string;
+  set?: RealityObjectOverride[];
+}
+
+export interface RealitySceneSpec {
+  /** Names the concrete thing, e.g. "Stretching a sheet of dough". Rendered as the panel's eyebrow. */
+  title: string;
+  objects: RealityObject[];
+  /** Ascending by `at_beat`, must start at beat 0 so the panel is never blank on arrival. */
+  beats: RealityBeat[];
+}
+
+/**
  * Parameterized animation. Plays/pauses on a single button. Three figure
  * modes share the beat/trap/storyboard machinery:
  *   - parametric (default): (x(t), y(t)) traces over a line
@@ -206,6 +322,16 @@ export interface SimulationSpec {
    * (each already owns its own fixed-marker mechanism).
    */
   reference_points?: Array<{ id: string; label: string; x: number; y: number }>;
+  /**
+   * The concrete companion panel — see `RealitySceneSpec`. Composes with
+   * ALL THREE figure modes (unlike `linear_map`/`graph`, which are
+   * mutually exclusive with each other), because it answers a different
+   * question than they do. Requires `narration_steps`: a panel that steps
+   * with the maths needs something to step with, and the validator refuses
+   * a `reality` block on a scene with no beats rather than rendering a
+   * frozen picture that never moves.
+   */
+  reality?: RealitySceneSpec;
   /** Total duration of one play, in seconds. Default 4. */
   duration_sec?: number;
   /** Display range. Default auto-fit from sampled points. */
@@ -644,6 +770,11 @@ function validateSimulation(raw: any): ParseSuccess | ParseFailure {
     const ghostFailure = checkGhost(raw.ghost, raw.t_min);
     if (ghostFailure) return ghostFailure;
   }
+  if (raw.reality !== undefined) {
+    const beatCount = Array.isArray(raw.narration_steps) ? raw.narration_steps.length : 0;
+    const realityFailure = checkRealityScene(raw.reality, beatCount);
+    if (realityFailure) return realityFailure;
+  }
   return { ok: true, spec: raw as SimulationSpec, body_without_spec: '' };
 }
 
@@ -676,6 +807,182 @@ function checkTrapShape(trap: any, i: number): ParseFailure | null {
         ok: false,
         reason: `simulation.narration_steps[${i}].trap.${field} must be a non-empty string of at most ${MAX_BEAT_TEXT_CHARS} characters`,
       };
+    }
+  }
+  return null;
+}
+
+/** The concrete stage, sized to fill the 320x200 panel exactly (y down). */
+export const REALITY_STAGE_W = 160;
+export const REALITY_STAGE_H = 100;
+/** One to six objects. More than six on a ~155px-wide half-panel stops being a picture a child can read in one glance, which is the whole point of the panel. */
+export const MIN_REALITY_OBJECTS = 1;
+export const MAX_REALITY_OBJECTS = 6;
+/** An on-stage label is drawn INSIDE the drawing at REALITY_LABEL units, which is ~7% of the stage width per character — twelve is already a third of the panel. */
+export const MAX_REALITY_LABEL_CHARS = 12;
+/** Capped at half a maths beat, deliberately: this is the five-year-old sentence, and it shares a pinned, height-budgeted panel with two figures. A long one is a sign the concrete side has drifted back into explaining the maths. */
+export const MAX_REALITY_BEAT_TEXT_CHARS = 140;
+/** Two lines at 11px in a ~113px half-panel. Longer and the eyebrow takes a third line, pushing the figure it names off the pinned budget. */
+export const MAX_REALITY_TITLE_CHARS = 40;
+
+const REALITY_KINDS = new Set(['box', 'disc', 'arrow', 'label']);
+const REALITY_ROLES = new Set(['idle', 'current', 'confirmed', 'wrong']);
+
+function onStage(v: any, max: number): boolean {
+  return typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
+}
+
+/**
+ * Geometry check on an object as it will ACTUALLY be drawn — i.e. base
+ * merged with the beat's own override, re-checked per beat. A beat that
+ * grows a disc past the stage edge is the same off-canvas-clipping bug
+ * `autoViewBox`/`linearMapViewBox` were widened for (the ghost-label
+ * audit, 2026-09-06): the correction renders outside the viewBox, SVG
+ * clips it silently, and the student sees nothing where the narration
+ * promises something.
+ */
+function checkRealityGeometry(o: any, where: string): ParseFailure | null {
+  if (!onStage(o.x, REALITY_STAGE_W) || !onStage(o.y, REALITY_STAGE_H)) {
+    return { ok: false, reason: `${where}: x must be in 0..${REALITY_STAGE_W} and y in 0..${REALITY_STAGE_H}` };
+  }
+  if (o.label !== undefined) {
+    if (typeof o.label !== 'string' || o.label.trim().length === 0 || o.label.length > MAX_REALITY_LABEL_CHARS) {
+      return { ok: false, reason: `${where}: label must be a non-empty string of at most ${MAX_REALITY_LABEL_CHARS} characters` };
+    }
+  }
+  if (o.hidden !== undefined && typeof o.hidden !== 'boolean') {
+    return { ok: false, reason: `${where}: hidden must be a boolean` };
+  }
+  if (o.kind === 'box') {
+    if (typeof o.w !== 'number' || typeof o.h !== 'number' || !(o.w > 0) || !(o.h > 0)) {
+      return { ok: false, reason: `${where}: a box needs positive w and h` };
+    }
+    if (o.x + o.w > REALITY_STAGE_W || o.y + o.h > REALITY_STAGE_H) {
+      return { ok: false, reason: `${where}: the box runs off the stage (x+w <= ${REALITY_STAGE_W}, y+h <= ${REALITY_STAGE_H})` };
+    }
+  } else if (o.kind === 'disc') {
+    if (typeof o.r !== 'number' || !(o.r > 0)) {
+      return { ok: false, reason: `${where}: a disc needs a positive r` };
+    }
+    if (o.x - o.r < 0 || o.y - o.r < 0 || o.x + o.r > REALITY_STAGE_W || o.y + o.r > REALITY_STAGE_H) {
+      return { ok: false, reason: `${where}: the disc runs off the stage` };
+    }
+  } else if (o.kind === 'arrow') {
+    if (!onStage(o.to_x, REALITY_STAGE_W) || !onStage(o.to_y, REALITY_STAGE_H)) {
+      return { ok: false, reason: `${where}: an arrow needs to_x in 0..${REALITY_STAGE_W} and to_y in 0..${REALITY_STAGE_H}` };
+    }
+    if (o.to_x === o.x && o.to_y === o.y) {
+      return { ok: false, reason: `${where}: an arrow's head and tail are the same point — nothing would be drawn` };
+    }
+  } else if (o.kind === 'label') {
+    if (typeof o.label !== 'string' || o.label.trim().length === 0) {
+      return { ok: false, reason: `${where}: a label object needs a non-empty label` };
+    }
+  }
+  return null;
+}
+
+/**
+ * Shape + lockstep checks for `simulation.reality`. `beatCount` is the
+ * scene's own `narration_steps.length` — every `at_beat` must index into
+ * it, which is what makes "the two panels step together" a schema
+ * guarantee rather than an authoring convention.
+ */
+function checkRealityScene(reality: any, beatCount: number): ParseFailure | null {
+  if (!reality || typeof reality !== 'object' || Array.isArray(reality)) {
+    return { ok: false, reason: 'simulation.reality must be an object' };
+  }
+  if (beatCount === 0) {
+    return {
+      ok: false,
+      reason: 'simulation.reality requires narration_steps — the concrete panel steps WITH the maths, so a scene with no beats has nothing to step with',
+    };
+  }
+  if (
+    typeof reality.title !== 'string' ||
+    reality.title.trim().length === 0 ||
+    reality.title.length > MAX_REALITY_TITLE_CHARS
+  ) {
+    return { ok: false, reason: `simulation.reality.title must be a non-empty string of at most ${MAX_REALITY_TITLE_CHARS} characters` };
+  }
+  if (
+    !Array.isArray(reality.objects) ||
+    reality.objects.length < MIN_REALITY_OBJECTS ||
+    reality.objects.length > MAX_REALITY_OBJECTS
+  ) {
+    return { ok: false, reason: `simulation.reality.objects must be an array of ${MIN_REALITY_OBJECTS}-${MAX_REALITY_OBJECTS} objects` };
+  }
+  const byId = new Map<string, any>();
+  for (let i = 0; i < reality.objects.length; i++) {
+    const o = reality.objects[i];
+    if (!o || typeof o !== 'object' || typeof o.id !== 'string' || o.id.trim().length === 0) {
+      return { ok: false, reason: `simulation.reality.objects[${i}] needs a non-empty string id` };
+    }
+    if (byId.has(o.id)) {
+      return { ok: false, reason: `simulation.reality.objects: duplicate id "${o.id}"` };
+    }
+    if (typeof o.kind !== 'string' || !REALITY_KINDS.has(o.kind)) {
+      return { ok: false, reason: `simulation.reality.objects[${i}].kind must be one of box/disc/arrow/label` };
+    }
+    const geo = checkRealityGeometry(o, `simulation.reality.objects[${i}]`);
+    if (geo) return geo;
+    byId.set(o.id, o);
+  }
+
+  if (!Array.isArray(reality.beats) || reality.beats.length === 0) {
+    return { ok: false, reason: 'simulation.reality.beats must be a non-empty array' };
+  }
+  if (reality.beats.length > beatCount) {
+    return { ok: false, reason: `simulation.reality.beats has ${reality.beats.length} entries but the scene only has ${beatCount} narration_steps` };
+  }
+  let prev = -1;
+  for (let i = 0; i < reality.beats.length; i++) {
+    const b = reality.beats[i];
+    if (!b || typeof b !== 'object' || Array.isArray(b)) {
+      return { ok: false, reason: `simulation.reality.beats[${i}] must be an object` };
+    }
+    if (!Number.isInteger(b.at_beat) || b.at_beat < 0 || b.at_beat >= beatCount) {
+      return { ok: false, reason: `simulation.reality.beats[${i}].at_beat must be an integer index into narration_steps (0..${beatCount - 1})` };
+    }
+    if (b.at_beat <= prev) {
+      return { ok: false, reason: `simulation.reality.beats must be authored in strictly ascending at_beat order — entry ${i} (at_beat ${b.at_beat}) does not follow ${prev}` };
+    }
+    if (i === 0 && b.at_beat !== 0) {
+      return { ok: false, reason: 'simulation.reality.beats must start at at_beat 0 — otherwise the concrete panel is blank when the scene opens' };
+    }
+    prev = b.at_beat;
+    if (
+      typeof b.text !== 'string' ||
+      b.text.trim().length === 0 ||
+      b.text.length > MAX_REALITY_BEAT_TEXT_CHARS
+    ) {
+      return { ok: false, reason: `simulation.reality.beats[${i}].text must be a non-empty string of at most ${MAX_REALITY_BEAT_TEXT_CHARS} characters` };
+    }
+    if (b.set !== undefined) {
+      if (!Array.isArray(b.set)) {
+        return { ok: false, reason: `simulation.reality.beats[${i}].set must be an array` };
+      }
+      const seen = new Set<string>();
+      for (let j = 0; j < b.set.length; j++) {
+        const ov = b.set[j];
+        const where = `simulation.reality.beats[${i}].set[${j}]`;
+        if (!ov || typeof ov !== 'object' || typeof ov.id !== 'string' || !byId.has(ov.id)) {
+          return { ok: false, reason: `${where} names unknown object id "${ov?.id}"` };
+        }
+        if (seen.has(ov.id)) {
+          return { ok: false, reason: `${where}: object "${ov.id}" is set twice in the same beat` };
+        }
+        seen.add(ov.id);
+        if (ov.kind !== undefined) {
+          return { ok: false, reason: `${where}: kind cannot be overridden — an object keeps its kind for the scene's whole run` };
+        }
+        if (ov.role !== undefined && (typeof ov.role !== 'string' || !REALITY_ROLES.has(ov.role))) {
+          return { ok: false, reason: `${where}.role must be one of idle/current/confirmed/wrong` };
+        }
+        const merged = { ...byId.get(ov.id), ...ov };
+        const geo = checkRealityGeometry(merged, where);
+        if (geo) return geo;
+      }
     }
   }
   return null;

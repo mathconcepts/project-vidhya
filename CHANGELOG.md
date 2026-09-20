@@ -4,6 +4,109 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.89.0] — 2026-09-20 — The syllabus floor is met for every concept, and the loader can serve what the gate counts
+
+**Operator action** — none. No new ENV vars, no migrations.
+
+Three asks. One was fully doable here, two turned out to hinge on a document
+this environment cannot fetch, and that is reported as a blocker rather than
+papered over.
+
+### The syllabus floor: 69 violations to zero
+
+Every one of the 69 JEE Main concepts tripped `ci:syllabus-floor` in
+report-only mode — `explainers: need >=1, have 0`, plus a missing
+teaching-tips source entry, each. Now:
+
+```
+Checked 170 concepts | Floor violations: 0 (enforced: 0, report-only: 0)
+```
+
+69 explainers merged into `frontend/public/data/explainers.json` (101 → 170
+concepts) and 15 topic strategy cards under `data/courses/jee-main/topics/`,
+authored by 15 parallel batches — one per topic, each owning its own files so
+no two could collide. Every numeric claim was verified before it was written:
+sympy for the mathematics and physics, brute-force sample-space enumeration
+for probability, explicit isomer counting for chemistry.
+
+Several batches declined to state something rather than guess it, which is the
+behaviour the brief asked for: no specific stereoisomer count for a named
+compound, no solvent-specific cryoscopic constants, no Doppler formula whose
+sign convention could not be re-derived, and no octahedral `[MA2B2C2]` isomer
+count (the counting is genuinely intricate and beyond JEE Main depth).
+
+### A defect found while doing it: the gate was counting what the runtime could not serve
+
+`ci:syllabus-floor`'s `loadTeachingTipsIndex` walks the whole of
+`data/courses`. `src/content/topic-context.ts` — the loader that actually puts
+a strategy card in front of a student — read one hardcoded directory,
+`data/courses/gate-em/topics`. So all 15 new files would have satisfied the
+gate and never been served to anyone. The same defect class this repo has
+caught before: a gate measuring something the runtime does not do.
+
+The loader now scans every `<course>/topics` directory. Safe as a flat
+topic_id index precisely because `ci:topic-namespace` refuses a topic string
+claimed by two packs — that gate is this scan's precondition. Course order is
+sorted, so a hypothetical collision resolves identically on every machine
+instead of following readdir order. `VIDHYA_TOPICS_DIR` still names a single
+directory, which is how the tests point at a fixture.
+
+Three tests, one of which pins the loader back to a single course and confirms
+the foreign topic returns to `null` — so the new coverage is demonstrably not
+vacuous and the fix cannot silently regress.
+
+### The JEE numerical-value marking rule: still unsettled, no longer unresearched
+
+Every NTA domain is refused by this environment's egress proxy (`curl: CONNECT
+tunnel failed, 403`), and the one reader that does reach them returns extracts
+truncated immediately before Section B's marking table.
+
+What that did establish is that **the conflict is not inside NTA's own
+documents.** Their notices show the rule changed once, in 2022:
+
+- 2021 — *"There will be no negative marking for Section B."*
+- 2022 — *"There will be negative marking for both Section A and Section B."*
+- 2023 — the same sentence again.
+
+The 2021 line is what most secondary sources still repeat, which is where the
+apparent split comes from. For 2026 the extract confirms Section A (+4/0/−1)
+and that Section B now holds five compulsory questions, then stops.
+
+That chain, both 2026 notice PDF urls and the exact string to search for, is
+recorded in `data/curriculum/jee-main.yml`'s `scoring:` block, so the
+operator's remaining job is one line rather than an investigation. **Nothing
+was encoded from it** — those quotes are a lead, not the 2026 source, and
+`JEE_MAIN_COMPILED_CONTRACT` still has no `nat` row. A JEE numerical item is
+still refused by name at grading time.
+
+### JEE past-exam questions: attempted, blocked, not faked
+
+Blocked on the same wall. NTA hosts its own question papers and the search
+index reaches them, but returns snippets rather than full text, so verbatim
+past-paper content cannot be obtained here. Writing questions from memory and
+filing them as "the actual 2023 paper" is the fabrication this repo's own
+notes already forbid, so nothing was written.
+
+One thing worth knowing before someone starts: the existing 241-row bank is
+itself mixed provenance — `GATE-EM-Topic-MCQs` 164, `GATE-PYQs-Seed` 50,
+`Supabase-PYQs-Seed` 27 — so only 77 rows are seeded from actual papers. A JEE
+mapping pass should decide what `source` value it is honestly entitled to
+before writing its first row. Recorded in TODOS.md.
+
+### One comment correction
+
+`check-practice-items.ts`'s double-escape rule claims a lone `\\` is exempt.
+It is not: a matrix row break written tight against the next entry
+(`\\a_1`) also matches, and that is valid LaTeX. No committed item trips it
+today, and the authoring fix is one space (`\\ a_1`), which renders
+identically. So the rule stays strict — a false positive costs a space, a
+false negative ships a question's own source to the student — and only the
+comment was corrected. Behaviour unchanged, verified by re-running the gate.
+
+**Tests:** backend 5005 → **5008** + 1 todo (378 files). Frontend **4149**
+(107 files, unchanged — backend and content only). `tsc --noEmit` clean both
+sides. `npm run ci` green across all 21 gates.
+
 ## [4.88.0] — 2026-09-20 — The demo deck follows the chosen exam, and a hook can show the maths and the real thing at once
 
 **Operator action** — none. No new ENV vars, no migrations.

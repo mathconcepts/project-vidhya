@@ -1,0 +1,31 @@
+# Concept anchors — jee-electromagnetism
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+#
+# Audience: Class 11-12 students preparing for JEE Main Physics. An anchor
+# here says what the idea DOES in a system the reader already knows about,
+# never what the exam asks about it — the exam framing lives in each
+# concept's own exam-pattern atom, and mixing the two is what made every
+# earlier framing registry in this repo exam-shaped.
+version: 1
+topic: jee-electromagnetism
+concepts:
+  electrostatics-coulomb:
+    anchor: "A photocopier drum holds toner in place using pure electric attraction between opposite charges."
+  capacitance:
+    anchor: "A camera flash charges a capacitor slowly, then dumps all that stored charge in one bright burst."
+  current-electricity:
+    anchor: "A phone charger cable warms up as current pushed through resistance wastes energy as heat."
+  magnetic-effects:
+    anchor: "An electric motor spins because a magnetic field pushes on the current-carrying coil inside it."
+  electromagnetic-induction:
+    anchor: "A wireless charging pad touches no wire — its changing magnetic field drives current in the phone."
+  alternating-current:
+    anchor: "A radio tunes to one station because its circuit resonates at only that broadcast frequency."
+  electromagnetic-waves:
+    anchor: "A microwave oven heats food by beaming electromagnetic waves that shake the water molecules inside."

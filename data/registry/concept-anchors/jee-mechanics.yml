@@ -1,0 +1,33 @@
+# Concept anchors — jee-mechanics
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+#
+# Audience: Class 11-12 students preparing for JEE Main Physics. An anchor
+# here says what the idea DOES in a system the reader already knows about,
+# never what the exam asks about it — the exam framing lives in each
+# concept's own exam-pattern atom, and mixing the two is what made every
+# earlier framing registry in this repo exam-shaped.
+version: 1
+topic: jee-mechanics
+concepts:
+  units-and-measurements:
+    anchor: "A digital weighing scale's readout can't be trusted beyond its smallest visible division."
+  kinematics-1d:
+    anchor: "A lift smoothly speeding up, then slowing to a stop at a floor, traces straight-line motion."
+  kinematics-2d:
+    anchor: "A cricketer's throw traces one curved path built from sideways drift and downward fall together."
+  newtons-laws:
+    anchor: "A goods lift and its counterweight move together because one string pulls both with equal tension."
+  work-energy-power:
+    anchor: "A crane's power rating decides how fast it lifts a load, not how heavy a load it can lift."
+  rotational-mechanics:
+    anchor: "A figure skater spins faster by pulling her arms in, trading spread-out mass for speed."
+  gravitation:
+    anchor: "A satellite moved to a higher orbit ends up circling slower, not faster, once it settles there."
+  properties-of-matter:
+    anchor: "A hydraulic car lift turns a small hand-push into a much larger lifting force using trapped fluid."

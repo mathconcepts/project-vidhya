@@ -1,0 +1,37 @@
+# Concept anchors — jee-physical-chemistry
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+#
+# Audience: Class 11-12 students preparing for JEE Main Chemistry. An anchor
+# here says what the idea DOES in a system the reader already knows about,
+# never what the exam asks about it — the exam framing lives in each
+# concept's own exam-pattern atom, and mixing the two is what made every
+# earlier framing registry in this repo exam-shaped.
+version: 1
+topic: jee-physical-chemistry
+concepts:
+  mole-concept:
+    anchor: "A kitchen recipe scaled up keeps every ingredient in the same mole-like ratio, or it fails."
+  atomic-structure:
+    anchor: "A neon sign glows one colour because excited electrons fall back to fixed energy levels."
+  chemical-bonding:
+    anchor: "Diamond is extremely hard because every carbon atom forms four strong covalent bonds."
+  thermodynamics-chemistry:
+    anchor: "An instant cold pack works because its salt dissolving absorbs heat from your hand."
+  equilibrium-chemical:
+    anchor: "A sealed soda bottle stays fizzy because dissolved gas sits in balance with gas above it."
+  equilibrium-ionic:
+    anchor: "Human blood holds its pH near 7.4 because a natural buffer resists added acid or base."
+  redox-and-electrochemistry:
+    anchor: "A car battery pairs two electrode reactions that swap electrons to push current."
+  chemical-kinetics:
+    anchor: "A drug's level in the blood falls over time following a first-order decay pattern."
+  solutions-and-colligative:
+    anchor: "Spreading salt on icy roads drops water's freezing point low enough to melt the ice."
+  solid-state:
+    anchor: "A metal's atoms pack into a crystal lattice much like oranges stacked tightly in a crate."

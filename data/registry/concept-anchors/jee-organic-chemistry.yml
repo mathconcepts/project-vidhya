@@ -1,0 +1,33 @@
+# Concept anchors — jee-organic-chemistry
+#
+# ONE plain sentence per concept, rendered at the top of the first lesson
+# card before any mathematics. Contract v1 (see
+# docs/designs/2026-09-18-concept-anchor-and-rendering-agenda.md §4):
+# <=100 characters (~3 rendered lines at 375px), a concrete named system,
+# carries the bridge not a name-drop, no notation, no exam framing, true
+# and direction-precise.
+#
+# Audience: Class 11-12 students preparing for JEE Main Chemistry. An anchor
+# here says what the idea DOES in a system the reader already knows about,
+# never what the exam asks about it — the exam framing lives in each
+# concept's own exam-pattern atom, and mixing the two is what made every
+# earlier framing registry in this repo exam-shaped.
+version: 1
+topic: jee-organic-chemistry
+concepts:
+  organic-basic-principles:
+    anchor: "A medicine's chemical name lets any chemist worldwide rebuild its exact molecular structure."
+  hydrocarbons:
+    anchor: "Petrol and LPG are blends of straight and branched hydrocarbon chains of different lengths."
+  haloalkanes-haloarenes:
+    anchor: "PVC pipes, chloroform and DDT all carry carbon-halogen bonds whose strength decides how they react."
+  alcohols-phenols-ethers:
+    anchor: "Dettol's antiseptic bite comes from a phenol, sharper and more acidic than plain rubbing alcohol."
+  aldehydes-ketones-acids:
+    anchor: "Formalin preserves biology specimens: formaldehyde's carbonyl reacts with and locks up proteins."
+  amines-and-diazonium:
+    anchor: "Bright fabric dyes get their colour from a diazonium salt coupling onto an electron-rich ring."
+  biomolecules:
+    anchor: "Silk and wool feel different from cotton because they are built from amino acids, not sugar units."
+  polymers:
+    anchor: "A rubber band snaps back after stretching because sulfur cross-links tie its long chains together."

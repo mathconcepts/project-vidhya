@@ -146,10 +146,41 @@ export function parseTeachingTips(topic_id: string, markdown: string): TopicTeac
 // Loading (lazy, cached)
 // ============================================================================
 
-const DEFAULT_TOPICS_DIR = 'data/courses/gate-em/topics';
+const DEFAULT_COURSES_DIR = 'data/courses';
 
-function topicsDir(): string {
-  return path.resolve(process.cwd(), process.env.VIDHYA_TOPICS_DIR || DEFAULT_TOPICS_DIR);
+/**
+ * Every `<course>/topics` directory under `data/courses`, sorted by course id.
+ *
+ * Scanning ALL courses rather than one hardcoded course is what makes a
+ * non-GATE pack's strategy cards actually reachable. `ci:syllabus-floor`'s
+ * `loadTeachingTipsIndex` already walked the whole of `data/courses`, so a
+ * loader pinned to `gate-em` meant a JEE teaching-tips file could satisfy the
+ * gate and still never be served to a student — the gate measuring something
+ * the runtime does not do.
+ *
+ * Safe as a FLAT topic_id index because `ci:topic-namespace` refuses a topic
+ * string claimed by two packs; that gate is the precondition for this scan.
+ * Course order is sorted so a hypothetical collision resolves the same way on
+ * every machine instead of following readdir order.
+ *
+ * `VIDHYA_TOPICS_DIR` still names a single topics directory directly, which is
+ * how the tests point the loader at a fixture.
+ */
+function topicDirRoots(): string[] {
+  const override = process.env.VIDHYA_TOPICS_DIR;
+  if (override) return [path.resolve(process.cwd(), override)];
+  const root = path.resolve(process.cwd(), DEFAULT_COURSES_DIR);
+  try {
+    return fs
+      .readdirSync(root, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .sort()
+      .map((name) => path.join(root, name, 'topics'))
+      .filter((p) => fs.existsSync(p));
+  } catch {
+    return [];
+  }
 }
 
 /** `01-linear-algebra` → `linear-algebra`; non-matching names → null. */
@@ -164,15 +195,17 @@ const _contextCache = new Map<string, TopicTeachingContext | null>();
 function dirIndex(): Map<string, string> {
   if (_dirIndex) return _dirIndex;
   const index = new Map<string, string>();
-  try {
-    const root = topicsDir();
-    for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const topic_id = topicIdFromDirName(entry.name);
-      if (topic_id) index.set(topic_id, path.join(root, entry.name));
+  for (const root of topicDirRoots()) {
+    try {
+      for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        const topic_id = topicIdFromDirName(entry.name);
+        // First course wins, so the sorted order above decides deterministically.
+        if (topic_id && !index.has(topic_id)) index.set(topic_id, path.join(root, entry.name));
+      }
+    } catch {
+      // Missing or unreadable topics dir — skip this course, keep the rest.
     }
-  } catch {
-    // Missing topics dir — empty index; every lookup returns null.
   }
   _dirIndex = index;
   return index;

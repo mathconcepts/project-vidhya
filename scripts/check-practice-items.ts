@@ -269,6 +269,16 @@ export function validateItemSchema(raw: unknown): string[] {
  * The rule is narrow on purpose: a doubled backslash IMMEDIATELY BEFORE a
  * letter is a LaTeX command that will not run. `\\` alone is left alone,
  * because inside a display block it is a legitimate line break.
+ *
+ * One honest edge, found 2026-09-20 while authoring JEE explainers: a matrix
+ * row break written tight against the next entry — `\begin{vmatrix}…\\a_1&a_2`
+ * — also matches, and it is valid (`\\` is a control symbol, so `\\a_1` is a
+ * break then `a_1`, not a `\a` command). No committed practice item trips it
+ * today, and the fix on the authoring side is one space (`\\ a_1`), which
+ * renders identically and removes the ambiguity for the next reader. So the
+ * rule stays strict rather than learning to tell the two apart: a false
+ * positive here costs one space, a false negative ships the source of a
+ * question to the student.
  */
 export function checkLatexEscaping(it: Record<string, unknown>): string[] {
   const problems: string[] = [];

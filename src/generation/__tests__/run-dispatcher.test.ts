@@ -42,6 +42,10 @@ vi.mock('../curriculum-unit-orchestrator', () => ({
 const mockGetConceptsForTopic = vi.fn();
 vi.mock('../../constants/concept-graph', () => ({
   CONCEPT_MAP: new Map([['derivatives-basic', { id: 'derivatives-basic', topic: 'calculus' }]]),
+  // The practice-item prompt derives the exam from the concept rather than
+  // hardcoding "GATE-style" (2026-09-20 exam-leak fix), so the mock has to
+  // carry this or every dispatch throws on a missing export.
+  CONCEPT_DECLARED_BY: new Map([['derivatives-basic', 'gate-ma']]),
   getConceptsForTopic: (...args: any[]) => mockGetConceptsForTopic(...args),
 }));
 

@@ -48,7 +48,7 @@ export function isDemoModeEnabled(): boolean {
   return process.env.DEMO_MODE_ENABLED === 'true';
 }
 
-async function handleGetRails(_req: ParsedRequest, res: ServerResponse): Promise<void> {
+async function handleGetRails(req: ParsedRequest, res: ServerResponse): Promise<void> {
   if (!isDemoModeEnabled()) {
     // 404 rather than 403: on an instance where demo mode is off, the deck
     // should not advertise its own existence.
@@ -90,12 +90,33 @@ async function handleGetRails(_req: ParsedRequest, res: ServerResponse): Promise
   // signal: it would silently compose a generic lesson while the deck claimed a
   // named student, which is the demo lying about itself. CI already refuses to
   // ship such a card, so reaching this branch means the venue copy was edited.
+  // Which exam the viewer is browsing. The deck is exam-scoped because a card
+  // is a named student sitting a named exam: "Three weeks to GATE, weak in
+  // linear algebra" is Meera's journey through GATE-MA concepts, and showing it
+  // to someone who switched to JEE Main is the deck lying about itself in the
+  // first ten seconds — the exact failure this route's own header calls the
+  // most expensive one in the demo (live QA, 2026-09-20).
+  //
+  // The exam is NOT a new field on the card. Every persona already declares
+  // `seed.exam_id`, and this handler was already loading the persona one line
+  // below — the dimension existed on disk from the start and was simply never
+  // read. Deriving it from the persona also makes a mismatch impossible to
+  // express: a card cannot claim an exam its own student is not sitting.
+  const requestedExam = (req.query.get('exam_id') ?? '').trim();
+
   const cards = [];
+  const droppedByExam: string[] = [];
   for (const card of rawCards) {
     try {
       const persona = loadPersona(card.persona);
+      const cardExam = persona.seed.exam_id;
+      if (requestedExam && cardExam && cardExam !== requestedExam) {
+        droppedByExam.push(card.id);
+        continue;
+      }
       cards.push({
         ...card,
+        exam_id: cardExam,
         persona_signal: {
           id: persona.id,
           display_name: persona.display_name,
@@ -115,11 +136,25 @@ async function handleGetRails(_req: ParsedRequest, res: ServerResponse): Promise
   }
 
   if (cards.length === 0) {
+    // Two very different causes, and saying the wrong one sends an operator
+    // hunting a broken persona file that is perfectly fine. If the exam filter
+    // is what emptied the deck, that is not a failure at all: it is an exam
+    // nobody has authored a journey for yet, and the page should say so rather
+    // than fall back to another exam's students.
+    if (droppedByExam.length > 0) {
+      sendJSON(res, {
+        version: config.version,
+        cards: [],
+        exam_id: requestedExam,
+        reason: `no demo journey has been authored for "${requestedExam}" yet`,
+      });
+      return;
+    }
     sendError(res, 503, 'no demo cards could be resolved — every persona failed to load');
     return;
   }
 
-  sendJSON(res, { version: config.version, cards });
+  sendJSON(res, { version: config.version, cards, exam_id: requestedExam || undefined });
 }
 
 export const demoRoutes: RouteDefinition[] = [

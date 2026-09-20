@@ -6,7 +6,7 @@
     "",
     "Validated by scripts/check-demo-rails.ts, wired into CI as ci:demo-rails.",
     "The validator refuses a card whose persona does not exist, whose atoms are",
-    "not on disk, or whose interactive blocks do not parse \u2014 so a card that would",
+    "not on disk, or whose interactive blocks do not parse — so a card that would",
     "dead-end in front of a visitor fails the build instead.",
     "",
     "Coherence rule: an atom rail's concept must appear in the persona's",
@@ -16,7 +16,7 @@
     "introduce by accident when personas and cards are edited separately.",
     "",
     "Captions (M3 / D3.4) narrate PRODUCT BEHAVIOUR, never puffery. They are",
-    "anchored to rail steps \u2014 an atom name \u2014 not to DOM selectors: a caption",
+    "anchored to rail steps — an atom name — not to DOM selectors: a caption",
     "between screens cannot miss its target, which is the CaptionTargetMissingError",
     "the plan's error map calls out. The validator refuses a caption whose `at`",
     "is not a step of that card's own rail.",
@@ -24,7 +24,7 @@
     "Rail kinds: 'atoms' walks a concept's atoms inside one lesson; 'compare'",
     "opens the existing personalized-vs-neutral side-by-side; 'surfaces' walks an",
     "ordered sequence of product screens, which is what the principal's",
-    "drill-down needs \u2014 aggregate, then per-student, then individual attempts.",
+    "drill-down needs — aggregate, then per-student, then individual attempts.",
     "A surfaces step's `at` is its caption anchor.",
     "",
     "An atoms rail may name a `practice_item_id`: an authored, server-gradable item",
@@ -33,7 +33,7 @@
     "read. The validator requires it to exist, to be gradable, and to belong to the",
     "same concept as the rail.",
     "",
-    "A caption may carry `when: correct | incorrect` \u2014 the miss choreography (D3.3).",
+    "A caption may carry `when: correct | incorrect` — the miss choreography (D3.3).",
     "For this audience the miss is the LIKELY case, so it is scripted rather than",
     "left to chance: the caption reframes, the worked steps appear, and the rail",
     "offers the same item again so the session still closes on earned competence.",
@@ -66,11 +66,11 @@
       "captions": [
         {
           "at": "hook",
-          "text": "This is the first thing Meera sees. The ellipse is what the matrix does to a circle \u2014 no formula yet, just the behaviour."
+          "text": "This is the first thing Meera sees. The ellipse is what the matrix does to a circle — no formula yet, just the behaviour."
         },
         {
           "at": "intuition",
-          "text": "Now she can drag the matrix entries herself. Watch the eigenvalues update as she does \u2014 that is the same arithmetic she would do by hand, running live."
+          "text": "Now she can drag the matrix entries herself. Watch the eigenvalues update as she does — that is the same arithmetic she would do by hand, running live."
         },
         {
           "at": "worked-example",
@@ -84,7 +84,7 @@
         {
           "at": "practice",
           "when": "incorrect",
-          "text": "That slip is exactly what Vidhya watches for. The worked steps are on screen now, and the rail will hand her the same question again \u2014 the session closes on this, not on the miss."
+          "text": "That slip is exactly what Vidhya watches for. The worked steps are on screen now, and the rail will hand her the same question again — the session closes on this, not on the miss."
         },
         {
           "at": "practice",
@@ -130,7 +130,7 @@
         {
           "at": "practice",
           "when": "incorrect",
-          "text": "She could compute the determinant and still miss what it meant \u2014 which is why the rail comes back to this one rather than moving on."
+          "text": "She could compute the determinant and still miss what it meant — which is why the rail comes back to this one rather than moving on."
         },
         {
           "at": "practice",
@@ -157,7 +157,7 @@
       "captions": [
         {
           "at": "hook",
-          "text": "Rahul scores well already. Notice the rail is shorter \u2014 the intuition pass is skipped, because his profile does not need it."
+          "text": "Rahul scores well already. Notice the rail is shorter — the intuition pass is skipped, because his profile does not need it."
         },
         {
           "at": "worked-example",
@@ -171,11 +171,70 @@
         {
           "at": "practice",
           "when": "incorrect",
-          "text": "Even a strong profile slips. The steps are up, and the same item comes back \u2014 the product does not round a miss up to a pass."
+          "text": "Even a strong profile slips. The steps are up, and the same item comes back — the product does not round a miss up to a pass."
         },
         {
           "at": "practice",
           "text": "This is a real item, graded on the server against an answer key the page never receives."
+        }
+      ]
+    },
+    {
+      "id": "jee-limits-shaky",
+      "title": "Limits still feel like guessing",
+      "subtitle": "Priya can get the answer and cannot say why it is the answer.",
+      "audience": "student",
+      "persona": "priya-cbse-12-anxious",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "limits-jee",
+        "atoms": [
+          "hook",
+          "intuition",
+          "worked-example"
+        ],
+        "practice_item_id": "pi-limits-jee-001",
+        "invite_doubt": true
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "Priya is anxious and board-taught. Watch the opening take the smallest true first step instead of leading with the formal definition."
+        },
+        {
+          "at": "intuition",
+          "text": "Same concept, her register. Nothing here mentions how she might be feeling — the adaptation is in what gets shown first, not in reassurance."
+        },
+        {
+          "at": "worked-example",
+          "text": "The arithmetic is done in full. For this persona a skipped line is where the thread gets lost."
+        }
+      ]
+    },
+    {
+      "id": "jee-limits-pushing",
+      "title": "Already fast at limits, wants the edge cases",
+      "subtitle": "Arjun does not need the intuition pass. Watch what changes.",
+      "audience": "student",
+      "persona": "arjun-iit-driven",
+      "rail": {
+        "kind": "atoms",
+        "concept_id": "limits-jee",
+        "atoms": [
+          "hook",
+          "worked-example"
+        ],
+        "practice_item_id": "pi-limits-jee-002",
+        "invite_doubt": true
+      },
+      "captions": [
+        {
+          "at": "hook",
+          "text": "Same concept as Priya's card, different student. The rail is shorter — the intuition pass is skipped because his profile does not need it."
+        },
+        {
+          "at": "worked-example",
+          "text": "His version spends its budget on the case that costs marks rather than on the mechanics he already has."
         }
       ]
     },
@@ -208,7 +267,7 @@
       "captions": [
         {
           "at": "batch",
-          "text": "Every number on this screen is tappable. Try to catch it \u2014 the drill-down goes all the way to one student's one attempt."
+          "text": "Every number on this screen is tappable. Try to catch it — the drill-down goes all the way to one student's one attempt."
         },
         {
           "at": "coverage",
@@ -216,7 +275,7 @@
         },
         {
           "at": "attempts",
-          "text": "This is the bottom of the drill-down. A green border here means a real verification record backs the number \u2014 where there is no border, nothing verified it, and the product says so rather than implying otherwise."
+          "text": "This is the bottom of the drill-down. A green border here means a real verification record backs the number — where there is no border, nothing verified it, and the product says so rather than implying otherwise."
         }
       ]
     }

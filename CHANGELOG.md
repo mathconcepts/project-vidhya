@@ -4,6 +4,166 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.87.0] — 2026-09-20 — JEE Main Physics and Chemistry: the stub list empties, 46 concepts get a full course
+
+**Operator action** — none. No new ENV vars, no migrations. `DEFAULT_EXAM_ID`
+still defaults to `gate-ma`; the exam switcher shipped in 4.86.0 is how a
+viewer reaches JEE.
+
+### What was actually missing
+
+v4.85.0 promoted JEE Main's 23 Mathematics ids out of `stub_concepts:` and
+left 41 there — 20 Physics, 21 Chemistry. A stub is a declared id the
+exam-loader will accept without a graph node behind it: legal, and
+deliberately so while a pack is being filled in, but it means the syllabus
+names a topic the platform cannot teach, cannot select, cannot schedule and
+cannot grade.
+
+`stub_concepts:` is now `[]`. It is the first pack in this repo to empty it.
+
+### The pack
+
+46 new concepts (41 promoted plus 5 the stub list never named: Properties of
+Matter, Kinetic Theory, Thermodynamics, Electromagnetic Waves, and Organic
+Chemistry — Basic Principles), across 9 new sections:
+
+| Section | Concepts |
+|---|---|
+| Mechanics | 8 |
+| Thermal Physics | 2 |
+| Oscillations and Waves | 2 |
+| Electromagnetism | 7 |
+| Optics | 2 |
+| Modern Physics | 3 |
+| Physical Chemistry | 10 |
+| Organic Chemistry | 8 |
+| Inorganic Chemistry | 4 |
+
+Graph: 124 → **170 concepts**, 101 GATE-MA + 69 JEE Main. Section weights are
+structural (a section's share of its subject's concept count), not imported
+percentages — NTA publishes no per-chapter weightage, and inventing one would
+be a number a student could act on that nothing supports.
+
+### Content
+
+**506 new base atoms** — 46 concepts × the full 11 atom types, landing on the
+arithmetic exactly, which is the check that no concept is short a type and no
+stray file snuck in. Corpus 1,366 → **1,872**. Authored by parallel Claude
+Sonnet subagent batches against one shared brief, the same mechanism every
+prior corpus-scale content pass in this repo used.
+
+**276 new practice items** across 6 banks (mechanics 48, thermal/waves/optics
+36, EM/modern 60, physical 60, organic 48, inorganic 24). Bank 656 → **932**
+items across 30 banks. **MCQ only, by construction, not by discipline**:
+`JEE_MAIN_COMPILED_CONTRACT` defines an `mcq` row and no `nat` row, so a
+numerical-value item is refused by name at grading time. The numerical-value
+negative-marking rule is still disputed and `jeemain.nta.nic.in` is
+unreachable from this environment, so the contract stays partial and the
+absence is the enforcement.
+
+Every answer key was verified by a second independent method before landing —
+sympy, or brute-force enumeration of the sample space for the probability and
+combinatorics items. Numbers recomputed and confirmed in review include rms
+speed 483.6 m/s, adiabatic T₂ = 189.0 K with W_iso 1728.8 J against W_adia
+1384.4 J, prism minimum deviation 37.18°, 2.303RT/F = 0.0591, the Cu unit-cell
+edge at 361 pm, a 400 nm photon at 3.11 eV, and the 52.4 / 68.0 / 74.0
+packing efficiencies. One shipped claim was wrong and was corrected:
+2,3-dibromobutane has **3** stereoisomers, not 4 (the meso form).
+
+**Concept anchors: 169 authored, 1 honest null, 0 missing** across all 170
+concepts, avg 94.2 characters against the 100-character cap. Every JEE
+Physics and Chemistry concept now opens on a concrete named system before any
+mathematics — a wireless charging pad's changing field, a radio's tuned
+circuit, an optical fibre's total internal reflection, polarised sunglasses
+blocking reflected glare.
+
+### Scaffolding this needed
+
+- **7 new template families** appended (never interleaved, so the GATE-EM 14
+  keep their source order): `mechanics`, `field_and_circuit`, `wave_and_optics`,
+  `modern_physics`, `chemistry_quantitative`, `chemistry_structure`,
+  `chemistry_reaction`. The GATE-EM corpus is postgraduate engineering
+  mathematics and by construction contains no mechanics, no reaction chemistry
+  and no optics — filing them under an existing family would have satisfied
+  B12's completeness check while describing a teaching shape those concepts do
+  not have. `ci:template-coverage`: 170/170 resolve.
+- **A fourth parallel truth closed.** `generate-intent-tables.ts` carried the
+  `TemplateFamilyId` union as a hardcoded string literal inside its own output
+  template — a third copy beside `TEMPLATE_FAMILIES` and the YAML. Adding
+  families made the drift real: the YAML and the checker agreed, the generated
+  union did not, and `tsc` rejected a freshly generated table against its own
+  freshly generated type. Derived from the locked array now.
+- **9 new authoring templates** under `modules/project-vidhya-content/templates/`.
+  `jee-vectors-3d` and `jee-coordinate-geometry` actively DISCOURAGE the
+  `gif-scene` fence rather than defaulting to it — 3D content and two-curve
+  constructs are things the safe `y=f(x)` evaluator cannot express honestly.
+- **`covers_topics:` on curriculum bridges** (`src/registry/curriculum-bridge.ts`),
+  required at parse. A bridge is now checked against the topics it *claims*,
+  not the whole pack — without it, TN-HSE-12-MATH would have been judged
+  incomplete for not covering Physics and Chemistry it never claimed.
+- **`frontend/src/lib/topic-icons.ts`** — the ONE icon-name → component map.
+  `Home.tsx` and `SpinePage.tsx` each carried a copy, and `crosshair`/`triangle`
+  had been added to one only.
+- **`checkLatexEscaping()`** in `scripts/check-practice-items.ts`. An authoring
+  batch shipped `\\dfrac` (heredoc double-escaping) in 16 of 36 items —
+  invisible to `ci:katex-fences`, which reads markdown, and invisible to the
+  schema and re-grade checks, which treat the string as opaque. The batch fixed
+  its own; the guard is permanent. Narrow on purpose: it flags `\\` before a
+  LETTER only, since a lone `\\` is a legitimate display-math line break.
+
+### Verified
+
+`npm run ci` green across all **21 gates**, including `ci:content-gate` under
+`CONTENT_CI_STRICT=true` (170 atom dirs, 342 answer-bearing atoms, the
+170-node prerequisite graph acyclic), `ci:interactive-specs` 651 blocks,
+`ci:variant-agreement` 1024 pairs, `ci:content-integrity` 2902 files,
+`ci:practice-items` 932 items self-re-grading to full marks, and
+`ci:topic-namespace` confirming all 25 topic strings are claimed by exactly
+one pack. Backend **4998 passed + 1 todo** across 377 files; frontend
+**4111** across 107. `tsc --noEmit` clean both sides.
+
+`ci:variant-agreement` took 8 rounds to reach zero (63 → 37 → 24 → 17 → 10 →
+7 → 6 → 5 → OK). **No threshold was relaxed** — the repeated-4-gram rule fires
+when a phrase appears in more than 20% of a topic's concepts, and the root
+cause was the authoring brief's own wording being copied as stock vocabulary
+by every batch reading it.
+
+### Named, not hidden
+
+- **69 report-only `ci:syllabus-floor` violations, all JEE-owned** — every JEE
+  concept, Mathematics included, still lacks an explainer and a strategy-card
+  teaching-tips entry. Not blocking (`enforce_topics: [linear-algebra]`), and
+  not a regression: no GATE-MA concept is among them. It is the next content
+  wave, tracked in TODOS.md.
+- **`solid-state` and `polymers` kept at `gate_frequency: low`** with the doubt
+  recorded in the pack — the NTA site is unreachable from here, so whether the
+  2026 syllabus still carries them could not be settled against a primary
+  source.
+- **A dead `algorithms` template family** — `ci:template-coverage` warns that
+  no concept uses it. Pre-existing, unchanged by this release.
+
+### Two process traps worth recording
+
+**A concurrent-write race.** Committing each batch as it landed, while later
+batches were still writing, meant `git stash push --keep-index` (used to
+isolate one commit's changeset for gate verification) conflicted on pop
+against content the running agents had since rewritten. Every "conflict" was
+diffed against the stash directly: each was byte-identical or a genuinely
+newer self-correction, so the stash was dropped as superseded rather than
+force-merged. Two agents independently reported a sibling process briefly
+reverting their unstaged edits and recovered from their own scratch backups.
+**Prefer running the content gates against the live working tree** — they are
+fast, read-only and report per-file — over `git stash`-based isolation when
+other agents may still be writing.
+
+**A regex that helpfully broke itself.** A propagation script used `re.sub()`
+with a callback that called `.replace('\\', '\\\\')` "to be safe" — Python never
+reprocesses a callable's return value for backslash escapes, so the extra
+replace was not merely unnecessary but actively wrong, quadruple-escaping
+every LaTeX command. Caught by reading the file back rather than trusting the
+script's own success print. Redone by direct string splicing: slice at the
+fence's span, concatenate, no substitution.
+
 ## [4.86.0] — 2026-09-19 — Both exams live on one deployment: a viewer exam switcher, and marking that knows which exam it is grading
 
 **Operator action** — none. No new ENV vars, no migrations. `DEFAULT_EXAM_ID`

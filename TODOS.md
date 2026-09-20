@@ -4,11 +4,13 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
-## JEE Main pack: the five things it still needs (2026-09-19)
+## JEE Main pack: what it still needs (2026-09-19, revised 2026-09-20)
 
-The pack went live in v4.85.0 — 23 Mathematics concepts, anchors, atoms,
-templates, a TN curriculum bridge, exam scoping. Five gaps remain, listed
-with what each blocks so none of them sit here being vaguely important.
+The pack went live in v4.85.0 (23 Mathematics concepts) and completed in
+v4.87.0 (46 Physics and Chemistry concepts, `stub_concepts: []`). Items 2 and
+4 of the original five are closed; each is kept below with what closed it and
+what genuinely separate work took its place, so a reader does not re-open a
+finished item or miss the successor gap hiding behind it.
 
 **1. The numerical-value marking rule. Blocks: `nat` practice items.**
 Sources split on whether JEE Main's five compulsory NVQs per subject carry
@@ -23,13 +25,17 @@ Read the marking section, then add the strategy (it must pass
 `marking-strategy-contract.ts`) and a contract row with the real
 `official_source_url` and `verified_at`.
 
-**2. Practice items. Blocks: everything graded.** The atoms landed; the
-graded item bank did not. All 23 concepts have lesson content and zero rows
-in `data/practice-items/`, so `/attempt/:id`, the checkpoint quiz and the
-readiness engine's practice arm have nothing to serve a JEE student.
-**Trigger:** immediately, for mcq/msq. `nat` items wait on item 1.
-Follow the hand-verification discipline the 123 Linear Algebra items used —
-every answer key recomputed by a second method before it ships.
+**2. Practice items — CLOSED (v4.86.0 Mathematics, v4.87.0 Physics and
+Chemistry).** 427 JEE items across 14 banks, all MCQ, every answer key
+recomputed by a second independent method before shipping. `nat` items still
+wait on item 1, and cannot ship before it: `JEE_MAIN_COMPILED_CONTRACT` has
+no `nat` row, so such an item is refused by name at grading time.
+What replaces this entry: **explainers and strategy cards.** All 69 JEE
+concepts trip `ci:syllabus-floor` in report-only mode — `explainers: need >=1,
+have 0` plus a missing teaching-tips source entry, each. Not blocking
+(`enforce_topics: [linear-algebra]`), not a regression (no GATE-MA concept is
+among them). **Trigger:** before adding `jee-main` to `enforce_topics`, or
+before any claim that a JEE topic is walkable end to end.
 
 **3. Past-exam questions mapped to JEE concepts.**
 `frontend/public/data/pyq-bank.json` has none, so a JEE concept's
@@ -39,14 +45,17 @@ Note `exam_tested: false` exists for concepts real papers assume rather than
 test — use it rather than writing a question and filing it as past-exam
 material.
 
-**4. Physics and Chemistry. Blocks: calling jee-main a complete pack.**
-41 of its 64 concept_ids are still in `stub_concepts:`.
-`src/curriculum/__tests__/stub-exam-rule.test.ts` pins that 41 and asserts
-the migrated half is exactly the Mathematics section, so migrating the next
-subject is a deliberate edit there too. **Trigger:** when someone wants a
-JEE student's Physics or Chemistry to work at all. Same shape as the
-Mathematics migration: promote the ids, namespace the topics, author
-anchors + a bridge column + atoms, extend the exam catalog's `topics`.
+**4. Physics and Chemistry — CLOSED (v4.87.0).** `stub_concepts:` is `[]`;
+69 concepts across 15 sections, all with 11 base atoms, an anchor, a template
+family and a practice bank. `stub-exam-rule.test.ts` now asserts zero stubs.
+What remains unclosed and is genuinely separate: **the TN-HSE-12-MATH
+curriculum bridge still claims only the six Mathematics topics**
+(`covers_topics:`), so a Tamil Nadu board student gets the
+have-I-seen-this-before framing on Mathematics and nothing on Physics or
+Chemistry. **Trigger:** when the TN HSE Physics and Chemistry chapter lists
+can be read against a published source — the bridge's whole value is that
+every claim is checkable against a state syllabus, so a guessed alignment
+would be worse than an absent one.
 
 **5. The ~20 topic-string call sites. NOT closed, only protected.**
 `ci:topic-namespace` makes a topic-string collision impossible, which

@@ -16,15 +16,17 @@ import { ALL_CONCEPTS } from '../../constants/concept-graph';
 import type { LearningObject } from '../../core/interfaces';
 
 describe('GATE_TOPIC_IDS', () => {
-  it('returns all 16 topics in the merged graph — 10 GATE + 6 JEE', () => {
+  it('returns all 25 topics in the merged graph — 10 GATE + 15 JEE', () => {
     // `GATE_TOPIC_IDS` is derived from ALL_CONCEPTS and so is NOT
     // exam-scoped despite the name; with jee-main declaring concepts it
     // covers both packs. Scoping ConceptGraphCurriculumRepo per student is
     // tracked in TODOS.md — it needs an exam id threaded through the
     // constructor, which this repo's one construction site can supply but
-    // does not yet. Pinned at the real number rather than left to drift.
-    expect(GATE_TOPIC_IDS).toHaveLength(16);
-    expect(new Set(GATE_TOPIC_IDS).size).toBe(16);
+    // does not yet. That gap got WIDER when jee-main's Physics and Chemistry
+    // landed (6 JEE topics -> 15), which is the point of pinning the real
+    // number here rather than letting it drift: the pin is the reminder.
+    expect(GATE_TOPIC_IDS).toHaveLength(25);
+    expect(new Set(GATE_TOPIC_IDS).size).toBe(25);
   });
 
   it('matches the topics derived from ALL_CONCEPTS', () => {
@@ -34,9 +36,9 @@ describe('GATE_TOPIC_IDS', () => {
 });
 
 describe('allTopicNodes', () => {
-  it('returns 16 CurriculumNode entries of kind exam_topic', () => {
+  it('returns 25 CurriculumNode entries of kind exam_topic', () => {
     const nodes = allTopicNodes();
-    expect(nodes).toHaveLength(16);
+    expect(nodes).toHaveLength(25);
     for (const n of nodes) {
       expect(n.kind).toBe('exam_topic');
       expect(n.course).toBe(GATE_MA_COURSE);

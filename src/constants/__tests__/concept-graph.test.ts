@@ -18,12 +18,13 @@ import {
 } from '../concept-graph';
 
 describe('concept-graph.ts (thin YAML loader)', () => {
-  it('loads 124 concepts — 101 from gate-ma, 23 from jee-main', () => {
-    // Was `toBe(101)` when gate-ma was the only pack declaring concepts.
-    // The number that must not silently regress is gate-ma's OWN 101, which
+  it('loads 170 concepts — 101 from gate-ma, 69 from jee-main', () => {
+    // Was `toBe(101)` when gate-ma was the only pack declaring concepts, then
+    // 124 when jee-main migrated its Mathematics half. The number that must
+    // not silently regress is gate-ma's OWN 101, which
     // concept-graph-multi-exam.test.ts pins per-pack; the universe total
-    // moves whenever a pack is added, by design.
-    expect(ALL_CONCEPTS.length).toBe(124);
+    // moves whenever a pack declares more, by design.
+    expect(ALL_CONCEPTS.length).toBe(170);
   });
 
   it('every concept has the full ConceptNode shape', () => {

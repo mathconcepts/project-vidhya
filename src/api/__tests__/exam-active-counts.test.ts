@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { conceptsDeclaredByExam } from '../../constants/concept-graph';
+import { conceptsDeclaredByExam, CONCEPT_MAP } from '../../constants/concept-graph';
 import { getTopicsForExam } from '../../curriculum/topic-adapter';
 import { getExam, listExamIds } from '../../curriculum/exam-loader';
 
@@ -37,10 +37,31 @@ describe('exam/active counts are studiable counts', () => {
       const exam = getExam(id)!;
       const topics = getTopicsForExam(id);
       expect(topics.length).toBeLessThanOrEqual(exam.syllabus.length);
-      // jee-main declares Physics and Chemistry (its syllabus really is PCM)
-      // but both are all-stub and filtered from the topic view, so the raw
-      // YAML section count would disagree with the nav.
-      if (id === 'jee-main') expect(topics.length).toBeLessThan(exam.syllabus.length);
+      // The rule: a section is a topic only when its concepts resolve. What
+      // the topic list shows must be exactly the studiable sections.
+      const studiable = exam.syllabus.filter(
+        (sec) => (sec.concept_ids ?? []).some((cid) => CONCEPT_MAP.has(cid)),
+      ).length;
+      expect(topics.length).toBe(studiable);
+    }
+  });
+
+  it('no exam has an all-stub section hidden from its topic list', () => {
+    // This used to be asserted the other way round, as
+    // `topics.length < exam.syllabus.length` for jee-main: that pack
+    // declared Physics and Chemistry as all-stub sections, so the filter had
+    // something to remove and the raw YAML section count disagreed with the
+    // nav. Both subjects have since migrated, so the filter is a no-op for
+    // every installed pack and the old assertion asserted the pack was
+    // unfinished.
+    //
+    // Kept as the positive form, which is the thing actually worth holding:
+    // every declared section is reachable. A future pack that lands a stub
+    // section fails here and is told to finish it or not declare it — the
+    // filter above stays as the runtime safety net either way.
+    for (const id of listExamIds()) {
+      const exam = getExam(id)!;
+      expect(getTopicsForExam(id).length).toBe(exam.syllabus.length);
     }
   });
 

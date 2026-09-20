@@ -86,11 +86,33 @@ describe('the committed bridge files', () => {
     for (const f of loadAllBridges(true)) expect(ids.has(f.track_id)).toBe(true);
   });
 
-  it('TN-HSE-12-MATH covers every concept jee-main declares', () => {
+  // The invariant is coverage of what the file CLAIMS, not of the whole pack.
+  // It used to be the whole pack, which was the same thing while jee-main
+  // declared Mathematics only. Once Physics and Chemistry landed, that rule
+  // asked a Class 12 MATHEMATICS track to make a claim about coordination
+  // compounds — so the file names its topics and is held to exactly those.
+  it('TN-HSE-12-MATH covers every concept in the topics it claims', () => {
     const file = bridgeForTrack('TN-HSE-12-MATH');
     expect(file).not.toBeNull();
-    const declared = conceptsDeclaredByExam('jee-main').map((c) => c.id).sort();
-    expect(Object.keys(file!.concepts).sort()).toEqual(declared);
+    expect(file!.covers_topics.length).toBeGreaterThan(0);
+    const claimed = new Set(file!.covers_topics);
+    const inScope = conceptsDeclaredByExam('jee-main')
+      .filter((c) => claimed.has(c.topic))
+      .map((c) => c.id)
+      .sort();
+    expect(inScope.length).toBeGreaterThan(0);
+    expect(Object.keys(file!.concepts).sort()).toEqual(inScope);
+  });
+
+  it('claims only Mathematics topics, and every one is real', () => {
+    const file = bridgeForTrack('TN-HSE-12-MATH')!;
+    const examTopics = new Set(conceptsDeclaredByExam('jee-main').map((c) => c.topic));
+    for (const t of file.covers_topics) expect(examTopics.has(t)).toBe(true);
+    // A Physics or Chemistry topic appearing here would mean a maths track is
+    // asserting what a student's chemistry class covered.
+    for (const t of file.covers_topics) {
+      expect(/chemistry|mechanics|optics|physics|electromagnetism|oscillations|thermal/.test(t)).toBe(false);
+    }
   });
 
   it('marks the three documented gaps as not simply aligned', () => {

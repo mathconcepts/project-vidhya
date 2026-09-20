@@ -19,12 +19,15 @@ import { computeVerificationReport } from '../report';
 describe('computeVerificationReport', () => {
   it('computes real counts from the committed practice-items bank', () => {
     const report = computeVerificationReport();
-    expect(report.practice_bank.total_items).toBe(656);
-    expect(report.practice_bank.bank_count).toBe(24);
-    // All 656 committed items (505 GATE-MA + 151 JEE Main) are hand-authored
-    // with a documented method — per the provenance-grandfather convention
-    // (scripts/check-practice-items.ts).
-    expect(report.practice_bank.with_verification_method).toBe(656);
+    expect(report.practice_bank.total_items).toBe(932);
+    expect(report.practice_bank.bank_count).toBe(30);
+    // All 932 committed items are hand-authored with a documented method —
+    // per the provenance-grandfather convention (scripts/check-practice-items.ts).
+    // 505 GATE-MA + 427 JEE Main, and the JEE half splits 151 Mathematics
+    // (the pack's first bank) + 276 Physics and Chemistry. Every JEE item is
+    // MCQ by construction: JEE_MAIN_COMPILED_CONTRACT defines no `nat` row,
+    // so a numeric item would be refused by name at grading time.
+    expect(report.practice_bank.with_verification_method).toBe(932);
     expect(report.practice_bank.without_verification_method).toBe(0);
     expect(report.headline.hand_verified_coverage_pct).toBe(100);
   });

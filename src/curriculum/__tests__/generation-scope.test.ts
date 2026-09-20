@@ -78,22 +78,35 @@ describe('getSyllabus — gate-ma (declares its own concepts)', () => {
   });
 });
 
-describe('getSyllabus — jee-main (Phase-1 stub, not gate-ma)', () => {
-  it('resolves to the 23 Mathematics concepts it now declares', () => {
+describe('getSyllabus — jee-main (fully migrated, not gate-ma)', () => {
+  it('resolves to all 69 concepts it declares, with nothing unresolved', () => {
     // jee-main was a Phase-1 stub: every concept_id its syllabus: named was
-    // listed under stub_concepts: and resolved to nothing. Its Mathematics
-    // half now declares real nodes, so the scope is those 23 — and the
-    // Physics and Chemistry ids, still stubs, are reported as unresolved
-    // rather than rounded away. A part-migrated pack must read as
-    // part-migrated.
+    // listed under stub_concepts: and resolved to nothing. Then its
+    // Mathematics half declared real nodes (23) and this test's job was to
+    // prove a part-migrated pack READS as part-migrated — unresolved ids
+    // reported, never rounded away. Physics and Chemistry have since landed,
+    // so the honest form of the same invariant is the other end of it: a
+    // fully migrated pack reports ZERO unresolved, and the count equals what
+    // the pack declares. The reporting rule below is unchanged and is what
+    // would catch a regression in either direction.
     const syllabus = getSyllabus('jee-main');
-    expect(syllabus.concepts).toHaveLength(23);
+    expect(syllabus.concepts).toHaveLength(69);
     expect(syllabus.concepts.map((c) => c.id).sort()).toEqual(
       conceptsDeclaredByExam('jee-main').map((c) => c.id).sort(),
     );
-    expect(syllabus.unresolvedConceptIds.length).toBeGreaterThan(0);
-    for (const cid of syllabus.unresolvedConceptIds) {
-      expect(syllabus.concepts.some((c) => c.id === cid)).toBe(false);
+    expect(syllabus.unresolvedConceptIds).toEqual([]);
+  });
+
+  it('still reports an unresolved id rather than rounding it away', () => {
+    // The rule the 23-concept version of the test above was really pinning,
+    // kept alive now that jee-main itself has nothing unresolved: whatever a
+    // syllabus names but the graph does not know must surface in
+    // unresolvedConceptIds and must NOT appear in concepts.
+    for (const examId of ['gate-ma', 'jee-main']) {
+      const syllabus = getSyllabus(examId);
+      for (const cid of syllabus.unresolvedConceptIds) {
+        expect(syllabus.concepts.some((c) => c.id === cid)).toBe(false);
+      }
     }
   });
 });

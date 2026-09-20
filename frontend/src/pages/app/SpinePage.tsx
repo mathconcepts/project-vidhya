@@ -25,15 +25,10 @@ import { trackEvent } from '@/lib/analytics';
 import { ReceiptBorder } from '@/components/ui/ReceiptBorder';
 import { NO_RECEIPT, type Receipt } from '@/lib/receipt';
 import {
-  Grid3x3, Activity, GitBranch, Circle, BarChart, Hash, Repeat, Layers, Share2, Navigation,
   BookOpen, Target, CheckCircle2, RotateCcw, ChevronDown, ChevronRight,
 } from 'lucide-react';
+import { iconForTopic } from '@/lib/topic-icons';
 
-const ICON_MAP: Record<string, React.ElementType> = {
-  'grid': Grid3x3, 'activity': Activity, 'git-branch': GitBranch,
-  'circle': Circle, 'bar-chart': BarChart, 'hash': Hash,
-  'repeat': Repeat, 'layers': Layers, 'share-2': Share2, 'navigation': Navigation,
-};
 
 // ============================================================================
 // Types (mirroring the three source endpoints — no new shapes invented)
@@ -179,7 +174,7 @@ export default function SpinePage() {
 // ============================================================================
 
 function SpineRow({ row }: { row: Row }) {
-  const Icon = ICON_MAP[row.icon] || Grid3x3;
+  const Icon = iconForTopic(row.icon);
 
   return (
     <motion.div

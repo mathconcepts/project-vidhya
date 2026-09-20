@@ -122,6 +122,14 @@ const INTENT_SET: ReadonlySet<string> = new Set(INTENTS);
  * shape those concepts do not have. The three additions are appended, not
  * interleaved, so the GATE-EM fourteen keep their source order and the
  * generated tables stay stable for every concept that already resolved.
+ *
+ * The last SEVEN were added on the same principle when jee-main promoted its
+ * Physics and Chemistry concepts out of `stub_concepts:`. A postgraduate
+ * engineering-maths corpus contains no mechanics, no circuits, no reaction
+ * mechanisms and no periodic trends, so two whole SUBJECTS arrived with
+ * nowhere honest to land. They are appended for the same stability reason,
+ * and template-families.yml carries the shape-by-shape justification for
+ * each one rather than a subject-label split.
  */
 export const TEMPLATE_FAMILIES = [
   'matrix', 'eigen', 'limit', 'derivative', 'integral', 'optimization',
@@ -129,6 +137,9 @@ export const TEMPLATE_FAMILIES = [
   'numerical', 'discrete',
   // Beyond the 116-topic GATE-EM corpus — see the note above.
   'coordinate_geometry', 'trigonometry', 'algebra',
+  // jee-main Physics and Chemistry — see the note above.
+  'mechanics', 'field_and_circuit', 'wave_and_optics', 'modern_physics',
+  'chemistry_quantitative', 'chemistry_structure', 'chemistry_reaction',
 ] as const;
 export type TemplateFamilyId = (typeof TEMPLATE_FAMILIES)[number];
 const TEMPLATE_FAMILY_SET: ReadonlySet<string> = new Set(TEMPLATE_FAMILIES);
@@ -721,7 +732,7 @@ export function checkB8_TemplateFamilySet(families: TemplateFamiliesFile): Check
     if (!present.has(expected)) violations.push(`families.${expected} is missing`);
   }
   for (const actual of present) {
-    if (!TEMPLATE_FAMILY_SET.has(actual)) violations.push(`families.${actual} is not one of the locked 14 families`);
+    if (!TEMPLATE_FAMILY_SET.has(actual)) violations.push(`families.${actual} is not one of the ${TEMPLATE_FAMILIES.length} locked families`);
   }
 
   return result('B8 exactly the locked template families', violations);

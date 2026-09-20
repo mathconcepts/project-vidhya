@@ -1,0 +1,1446 @@
+{
+  "version": 1,
+  "_comment": "JEE Main Physics practice items (MCQ-only, marks=4/-1 per the platform's locked JEE marking gap) across two topics: jee-electromagnetism (electrostatics-coulomb, capacitance, current-electricity, magnetic-effects, electromagnetic-induction, alternating-current, electromagnetic-waves) and jee-modern-physics (dual-nature-matter, atoms-and-nuclei, semiconductor-electronics). Authored 2026-09-19. Every numeric answer was computed with python3 (sympy for symbolic/rational algebra, plain arithmetic for direct substitution) and cross-checked against a second, independent route (a formula variant, a unit-consistency check, or a sanity bound) before being written down; purely factual/conceptual items (spectrum ordering, decay type, diode bias behaviour, logic-gate truth tables) were checked against standard NCERT-level physics facts rather than a numeric computation.",
+  "items": [
+    {
+      "id": "pi-electrostatics-coulomb-001",
+      "concept_id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two point charges $+2\\ \\mu\\text{C}$ and $+3\\ \\mu\\text{C}$ are placed $30\\ \\text{cm}$ apart in air. Using $\\dfrac{1}{4\\pi\\varepsilon_0} = 9\\times10^{9}\\ \\text{N m}^2\\text{C}^{-2}$, find the force between them.",
+      "options": [
+        "$0.6\\ \\text{N}$",
+        "$1.8\\ \\text{N}$",
+        "$6\\ \\text{N}$",
+        "$0.06\\ \\text{N}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.6\\ \\text{N}$",
+      "solution_steps": [
+        "Coulomb's law: $F = \\dfrac{1}{4\\pi\\varepsilon_0}\\dfrac{q_1 q_2}{r^2} = 9\\times10^{9}\\times\\dfrac{(2\\times10^{-6})(3\\times10^{-6})}{(0.3)^2}$.",
+        "Numerator: $9\\times10^9 \\times 6\\times10^{-12} = 0.054$. Dividing by $r^2 = 0.09$ gives $F = 0.054/0.09 = 0.6\\ \\text{N}$.",
+        "Cross-checked in python: `9e9*2e-6*3e-6/0.3**2` evaluates to exactly $0.6$.",
+        "$1.8\\ \\text{N}$ comes from forgetting to square $r$ (dividing by $0.3$ instead of $0.09$). $6\\ \\text{N}$ comes from a decimal slip — using the charges as $2$ and $3$ (not $\\times10^{-6}$) while keeping the $10^9$ factor, i.e. missing six powers of ten. $0.06\\ \\text{N}$ is the correct calculation with one extra factor of $10$ dropped by mistake (a common exponent-counting slip)."
+      ],
+      "verification_method": "python_sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-electrostatics-coulomb-002",
+      "concept_id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A point charge of $+5\\ \\mu\\text{C}$ sits alone in vacuum. Using $\\dfrac{1}{4\\pi\\varepsilon_0} = 9\\times10^{9}\\ \\text{N m}^2\\text{C}^{-2}$, find the magnitude of the electric field it produces at a point $10\\ \\text{cm}$ away.",
+      "options": [
+        "$4.5\\times10^{6}\\ \\text{N/C}$",
+        "$4.5\\times10^{5}\\ \\text{N/C}$",
+        "$4.5\\times10^{7}\\ \\text{N/C}$",
+        "$45\\ \\text{N/C}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$4.5\\times10^{6}\\ \\text{N/C}$",
+      "solution_steps": [
+        "Electric field of a point charge: $E = \\dfrac{1}{4\\pi\\varepsilon_0}\\dfrac{q}{r^2} = 9\\times10^9 \\times \\dfrac{5\\times10^{-6}}{(0.1)^2}$.",
+        "$(0.1)^2 = 0.01$, so $E = 9\\times10^9 \\times 5\\times10^{-6}/0.01 = 9\\times10^9\\times5\\times10^{-4} = 4.5\\times10^{6}\\ \\text{N/C}$.",
+        "Cross-checked in python: `9e9*5e-6/0.1**2` gives exactly $4.5\\times10^6$.",
+        "$4.5\\times10^{5}\\ \\text{N/C}$ comes from treating $r=0.1\\ \\text{m}$ as $1\\ \\text{m}$'s worth of squaring by a factor-of-ten slip (dividing by $0.1$ instead of $0.01$). $4.5\\times10^{7}\\ \\text{N/C}$ comes from the opposite slip — an extra power of ten introduced while squaring $r$. $45\\ \\text{N/C}$ comes from forgetting to square $r$ at all (dividing by $0.1$ once, not $0.1^2$) while also missing several powers of ten."
+      ],
+      "verification_method": "python_sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-electrostatics-coulomb-003",
+      "concept_id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two point charges of $+2\\ \\mu\\text{C}$ each are placed $20\\ \\text{cm}$ apart in air and repel each other with force $F$. If the separation between them is reduced to $5\\ \\text{cm}$ (one-quarter of the original distance), what does the new force become?",
+      "options": [
+        "$14.4\\ \\text{N}$",
+        "$3.6\\ \\text{N}$",
+        "$7.2\\ \\text{N}$",
+        "$0.9\\ \\text{N}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$14.4\\ \\text{N}$",
+      "solution_steps": [
+        "Coulomb's law gives $F\\propto 1/r^2$. At $r_0=0.2\\ \\text{m}$: $F_0 = 9\\times10^9\\times(2\\times10^{-6})^2/(0.2)^2 = 0.9\\ \\text{N}$.",
+        "Reducing the distance to a QUARTER of the original means $F$ scales by $(1/\\tfrac14)^2 = 16$ — this is the key idea being tested, not a re-derivation from scratch. New force $= 16\\times0.9 = 14.4\\ \\text{N}$.",
+        "Cross-checked directly in python at $r_1=0.05\\ \\text{m}$: `9e9*(2e-6)**2/0.05**2` gives exactly $14.4$, and the ratio to $F_0=0.9$ is exactly $16$.",
+        "$3.6\\ \\text{N}$ comes from wrongly treating the force as inversely proportional to distance itself (not distance squared), giving a factor of $4$ instead of $16$. $7.2\\ \\text{N}$ comes from a doubling-the-doubling slip — applying the inverse-square scaling to a halved distance twice (factor of $8$) instead of correctly recognising the distance is quartered in one step. $0.9\\ \\text{N}$ is simply the original force $F_0$, from forgetting that changing the distance changes the force at all."
+      ],
+      "verification_method": "python_sympy_ratio_scaling_and_numeric_crosscheck"
+    },
+    {
+      "id": "pi-electrostatics-coulomb-004",
+      "concept_id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two positive point charges $+4\\ \\mu\\text{C}$ and $+9\\ \\mu\\text{C}$ are placed $25\\ \\text{cm}$ apart. At what distance from the $+4\\ \\mu\\text{C}$ charge, measured along the line joining them and between the two charges, is the net electric field zero?",
+      "options": [
+        "$10\\ \\text{cm}$",
+        "$12.5\\ \\text{cm}$",
+        "$15\\ \\text{cm}$",
+        "$6.25\\ \\text{cm}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$10\\ \\text{cm}$",
+      "solution_steps": [
+        "At the null point, the two fields must be equal in magnitude and opposite in direction. If $x$ is the distance from the $+4\\ \\mu\\text{C}$ charge, then $\\dfrac{4}{x^2} = \\dfrac{9}{(0.25-x)^2}$ (the $\\mu\\text{C}$ and $9\\times10^9$ factors cancel, since they're the same on both sides).",
+        "Taking square roots: $\\dfrac{x}{0.25-x} = \\sqrt{4/9} = 2/3$, so $3x = 2(0.25-x) \\Rightarrow 5x = 0.5 \\Rightarrow x = 0.1\\ \\text{m} = 10\\ \\text{cm}$. The null point sits closer to the SMALLER charge, which makes sense — its field falls off from a lower starting value, so it needs less distance to be over-taken.",
+        "Solved symbolically in python with sympy's `solve`: confirms $x=0.1\\ \\text{m}$ exactly.",
+        "$12.5\\ \\text{cm}$ is the plain midpoint — the mistake of assuming the null point is exactly halfway, which is only true when the two charges are EQUAL. $15\\ \\text{cm}$ comes from inverting the square-root ratio (using $\\sqrt{9/4}=3/2$ instead of $\\sqrt{4/9}=2/3$), which wrongly places the null point closer to the LARGER charge instead of the smaller one. $6.25\\ \\text{cm}$ is one quarter of the separation, a bare arithmetic guess with no basis in the field-balance equation."
+      ],
+      "verification_method": "python_sympy_solve_symbolic"
+    },
+    {
+      "id": "pi-electrostatics-coulomb-005",
+      "concept_id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two point charges $+3\\ \\mu\\text{C}$ and $+5\\ \\mu\\text{C}$ are $40\\ \\text{cm}$ apart. Using $\\dfrac{1}{4\\pi\\varepsilon_0}=9\\times10^9\\ \\text{N m}^2\\text{C}^{-2}$, find the electric potential at the midpoint of the line joining them.",
+      "options": [
+        "$3.6\\times10^{5}\\ \\text{V}$",
+        "$1.8\\times10^{5}\\ \\text{V}$",
+        "$1.35\\times10^{5}\\ \\text{V}$",
+        "$2.25\\times10^{5}\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3.6\\times10^{5}\\ \\text{V}$",
+      "solution_steps": [
+        "Unlike the electric FIELD (a vector), electric POTENTIAL is a scalar, so the potentials from both charges simply ADD — no angles or components needed, whatever the charges' positions.",
+        "The midpoint is $0.2\\ \\text{m}$ from each charge. $V = 9\\times10^9\\left(\\dfrac{3\\times10^{-6}}{0.2} + \\dfrac{5\\times10^{-6}}{0.2}\\right) = 9\\times10^9\\times\\dfrac{8\\times10^{-6}}{0.2} = 3.6\\times10^{5}\\ \\text{V}$.",
+        "Cross-checked in python: `9e9*(3e-6/0.2 + 5e-6/0.2)` gives exactly $360000$.",
+        "$1.8\\times10^5\\ \\text{V}$ comes from using the full separation ($0.4\\ \\text{m}$) instead of the midpoint distance ($0.2\\ \\text{m}$) for each charge. $1.35\\times10^5\\ \\text{V}$ counts only the $3\\ \\mu\\text{C}$ charge's contribution, forgetting the $5\\ \\mu\\text{C}$ charge entirely. $2.25\\times10^5\\ \\text{V}$ counts only the $5\\ \\mu\\text{C}$ charge's contribution, forgetting the $3\\ \\mu\\text{C}$ charge."
+      ],
+      "verification_method": "python_sympy_symbolic_then_numeric_substitution"
+    },
+    {
+      "id": "pi-electrostatics-coulomb-006",
+      "concept_id": "electrostatics-coulomb",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A solid non-conducting sphere of radius $6\\ \\text{cm}$ carries a total charge of $+8\\ \\mu\\text{C}$ spread uniformly through its volume. Using Gauss's law and $\\dfrac{1}{4\\pi\\varepsilon_0}=9\\times10^9\\ \\text{N m}^2\\text{C}^{-2}$, find the electric field at a point $12\\ \\text{cm}$ from the centre (outside the sphere).",
+      "options": [
+        "$5\\times10^{6}\\ \\text{N/C}$",
+        "$2\\times10^{7}\\ \\text{N/C}$",
+        "$6\\times10^{5}\\ \\text{N/C}$",
+        "$1.25\\times10^{6}\\ \\text{N/C}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$5\\times10^{6}\\ \\text{N/C}$",
+      "solution_steps": [
+        "Gauss's law shows that OUTSIDE a uniformly charged sphere, the field is exactly the same as if all the charge $Q$ were concentrated at the centre — the enclosed charge inside any Gaussian sphere of radius $r>R$ is the full $Q$.",
+        "So $E = \\dfrac{1}{4\\pi\\varepsilon_0}\\dfrac{Q}{r^2} = 9\\times10^9\\times\\dfrac{8\\times10^{-6}}{(0.12)^2} = 9\\times10^9\\times\\dfrac{8\\times10^{-6}}{0.0144} = 5\\times10^{6}\\ \\text{N/C}$.",
+        "Cross-checked in python: `9e9*8e-6/0.12**2` gives exactly $5000000.0$.",
+        "$2\\times10^7\\ \\text{N/C}$ comes from wrongly using the sphere's own radius ($R=0.06\\ \\text{m}$, the surface) instead of the actual field point's distance ($r=0.12\\ \\text{m}$). $6\\times10^5\\ \\text{N/C}$ comes from forgetting to square $r$ (dividing by $0.12$, not $0.12^2$). $1.25\\times10^6\\ \\text{N/C}$ comes from using the DIAMETER of the sphere ($0.12\\ \\text{m}$, mistaken for the given distance's own diameter, i.e. plugging in $r=0.24\\ \\text{m}$) instead of the stated $12\\ \\text{cm}$ distance."
+      ],
+      "verification_method": "python_sympy_gauss_law_outside_sphere_numeric_check"
+    },
+    {
+      "id": "pi-capacitance-001",
+      "concept_id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A parallel-plate capacitor has plates of area $0.02\\ \\text{m}^2$ separated by $1\\ \\text{mm}$ of air. Using $\\varepsilon_0 = 8.85\\times10^{-12}\\ \\text{F/m}$, find its capacitance.",
+      "options": [
+        "$177\\ \\text{pF}$",
+        "$17.7\\ \\text{pF}$",
+        "$1770\\ \\text{pF}$",
+        "$0.177\\ \\text{pF}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$177\\ \\text{pF}$",
+      "solution_steps": [
+        "For a parallel-plate capacitor, $C = \\dfrac{\\varepsilon_0 A}{d}$. Here $A=0.02\\ \\text{m}^2$ and $d = 1\\ \\text{mm} = 0.001\\ \\text{m}$ — the plate SEPARATION must be in metres, same as $\\varepsilon_0$'s own units.",
+        "$C = \\dfrac{8.85\\times10^{-12}\\times0.02}{0.001} = 1.77\\times10^{-10}\\ \\text{F} = 177\\ \\text{pF}$.",
+        "Cross-checked in python: `8.85e-12*0.02/0.001` gives $1.77\\times10^{-10}$, i.e. $177\\ \\text{pF}$.",
+        "$17.7\\ \\text{pF}$ comes from mistaking the $1\\ \\text{mm}$ separation for $1\\ \\text{cm}$ ($d=0.01\\ \\text{m}$), one order of magnitude too large a denominator. $1770\\ \\text{pF}$ comes from the opposite mistake — using $d=0.1\\ \\text{mm}$, one order of magnitude too small. $0.177\\ \\text{pF}$ comes from forgetting to convert millimetres to metres at all (using $d=1$ instead of $d=0.001$), a factor of $1000$ error."
+      ],
+      "verification_method": "python_numeric_substitution_unit_check"
+    },
+    {
+      "id": "pi-capacitance-002",
+      "concept_id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two capacitors of $4\\ \\mu\\text{F}$ and $6\\ \\mu\\text{F}$ are connected in SERIES across a battery. What is their equivalent capacitance?",
+      "options": [
+        "$2.4\\ \\mu\\text{F}$",
+        "$10\\ \\mu\\text{F}$",
+        "$5\\ \\mu\\text{F}$",
+        "$24\\ \\mu\\text{F}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.4\\ \\mu\\text{F}$",
+      "solution_steps": [
+        "Capacitors combine the OPPOSITE way resistors do: resistors ADD DIRECTLY in series, but capacitors in series combine by RECIPROCALS — $\\dfrac{1}{C_{eq}} = \\dfrac{1}{C_1}+\\dfrac{1}{C_2}$, same as resistors in PARALLEL.",
+        "$\\dfrac{1}{C_{eq}} = \\dfrac{1}{4}+\\dfrac{1}{6} = \\dfrac{3+2}{12} = \\dfrac{5}{12}$, so $C_{eq} = \\dfrac{12}{5} = 2.4\\ \\mu\\text{F}$ — equivalently, the product-over-sum shortcut $\\dfrac{4\\times6}{4+6}=\\dfrac{24}{10}=2.4\\ \\mu\\text{F}$.",
+        "Cross-checked in python with sympy: `1/(sp.Rational(1,4)+sp.Rational(1,6))` gives exactly $12/5 = 2.4$.",
+        "$10\\ \\mu\\text{F}$ is the value you'd get by simply ADDING the two capacitances — the resistor-series rule wrongly carried over to capacitors, when adding directly is actually the rule for capacitors in PARALLEL. $5\\ \\mu\\text{F}$ is the plain average of the two values, with no basis in either combination rule. $24\\ \\mu\\text{F}$ is the product $4\\times6$ with the division by the sum forgotten."
+      ],
+      "verification_method": "python_sympy_rational_series_capacitance"
+    },
+    {
+      "id": "pi-capacitance-003",
+      "concept_id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A $4\\ \\mu\\text{F}$ capacitor is charged to $12\\ \\text{V}$ and a $2\\ \\mu\\text{F}$ capacitor is charged to $3\\ \\text{V}$. Their positive plates are then connected together (and negative plates together). What is the common potential across both capacitors once charge stops flowing?",
+      "options": [
+        "$9\\ \\text{V}$",
+        "$7.5\\ \\text{V}$",
+        "$7\\ \\text{V}$",
+        "$6\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$9\\ \\text{V}$",
+      "solution_steps": [
+        "Total charge is CONSERVED when the capacitors are connected: $Q_1 = C_1V_1 = 4\\times12=48\\ \\mu\\text{C}$, $Q_2=C_2V_2=2\\times3=6\\ \\mu\\text{C}$, so $Q_{total}=54\\ \\mu\\text{C}$.",
+        "After connecting, both capacitors sit at the same common potential $V$, and together they still store all $54\\ \\mu\\text{C}$ across a combined capacitance $C_1+C_2=6\\ \\mu\\text{F}$ (they're now effectively in parallel). So $V = Q_{total}/(C_1+C_2) = 54/6 = 9\\ \\text{V}$.",
+        "Cross-checked in python with sympy Rationals: `(C1*V1+C2*V2)/(C1+C2)` gives exactly $9$.",
+        "$7.5\\ \\text{V}$ comes from wrongly averaging the two ORIGINAL voltages directly, ignoring that the capacitors hold different amounts of charge. $7\\ \\text{V}$ comes from assuming the two charges were connected with OPPOSITE polarity and subtracting them ($Q_1-Q_2=42$, giving $42/6=7$) when the question states they were connected with matching polarity. $6\\ \\text{V}$ comes from swapping which voltage goes with which capacitance in the weighted average ($(C_2V_1+C_1V_2)/(C_1+C_2) = (2\\times12+4\\times3)/6 = 6$)."
+      ],
+      "verification_method": "python_sympy_rational_charge_conservation"
+    },
+    {
+      "id": "pi-capacitance-004",
+      "concept_id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A capacitor of $5\\ \\mu\\text{F}$ is charged to a potential difference of $200\\ \\text{V}$. How much electrical energy does it store?",
+      "options": [
+        "$0.1\\ \\text{J}$",
+        "$0.2\\ \\text{J}$",
+        "$0.05\\ \\text{J}$",
+        "$5\\times10^{-4}\\ \\text{J}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.1\\ \\text{J}$",
+      "solution_steps": [
+        "Energy stored in a charged capacitor: $U = \\dfrac12 CV^2 = \\dfrac12\\times(5\\times10^{-6})\\times(200)^2$.",
+        "$(200)^2 = 40000$, so $U = 0.5\\times5\\times10^{-6}\\times40000 = 0.1\\ \\text{J}$.",
+        "Cross-checked in python with sympy Rationals: `sp.Rational(1,2)*5e-6*200**2` gives exactly $0.1$.",
+        "$0.2\\ \\text{J}$ comes from forgetting the factor of $\\tfrac12$ in the formula. $0.05\\ \\text{J}$ comes from using an extra, incorrect factor of $\\tfrac14$ instead of $\\tfrac12$. $5\\times10^{-4}\\ \\text{J}$ comes from forgetting to SQUARE the voltage (using $\\tfrac12 CV$ instead of $\\tfrac12 CV^2$)."
+      ],
+      "verification_method": "python_sympy_rational_energy_formula"
+    },
+    {
+      "id": "pi-capacitance-005",
+      "concept_id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A parallel-plate capacitor has capacitance $2\\ \\mu\\text{F}$ with air between its plates. A dielectric slab of dielectric constant $K=5$ is inserted, completely filling the gap. What is the new capacitance?",
+      "options": [
+        "$10\\ \\mu\\text{F}$",
+        "$0.4\\ \\mu\\text{F}$",
+        "$7\\ \\mu\\text{F}$",
+        "$2\\ \\mu\\text{F}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$10\\ \\mu\\text{F}$",
+      "solution_steps": [
+        "Filling the gap between the plates with a dielectric of constant $K$ multiplies the capacitance by $K$: $C_{new} = K\\times C_0$.",
+        "$C_{new} = 5\\times2 = 10\\ \\mu\\text{F}$.",
+        "Cross-checked in python: `2*5` gives $10$, matching the direct application of the dielectric formula.",
+        "$0.4\\ \\mu\\text{F}$ comes from DIVIDING by $K$ instead of multiplying — the exact opposite mistake, treating a dielectric as if it reduces capacitance rather than increasing it. $7\\ \\mu\\text{F}$ comes from ADDING $K$ to $C_0$ instead of multiplying them. $2\\ \\mu\\text{F}$ is the original, unchanged value — the mistake of thinking a dielectric slab makes no difference at all."
+      ],
+      "verification_method": "python_numeric_dielectric_multiplication_check"
+    },
+    {
+      "id": "pi-capacitance-006",
+      "concept_id": "capacitance",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a circuit, a $2\\ \\mu\\text{F}$ and a $3\\ \\mu\\text{F}$ capacitor are connected in PARALLEL with each other, and this combination is then connected in SERIES with a $5\\ \\mu\\text{F}$ capacitor. Find the equivalent capacitance of the whole network.",
+      "options": [
+        "$2.5\\ \\mu\\text{F}$",
+        "$10\\ \\mu\\text{F}$",
+        "$6.2\\ \\mu\\text{F}$",
+        "$0.97\\ \\mu\\text{F}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.5\\ \\mu\\text{F}$",
+      "solution_steps": [
+        "First combine the parallel pair by ADDING them directly: $C_p = 2+3 = 5\\ \\mu\\text{F}$.",
+        "This $5\\ \\mu\\text{F}$ is now in SERIES with the third $5\\ \\mu\\text{F}$ capacitor, so combine by reciprocals: $\\dfrac{1}{C_{eq}} = \\dfrac15+\\dfrac15 = \\dfrac25$, giving $C_{eq} = 2.5\\ \\mu\\text{F}$.",
+        "Cross-checked in python with sympy Rationals, building the network step by step: gives exactly $C_{eq}=5/2=2.5$.",
+        "$10\\ \\mu\\text{F}$ comes from treating ALL THREE capacitors as if they were in parallel (just adding $2+3+5$), ignoring that the network actually has one series connection. $6.2\\ \\mu\\text{F}$ comes from SWAPPING which pair is series and which is parallel — wrongly combining the $2\\ \\mu\\text{F}$ and $3\\ \\mu\\text{F}$ capacitors by reciprocals first (getting $1.2\\ \\mu\\text{F}$) and then adding the $5\\ \\mu\\text{F}$ capacitor directly ($1.2+5=6.2$). $0.97\\ \\mu\\text{F}$ comes from treating all three as if they were entirely in series ($1/2+1/3+1/5$, giving $30/31\\approx0.97$), ignoring that two of them are actually in parallel."
+      ],
+      "verification_method": "python_sympy_rational_mixed_network"
+    },
+    {
+      "id": "pi-current-electricity-001",
+      "concept_id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A cell of EMF $10\\ \\text{V}$ and internal resistance $1\\ \\Omega$ is connected to an external resistor of $4\\ \\Omega$. Find the terminal voltage across the cell.",
+      "options": [
+        "$8\\ \\text{V}$",
+        "$10\\ \\text{V}$",
+        "$9\\ \\text{V}$",
+        "$2\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$8\\ \\text{V}$",
+      "solution_steps": [
+        "Current in the circuit: $I = \\dfrac{\\text{EMF}}{R+r} = \\dfrac{10}{4+1} = 2\\ \\text{A}$.",
+        "Terminal voltage is what's left after the internal resistance takes its share: $V = \\text{EMF} - Ir = 10 - 2\\times1 = 8\\ \\text{V}$ (equivalently, $V=IR=2\\times4=8\\ \\text{V}$, the voltage actually delivered to the external resistor).",
+        "Cross-checked in python with sympy Rationals: `EMF - (EMF/(R+r))*r` gives exactly $8$.",
+        "$10\\ \\text{V}$ comes from ignoring the internal resistance entirely, as if the cell were ideal. $9\\ \\text{V}$ comes from an additive slip — computing $I\\times R + r$ (adding the raw resistance value instead of the voltage drop $Ir$) instead of subtracting $Ir$ from the EMF. $2\\ \\text{V}$ is simply the CURRENT's numeric value mistaken for the terminal voltage."
+      ],
+      "verification_method": "python_sympy_rational_terminal_voltage"
+    },
+    {
+      "id": "pi-current-electricity-002",
+      "concept_id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Three resistors of $2\\ \\Omega$, $3\\ \\Omega$ and $5\\ \\Omega$ are connected in SERIES with a $20\\ \\text{V}$ battery. Find the current in the circuit.",
+      "options": [
+        "$2\\ \\text{A}$",
+        "$10\\ \\text{A}$",
+        "$4\\ \\text{A}$",
+        "$2.5\\ \\text{A}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2\\ \\text{A}$",
+      "solution_steps": [
+        "Resistors in series simply ADD: $R_{eq} = 2+3+5 = 10\\ \\Omega$.",
+        "Ohm's law: $I = V/R_{eq} = 20/10 = 2\\ \\text{A}$.",
+        "Cross-checked in python: `20/(2+3+5)` gives exactly $2.0$.",
+        "$10\\ \\text{A}$ comes from only using the FIRST resistor ($2\\ \\Omega$) and forgetting the other two entirely ($20/2=10$). $4\\ \\text{A}$ comes from forgetting the LAST resistor, using $R_{eq}=2+3=5\\ \\Omega$ instead of $10\\ \\Omega$ ($20/5=4$). $2.5\\ \\text{A}$ comes from forgetting the FIRST resistor, using $R_{eq}=3+5=8\\ \\Omega$... rounded off incorrectly (a common slip when a student drops one term while combining three numbers quickly)."
+      ],
+      "verification_method": "python_numeric_series_resistance_ohms_law"
+    },
+    {
+      "id": "pi-current-electricity-003",
+      "concept_id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two resistors of $6\\ \\Omega$ and $3\\ \\Omega$ are connected in PARALLEL. Find their equivalent resistance.",
+      "options": [
+        "$2\\ \\Omega$",
+        "$9\\ \\Omega$",
+        "$4.5\\ \\Omega$",
+        "$18\\ \\Omega$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2\\ \\Omega$",
+      "solution_steps": [
+        "For two resistors in parallel, use the product-over-sum shortcut: $R_{eq} = \\dfrac{R_1R_2}{R_1+R_2} = \\dfrac{6\\times3}{6+3} = \\dfrac{18}{9} = 2\\ \\Omega$.",
+        "Sanity check: the parallel combination must always be SMALLER than the smallest individual resistor ($3\\ \\Omega$ here) — $2\\ \\Omega$ satisfies that, confirming the answer is at least plausible.",
+        "Cross-checked in python with sympy Rationals: `(6*3)/(6+3)` gives exactly $2$.",
+        "$9\\ \\Omega$ comes from simply ADDING the two resistances, the series rule wrongly applied to a parallel combination. $4.5\\ \\Omega$ is the plain average of the two resistances, which has no basis in either combination formula. $18\\ \\Omega$ is the product $6\\times3$ with the division by the sum forgotten."
+      ],
+      "verification_method": "python_sympy_rational_parallel_resistance"
+    },
+    {
+      "id": "pi-current-electricity-004",
+      "concept_id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A current of $2\\ \\text{A}$ flows through a resistor of $10\\ \\Omega$. Find the power dissipated in it.",
+      "options": [
+        "$40\\ \\text{W}$",
+        "$20\\ \\text{W}$",
+        "$200\\ \\text{W}$",
+        "$0.4\\ \\text{W}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$40\\ \\text{W}$",
+      "solution_steps": [
+        "Power dissipated in a resistor: $P = I^2R = (2)^2\\times10 = 4\\times10 = 40\\ \\text{W}$.",
+        "Cross-checked in python: `2**2 * 10` gives exactly $40$.",
+        "$20\\ \\text{W}$ comes from forgetting to square the current — computing $P=IR=2\\times10=20$ instead of $P=I^2R$.",
+        "$200\\ \\text{W}$ comes from squaring the WRONG quantity — computing $P=IR^2=2\\times100=200$ instead of squaring the current. $0.4\\ \\text{W}$ comes from dividing instead of multiplying ($I^2/R=4/10=0.4$), inverting the formula entirely."
+      ],
+      "verification_method": "python_numeric_power_dissipation_formula"
+    },
+    {
+      "id": "pi-current-electricity-005",
+      "concept_id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A single loop contains two cells of EMF $12\\ \\text{V}$ and $6\\ \\text{V}$, connected so that the $6\\ \\text{V}$ cell opposes the $12\\ \\text{V}$ cell, in series with resistors of $2\\ \\Omega$ and $4\\ \\Omega$. Using Kirchhoff's voltage law, find the current in the loop.",
+      "options": [
+        "$1\\ \\text{A}$",
+        "$3\\ \\text{A}$",
+        "$2\\ \\text{A}$",
+        "$4.5\\ \\text{A}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1\\ \\text{A}$",
+      "solution_steps": [
+        "Going around the loop, the NET driving EMF is the difference of the two opposing cells: $\\text{EMF}_{net} = 12-6 = 6\\ \\text{V}$ (this is exactly where Kirchhoff's voltage law's sign convention matters — a cell that opposes the loop direction is SUBTRACTED, not added).",
+        "Total resistance in the loop: $R = 2+4 = 6\\ \\Omega$. So $I = \\text{EMF}_{net}/R = 6/6 = 1\\ \\text{A}$.",
+        "Cross-checked in python with sympy Rationals: `(12-6)/(2+4)` gives exactly $1$.",
+        "$3\\ \\text{A}$ comes from traversing the loop with the WRONG SIGN on the opposing cell — adding $12+6=18\\ \\text{V}$ instead of subtracting, then $18/6=3\\ \\text{A}$. $2\\ \\text{A}$ comes from ignoring the $6\\ \\text{V}$ cell entirely and using only the $12\\ \\text{V}$ cell ($12/6=2$). $4.5\\ \\text{A}$ comes from wrongly combining the two resistors as if they were in PARALLEL instead of in series around the loop ($R_p = 2\\times4/6=4/3$, then $6/(4/3)=4.5$)."
+      ],
+      "verification_method": "python_sympy_rational_kirchhoff_loop_signs"
+    },
+    {
+      "id": "pi-current-electricity-006",
+      "concept_id": "current-electricity",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A Wheatstone bridge has arms $P=4\\ \\Omega$, $Q=8\\ \\Omega$ and $R=6\\ \\Omega$. What value of $S$ makes the bridge balanced?",
+      "options": [
+        "$12\\ \\Omega$",
+        "$3\\ \\Omega$",
+        "$6\\ \\Omega$",
+        "$8\\ \\Omega$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$12\\ \\Omega$",
+      "solution_steps": [
+        "The Wheatstone bridge balance condition is $\\dfrac{P}{Q} = \\dfrac{R}{S}$, i.e. $S = \\dfrac{QR}{P}$.",
+        "$S = \\dfrac{8\\times6}{4} = \\dfrac{48}{4} = 12\\ \\Omega$.",
+        "Cross-checked in python with sympy Rationals: `Q*R/P` gives exactly $12$.",
+        "$3\\ \\Omega$ comes from inverting the ratio — computing $S = \\dfrac{PR}{Q} = \\dfrac{4\\times6}{8}=3$, which swaps which pair of arms the ratio applies to. $6\\ \\Omega$ comes from an additive slip: $S = P+Q-R = 4+8-6=6$, treating the balance condition as an addition instead of a ratio. $8\\ \\Omega$ comes from assuming $S$ must simply equal one of the given arms ($Q$), ignoring the balance condition entirely."
+      ],
+      "verification_method": "python_sympy_rational_wheatstone_bridge"
+    },
+    {
+      "id": "pi-magnetic-effects-001",
+      "concept_id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A charged particle with $q=1.6\\times10^{-19}\\ \\text{C}$ moves with speed $2\\times10^{6}\\ \\text{m/s}$ PERPENDICULAR to a magnetic field of $0.5\\ \\text{T}$. Find the magnitude of the magnetic force on it.",
+      "options": [
+        "$1.6\\times10^{-13}\\ \\text{N}$",
+        "$0\\ \\text{N}$",
+        "$8\\times10^{-20}\\ \\text{N}$",
+        "$1.6\\times10^{-14}\\ \\text{N}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1.6\\times10^{-13}\\ \\text{N}$",
+      "solution_steps": [
+        "The magnetic force on a moving charge is $F = qvB\\sin\\theta$. Here $\\theta=90°$ (perpendicular), so $\\sin\\theta=1$ and $F=qvB$.",
+        "$F = (1.6\\times10^{-19})\\times(2\\times10^{6})\\times(0.5) = 1.6\\times10^{-13}\\ \\text{N}$.",
+        "Cross-checked in python: `1.6e-19*2e6*0.5` gives exactly $1.6\\times10^{-13}$.",
+        "$0\\ \\text{N}$ comes from wrongly using $\\cos\\theta$ instead of $\\sin\\theta$ in the formula — at $90°$, $\\cos\\theta=0$, which is actually the correct trig function for the PARALLEL case, not this perpendicular one. $8\\times10^{-20}\\ \\text{N}$ comes from forgetting to include the speed $v$ (computing $qB$ only). $1.6\\times10^{-14}\\ \\text{N}$ comes from misreading the speed's exponent as $2\\times10^{5}$ instead of $2\\times10^{6}$, one power of ten too small."
+      ],
+      "verification_method": "python_numeric_lorentz_force_perpendicular"
+    },
+    {
+      "id": "pi-magnetic-effects-002",
+      "concept_id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A charged particle with $q=1.6\\times10^{-19}\\ \\text{C}$ moves with speed $3\\times10^{6}\\ \\text{m/s}$ exactly PARALLEL to a magnetic field of $0.4\\ \\text{T}$ (along the field's own direction). Find the magnitude of the magnetic force on it.",
+      "options": [
+        "$0\\ \\text{N}$",
+        "$1.92\\times10^{-13}\\ \\text{N}$",
+        "$9.6\\times10^{-14}\\ \\text{N}$",
+        "$1.2\\times10^{6}\\ \\text{N}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0\\ \\text{N}$",
+      "solution_steps": [
+        "The magnetic force is $F=qvB\\sin\\theta$, where $\\theta$ is the angle between the velocity and the field. When the particle moves EXACTLY PARALLEL to the field, $\\theta=0°$, so $\\sin\\theta=0$.",
+        "Therefore $F = qvB\\times0 = 0\\ \\text{N}$ — no force at all, however large $q$, $v$ and $B$ individually are.",
+        "Cross-checked in python: `1.6e-19*3e6*0.4*math.sin(0)` gives exactly $0.0$.",
+        "$1.92\\times10^{-13}\\ \\text{N}$ comes from just multiplying $qvB$ directly, without checking the angle at all — this would be the (wrong) force if the motion were perpendicular to the field instead of parallel to it. $9.6\\times10^{-14}\\ \\text{N}$ comes from using $\\sin45°$ by mistake, as if the angle were $45°$ rather than $0°$. $1.2\\times10^{6}\\ \\text{N}$ comes from forgetting to include the charge $q$ at all (computing $vB$ alone), which also produces a physically absurd, dimensionally-wrong magnitude."
+      ],
+      "verification_method": "python_numeric_lorentz_force_parallel_zero"
+    },
+    {
+      "id": "pi-magnetic-effects-003",
+      "concept_id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A straight wire of length $0.3\\ \\text{m}$ carrying a current of $5\\ \\text{A}$ is placed perpendicular to a magnetic field of $0.2\\ \\text{T}$. Find the magnetic force on the wire.",
+      "options": [
+        "$0.3\\ \\text{N}$",
+        "$1\\ \\text{N}$",
+        "$1.5\\ \\text{N}$",
+        "$0.06\\ \\text{N}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.3\\ \\text{N}$",
+      "solution_steps": [
+        "Force on a current-carrying wire in a magnetic field (wire perpendicular to field): $F = BIL$.",
+        "$F = 0.2\\times5\\times0.3 = 0.3\\ \\text{N}$.",
+        "Cross-checked in python: `0.2*5*0.3` gives exactly $0.3$.",
+        "$1\\ \\text{N}$ comes from forgetting the wire's length $L$ (computing $BI=0.2\\times5=1$). $1.5\\ \\text{N}$ comes from forgetting the field $B$ (computing $IL=5\\times0.3=1.5$). $0.06\\ \\text{N}$ comes from forgetting the current $I$ (computing $BL=0.2\\times0.3=0.06$)."
+      ],
+      "verification_method": "python_numeric_force_on_current_carrying_wire"
+    },
+    {
+      "id": "pi-magnetic-effects-004",
+      "concept_id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An electron (mass $9.1\\times10^{-31}\\ \\text{kg}$, charge $1.6\\times10^{-19}\\ \\text{C}$) moves at $2\\times10^{6}\\ \\text{m/s}$ perpendicular to a magnetic field of $1\\times10^{-3}\\ \\text{T}$. Find the radius of its circular path.",
+      "options": [
+        "$1.14\\times10^{-2}\\ \\text{m}$",
+        "$87.9\\ \\text{m}$",
+        "$1.14\\times10^{-5}\\ \\text{m}$",
+        "$5.69\\times10^{-9}\\ \\text{m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1.14\\times10^{-2}\\ \\text{m}$",
+      "solution_steps": [
+        "For a charged particle moving in a circle inside a magnetic field, the magnetic force supplies the centripetal force: $qvB = \\dfrac{mv^2}{r}$, which rearranges to $r = \\dfrac{mv}{qB}$.",
+        "$r = \\dfrac{(9.1\\times10^{-31})(2\\times10^{6})}{(1.6\\times10^{-19})(1\\times10^{-3})} = \\dfrac{1.82\\times10^{-24}}{1.6\\times10^{-22}} \\approx 1.14\\times10^{-2}\\ \\text{m}$.",
+        "Cross-checked in python with sympy: `m*v/(q*B)` gives $0.011375$, i.e. $1.14\\times10^{-2}\\ \\text{m}$ to 3 significant figures.",
+        "$87.9\\ \\text{m}$ comes from inverting the formula — computing $\\dfrac{qB}{mv}$ instead of $\\dfrac{mv}{qB}$. $1.14\\times10^{-5}\\ \\text{m}$ comes from forgetting to divide by $B$ (computing $mv/q$ alone). $5.69\\times10^{-9}\\ \\text{m}$ comes from forgetting to include $v$ in the numerator (computing $m/(qB)$ instead of $mv/(qB)$)."
+      ],
+      "verification_method": "python_sympy_radius_of_circular_motion_in_field"
+    },
+    {
+      "id": "pi-magnetic-effects-005",
+      "concept_id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Two long, straight, parallel wires carry currents of $3\\ \\text{A}$ and $5\\ \\text{A}$ and are $2\\ \\text{cm}$ apart. Using $\\mu_0 = 4\\pi\\times10^{-7}\\ \\text{T m/A}$, find the force per unit length between them.",
+      "options": [
+        "$1.5\\times10^{-4}\\ \\text{N/m}$",
+        "$3\\times10^{-4}\\ \\text{N/m}$",
+        "$750\\ \\text{N/m}$",
+        "$7.5\\times10^{-3}\\ \\text{N/m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1.5\\times10^{-4}\\ \\text{N/m}$",
+      "solution_steps": [
+        "Force per unit length between two long parallel current-carrying wires: $\\dfrac{F}{L} = \\dfrac{\\mu_0 I_1 I_2}{2\\pi d}$.",
+        "$\\dfrac{F}{L} = \\dfrac{(4\\pi\\times10^{-7})\\times3\\times5}{2\\pi\\times0.02}$. The $\\pi$ cancels between numerator and denominator, leaving $\\dfrac{4\\times10^{-7}\\times15}{2\\times0.02} = \\dfrac{6\\times10^{-6}}{0.04} = 1.5\\times10^{-4}\\ \\text{N/m}$.",
+        "Cross-checked in python with sympy (keeping $\\pi$ symbolic so it cancels exactly): gives $F/L = 3/20000 = 1.5\\times10^{-4}$ exactly.",
+        "$3\\times10^{-4}\\ \\text{N/m}$ comes from forgetting the factor of $2$ in the denominator (using $\\pi d$ instead of $2\\pi d$). $750\\ \\text{N/m}$ comes from forgetting the $\\mu_0/2\\pi$ factor entirely and just computing $I_1I_2/d$, which also makes the units come out wrong. $7.5\\times10^{-3}\\ \\text{N/m}$ comes from using $d^2$ instead of $d$ in the denominator — wrongly borrowing the inverse-square pattern from Coulomb's law, when the force between parallel wires actually falls off as $1/d$, not $1/d^2$."
+      ],
+      "verification_method": "python_sympy_symbolic_pi_cancellation_parallel_wires"
+    },
+    {
+      "id": "pi-magnetic-effects-006",
+      "concept_id": "magnetic-effects",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A rectangular coil of $50$ turns, each of area $0.01\\ \\text{m}^2$, carries a current of $2\\ \\text{A}$ and sits in a magnetic field of $0.5\\ \\text{T}$. The angle between the coil's normal and the field is $30°$ (so $\\sin30°=0.5$). Find the torque on the coil.",
+      "options": [
+        "$0.25\\ \\text{N m}$",
+        "$0.005\\ \\text{N m}$",
+        "$0.5\\ \\text{N m}$",
+        "$0.43\\ \\text{N m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.25\\ \\text{N m}$",
+      "solution_steps": [
+        "Torque on a current-carrying coil: $\\tau = NIAB\\sin\\theta$, where $\\theta$ is the angle between the coil's normal and the field.",
+        "$\\tau = 50\\times2\\times0.01\\times0.5\\times\\sin30° = 50\\times2\\times0.01\\times0.5\\times0.5 = 0.25\\ \\text{N m}$.",
+        "Cross-checked in python with sympy: `50*2*0.01*0.5*sp.sin(sp.pi/6)` gives exactly $0.25$.",
+        "$0.005\\ \\text{N m}$ comes from forgetting the number of turns $N$ (computing $IAB\\sin\\theta$ for a single turn only). $0.5\\ \\text{N m}$ comes from forgetting the $\\sin\\theta$ factor entirely, using the maximum possible torque ($NIAB$) as if the coil's normal were exactly perpendicular to the field. $0.43\\ \\text{N m}$ comes from using $\\cos30°\\approx0.866$ instead of $\\sin30°=0.5$, mixing up the two trig functions."
+      ],
+      "verification_method": "python_sympy_torque_on_current_loop"
+    },
+    {
+      "id": "pi-electromagnetic-induction-001",
+      "concept_id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A coil of $10$ turns, each of area $0.05\\ \\text{m}^2$, sits with its plane perpendicular to a magnetic field. The field changes from $0.3\\ \\text{T}$ to $0.1\\ \\text{T}$ over $0.2\\ \\text{s}$. Find the magnitude of the induced EMF.",
+      "options": [
+        "$0.5\\ \\text{V}$",
+        "$0.05\\ \\text{V}$",
+        "$0.1\\ \\text{V}$",
+        "$0.2\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.5\\ \\text{V}$",
+      "solution_steps": [
+        "Faraday's law: the magnitude of the induced EMF is $|\\varepsilon| = N\\left|\\dfrac{\\Delta\\Phi}{\\Delta t}\\right| = NA\\left|\\dfrac{\\Delta B}{\\Delta t}\\right|$ (area is constant here, only $B$ changes).",
+        "$\\dfrac{\\Delta B}{\\Delta t} = \\dfrac{0.1-0.3}{0.2} = -1\\ \\text{T/s}$, so $|\\varepsilon| = 10\\times0.05\\times1 = 0.5\\ \\text{V}$.",
+        "Cross-checked in python with sympy Rationals: `N*A*abs((B2-B1)/dt)` gives exactly $0.5$.",
+        "$0.05\\ \\text{V}$ comes from forgetting the number of turns $N$ (computing $A|\\Delta B/\\Delta t|$ for a single turn only). $0.1\\ \\text{V}$ comes from forgetting to divide by the time interval $\\Delta t$ (using $NA|\\Delta B|$ directly). $0.2\\ \\text{V}$ comes from a compounded slip — adding the two field values instead of subtracting them, and also forgetting to divide by $\\Delta t$."
+      ],
+      "verification_method": "python_sympy_rational_faraday_law_emf"
+    },
+    {
+      "id": "pi-electromagnetic-induction-002",
+      "concept_id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A circular loop lies flat on a table. A magnetic field points straight down through the loop, and its magnitude is DECREASING with time. Viewed from directly above the loop, in which direction does the induced current flow?",
+      "options": [
+        "Clockwise (as seen from above)",
+        "Counterclockwise (as seen from above)",
+        "No current flows, since the loop itself is not moving",
+        "The current keeps alternating direction back and forth"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Clockwise (as seen from above)",
+      "solution_steps": [
+        "Lenz's law says the induced current opposes the CHANGE in flux, not the field's own direction. Since the downward flux is DECREASING, the induced current tries to keep the downward flux from fading — it flows in whichever direction creates its OWN magnetic field pointing further downward, inside the loop.",
+        "By the right-hand rule, curling the fingers of the right hand in the CLOCKWISE direction (as viewed from above) makes the thumb point downward, away from the viewer — exactly the direction needed to reinforce the fading field. So the current flows clockwise, as seen from above.",
+        "This is the classic trap in Lenz's law: many students assume the induced current always opposes the field's OWN direction, which is only true when the field is INCREASING. When the field is decreasing instead, the induced current reinforces it.",
+        "Counterclockwise is exactly that naive mistake — assuming the induced field must always point opposite to the applied field, regardless of whether the flux is growing or shrinking. 'No current flows' confuses this scenario with motional EMF, forgetting that a CHANGING field alone (with nothing physically moving) is enough to induce a current, per Faraday's law. 'Alternating direction' wrongly imports the behaviour of an AC generator into a situation with one steady, one-directional change in field strength."
+      ],
+      "verification_method": "physics_fact_check_lenz_law_direction_decreasing_field"
+    },
+    {
+      "id": "pi-electromagnetic-induction-003",
+      "concept_id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A metal rod of length $0.5\\ \\text{m}$ moves with speed $4\\ \\text{m/s}$ perpendicular to a magnetic field of $0.6\\ \\text{T}$ (the rod, its velocity, and the field are all mutually perpendicular). Find the motional EMF induced across its ends.",
+      "options": [
+        "$1.2\\ \\text{V}$",
+        "$2.4\\ \\text{V}$",
+        "$0.3\\ \\text{V}$",
+        "$0.6\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1.2\\ \\text{V}$",
+      "solution_steps": [
+        "Motional EMF: $\\varepsilon = BLv$.",
+        "$\\varepsilon = 0.6\\times0.5\\times4 = 1.2\\ \\text{V}$.",
+        "Cross-checked in python: `0.6*0.5*4` gives exactly $1.2$.",
+        "$2.4\\ \\text{V}$ comes from forgetting the rod's length $L$ (computing $Bv=0.6\\times4=2.4$ alone). $0.3\\ \\text{V}$ comes from forgetting the speed $v$ (computing $BL=0.6\\times0.5=0.3$ alone). $0.6\\ \\text{V}$ comes from squaring the length by mistake (computing $BL^2v=0.6\\times0.25\\times4=0.6$), a dimensionally wrong slip."
+      ],
+      "verification_method": "python_numeric_motional_emf_formula"
+    },
+    {
+      "id": "pi-electromagnetic-induction-004",
+      "concept_id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An inductor of $3\\ \\text{H}$ carries a current that changes from $2\\ \\text{A}$ to $6\\ \\text{A}$ in $0.4\\ \\text{s}$. Find the magnitude of the self-induced EMF.",
+      "options": [
+        "$30\\ \\text{V}$",
+        "$10\\ \\text{V}$",
+        "$12\\ \\text{V}$",
+        "$60\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$30\\ \\text{V}$",
+      "solution_steps": [
+        "Self-induced EMF: $|\\varepsilon| = L\\left|\\dfrac{\\Delta I}{\\Delta t}\\right|$.",
+        "$\\dfrac{\\Delta I}{\\Delta t} = \\dfrac{6-2}{0.4} = 10\\ \\text{A/s}$, so $|\\varepsilon| = 3\\times10 = 30\\ \\text{V}$.",
+        "Cross-checked in python: `3*(6-2)/0.4` gives exactly $30.0$.",
+        "$10\\ \\text{V}$ comes from forgetting the inductance $L$ (reporting the RATE of change of current, $10\\ \\text{A/s}$, as if it were itself the EMF in volts). $12\\ \\text{V}$ comes from forgetting to divide by the time interval $\\Delta t$ (computing $L\\times\\Delta I = 3\\times4=12$ directly). $60\\ \\text{V}$ comes from ADDING the two current values instead of subtracting them before dividing by $\\Delta t$ (giving $3\\times(2+6)/0.4=60$)."
+      ],
+      "verification_method": "python_numeric_self_inductance_emf_formula"
+    },
+    {
+      "id": "pi-electromagnetic-induction-005",
+      "concept_id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An inductor of $4\\ \\text{H}$ carries a steady current of $3\\ \\text{A}$. Find the energy stored in its magnetic field.",
+      "options": [
+        "$18\\ \\text{J}$",
+        "$36\\ \\text{J}$",
+        "$6\\ \\text{J}$",
+        "$9\\ \\text{J}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$18\\ \\text{J}$",
+      "solution_steps": [
+        "Energy stored in an inductor's magnetic field: $U = \\dfrac12 LI^2$.",
+        "$U = 0.5\\times4\\times(3)^2 = 0.5\\times4\\times9 = 18\\ \\text{J}$.",
+        "Cross-checked in python: `0.5*4*3**2` gives exactly $18.0$.",
+        "$36\\ \\text{J}$ comes from forgetting the factor of $\\tfrac12$ in the formula. $6\\ \\text{J}$ comes from forgetting to SQUARE the current (using $\\tfrac12 LI$ instead of $\\tfrac12 LI^2$). $9\\ \\text{J}$ comes from an extra, incorrect factor of $\\tfrac14$ instead of $\\tfrac12$."
+      ],
+      "verification_method": "python_numeric_energy_stored_in_inductor"
+    },
+    {
+      "id": "pi-electromagnetic-induction-006",
+      "concept_id": "electromagnetic-induction",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A coil of $100$ turns, each of area $0.02\\ \\text{m}^2$, rotates in a magnetic field of $0.5\\ \\text{T}$ at an angular speed of $50\\ \\text{rad/s}$. Find the PEAK EMF generated.",
+      "options": [
+        "$50\\ \\text{V}$",
+        "$0.5\\ \\text{V}$",
+        "$1\\ \\text{V}$",
+        "$35.4\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$50\\ \\text{V}$",
+      "solution_steps": [
+        "For a coil rotating in a uniform field, the peak (maximum) EMF is $\\varepsilon_0 = NAB\\omega$.",
+        "$\\varepsilon_0 = 100\\times0.02\\times0.5\\times50 = 50\\ \\text{V}$.",
+        "Cross-checked in python: `100*0.02*0.5*50` gives exactly $50.0$.",
+        "$0.5\\ \\text{V}$ comes from forgetting the number of turns $N$ (computing $AB\\omega$ for a single turn only). $1\\ \\text{V}$ comes from forgetting the angular speed $\\omega$ (computing $NAB$ alone, as if $\\omega=1$). $35.4\\ \\text{V}$ comes from a peak-vs-rms mix-up — dividing the correct peak value by $\\sqrt2$ ($50/\\sqrt2\\approx35.4$) as if the question had asked for the rms value instead of the peak."
+      ],
+      "verification_method": "python_sympy_ac_generator_peak_emf_and_rms_crosscheck"
+    },
+    {
+      "id": "pi-alternating-current-001",
+      "concept_id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An alternating current is given by $i(t) = 5\\sin(\\omega t)\\ \\text{A}$. Find its RMS (root-mean-square) value.",
+      "options": [
+        "$3.54\\ \\text{A}$",
+        "$5\\ \\text{A}$",
+        "$3.18\\ \\text{A}$",
+        "$2.5\\ \\text{A}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3.54\\ \\text{A}$",
+      "solution_steps": [
+        "For a sinusoidal current $i(t)=I_0\\sin(\\omega t)$, the RMS value is $I_{rms} = \\dfrac{I_0}{\\sqrt2}$ — this is a separate, smaller quantity from both the peak value and the average value, and mixing the three up is the single most common mistake in this topic.",
+        "$I_{rms} = \\dfrac{5}{\\sqrt2} \\approx 3.54\\ \\text{A}$.",
+        "Cross-checked in python with sympy: `5/sp.sqrt(2)` evaluates to $3.5355...\\approx3.54$.",
+        "$5\\ \\text{A}$ is the PEAK value $I_0$ itself, reported without converting to RMS at all. $3.18\\ \\text{A}$ is the AVERAGE value over a half-cycle, $\\dfrac{2I_0}{\\pi}=\\dfrac{2\\times5}{\\pi}\\approx3.18$ — a genuinely different quantity, wrongly substituted for RMS. $2.5\\ \\text{A}$ comes from a naive halving of the peak value, with no basis in either the RMS or average formula."
+      ],
+      "verification_method": "python_sympy_rms_value_of_sinusoidal_current"
+    },
+    {
+      "id": "pi-alternating-current-002",
+      "concept_id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An alternating voltage is given by $v(t) = 4\\sin(\\omega t)\\ \\text{V}$. Find its AVERAGE value over one half-cycle.",
+      "options": [
+        "$2.55\\ \\text{V}$",
+        "$4\\ \\text{V}$",
+        "$2.83\\ \\text{V}$",
+        "$2\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.55\\ \\text{V}$",
+      "solution_steps": [
+        "For a sinusoidal voltage $v(t)=V_0\\sin(\\omega t)$, the average value over a half-cycle is $V_{avg} = \\dfrac{2V_0}{\\pi}$ (over a FULL cycle, the average is exactly zero by symmetry — the half-cycle average is the one usually asked for).",
+        "$V_{avg} = \\dfrac{2\\times4}{\\pi} \\approx 2.55\\ \\text{V}$.",
+        "Cross-checked in python with sympy: `2*4/sp.pi` evaluates to $2.546...\\approx2.55$.",
+        "$4\\ \\text{V}$ is the PEAK value $V_0$ itself, mistaken for the average. $2.83\\ \\text{V}$ is the RMS value, $\\dfrac{V_0}{\\sqrt2}=\\dfrac{4}{\\sqrt2}\\approx2.83$ — again, a genuinely different quantity of the same waveform, swapped in by mistake. $2\\ \\text{V}$ comes from a naive halving of the peak value."
+      ],
+      "verification_method": "python_sympy_average_value_of_sinusoidal_voltage"
+    },
+    {
+      "id": "pi-alternating-current-003",
+      "concept_id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An AC circuit has a resistor of $30\\ \\Omega$ in series with a capacitor whose reactance is $40\\ \\Omega$. Find the impedance of the circuit.",
+      "options": [
+        "$50\\ \\Omega$",
+        "$70\\ \\Omega$",
+        "$10\\ \\Omega$",
+        "$2500\\ \\Omega$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$50\\ \\Omega$",
+      "solution_steps": [
+        "For a series RC circuit, resistance and reactance combine like the two legs of a right triangle (they're $90°$ out of phase): $Z = \\sqrt{R^2+X_C^2}$.",
+        "$Z = \\sqrt{30^2+40^2} = \\sqrt{900+1600} = \\sqrt{2500} = 50\\ \\Omega$ — a $3$-$4$-$5$ right triangle in disguise.",
+        "Cross-checked in python: `(30**2+40**2)**0.5` gives exactly $50.0$.",
+        "$70\\ \\Omega$ comes from simply ADDING $R$ and $X_C$ directly, as if they were in phase like resistors in series with each other. $10\\ \\Omega$ comes from SUBTRACTING them instead. $2500\\ \\Omega$ comes from computing $R^2+X_C^2$ correctly but then forgetting to take the square root at the end."
+      ],
+      "verification_method": "python_numeric_rc_impedance_pythagorean"
+    },
+    {
+      "id": "pi-alternating-current-004",
+      "concept_id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An AC voltage has a PEAK value of $200\\ \\text{V}$. Find its RMS value.",
+      "options": [
+        "$141.4\\ \\text{V}$",
+        "$200\\ \\text{V}$",
+        "$127.3\\ \\text{V}$",
+        "$100\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$141.4\\ \\text{V}$",
+      "solution_steps": [
+        "$V_{rms} = \\dfrac{V_0}{\\sqrt2}$ — a genuinely different, smaller number from both the peak value itself and the half-cycle average value.",
+        "$V_{rms} = \\dfrac{200}{\\sqrt2} \\approx 141.4\\ \\text{V}$.",
+        "Cross-checked in python with sympy: `200/sp.sqrt(2)` evaluates to $141.42...\\approx141.4$.",
+        "$200\\ \\text{V}$ is simply the PEAK value $V_0$, reported unchanged as if peak and RMS were the same thing. $127.3\\ \\text{V}$ is the AVERAGE value over a half-cycle instead, $\\dfrac{2\\times200}{\\pi}\\approx127.3$ — the classic mix-up between the three distinct AC quantities (peak, RMS, average). $100\\ \\text{V}$ comes from a naive halving of the peak value, ignoring the actual $1/\\sqrt2$ factor."
+      ],
+      "verification_method": "python_sympy_rms_vs_peak_vs_average_confusion_check"
+    },
+    {
+      "id": "pi-alternating-current-005",
+      "concept_id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In an AC circuit, the RMS voltage is $100\\ \\text{V}$, the RMS current is $2\\ \\text{A}$, and the phase angle between them is $60°$ (so $\\cos60°=0.5$). Find the average power consumed.",
+      "options": [
+        "$100\\ \\text{W}$",
+        "$200\\ \\text{W}$",
+        "$173.2\\ \\text{W}$",
+        "$50\\ \\text{W}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$100\\ \\text{W}$",
+      "solution_steps": [
+        "Average power in an AC circuit: $P = V_{rms}I_{rms}\\cos\\phi$, where $\\cos\\phi$ is the power factor.",
+        "$P = 100\\times2\\times0.5 = 100\\ \\text{W}$.",
+        "Cross-checked in python with sympy: `100*2*sp.cos(sp.pi/3)` gives exactly $100$.",
+        "$200\\ \\text{W}$ comes from forgetting the power factor $\\cos\\phi$ entirely, as if the circuit were purely resistive with the voltage and current perfectly in phase. $173.2\\ \\text{W}$ comes from using $\\sin\\phi=\\sin60°\\approx0.866$ instead of $\\cos\\phi=\\cos60°=0.5$, mixing up the two trig functions. $50\\ \\text{W}$ comes from using $\\cos^2\\phi=0.25$ instead of $\\cos\\phi=0.5$, an extra squaring slip."
+      ],
+      "verification_method": "python_sympy_ac_average_power_power_factor"
+    },
+    {
+      "id": "pi-alternating-current-006",
+      "concept_id": "alternating-current",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An LCR series circuit has inductance $L=0.1\\ \\text{H}$ and capacitance $C=10\\ \\mu\\text{F}$. Find its resonant frequency.",
+      "options": [
+        "$159.2\\ \\text{Hz}$",
+        "$1000\\ \\text{Hz}$",
+        "$0.159\\ \\text{Hz}$",
+        "$318.3\\ \\text{Hz}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$159.2\\ \\text{Hz}$",
+      "solution_steps": [
+        "Resonant frequency of a series LCR circuit: $f_0 = \\dfrac{1}{2\\pi\\sqrt{LC}}$.",
+        "$\\sqrt{LC} = \\sqrt{0.1\\times10\\times10^{-6}} = \\sqrt{10^{-6}} = 10^{-3}$, so $f_0 = \\dfrac{1}{2\\pi\\times10^{-3}} \\approx 159.2\\ \\text{Hz}$.",
+        "Cross-checked in python with sympy: `1/(2*sp.pi*sp.sqrt(L*C))` evaluates to $159.15...\\approx159.2$.",
+        "$1000\\ \\text{Hz}$ comes from forgetting the $2\\pi$ factor entirely and reporting the ANGULAR frequency $\\omega_0=1/\\sqrt{LC}=1000\\ \\text{rad/s}$ as if it were the ordinary frequency $f_0$ in Hz. $0.159\\ \\text{Hz}$ comes from forgetting to convert $C=10\\ \\mu\\text{F}$ into farads (using $C=10$ instead of $C=10\\times10^{-6}$), a factor-of-a-million unit slip. $318.3\\ \\text{Hz}$ comes from using $\\pi\\sqrt{LC}$ instead of $2\\pi\\sqrt{LC}$ in the denominator (missing a factor of $2$)."
+      ],
+      "verification_method": "python_sympy_lcr_resonant_frequency"
+    },
+    {
+      "id": "pi-electromagnetic-waves-001",
+      "concept_id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Arrange the following in order of INCREASING frequency: radio waves, gamma rays, visible light.",
+      "options": [
+        "Radio waves, visible light, gamma rays",
+        "Gamma rays, visible light, radio waves",
+        "Visible light, radio waves, gamma rays",
+        "Radio waves, gamma rays, visible light"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Radio waves, visible light, gamma rays",
+      "solution_steps": [
+        "The electromagnetic spectrum is ordered by frequency (equivalently, by photon energy — higher frequency means higher energy per photon, since $E=hf$): radio waves have the lowest frequency of the three, gamma rays the highest, with visible light in between.",
+        "So increasing frequency is: radio waves $\\to$ visible light $\\to$ gamma rays.",
+        "This is a standard, well-established ordering of the electromagnetic spectrum, listed in every NCERT physics textbook's EM-waves chapter.",
+        "Gamma rays, visible light, radio waves is the sequence in exactly REVERSED (decreasing) order. Visible light, radio waves, gamma rays jumbles the middle and lowest entries. Radio waves, gamma rays, visible light gets the first entry right but then swaps the order of the last two."
+      ],
+      "verification_method": "physics_fact_check_standard_em_spectrum_ordering"
+    },
+    {
+      "id": "pi-electromagnetic-waves-002",
+      "concept_id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using $\\mu_0 = 4\\pi\\times10^{-7}\\ \\text{T m/A}$ and $\\varepsilon_0 = 8.85\\times10^{-12}\\ \\text{C}^2\\text{N}^{-1}\\text{m}^{-2}$, the speed of an electromagnetic wave in vacuum is $c = \\dfrac{1}{\\sqrt{\\mu_0\\varepsilon_0}}$. This value comes out closest to which of the following?",
+      "options": [
+        "$3\\times10^{8}\\ \\text{m/s}$",
+        "$3\\times10^{6}\\ \\text{m/s}$",
+        "$3\\times10^{10}\\ \\text{m/s}$",
+        "$3\\times10^{4}\\ \\text{m/s}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3\\times10^{8}\\ \\text{m/s}$",
+      "solution_steps": [
+        "Substituting the given constants: $c = \\dfrac{1}{\\sqrt{(4\\pi\\times10^{-7})\\times(8.85\\times10^{-12})}}$.",
+        "Working this out numerically gives $c \\approx 2.999\\times10^{8}\\ \\text{m/s} \\approx 3\\times10^{8}\\ \\text{m/s}$ — this is exactly why Maxwell's equations predicted that light itself is an electromagnetic wave, since this value matched the already-measured speed of light.",
+        "Cross-checked in python with sympy: `1/sp.sqrt(mu0*eps0)` evaluates to $2.9986\\times10^8$, which rounds to $3\\times10^8$.",
+        "$3\\times10^{6}\\ \\text{m/s}$ and $3\\times10^{10}\\ \\text{m/s}$ are the same digits with the decimal exponent misplaced by two powers of ten in either direction — an easy slip when combining several powers of ten under a square root. $3\\times10^{4}\\ \\text{m/s}$ is off by four powers of ten, from a similar but larger exponent-tracking error."
+      ],
+      "verification_method": "python_sympy_speed_of_light_from_mu0_eps0"
+    },
+    {
+      "id": "pi-electromagnetic-waves-003",
+      "concept_id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An electromagnetic wave in vacuum has a magnetic field amplitude of $B_0=2\\times10^{-6}\\ \\text{T}$. Using $c=3\\times10^{8}\\ \\text{m/s}$, find its electric field amplitude $E_0$.",
+      "options": [
+        "$600\\ \\text{V/m}$",
+        "$1200\\ \\text{V/m}$",
+        "$2\\times10^{-6}\\ \\text{V/m}$",
+        "$6.67\\times10^{-15}\\ \\text{V/m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$600\\ \\text{V/m}$",
+      "solution_steps": [
+        "For an electromagnetic wave in vacuum, the electric and magnetic field amplitudes are related by $E_0 = cB_0$.",
+        "$E_0 = (3\\times10^8)\\times(2\\times10^{-6}) = 600\\ \\text{V/m}$.",
+        "Cross-checked in python: `3e8*2e-6` gives exactly $600.0$.",
+        "$1200\\ \\text{V/m}$ comes from an extra, incorrect factor of $2$ in the formula. $2\\times10^{-6}\\ \\text{V/m}$ comes from forgetting to multiply by $c$ at all, just reporting $B_0$'s own numeric value as if it were $E_0$. $6.67\\times10^{-15}\\ \\text{V/m}$ comes from inverting the relation — computing $B_0/c$ instead of $B_0\\times c$."
+      ],
+      "verification_method": "python_numeric_E0_cB0_relation"
+    },
+    {
+      "id": "pi-electromagnetic-waves-004",
+      "concept_id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A radio station broadcasts at a frequency of $100\\ \\text{MHz}$. Using $c=3\\times10^{8}\\ \\text{m/s}$, find the wavelength of these radio waves.",
+      "options": [
+        "$3\\ \\text{m}$",
+        "$0.333\\ \\text{m}$",
+        "$3\\times10^{6}\\ \\text{m}$",
+        "$3\\times10^{16}\\ \\text{m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3\\ \\text{m}$",
+      "solution_steps": [
+        "Wave speed relation: $c = f\\lambda$, so $\\lambda = c/f$. Here $f=100\\ \\text{MHz}=1\\times10^8\\ \\text{Hz}$.",
+        "$\\lambda = \\dfrac{3\\times10^8}{1\\times10^8} = 3\\ \\text{m}$.",
+        "Cross-checked in python: `3e8/100e6` gives exactly $3.0$.",
+        "$0.333\\ \\text{m}$ comes from inverting the formula — computing $f/c$ instead of $c/f$. $3\\times10^{6}\\ \\text{m}$ comes from forgetting that '$100\\ \\text{MHz}$' means $100\\times10^6\\ \\text{Hz}$, and instead using $f=100\\ \\text{Hz}$ directly (missing the mega- prefix). $3\\times10^{16}\\ \\text{m}$ comes from MULTIPLYING $c$ and $f$ together instead of dividing."
+      ],
+      "verification_method": "python_numeric_wavelength_frequency_relation"
+    },
+    {
+      "id": "pi-electromagnetic-waves-005",
+      "concept_id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Maxwell's key addition to Ampère's law — the extra term needed to explain that a CHANGING electric field between capacitor plates produces a magnetic field, exactly as a real current would — is called the:",
+      "options": [
+        "Displacement current",
+        "Conduction current",
+        "Eddy current",
+        "Induced current"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Displacement current",
+      "solution_steps": [
+        "Maxwell noticed that Ampère's law, as originally stated, only accounted for magnetic fields produced by actual charge flow (conduction current) — it failed for a circuit with a gap, like the space between two capacitor plates being charged.",
+        "He added a new term, $\\varepsilon_0\\dfrac{d\\Phi_E}{dt}$, called the DISPLACEMENT CURRENT, which acts exactly like a real current for the purpose of producing a magnetic field, even though no charge actually crosses the gap between the plates.",
+        "This is a standard, named result from Maxwell's equations, covered in every NCERT electromagnetic-waves chapter.",
+        "'Conduction current' is the ordinary current due to actual moving charges in a wire — the very thing Maxwell's new term was needed to SUPPLEMENT, not the term itself. 'Eddy current' is a swirling induced current in a solid conductor caused by a changing magnetic flux (a Lenz's-law effect, unrelated to Ampère's law's gap problem). 'Induced current' is the general term for any current caused by electromagnetic induction (Faraday's law), a different phenomenon from the displacement-current term inside Ampère's law."
+      ],
+      "verification_method": "physics_fact_check_displacement_current_definition"
+    },
+    {
+      "id": "pi-electromagnetic-waves-006",
+      "concept_id": "electromagnetic-waves",
+      "topic": "jee-electromagnetism",
+      "difficulty": 0.65,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "An electromagnetic wave in vacuum has electric field amplitude $E_0=100\\ \\text{V/m}$. Using $c=3\\times10^{8}\\ \\text{m/s}$ and $\\varepsilon_0=8.85\\times10^{-12}\\ \\text{C}^2\\text{N}^{-1}\\text{m}^{-2}$, find the intensity of the wave.",
+      "options": [
+        "$13.3\\ \\text{W/m}^2$",
+        "$26.6\\ \\text{W/m}^2$",
+        "$0.133\\ \\text{W/m}^2$",
+        "$1.5\\times10^{12}\\ \\text{W/m}^2$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$13.3\\ \\text{W/m}^2$",
+      "solution_steps": [
+        "The intensity (average power per unit area) of an electromagnetic wave in vacuum is $I = \\dfrac12\\varepsilon_0 c E_0^2$.",
+        "$I = 0.5\\times(8.85\\times10^{-12})\\times(3\\times10^8)\\times(100)^2 = 0.5\\times8.85\\times10^{-12}\\times3\\times10^8\\times10000 \\approx 13.3\\ \\text{W/m}^2$.",
+        "Cross-checked in python: `0.5*8.85e-12*3e8*100**2` gives $13.275$, i.e. $\\approx13.3\\ \\text{W/m}^2$.",
+        "$26.6\\ \\text{W/m}^2$ comes from forgetting the factor of $\\tfrac12$ in the formula. $0.133\\ \\text{W/m}^2$ comes from forgetting to SQUARE $E_0$ (using $\\tfrac12\\varepsilon_0cE_0$ instead of $\\tfrac12\\varepsilon_0cE_0^2$). $1.5\\times10^{12}\\ \\text{W/m}^2$ comes from forgetting to include $\\varepsilon_0$ entirely (computing $\\tfrac12cE_0^2$ alone), which also makes the units come out wrong."
+      ],
+      "verification_method": "python_numeric_em_wave_intensity_formula"
+    },
+    {
+      "id": "pi-dual-nature-matter-001",
+      "concept_id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using $h=6.63\\times10^{-34}\\ \\text{J s}$, $c=3\\times10^{8}\\ \\text{m/s}$ and $1\\ \\text{eV}=1.6\\times10^{-19}\\ \\text{J}$, find the energy (in eV) of a photon of light with wavelength $400\\ \\text{nm}$.",
+      "options": [
+        "$3.11\\ \\text{eV}$",
+        "$6.22\\ \\text{eV}$",
+        "$1.55\\ \\text{eV}$",
+        "$4.97\\times10^{-19}\\ \\text{eV}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3.11\\ \\text{eV}$",
+      "solution_steps": [
+        "Photon energy: $E = \\dfrac{hc}{\\lambda}$. With $\\lambda=400\\ \\text{nm}=4\\times10^{-7}\\ \\text{m}$: $E = \\dfrac{(6.63\\times10^{-34})(3\\times10^{8})}{4\\times10^{-7}} = 4.9725\\times10^{-19}\\ \\text{J}$.",
+        "Converting to eV: $E = \\dfrac{4.9725\\times10^{-19}}{1.6\\times10^{-19}} \\approx 3.11\\ \\text{eV}$.",
+        "Cross-checked in python: `(6.63e-34*3e8/400e-9)/1.6e-19` gives $3.1078$, matching $3.11\\ \\text{eV}$.",
+        "$6.22\\ \\text{eV}$ comes from using HALF the given wavelength ($200\\ \\text{nm}$) by mistake — since $E\\propto1/\\lambda$, halving $\\lambda$ doubles $E$. $1.55\\ \\text{eV}$ comes from the opposite slip — using DOUBLE the wavelength ($800\\ \\text{nm}$), halving $E$. $4.97\\times10^{-19}\\ \\text{eV}$ comes from forgetting to convert joules to electron-volts at all — reporting the correct joule value's number but leaving 'eV' as the (wrong) unit label."
+      ],
+      "verification_method": "python_numeric_photon_energy_hc_over_lambda"
+    },
+    {
+      "id": "pi-dual-nature-matter-002",
+      "concept_id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Light of energy $4.5\\ \\text{eV}$ falls on a metal surface whose work function is $2.0\\ \\text{eV}$. Find the maximum kinetic energy of the emitted photoelectrons.",
+      "options": [
+        "$2.5\\ \\text{eV}$",
+        "$6.5\\ \\text{eV}$",
+        "$4.5\\ \\text{eV}$",
+        "$2.0\\ \\text{eV}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.5\\ \\text{eV}$",
+      "solution_steps": [
+        "Einstein's photoelectric equation: $KE_{max} = E_{photon} - \\phi$, where $\\phi$ is the work function — the minimum energy needed just to free an electron from the metal, with anything left over becoming kinetic energy.",
+        "$KE_{max} = 4.5 - 2.0 = 2.5\\ \\text{eV}$.",
+        "Cross-checked in python: `4.5-2.0` gives exactly $2.5$.",
+        "$6.5\\ \\text{eV}$ comes from ADDING the work function instead of subtracting it. $4.5\\ \\text{eV}$ comes from ignoring the work function entirely, reporting the full photon energy as if none of it were 'spent' freeing the electron. $2.0\\ \\text{eV}$ comes from reporting the work function itself, mistaken for the answer."
+      ],
+      "verification_method": "python_numeric_einstein_photoelectric_equation"
+    },
+    {
+      "id": "pi-dual-nature-matter-003",
+      "concept_id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a photoelectric experiment, monochromatic light (above the metal's threshold frequency) falls on a metal surface. If the INTENSITY of the light is increased while its frequency is kept exactly the same, what happens to (i) the photocurrent, and (ii) the maximum kinetic energy of the emitted photoelectrons?",
+      "options": [
+        "Photocurrent increases; maximum kinetic energy stays the same",
+        "Both the photocurrent and the maximum kinetic energy increase",
+        "Photocurrent stays the same; maximum kinetic energy increases",
+        "Both the photocurrent and the maximum kinetic energy stay the same"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Photocurrent increases; maximum kinetic energy stays the same",
+      "solution_steps": [
+        "Intensity means more photons striking the surface per second, at the SAME energy per photon (since frequency is unchanged) — so MORE electrons get emitted per second, increasing the photocurrent.",
+        "But each individual photon still carries exactly the same energy as before (energy depends only on frequency, $E=hf$), so the maximum kinetic energy of any one emitted electron, $KE_{max}=hf-\\phi$, is completely unaffected by intensity — it depends only on frequency and the work function.",
+        "This is one of the sharpest, most-tested distinctions in the photoelectric effect: intensity controls HOW MANY electrons come out (current), frequency controls HOW ENERGETIC each one is (maximum KE).",
+        "'Both increase' is the natural but wrong guess — that 'brighter light' should mean 'more energetic electrons too,' when in fact each photon's individual energy never changed. 'Photocurrent stays the same, KE increases' has the two effects backwards. 'Both stay the same' wrongly assumes intensity has no effect on the experiment at all, when it does change how many electrons are emitted per second."
+      ],
+      "verification_method": "physics_fact_check_photoelectric_intensity_vs_frequency"
+    },
+    {
+      "id": "pi-dual-nature-matter-004",
+      "concept_id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Light of wavelength $300\\ \\text{nm}$ falls on a metal of work function $2.0\\ \\text{eV}$. Using $h=6.63\\times10^{-34}\\ \\text{J s}$, $c=3\\times10^{8}\\ \\text{m/s}$ and $1\\ \\text{eV}=1.6\\times10^{-19}\\ \\text{J}$, find the stopping potential.",
+      "options": [
+        "$2.14\\ \\text{V}$",
+        "$4.14\\ \\text{V}$",
+        "$6.14\\ \\text{V}$",
+        "$2.0\\ \\text{V}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.14\\ \\text{V}$",
+      "solution_steps": [
+        "Photon energy: $E = \\dfrac{hc}{\\lambda} = \\dfrac{(6.63\\times10^{-34})(3\\times10^8)}{300\\times10^{-9}} = 6.63\\times10^{-19}\\ \\text{J} = 4.14\\ \\text{eV}$.",
+        "The stopping potential $V_0$ (in volts, numerically) equals $KE_{max}$ in eV: $eV_0 = E-\\phi \\Rightarrow V_0 = 4.14-2.0 = 2.14\\ \\text{V}$.",
+        "Cross-checked in python: `(6.63e-34*3e8/300e-9)/1.6e-19 - 2.0` gives $2.14375$, matching $2.14\\ \\text{V}$.",
+        "$4.14\\ \\text{V}$ comes from forgetting to subtract the work function at all, reporting the raw photon energy in eV. $6.14\\ \\text{V}$ comes from ADDING the work function instead of subtracting it. $2.0\\ \\text{V}$ comes from mistakenly reporting the work function itself as the stopping potential."
+      ],
+      "verification_method": "python_numeric_stopping_potential_from_photon_energy"
+    },
+    {
+      "id": "pi-dual-nature-matter-005",
+      "concept_id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.55,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Using $h=6.63\\times10^{-34}\\ \\text{J s}$, find the de Broglie wavelength of an electron (mass $9.1\\times10^{-31}\\ \\text{kg}$) moving at $2\\times10^{6}\\ \\text{m/s}$.",
+      "options": [
+        "$3.64\\times10^{-10}\\ \\text{m}$",
+        "$3.64\\times10^{-7}\\ \\text{m}$",
+        "$1.82\\times10^{-10}\\ \\text{m}$",
+        "$7.29\\times10^{-10}\\ \\text{m}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$3.64\\times10^{-10}\\ \\text{m}$",
+      "solution_steps": [
+        "De Broglie wavelength: $\\lambda = \\dfrac{h}{p} = \\dfrac{h}{mv}$.",
+        "$\\lambda = \\dfrac{6.63\\times10^{-34}}{(9.1\\times10^{-31})(2\\times10^{6})} \\approx 3.64\\times10^{-10}\\ \\text{m}$.",
+        "Cross-checked in python: `6.63e-34/(9.1e-31*2e6)` gives $3.6429\\times10^{-10}$, matching $3.64\\times10^{-10}\\ \\text{m}$.",
+        "$3.64\\times10^{-7}\\ \\text{m}$ comes from misreading the speed's exponent as $2\\times10^{3}\\ \\text{m/s}$ instead of $2\\times10^{6}\\ \\text{m/s}$, one thousand times too slow, which inflates $\\lambda$ by the same factor. $1.82\\times10^{-10}\\ \\text{m}$ comes from an extra, incorrect factor of $2$ in the denominator (using $2mv$ instead of $mv$). $7.29\\times10^{-10}\\ \\text{m}$ comes from the opposite slip — using $\\tfrac12mv$ in the denominator instead of $mv$, doubling $\\lambda$."
+      ],
+      "verification_method": "python_numeric_de_broglie_wavelength"
+    },
+    {
+      "id": "pi-dual-nature-matter-006",
+      "concept_id": "dual-nature-matter",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "Light of wavelength $200\\ \\text{nm}$ ejects photoelectrons from a metal of work function $2.0\\ \\text{eV}$. Using $h=6.63\\times10^{-34}\\ \\text{J s}$, $c=3\\times10^{8}\\ \\text{m/s}$, $1\\ \\text{eV}=1.6\\times10^{-19}\\ \\text{J}$ and electron mass $9.1\\times10^{-31}\\ \\text{kg}$, find the de Broglie wavelength of the fastest emitted electron.",
+      "options": [
+        "$0.598\\ \\text{nm}$",
+        "$0.493\\ \\text{nm}$",
+        "$0.846\\ \\text{nm}$",
+        "$200\\ \\text{nm}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.598\\ \\text{nm}$",
+      "solution_steps": [
+        "First find the photon energy: $E = \\dfrac{hc}{\\lambda} = \\dfrac{(6.63\\times10^{-34})(3\\times10^8)}{200\\times10^{-9}} = 9.945\\times10^{-19}\\ \\text{J} \\approx 6.22\\ \\text{eV}$.",
+        "Maximum electron kinetic energy: $KE_{max} = E-\\phi = 6.22-2.0 = 4.22\\ \\text{eV} = 6.75\\times10^{-19}\\ \\text{J}$. From this, momentum $p=\\sqrt{2mKE_{max}}$, and finally $\\lambda_{dB}=h/p \\approx 0.598\\ \\text{nm}$.",
+        "Cross-checked step by step in python: photon energy, then $KE_{max}$ in joules, then momentum via $\\sqrt{2mKE_{max}}$, then $\\lambda_{dB}=h/p$ — gives $5.984\\times10^{-10}\\ \\text{m} = 0.598\\ \\text{nm}$.",
+        "$0.493\\ \\text{nm}$ comes from forgetting to subtract the work function — using the FULL photon energy as the electron's kinetic energy instead of $KE_{max}=E-\\phi$. $0.846\\ \\text{nm}$ comes from forgetting the factor of $2$ inside the momentum formula (using $p=\\sqrt{mKE_{max}}$ instead of $\\sqrt{2mKE_{max}}$). $200\\ \\text{nm}$ comes from confusing the PHOTON's own wavelength with the emitted ELECTRON's de Broglie wavelength — these are two completely different waves for two completely different particles."
+      ],
+      "verification_method": "python_numeric_combined_photoelectric_then_de_broglie"
+    },
+    {
+      "id": "pi-atoms-and-nuclei-001",
+      "concept_id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A radioactive nucleus $^{238}_{92}\\text{U}$ emits an alpha particle ($^{4}_{2}\\text{He}$). What are the mass number and atomic number of the daughter nucleus?",
+      "options": [
+        "Mass number $234$, atomic number $90$",
+        "Mass number $234$, atomic number $92$",
+        "Mass number $238$, atomic number $90$",
+        "Mass number $236$, atomic number $90$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Mass number $234$, atomic number $90$",
+      "solution_steps": [
+        "An alpha particle carries away mass number $4$ and atomic number $2$ (it IS a helium nucleus). Both mass number and atomic number must balance on the two sides of a nuclear reaction.",
+        "Daughter mass number: $238-4=234$. Daughter atomic number: $92-2=90$. So the daughter is $^{234}_{90}\\text{Th}$ (thorium).",
+        "This is a standard nuclear-physics bookkeeping fact — verified against the known alpha-decay chain of $^{238}\\text{U}$, whose first daughter is indeed thorium-234.",
+        "Mass number $234$, atomic number $92$ correctly reduces the mass number but forgets to reduce the atomic number at all. Mass number $238$, atomic number $90$ makes the opposite mistake — reduces the atomic number but forgets to reduce the mass number. Mass number $236$, atomic number $90$ subtracts only $2$ from the mass number instead of the alpha particle's full mass number of $4$."
+      ],
+      "verification_method": "physics_fact_check_alpha_decay_mass_charge_balance"
+    },
+    {
+      "id": "pi-atoms-and-nuclei-002",
+      "concept_id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.3,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A radioactive nucleus $^{14}_{6}\\text{C}$ undergoes beta-minus decay (emitting an electron). What are the mass number and atomic number of the daughter nucleus?",
+      "options": [
+        "Mass number $14$, atomic number $7$",
+        "Mass number $14$, atomic number $5$",
+        "Mass number $13$, atomic number $7$",
+        "Mass number $14$, atomic number $6$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Mass number $14$, atomic number $7$",
+      "solution_steps": [
+        "In beta-minus decay, a neutron inside the nucleus converts into a proton, an electron, and an antineutrino. The emitted electron carries away essentially no mass number, but the nucleus GAINS one proton, so the atomic number goes UP by $1$ while the mass number stays the same.",
+        "Daughter mass number: $14$ (unchanged). Daughter atomic number: $6+1=7$. So the daughter is $^{14}_{7}\\text{N}$ (nitrogen) — this is exactly the decay behind radiocarbon dating.",
+        "This is a standard nuclear-physics fact, cross-checked against the well-known carbon-14 to nitrogen-14 beta-decay chain.",
+        "Mass number $14$, atomic number $5$ moves the atomic number in the WRONG direction — decreasing it, which is what beta-PLUS decay does, not beta-minus. Mass number $13$, atomic number $7$ wrongly changes the mass number, which beta decay never does. Mass number $14$, atomic number $6$ assumes nothing changes at all, missing that a neutron becoming a proton does change the atomic number."
+      ],
+      "verification_method": "physics_fact_check_beta_minus_decay_mass_charge_balance"
+    },
+    {
+      "id": "pi-atoms-and-nuclei-003",
+      "concept_id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A radioactive sample has a half-life of $3$ hours and starts with a mass of $640\\ \\text{g}$. How much of the sample remains after $2$ half-lives (i.e. $6$ hours)?",
+      "options": [
+        "$160\\ \\text{g}$",
+        "$0\\ \\text{g}$",
+        "$320\\ \\text{g}$",
+        "$480\\ \\text{g}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$160\\ \\text{g}$",
+      "solution_steps": [
+        "After each half-life, exactly HALF of whatever remains decays — the remaining amount after $n$ half-lives is $N_0\\times(1/2)^n$, never a simple subtraction of a fixed amount each time.",
+        "After $2$ half-lives: $N = 640\\times(1/2)^2 = 640\\times\\dfrac14 = 160\\ \\text{g}$.",
+        "Cross-checked in python: `640*0.5**2` gives exactly $160.0$.",
+        "$0\\ \\text{g}$ is the classic trap in this topic — the mistaken belief that '$2$ half-lives' means the substance is completely gone. It never fully disappears in a finite number of half-lives; only HALF of what's left decays each time. $320\\ \\text{g}$ comes from applying only ONE half-life's worth of decay, forgetting the second one. $480\\ \\text{g}$ comes from an inverted idea of the fraction remaining — treating $\\tfrac34$ (not $\\tfrac14$) as what's left after $2$ half-lives."
+      ],
+      "verification_method": "python_numeric_half_life_two_half_lives_check"
+    },
+    {
+      "id": "pi-atoms-and-nuclei-004",
+      "concept_id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A nuclear reaction has a mass defect of $\\Delta m = 3.3\\times10^{-28}\\ \\text{kg}$. Using $c=3\\times10^8\\ \\text{m/s}$ and $1\\ \\text{MeV}=1.6\\times10^{-13}\\ \\text{J}$, find the energy released, in MeV.",
+      "options": [
+        "$185.6\\ \\text{MeV}$",
+        "$1.86\\times10^{8}\\ \\text{MeV}$",
+        "$3.87\\times10^{6}\\ \\text{MeV}$",
+        "$92.8\\ \\text{MeV}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$185.6\\ \\text{MeV}$",
+      "solution_steps": [
+        "Mass-energy equivalence: $E = \\Delta m\\, c^2 = (3.3\\times10^{-28})\\times(3\\times10^8)^2 = 2.97\\times10^{-11}\\ \\text{J}$.",
+        "Converting to MeV: $E = \\dfrac{2.97\\times10^{-11}}{1.6\\times10^{-13}} = 185.625\\ \\text{MeV}$.",
+        "Cross-checked in python: `3.3e-28*(3e8)**2/1.6e-13` gives $185.625$, matching $185.6\\ \\text{MeV}$.",
+        "$1.86\\times10^{8}\\ \\text{MeV}$ comes from converting joules to ELECTRON-VOLTS ($1\\ \\text{eV}=1.6\\times10^{-19}\\ \\text{J}$) instead of MEGA-electron-volts, missing a factor of a million. $3.87\\times10^{6}\\ \\text{MeV}$ comes from forgetting to SQUARE the speed of light — using $E=\\Delta m\\, c$ instead of $E=\\Delta m\\, c^2$. $92.8\\ \\text{MeV}$ comes from using half of $\\Delta m$ by mistake, halving the final energy."
+      ],
+      "verification_method": "python_numeric_mass_energy_equivalence_binding_energy"
+    },
+    {
+      "id": "pi-atoms-and-nuclei-005",
+      "concept_id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A radioactive substance has a half-life of $10$ days. Find its decay constant $\\lambda$ (per day).",
+      "options": [
+        "$0.0693\\ \\text{day}^{-1}$",
+        "$0.1\\ \\text{day}^{-1}$",
+        "$10\\ \\text{day}^{-1}$",
+        "$14.43\\ \\text{day}^{-1}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$0.0693\\ \\text{day}^{-1}$",
+      "solution_steps": [
+        "Decay constant and half-life are related by $\\lambda = \\dfrac{\\ln2}{T_{1/2}} = \\dfrac{0.693}{T_{1/2}}$ — note the $\\ln2\\approx0.693$ factor, not simply $1$.",
+        "$\\lambda = \\dfrac{0.693}{10} = 0.0693\\ \\text{day}^{-1}$.",
+        "Cross-checked in python: `0.693/10` gives exactly $0.0693$.",
+        "$0.1\\ \\text{day}^{-1}$ comes from dropping the $\\ln2$ factor and using $\\lambda=1/T_{1/2}$ instead — as if half-life and the '$e$-folding time' of exponential decay were the same thing (they aren't). $10\\ \\text{day}^{-1}$ comes from reporting the half-life value itself, mistaken for the decay constant. $14.43\\ \\text{day}^{-1}$ comes from inverting the formula — computing $T_{1/2}/0.693$ instead of $0.693/T_{1/2}$."
+      ],
+      "verification_method": "python_numeric_decay_constant_from_half_life"
+    },
+    {
+      "id": "pi-atoms-and-nuclei-006",
+      "concept_id": "atoms-and-nuclei",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.7,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A radioactive source has an initial activity of $1000\\ \\text{Bq}$ and a half-life of $5$ years. Using $A=A_0\\left(\\tfrac12\\right)^{t/T_{1/2}}$, find its activity after $8$ years.",
+      "options": [
+        "$330\\ \\text{Bq}$",
+        "$200\\ \\text{Bq}$",
+        "$250\\ \\text{Bq}$",
+        "$500\\ \\text{Bq}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$330\\ \\text{Bq}$",
+      "solution_steps": [
+        "$8$ years is $1.6$ half-lives (not a whole number), so the activity must be found from the exponential formula directly, not by counting a whole number of halvings.",
+        "$A = 1000\\times(1/2)^{8/5} = 1000\\times2^{-1.6} \\approx 330\\ \\text{Bq}$.",
+        "Cross-checked in python: `1000*0.5**(8/5)` gives $329.88$, matching $\\approx330\\ \\text{Bq}$.",
+        "$200\\ \\text{Bq}$ comes from wrongly treating radioactive decay as LINEAR instead of exponential — assuming the activity falls in a straight line to zero by $2$ half-lives ($10$ years), so at $8$ years it's linearly interpolated to $\\tfrac{2}{10}$ of the original. $250\\ \\text{Bq}$ comes from rounding $1.6$ half-lives UP to $2$ whole half-lives and using $1000/4$. $500\\ \\text{Bq}$ comes from rounding $1.6$ half-lives DOWN to just $1$ whole half-life and using $1000/2$."
+      ],
+      "verification_method": "python_numeric_activity_exponential_decay_noninteger_half_lives"
+    },
+    {
+      "id": "pi-semiconductor-electronics-001",
+      "concept_id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.2,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a p-n junction diode, what happens to the width of the depletion region when the junction is put under FORWARD bias?",
+      "options": [
+        "It decreases",
+        "It increases",
+        "It stays exactly the same",
+        "It disappears and reverses to the opposite side"
+      ],
+      "answer_index": 0,
+      "correct_answer": "It decreases",
+      "solution_steps": [
+        "Forward bias connects the battery's positive terminal to the p-side and negative terminal to the n-side. This pushes majority carriers (holes from the p-side, electrons from the n-side) TOWARD the junction, opposing the depletion region's own built-in field.",
+        "As majority carriers crowd back into the depletion region and recombine there, the depletion region NARROWS, lowering the barrier to current flow — this is exactly why forward bias allows current to flow easily.",
+        "This is a standard, well-established fact about p-n junction behaviour under bias, from every NCERT semiconductor-electronics chapter.",
+        "'It increases' describes what happens under REVERSE bias instead, exactly the opposite case. 'It stays exactly the same' ignores that biasing a junction is precisely what changes the depletion region's width — that's the entire mechanism behind diode action. 'Disappears and reverses to the opposite side' overstates the effect — the depletion region narrows under forward bias but doesn't flip to the other side of the junction."
+      ],
+      "verification_method": "physics_fact_check_forward_bias_depletion_region"
+    },
+    {
+      "id": "pi-semiconductor-electronics-002",
+      "concept_id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.25,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "In a half-wave rectifier circuit using a single diode, during which part of the AC input cycle does current flow through the load resistor?",
+      "options": [
+        "Only during the half-cycle when the diode is forward biased",
+        "During both halves of the AC cycle equally",
+        "Only during the half-cycle when the diode is reverse biased",
+        "Current never flows through the load in this circuit"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Only during the half-cycle when the diode is forward biased",
+      "solution_steps": [
+        "A diode conducts (lets current through) only when it is FORWARD biased, and blocks current almost completely when REVERSE biased.",
+        "In a half-wave rectifier, the AC input swings positive for one half-cycle (forward-biasing the diode, so current flows through the load) and negative for the other half (reverse-biasing the diode, so it blocks — no current flows). This is exactly why the output looks like only 'half' of the original wave — hence the name.",
+        "This is a standard, well-established fact from every NCERT semiconductor-electronics chapter on rectifier circuits.",
+        "'Both halves equally' would describe a FULL-wave rectifier (which uses two diodes or a bridge arrangement), not this single-diode half-wave circuit. 'Only during reverse bias' has diode behaviour exactly backwards — a diode BLOCKS current when reverse biased, it doesn't conduct then. 'Current never flows' ignores that the entire POINT of a rectifier is to let current flow during part of the cycle."
+      ],
+      "verification_method": "physics_fact_check_half_wave_rectifier_conduction"
+    },
+    {
+      "id": "pi-semiconductor-electronics-003",
+      "concept_id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.4,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A Zener diode is used in a voltage-regulator circuit. For this purpose, it is operated in which mode?",
+      "options": [
+        "Reverse bias, in its breakdown region",
+        "Forward bias, like an ordinary diode",
+        "With no bias applied at all",
+        "Alternating between forward and reverse bias"
+      ],
+      "answer_index": 0,
+      "correct_answer": "Reverse bias, in its breakdown region",
+      "solution_steps": [
+        "A Zener diode is specially designed so that, once reverse biased PAST its breakdown voltage, the voltage across it stays almost perfectly constant even as the current through it changes significantly.",
+        "This constant-voltage behaviour in REVERSE breakdown is exactly what makes it useful for voltage regulation — the load connected across the Zener sees a steady voltage regardless of fluctuations elsewhere in the circuit.",
+        "This is a standard, well-established fact about Zener diode operation, from every NCERT semiconductor-electronics chapter.",
+        "'Forward bias' is how an ORDINARY diode is used to conduct current, but forward bias gives no special constant-voltage behaviour — that property only appears in the Zener's own reverse breakdown region. 'No bias applied' means no current and no regulation happening at all. 'Alternating between forward and reverse' describes rectifier action, not the steady, one-directional bias a voltage regulator actually needs."
+      ],
+      "verification_method": "physics_fact_check_zener_diode_voltage_regulation"
+    },
+    {
+      "id": "pi-semiconductor-electronics-004",
+      "concept_id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.45,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A transistor in common-emitter configuration has a current gain $\\beta=100$. If the base current is $20\\ \\mu\\text{A}$, find the collector current.",
+      "options": [
+        "$2.0\\ \\text{mA}$",
+        "$0.02\\ \\text{mA}$",
+        "$2.02\\ \\text{mA}$",
+        "$0.0002\\ \\text{mA}$"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$2.0\\ \\text{mA}$",
+      "solution_steps": [
+        "Common-emitter current gain: $\\beta = \\dfrac{I_C}{I_B}$, so $I_C = \\beta I_B$.",
+        "$I_C = 100\\times20\\ \\mu\\text{A} = 2000\\ \\mu\\text{A} = 2.0\\ \\text{mA}$.",
+        "Cross-checked in python: `100*20e-6` gives $0.002\\ \\text{A} = 2.0\\ \\text{mA}$.",
+        "$0.02\\ \\text{mA}$ comes from forgetting $\\beta$ entirely, reporting the base current itself as if it were the collector current. $2.02\\ \\text{mA}$ comes from reporting the EMITTER current instead, $I_E=I_B+I_C=0.02+2.0=2.02\\ \\text{mA}$ — a real quantity in the circuit, but not the one asked for. $0.0002\\ \\text{mA}$ comes from DIVIDING the base current by $\\beta$ instead of multiplying by it."
+      ],
+      "verification_method": "python_numeric_transistor_common_emitter_current_gain"
+    },
+    {
+      "id": "pi-semiconductor-electronics-005",
+      "concept_id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.5,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A logic circuit first passes two inputs $A=1$ and $B=0$ through an AND gate, and then passes the AND gate's output through a NOT gate. What is the final output?",
+      "options": [
+        "$1$",
+        "$0$",
+        "Undefined, since the inputs disagree",
+        "Equal to whichever input came first ($A=1$)"
+      ],
+      "answer_index": 0,
+      "correct_answer": "$1$",
+      "solution_steps": [
+        "First, the AND gate: $\\text{AND}(1,0) = 0$ — an AND gate outputs $1$ only when BOTH inputs are $1$, and here they aren't.",
+        "Then, the NOT gate flips its input: $\\text{NOT}(0) = 1$. So the final output is $1$ — this two-gate combination (AND followed by NOT) is exactly how a NAND gate is built from simpler gates.",
+        "Standard, well-established Boolean-logic truth-table fact, verified step by step against the definitions of AND and NOT.",
+        "$0$ comes from stopping after the AND gate and forgetting to apply the NOT gate at all. 'Undefined, since the inputs disagree' wrongly assumes a logic gate needs matching inputs to produce a defined output — every combination of $0$s and $1$s has a well-defined AND output. 'Equal to whichever input came first' isn't how logic gates work at all — the output depends on the LOGICAL OPERATION applied to both inputs together, not on which one is listed first."
+      ],
+      "verification_method": "physics_fact_check_and_then_not_gate_truth_table"
+    },
+    {
+      "id": "pi-semiconductor-electronics-006",
+      "concept_id": "semiconductor-electronics",
+      "topic": "jee-modern-physics",
+      "difficulty": 0.6,
+      "question_type": "mcq",
+      "marks": 4,
+      "question_text": "A pure silicon crystal (a group-14 element, with 4 valence electrons per atom) is doped with a small amount of phosphorus (a group-15 element, with 5 valence electrons per atom). What type of semiconductor is formed, and what are its majority charge carriers?",
+      "options": [
+        "n-type; majority carriers are electrons",
+        "p-type; majority carriers are holes",
+        "n-type; majority carriers are holes",
+        "p-type; majority carriers are electrons"
+      ],
+      "answer_index": 0,
+      "correct_answer": "n-type; majority carriers are electrons",
+      "solution_steps": [
+        "Phosphorus has ONE MORE valence electron than silicon. Four of its five valence electrons form covalent bonds with neighbouring silicon atoms, just like silicon's own atoms do — but the fifth electron has no bond to join and becomes loosely bound, free to move through the crystal as a DONOR electron.",
+        "Since the extra charge carriers are negative electrons, this is called an n-type semiconductor ('n' for negative), and its MAJORITY carriers are electrons — this is a standard, well-established fact about pentavalent doping.",
+        "Cross-checked against the standard NCERT semiconductor-electronics description of pentavalent (donor) doping.",
+        "'p-type; majority carriers are holes' describes doping with a TRIVALENT impurity (like boron, one electron SHORT of silicon's four), which creates extra holes instead — the exact opposite doping type from phosphorus. 'n-type; majority carriers are holes' gets the semiconductor type right but the majority carrier wrong — an n-type semiconductor's majority carriers are by definition electrons, not holes. 'p-type; majority carriers are electrons' mismatches the two facts in the other direction."
+      ],
+      "verification_method": "physics_fact_check_pentavalent_doping_n_type_semiconductor"
+    }
+  ]
+}

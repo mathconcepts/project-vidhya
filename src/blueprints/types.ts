@@ -189,6 +189,17 @@ export const RATIONALE_CODES = {
   family_coordinate_geometry: 'Coordinate-geometry-family template — repo extrapolation beyond the GATE-EM corpus, locus-before-equation sequence',
   family_trigonometry: 'Trigonometry-family template — repo extrapolation beyond the GATE-EM corpus, unit-circle-before-identity sequence',
   family_algebra: 'Algebra-family template — repo extrapolation beyond the GATE-EM corpus, small-numeric-case-before-formula sequence',
+  // Seven more, added when jee-main promoted Physics and Chemistry out of
+  // stub_concepts:. Same reason and same honesty marker as the three above:
+  // a postgraduate engineering-maths corpus has no mechanics, circuits,
+  // reaction mechanisms or periodic trends to be mapped from.
+  family_mechanics: 'Mechanics-family template — repo extrapolation beyond the GATE-EM corpus, physical-situation-then-free-body sequence',
+  family_field_and_circuit: 'Field-and-circuit-family template — repo extrapolation beyond the GATE-EM corpus, configuration-before-formula sequence',
+  family_wave_and_optics: 'Wave-and-optics-family template — repo extrapolation beyond the GATE-EM corpus, path-difference-picture-first sequence',
+  family_modern_physics: 'Modern-physics-family template — repo extrapolation beyond the GATE-EM corpus, experiment-that-broke-the-model sequence',
+  family_chemistry_quantitative: 'Quantitative-chemistry-family template — repo extrapolation beyond the GATE-EM corpus, count-before-formula sequence',
+  family_chemistry_structure: 'Structure-and-periodicity-family template — repo extrapolation beyond the GATE-EM corpus, structure-explains-property sequence',
+  family_chemistry_reaction: 'Reaction-mechanism-family template — repo extrapolation beyond the GATE-EM corpus, electron-movement-with-a-method-decision sequence',
 } as const;
 
 export type RationaleCode = keyof typeof RATIONALE_CODES;

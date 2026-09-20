@@ -11,17 +11,27 @@ metadata:
     qualifier for JEE Advanced and as a direct entry exam for ~30 NITs,
     IIITs, and CFTIs.
 
-    Phase 1 stub — operator fleshes out concept_ids via the curriculum
-    unit generator (PR #32+) rather than seeding all 150+ concepts at
-    once. This keeps the file truthful: only concepts that have at least
-    one generated curriculum_unit + at least one PYQ link are listed.
+    All three subjects are now real. Mathematics was promoted out of
+    `stub_concepts:` in v4.85.0 (23 concepts); Physics (24) and Chemistry
+    (22) followed, and `stub_concepts:` is empty for the first time. 69
+    concepts across 15 syllabus sections.
 
-    Note (CEO plan §6 stub-exam rule): every concept_id listed here is
-    declared in this file's stub_concepts: block below, because none of
-    them have a matching node in the concept graph yet (currently
-    GATE-only). exam-loader.ts requires that — an undeclared unknown
-    concept_id is a hard load failure, not a warning. Remove an id from
-    stub_concepts: once it gets a real concept-graph entry + curriculum unit.
+    FIVE of those 46 are NOT former stubs — `properties-of-matter`,
+    `kinetic-theory`, `thermodynamics-physics`, `electromagnetic-waves`
+    and `organic-basic-principles` are named units of the published JEE
+    Main syllabus that the original stub list simply omitted. Promoting
+    only the stubs would have left a pack claiming to cover Physics with
+    no thermodynamics and Chemistry with no IUPAC nomenclature.
+
+    TWO ids are kept but flagged: `solid-state` and `polymers` are widely
+    reported as dropped in NTA's 2023/2025 syllabus rationalisation.
+    jeemain.nta.nic.in is unreachable from this environment's egress
+    proxy, so the primary bulletin could not settle it. They are kept
+    (both are still Class 12 board content and still asked in other
+    engineering entrances this platform targets) and carry
+    `gate_frequency: low` rather than being deleted on secondary-source
+    evidence alone — same discipline as the unsettled numerical-value
+    marking rule recorded in `scoring:` below.
   scope: mcq-and-numerical
   total_marks: 300
   duration_minutes: 180
@@ -39,16 +49,28 @@ capabilities:
   interactives_enabled: true
 
 # ---------------------------------------------------------------------------
-# Syllabus structure — three subjects, each with topic groups.
-# Concept IDs are placeholders for Phase 1; the generator + curriculum
-# unit launches will populate the real concept lists incrementally.
+# Syllabus structure — three subjects, fifteen sections.
+# Every concept_id below resolves to a real node in this file's own
+# `concepts:` block; nothing here is a placeholder any more.
 # ---------------------------------------------------------------------------
 syllabus:
-  - id: jee-main-physics
-    title: Physics
-    weight_pct: 33.3
+  # Physics and Chemistry, as NINE sections rather than two.
+  #
+  # Same reasoning as the Mathematics split below, applied when these two
+  # subjects were promoted out of `stub_concepts:`. Sections are what the app
+  # renders as TOPICS, so a single `jee-main-physics` section would have shown
+  # a student one undifferentiated "Physics" bucket holding 24 concepts.
+  # Section ids ARE the concept `topic` strings, and they are namespaced
+  # (`jee-mechanics`, never `mechanics`) for the load-bearing reason spelled
+  # out above the `concepts:` block.
+  #
+  # weight_pct is derived STRUCTURALLY (33.3 x n/24 for Physics, 33.3 x n/22
+  # for Chemistry), not imported. NTA publishes a subject-level split only.
+
+  - id: jee-mechanics
+    title: Mechanics
+    weight_pct: 11.1
     concept_ids:
-      # Class 11
       - units-and-measurements
       - kinematics-1d
       - kinematics-2d
@@ -56,26 +78,53 @@ syllabus:
       - work-energy-power
       - rotational-mechanics
       - gravitation
+      - properties-of-matter
+
+  - id: jee-thermal-physics
+    title: Thermal Physics
+    weight_pct: 2.8
+    concept_ids:
+      - kinetic-theory
+      - thermodynamics-physics
+
+  - id: jee-oscillations-waves
+    title: Oscillations and Waves
+    weight_pct: 2.8
+    concept_ids:
       - oscillations-shm
       - waves-mechanical
-      # Class 12
+
+  - id: jee-electromagnetism
+    title: Electromagnetism
+    weight_pct: 9.7
+    concept_ids:
       - electrostatics-coulomb
       - capacitance
       - current-electricity
       - magnetic-effects
       - electromagnetic-induction
       - alternating-current
+      - electromagnetic-waves
+
+  - id: jee-optics
+    title: Optics
+    weight_pct: 2.8
+    concept_ids:
       - ray-optics
       - wave-optics
+
+  - id: jee-modern-physics
+    title: Modern Physics
+    weight_pct: 4.1
+    concept_ids:
       - dual-nature-matter
       - atoms-and-nuclei
       - semiconductor-electronics
 
-  - id: jee-main-chemistry
-    title: Chemistry
-    weight_pct: 33.3
+  - id: jee-physical-chemistry
+    title: Physical Chemistry
+    weight_pct: 15.1
     concept_ids:
-      # Physical Chemistry
       - mole-concept
       - atomic-structure
       - chemical-bonding
@@ -84,9 +133,14 @@ syllabus:
       - equilibrium-ionic
       - redox-and-electrochemistry
       - chemical-kinetics
-      - solid-state
       - solutions-and-colligative
-      # Organic Chemistry
+      - solid-state
+
+  - id: jee-organic-chemistry
+    title: Organic Chemistry
+    weight_pct: 12.1
+    concept_ids:
+      - organic-basic-principles
       - hydrocarbons
       - haloalkanes-haloarenes
       - alcohols-phenols-ethers
@@ -94,7 +148,11 @@ syllabus:
       - amines-and-diazonium
       - biomolecules
       - polymers
-      # Inorganic Chemistry
+
+  - id: jee-inorganic-chemistry
+    title: Inorganic Chemistry
+    weight_pct: 6.1
+    concept_ids:
       - periodic-table-trends
       - p-block-elements
       - d-and-f-block
@@ -178,11 +236,11 @@ syllabus:
 # ---------------------------------------------------------------------------
 # Concepts — JEE Main Mathematics (Paper 1)
 #
-# The 23 Mathematics ids referenced by `syllabus:` above, promoted from
-# `stub_concepts:` into real concept-graph nodes. Physics and Chemistry stay
-# stubs: this pack is being filled subject by subject, and `getSyllabus()`
-# reports the still-unresolved ids honestly rather than calling a partly
-# migrated pack done.
+# All 69 ids referenced by `syllabus:` above, as real concept-graph nodes:
+# 23 Mathematics (v4.85.0), then 24 Physics and 22 Chemistry. The pack was
+# filled subject by subject and `getSyllabus()` reported the unresolved ids
+# honestly at each step rather than calling a partly migrated pack done;
+# there is nothing left for it to report.
 #
 # TOPIC STRINGS ARE NAMESPACED (`jee-algebra`, not `algebra`) AND THAT IS
 # LOAD-BEARING, not cosmetic. Concept IDS are global and uniqueness is
@@ -429,58 +487,448 @@ concepts:
     prerequisites:
       - sequences-series
 
+
+  # =====================  PHYSICS  =====================
+
+  # ---- jee-mechanics -----------------------------------------------
+  - id: units-and-measurements
+    topic: jee-mechanics
+    label: Units, Dimensions and Measurement
+    description: SI units, dimensional analysis and dimensional formulae, significant figures, errors in measurement and their combination
+    difficulty_base: 0.2
+    gate_frequency: medium
+    prerequisites: []
+
+  - id: kinematics-1d
+    topic: jee-mechanics
+    label: Motion in a Straight Line
+    description: Displacement velocity and acceleration, uniformly accelerated motion, graphical analysis of motion, relative velocity in one dimension
+    difficulty_base: 0.3
+    gate_frequency: high
+    prerequisites:
+      - units-and-measurements
+
+  - id: kinematics-2d
+    topic: jee-mechanics
+    label: Motion in a Plane
+    description: Vector addition and resolution, projectile motion, uniform circular motion, relative velocity in two dimensions
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - kinematics-1d
+
+  - id: newtons-laws
+    topic: jee-mechanics
+    label: Laws of Motion
+    description: Newton's three laws, free-body diagrams, friction, connected bodies and pulleys, dynamics of circular motion
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - kinematics-2d
+
+  - id: work-energy-power
+    topic: jee-mechanics
+    label: Work, Energy and Power
+    description: Work by constant and variable forces, kinetic and potential energy, work-energy theorem, conservation of mechanical energy, elastic and inelastic collisions
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - newtons-laws
+
+  - id: rotational-mechanics
+    topic: jee-mechanics
+    label: Rotational Motion
+    description: Centre of mass, torque and angular momentum, moment of inertia and its theorems, rolling motion, conservation of angular momentum
+    difficulty_base: 0.55
+    gate_frequency: high
+    prerequisites:
+      - work-energy-power
+
+  - id: gravitation
+    topic: jee-mechanics
+    label: Gravitation
+    description: Universal law of gravitation, gravitational field and potential, escape and orbital velocity, satellite motion, Kepler's laws
+    difficulty_base: 0.45
+    gate_frequency: medium
+    prerequisites:
+      - newtons-laws
+
+  - id: properties-of-matter
+    topic: jee-mechanics
+    label: Properties of Solids and Liquids
+    description: Elasticity and moduli, pressure and Pascal's law, buoyancy, Bernoulli's principle, viscosity and Stokes' law, surface tension and capillarity, heat transfer
+    difficulty_base: 0.4
+    gate_frequency: medium
+    prerequisites:
+      - newtons-laws
+
+  # ---- jee-thermal-physics -----------------------------------------
+  - id: kinetic-theory
+    topic: jee-thermal-physics
+    label: Kinetic Theory of Gases
+    description: Ideal gas equation from molecular assumptions, pressure and kinetic energy, degrees of freedom and equipartition, mean free path, rms and average speeds
+    difficulty_base: 0.4
+    gate_frequency: medium
+    prerequisites:
+      - units-and-measurements
+
+  - id: thermodynamics-physics
+    topic: jee-thermal-physics
+    label: Thermodynamics
+    description: Zeroth and first law, work done in thermodynamic processes, isothermal and adiabatic changes, second law, heat engines and refrigerators, Carnot cycle
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - kinetic-theory
+
+  # ---- jee-oscillations-waves --------------------------------------
+  - id: oscillations-shm
+    topic: jee-oscillations-waves
+    label: Oscillations
+    description: Simple harmonic motion and its differential equation, energy in SHM, simple and spring pendulums, damped and forced oscillations, resonance
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - newtons-laws
+
+  - id: waves-mechanical
+    topic: jee-oscillations-waves
+    label: Waves
+    description: Travelling and standing waves, superposition, speed of a wave on a string and in a gas, beats, organ pipes, Doppler effect in sound
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - oscillations-shm
+
+  # ---- jee-electromagnetism ----------------------------------------
+  - id: electrostatics-coulomb
+    topic: jee-electromagnetism
+    label: Electrostatics
+    description: Coulomb's law, electric field and dipoles, Gauss's law and its applications, electric potential and potential energy, conductors in a field
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - newtons-laws
+
+  - id: capacitance
+    topic: jee-electromagnetism
+    label: Capacitance
+    description: Parallel-plate and spherical capacitors, series and parallel combinations, dielectrics, energy stored in a capacitor, charge redistribution
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - electrostatics-coulomb
+
+  - id: current-electricity
+    topic: jee-electromagnetism
+    label: Current Electricity
+    description: Ohm's law and resistivity, series and parallel networks, Kirchhoff's rules, Wheatstone bridge, potentiometer, cells and internal resistance
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - electrostatics-coulomb
+
+  - id: magnetic-effects
+    topic: jee-electromagnetism
+    label: Magnetic Effects of Current and Magnetism
+    description: Biot-Savart and Ampere's circuital law, force on a moving charge and a current-carrying wire, torque on a loop, moving-coil galvanometer, magnetic materials
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - current-electricity
+
+  - id: electromagnetic-induction
+    topic: jee-electromagnetism
+    label: Electromagnetic Induction
+    description: Faraday's law and Lenz's law, motional emf, self and mutual inductance, energy stored in an inductor, eddy currents
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - magnetic-effects
+
+  - id: alternating-current
+    topic: jee-electromagnetism
+    label: Alternating Current
+    description: Peak and rms values, phasors, reactance and impedance, LCR series circuits, resonance and quality factor, power factor, transformers
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - electromagnetic-induction
+      - oscillations-shm
+
+  - id: electromagnetic-waves
+    topic: jee-electromagnetism
+    label: Electromagnetic Waves
+    description: Displacement current, transverse nature of electromagnetic waves, energy and momentum transported, the electromagnetic spectrum and its uses
+    difficulty_base: 0.3
+    gate_frequency: medium
+    prerequisites:
+      - alternating-current
+
+  # ---- jee-optics --------------------------------------------------
+  - id: ray-optics
+    topic: jee-optics
+    label: Ray Optics and Optical Instruments
+    description: Reflection at plane and spherical surfaces, refraction and total internal reflection, lens and mirror formulae, prisms and dispersion, microscopes and telescopes
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - units-and-measurements
+
+  - id: wave-optics
+    topic: jee-optics
+    label: Wave Optics
+    description: Huygens' principle, Young's double-slit interference, thin-film interference, single-slit diffraction, resolving power, polarisation and Brewster's law
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - waves-mechanical
+      - ray-optics
+
+  # ---- jee-modern-physics ------------------------------------------
+  - id: dual-nature-matter
+    topic: jee-modern-physics
+    label: Dual Nature of Matter and Radiation
+    description: Photoelectric effect and Einstein's equation, stopping potential, work function, photon momentum, de Broglie wavelength of matter waves
+    difficulty_base: 0.35
+    gate_frequency: high
+    prerequisites:
+      - wave-optics
+
+  - id: atoms-and-nuclei
+    topic: jee-modern-physics
+    label: Atoms and Nuclei
+    description: Rutherford scattering and Bohr's model, hydrogen spectral series, nuclear size and binding energy, radioactive decay laws, fission and fusion
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - dual-nature-matter
+
+  - id: semiconductor-electronics
+    topic: jee-modern-physics
+    label: Semiconductor Electronics
+    description: Energy bands, intrinsic and extrinsic semiconductors, p-n junction and diode characteristics, rectifiers, Zener diodes, logic gates
+    difficulty_base: 0.35
+    gate_frequency: high
+    prerequisites:
+      - atoms-and-nuclei
+
+
+  # =====================  CHEMISTRY  =====================
+
+  # ---- jee-physical-chemistry --------------------------------------
+  - id: mole-concept
+    topic: jee-physical-chemistry
+    label: Some Basic Concepts of Chemistry
+    description: Mole and Avogadro's number, empirical and molecular formulae, stoichiometry and limiting reagent, concentration terms, percentage yield
+    difficulty_base: 0.3
+    gate_frequency: high
+    prerequisites: []
+
+  - id: atomic-structure
+    topic: jee-physical-chemistry
+    label: Atomic Structure
+    description: Bohr model and hydrogen spectrum, de Broglie and Heisenberg relations, quantum numbers, shapes of orbitals, Aufbau, Pauli and Hund rules
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - mole-concept
+
+  - id: chemical-bonding
+    topic: jee-physical-chemistry
+    label: Chemical Bonding and Molecular Structure
+    description: Ionic and covalent bonding, Lewis structures and formal charge, VSEPR shapes, hybridisation, molecular orbital theory, bond parameters, hydrogen bonding
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - atomic-structure
+
+  - id: thermodynamics-chemistry
+    topic: jee-physical-chemistry
+    label: Chemical Thermodynamics
+    description: System and surroundings, internal energy and enthalpy, Hess's law, bond and formation enthalpies, entropy, Gibbs free energy and spontaneity
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - mole-concept
+
+  - id: equilibrium-chemical
+    topic: jee-physical-chemistry
+    label: Chemical Equilibrium
+    description: Reversible reactions and dynamic equilibrium, Kc and Kp, reaction quotient, Le Chatelier's principle, relation of K to Gibbs free energy
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - thermodynamics-chemistry
+
+  - id: equilibrium-ionic
+    topic: jee-physical-chemistry
+    label: Ionic Equilibrium
+    description: Acid-base theories, Ka Kb and pH, common-ion effect, buffers and the Henderson equation, salt hydrolysis, solubility product
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - equilibrium-chemical
+
+  - id: redox-and-electrochemistry
+    topic: jee-physical-chemistry
+    label: Redox Reactions and Electrochemistry
+    description: Oxidation numbers and balancing redox equations, electrochemical cells, standard electrode potentials, Nernst equation, conductance, Faraday's laws of electrolysis
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - equilibrium-ionic
+
+  - id: chemical-kinetics
+    topic: jee-physical-chemistry
+    label: Chemical Kinetics
+    description: Rate of reaction and rate law, order and molecularity, integrated rate equations for zero and first order, half-life, Arrhenius equation and activation energy
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - equilibrium-chemical
+
+  - id: solutions-and-colligative
+    topic: jee-physical-chemistry
+    label: Solutions
+    description: Concentration units, Raoult's law and ideal solutions, relative lowering of vapour pressure, boiling-point elevation and freezing-point depression, osmotic pressure, van't Hoff factor
+    difficulty_base: 0.4
+    gate_frequency: medium
+    prerequisites:
+      - mole-concept
+
+  - id: solid-state
+    topic: jee-physical-chemistry
+    label: Solid State
+    description: Crystal lattices and unit cells, packing efficiency, density of a unit cell, voids, point defects, electrical and magnetic properties of solids
+    difficulty_base: 0.35
+    gate_frequency: low
+    prerequisites:
+      - chemical-bonding
+
+  # ---- jee-organic-chemistry ---------------------------------------
+  - id: organic-basic-principles
+    topic: jee-organic-chemistry
+    label: Basic Principles of Organic Chemistry
+    description: IUPAC nomenclature, structural and stereo isomerism, inductive resonance and hyperconjugation effects, reaction intermediates, types of organic reactions, purification methods
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - chemical-bonding
+
+  - id: hydrocarbons
+    topic: jee-organic-chemistry
+    label: Hydrocarbons
+    description: Alkanes alkenes and alkynes, conformations, Markovnikov and anti-Markovnikov addition, ozonolysis, aromaticity and Huckel's rule, electrophilic aromatic substitution
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - organic-basic-principles
+
+  - id: haloalkanes-haloarenes
+    topic: jee-organic-chemistry
+    label: Haloalkanes and Haloarenes
+    description: Preparation and physical properties, SN1 and SN2 mechanisms and their stereochemistry, elimination versus substitution, reactivity of aryl halides, Grignard reagents
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - hydrocarbons
+
+  - id: alcohols-phenols-ethers
+    topic: jee-organic-chemistry
+    label: Alcohols, Phenols and Ethers
+    description: Preparation and reactions of alcohols, acidity of phenols and substituent effects, Reimer-Tiemann and Kolbe reactions, Williamson ether synthesis, ether cleavage
+    difficulty_base: 0.45
+    gate_frequency: high
+    prerequisites:
+      - haloalkanes-haloarenes
+
+  - id: aldehydes-ketones-acids
+    topic: jee-organic-chemistry
+    label: Aldehydes, Ketones and Carboxylic Acids
+    description: Nucleophilic addition to the carbonyl group, aldol and Cannizzaro reactions, oxidation and reduction, distinguishing tests, acidity of carboxylic acids and their derivatives
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - alcohols-phenols-ethers
+
+  - id: amines-and-diazonium
+    topic: jee-organic-chemistry
+    label: Amines and Diazonium Salts
+    description: Preparation and basicity of amines, Hofmann and Gabriel syntheses, carbylamine and Hinsberg tests, diazotisation and coupling, Sandmeyer reactions
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - aldehydes-ketones-acids
+
+  - id: biomolecules
+    topic: jee-organic-chemistry
+    label: Biomolecules
+    description: Classification of carbohydrates and their glycosidic linkages, amino acids and the peptide bond, protein structure, enzymes, vitamins, nucleic acids
+    difficulty_base: 0.3
+    gate_frequency: medium
+    prerequisites:
+      - alcohols-phenols-ethers
+
+  - id: polymers
+    topic: jee-organic-chemistry
+    label: Polymers
+    description: Addition and condensation polymerisation, copolymers, natural and synthetic rubber, commercially important polymers and their monomers, biodegradable polymers
+    difficulty_base: 0.25
+    gate_frequency: low
+    prerequisites:
+      - hydrocarbons
+
+  # ---- jee-inorganic-chemistry -------------------------------------
+  - id: periodic-table-trends
+    topic: jee-inorganic-chemistry
+    label: Classification of Elements and Periodicity
+    description: Modern periodic law and blocks, atomic and ionic radii, ionisation enthalpy, electron gain enthalpy, electronegativity, diagonal relationship and anomalous behaviour
+    difficulty_base: 0.3
+    gate_frequency: high
+    prerequisites:
+      - atomic-structure
+
+  - id: p-block-elements
+    topic: jee-inorganic-chemistry
+    label: p-Block Elements
+    description: Group trends across groups 13 to 18, oxides oxyacids and halides, allotropy, interhalogens, noble-gas compounds, named preparations and structures
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - periodic-table-trends
+
+  - id: d-and-f-block
+    topic: jee-inorganic-chemistry
+    label: d- and f-Block Elements
+    description: Variable oxidation states, colour magnetic moment and catalytic behaviour, potassium dichromate and permanganate, lanthanoid contraction, actinoids
+    difficulty_base: 0.4
+    gate_frequency: high
+    prerequisites:
+      - periodic-table-trends
+
+  - id: coordination-compounds
+    topic: jee-inorganic-chemistry
+    label: Coordination Compounds
+    description: Werner's theory and nomenclature, isomerism in complexes, valence bond and crystal field theories, colour and magnetic properties, stability and applications
+    difficulty_base: 0.5
+    gate_frequency: high
+    prerequisites:
+      - d-and-f-block
+
 # ---------------------------------------------------------------------------
-# Stub-exam rule (CEO plan §6 baseline) — every concept_id above is declared
-# here because they have no real node in the concept graph yet. The 23
-# Mathematics ids were promoted into this pack's own `concepts:` block above
-# and removed from this list; Physics and Chemistry are still stubs.
-# exam-loader.ts refuses to load a concept_id
-# that is neither a real node nor listed here — a Phase-1 stub exam says so
-# explicitly instead of relying on a warning that scrolls by in server logs.
-# Remove an id from this list once it gets a real concept-graph entry.
+# Stub-exam rule (CEO plan §6 baseline) — a concept_id referenced by
+# `syllabus:` that has no real node in the concept graph must be declared
+# here, or exam-loader.ts refuses to load the pack. That is deliberate: a
+# stub exam says so explicitly instead of relying on a warning that scrolls
+# by in server logs.
+#
+# EMPTY, and keep it that way. Every id this pack references is a real node
+# in the `concepts:` block above. Adding a new syllabus id without a node is
+# still allowed while a subject is being filled — declare it here, then
+# remove it the moment the node lands.
 # ---------------------------------------------------------------------------
-stub_concepts:
-  - alcohols-phenols-ethers
-  - aldehydes-ketones-acids
-  - alternating-current
-  - amines-and-diazonium
-  - atomic-structure
-  - atoms-and-nuclei
-  - biomolecules
-  - capacitance
-  - chemical-bonding
-  - chemical-kinetics
-  - coordination-compounds
-  - current-electricity
-  - d-and-f-block
-  - dual-nature-matter
-  - electromagnetic-induction
-  - electrostatics-coulomb
-  - equilibrium-chemical
-  - equilibrium-ionic
-  - gravitation
-  - haloalkanes-haloarenes
-  - hydrocarbons
-  - kinematics-1d
-  - kinematics-2d
-  - magnetic-effects
-  - mole-concept
-  - newtons-laws
-  - oscillations-shm
-  - p-block-elements
-  - periodic-table-trends
-  - polymers
-  - ray-optics
-  - redox-and-electrochemistry
-  - rotational-mechanics
-  - semiconductor-electronics
-  - solid-state
-  - solutions-and-colligative
-  - thermodynamics-chemistry
-  - units-and-measurements
-  - wave-optics
-  - waves-mechanical
-  - work-energy-power
+stub_concepts: []
 
 # ---------------------------------------------------------------------------
 # Score interpretation
@@ -498,12 +946,15 @@ stub_concepts:
 # claim that Mathematics' weightage rose to 35% in 2026, which contradicts
 # the corroborated equal-marks structure.
 #
-# This block therefore describes MCQ marking only. There is no `jee_main`
-# MarkingStrategy in src/exams/marking-constants.ts and no row in
-# `assessment_contracts` — that table requires an `official_source_url` and a
-# `verified_at`, which is the point. Nothing grades against a JEE contract
-# today, so nothing is currently wrong; a guess would have made it wrong
-# quietly. Same discipline as the Wolfram licensing gate in
+# This block therefore describes MCQ marking only, and so does the compiled
+# contract: `JEE_MAIN_COMPILED_CONTRACT` in src/exams/marking-constants.ts
+# defines `mcq` and DELIBERATELY defines neither `msq` (JEE Main Maths does
+# not ask it) nor `nat`. That absence IS the enforcement — a JEE numerical
+# item is refused by name at grading time rather than graded on a guess, so
+# the bank is MCQ-only by construction and not by authoring discipline.
+# There is still no row in `assessment_contracts`; that table requires an
+# `official_source_url` and a `verified_at`, which is the point. Same
+# discipline as the Wolfram licensing gate in
 # docs/ops/content-verification-runbook.md §0: ship the gate unfilled and
 # name what it blocks.
 #

@@ -1,0 +1,239 @@
+# Best-practice authoring templates for JEE Main Organic Chemistry concepts
+# (organic-basic-principles, hydrocarbons, haloalkanes-haloarenes,
+# alcohols-phenols-ethers, aldehydes-ketones-acids, amines-and-diazonium,
+# biomolecules, polymers).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose — see
+# jee-mechanics.yaml's header for the full rationale (content is being
+# authored concurrently with this template).
+#
+# Audience note: an anxious Indian Class 11-12 student sitting JEE Main.
+# ELI5, short sentences, Indian English, every technical term glossed on
+# first use. No curriculum-bridge audit exists for Chemistry against any
+# state board, so treat this as first-time-depth instruction, not a
+# refresher.
+#
+# Family shape (chemistry_reaction, template-families.yml) is the ONLY
+# family in the corpus whose formalism stage is a MECHANISM, not an
+# equation, and it carries an extra `discovery` stage (guided_walkthrough,
+# presentation: decision_tree) between intuition and formalism:
+#   intuition (visual_analogy, structure_visual)
+#   -> discovery (guided_walkthrough, decision_tree)
+#   -> formalism (worked_example, mechanism_arrows)
+#   -> worked_example (worked_example, worked_synthesis)
+#   -> practice (mcq, product_prediction_check)
+# This is why the intuition or worked_example atom for a concept in this
+# topic MAY legitimately carry a branching guided_walkthrough
+# interactive-spec (the decision_tree presentation): a real organic
+# question is rarely "apply the one rule" — it is "which of two competing
+# pathways wins here, and why." The two things every guidance block below
+# insists on: (1) CURLY-ARROW electron-pushing to show a mechanism, never a
+# mechanism asserted by naming the product alone, and (2) naming the
+# COMPETING pathway (SN1 vs SN2, substitution vs elimination, Markovnikov
+# vs anti-Markovnikov) and the condition that decides between them — never
+# present only the winning pathway as if no other were possible.
+
+topic_family: jee-organic-chemistry
+
+intuition:
+  scaffold: structure-explains-reactivity
+  guidance: |
+    Open by describing the molecule's structure in plain words — which atom
+    or bond is electron-rich, which is electron-poor, where a lone pair or
+    a leaving group sits — and connect that structure directly to why it
+    reacts the way it does, before naming the reaction by its formal name.
+    Gloss every technical word on first use (e.g. "nucleophile" — an
+    electron-rich atom or group that goes looking for a positive or
+    electron-poor centre to bond with; think of it as "electron-loving").
+    When a genuine two-pathway decision underlies the concept (e.g. SN1 vs
+    SN2 for haloalkanes-haloarenes), this atom MAY carry a fenced
+    guided_walkthrough interactive-spec framing that decision as a branch
+    (see linear-algebra.yaml's `hook` schema for the general JSON shape of
+    a fenced spec — a guided_walkthrough spec instead names `steps` with
+    `prompt`/`hint`/`answer`, or a `branches` tree of `nodes`/`leaves` for a
+    genuine fork). OMIT it when the concept has only one pathway to teach.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement. Pick one small, fully-drawn-in-words
+      molecule and trace what happens to it — which bond breaks, which
+      forms — step by step, before any general rule appears. End on one
+      thing to do next time (e.g. "always identify the leaving group
+      first — no leaving group, no substitution"), phrased as an action.
+      No praise, no mention of feelings.
+    assured: |
+      Skip the setup — a confident reader already spots the reactive
+      centre. Go straight to the one condition that costs marks: the
+      structural feature (a tertiary carbon, a bulky base, a protic
+      solvent) that tips the balance from one competing pathway to the
+      other. Give a genuine counterexample, not a restatement.
+
+formal_definition:
+  scaffold: mechanism-statement
+  guidance: |
+    State the mechanism using curly-arrow electron-pushing notation
+    described precisely in words when display math cannot show arrows
+    (name exactly which bond forms and which breaks, and in which
+    direction the electron pair moves), plus the named reaction type (SN1,
+    SN2, E1, E2, electrophilic addition, nucleophilic acyl substitution).
+    Two-sentence prose cap around the mechanism description. Name every
+    symbol or reagent once in plain words on first use.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: mechanism-then-product
+  guidance: |
+    Start with a one-line statement of which mechanism applies and WHY (not
+    just which reagent is given), then walk the curly-arrow electron
+    movement step by step to the product. Six steps maximum, each step one
+    action (identify the reactive centre, name the mechanism and why it
+    applies over its competitor, show the electron-pushing step, draw the
+    intermediate if one exists, state the product, check the product
+    against the starting material's degree of substitution). Favour a
+    JEE-flavoured shape (a substitution vs elimination competition, a
+    multi-step synthesis) over a bare "here is the product" statement.
+    Steps separated by `\n---\n` so scaffold-fade can blank trailing steps
+    on revisit. Final line "Answer: ..." naming the product, so :::verify
+    can confirm. When the concept has a genuine multi-step decision (which
+    reagent, which mechanism, which regiochemistry), this atom MAY instead
+    carry a fenced guided_walkthrough `branches` interactive-spec walking
+    the decision tree to the correct product — reuse the
+    intuition/formalism's own reasoning, never invent a second one.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — identify the reactive centre,
+      name the mechanism, show the arrow, state the intermediate, state the
+      product, check it, each on its own line. Push every "why does this
+      step work" explanation into the walkthrough's prompts/hints, not onto
+      the page. End with the check run explicitly (does the product's
+      structure match what the mechanism predicts), not just claimed.
+    assured: |
+      Lead with the shortcut a first pass doesn't always emphasise —
+      recognising a tertiary substrate favours SN1/E1 without working
+      through the full kinetics argument, or spotting a directing group
+      that fixes the position of electrophilic aromatic substitution — and
+      state the one structural condition that must hold for the shortcut
+      to apply before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level organic chemistry: assuming SN2 always applies regardless of
+    substrate (a tertiary carbon almost always favours SN1/E1 instead),
+    forgetting that a strong bulky base favours elimination over
+    substitution even where a weaker base would substitute, misapplying
+    Markovnikov's rule to a reaction that actually proceeds by the
+    anti-Markovnikov (peroxide-effect) pathway, or naming a product without
+    checking whether the mechanism's intermediate (a carbocation, in
+    particular) would actually be stable enough to form.
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with a
+    different substrate or reagent. Keep it to one reaction step, not a
+    multi-step synthesis, so it finishes in under a minute.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the mechanism or named reaction by name (e.g. "SN1 vs
+    SN2 — which needs a polar protic solvent?", "Hofmann bromamide
+    degradation"); back gives the one-line condition that decides it. Used
+    by SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: structure-and-electron-flow-picture
+  guidance: |
+    Describe the molecule's structure and the direction electrons move
+    during the reaction as a picture in words — this concept family is
+    almost never a plottable curve.
+
+    This is a REACTION-MECHANISM family — the single explicitly-named bad
+    fit for gif-scene rendering in this repo's whole content system. OMIT
+    the gif-scene block for essentially every concept in this topic;
+    curly-arrow electron movement, ring structures, and stereochemistry do
+    not reduce to the safe single-variable formula the renderer evaluates,
+    and a plotted "reaction progress" curve would misrepresent a discrete
+    mechanism as continuous motion it doesn't have. If a genuine exception
+    ever arises (a rate-law-driven concentration-vs-time curve, in the rare
+    case a kinetics angle is folded into this topic), the schema is:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"1.0*exp(-0.1*x)","x_range":[0,20],"y_range":[0,1],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. Default to omitting the block
+    entirely — never invent a misleading scene to fill this section.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question names a bulky base like potassium tert-butoxide, expect
+    elimination (Hofmann product) over substitution." JEE Main Paper 1 asks
+    25 questions per subject: 20 MCQs (+4/-1) and 5 compulsory
+    numerical-value questions — do not invent a per-topic weightage beyond
+    that.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (which
+    substrate class favours SN1 vs SN2, Markovnikov vs the peroxide-effect
+    anti-Markovnikov addition).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    a haloalkanes-haloarenes substitution question feeding into an
+    alcohols-phenols-ethers question about the alcohol that same
+    substitution would produce).
+  bloom_floor: 4
+
+hook:
+  scaffold: same-reagent-different-product
+  guidance: |
+    Open on one concrete, fully-drawn-in-words situation small enough to
+    reason through immediately — not a restatement of the textbook
+    definition. Name the JEE-specific twist up front (e.g. "the exact same
+    alkyl halide gives a different major product with a strong base than
+    with a weak nucleophile — why does the reagent alone decide the
+    pathway?").
+
+    This is a REACTION-MECHANISM family: OMIT the fenced interactive-spec
+    gif-style scene block that other families use under `hook` — curly-arrow
+    electron movement and competing pathways do not reduce to a 2D
+    parametric/trace scene, and inventing one would misrepresent a discrete
+    mechanistic choice as continuous motion. Instead, when a concept
+    genuinely turns on picking between two or more pathways, prefer framing
+    the hook itself as leading into the discovery-stage guided_walkthrough
+    (see intuition's guidance above) rather than forcing a curve onto it.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-drawn-in-words instance, small enough to reason
+      through right now. No history, no "you'll need this later" framing —
+      the reader is here after getting something wrong, and the useful
+      move is one thing that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      (assuming Markovnikov's rule always applies regardless of reaction
+      conditions, or picking SN2 by reflex on a substrate that is actually
+      tertiary).

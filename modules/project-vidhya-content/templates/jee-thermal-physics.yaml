@@ -1,0 +1,222 @@
+# Best-practice authoring templates for JEE Main Thermal Physics concepts
+# (kinetic-theory, thermodynamics-physics).
+#
+# NO top-level `stances:` opt-in key on this file, on purpose — see
+# jee-mechanics.yaml's header for the full rationale (content is being
+# authored concurrently with this template; adding the key would claim a
+# completion that hasn't happened).
+#
+# Audience note: an anxious Indian Class 11-12 student sitting JEE Main.
+# ELI5, short sentences, Indian English, every technical term glossed on
+# first use. No curriculum-bridge audit exists for Physics against any state
+# board, so treat this as first-time-depth instruction, not a refresher.
+#
+# Family shape: this topic sits on `mechanics`
+# (data/curriculum/gate-em/template-families.yml's coverage note explains
+# why — a gas law is set up and resolved the same way a pulley problem is,
+# and a separate two-concept family would be a label, not a shape). The one
+# thing this template insists on that jee-mechanics.yaml's own free-body
+# diagram cannot cover: a thermodynamic process needs its OWN diagram — a
+# labelled P-V sketch, or a system/surroundings boundary with arrows showing
+# the direction heat and work cross it — before any first-law equation is
+# written, plus the sign convention for q (heat) and w (work) stated
+# explicitly, because JEE Main loses marks on students silently swapping
+# which convention a question is using.
+
+topic_family: jee-thermal-physics
+
+intuition:
+  scaffold: physical-setup-before-formula
+  guidance: |
+    Open by describing the system in plain words — a gas in a cylinder with
+    a piston, a fixed amount of gas at some temperature — and sketch the
+    process in words (isothermal: temperature held fixed; adiabatic: no
+    heat crosses the boundary at all) before any equation appears. Gloss
+    every technical word on first use (e.g. "degrees of freedom" — the
+    number of independent ways a molecule can store energy, like moving in
+    x, y, z, or spinning). Only after the picture is fixed should the
+    general relation appear.
+  bloom_floor: 2
+
+  stances:
+    shaken: |
+      Skip the general statement. Pick one small, fully-numbered gas sample
+      (a fixed volume, a stated temperature change) and work through what
+      happens to it step by step, out loud, before any symbol appears in
+      general form. End on one thing to do next time (e.g. "always ask
+      first: is heat allowed to enter or leave? that decides which law
+      applies"), phrased as an action. No praise, no mention of feelings.
+    assured: |
+      Skip the setup — a confident reader already pictures the process. Go
+      straight to the one condition that costs marks: which sign convention
+      the question is using for work done (by the gas vs on the gas), or
+      the assumption (ideal gas, quasi-static process) a shortcut silently
+      needs. Give a genuine counterexample, not a restatement.
+
+formal_definition:
+  scaffold: law-with-units-and-sign-convention
+  guidance: |
+    State the law in full symbolic form with display math (the ideal gas
+    equation, the first law of thermodynamics), name the SI unit of every
+    quantity, and state the sign convention being used for heat and work in
+    the very same sentence the equation appears in — never leave it
+    implicit. Two-sentence prose cap around the display math. Name every
+    symbol once in plain words on first use.
+  bloom_floor: 3
+
+worked_example:
+  scaffold: diagram-then-numbers
+  guidance: |
+    Start with a one-line description of the process on a P-V diagram (in
+    words: "pressure held constant while volume doubles" or similar) before
+    any number is substituted, and state which sign convention for work is
+    in use. Six steps maximum, each step one action (describe the process,
+    write the first law for it, substitute values with units, solve,
+    sanity-check the sign of the answer against the physical picture).
+    Favour a JEE-flavoured shape (a cyclic process, an adiabatic expansion,
+    a mixture at two temperatures reaching equilibrium) over a bare
+    plug-in-the-formula problem. Steps separated by `\n---\n`. Final line
+    "Answer: ..." with its unit.
+  bloom_floor: 3
+
+  stances:
+    shaken: |
+      One action per step, no exceptions — describe the process, write the
+      law, substitute, solve, check, each on its own line. Push every "why"
+      into the walkthrough's prompts/hints. End with the check run
+      explicitly (does the sign of q or w make sense for what the gas is
+      doing), not just claimed.
+    assured: |
+      Lead with the shortcut a first pass doesn't always emphasise — that a
+      cyclic process returns internal energy to its starting value so net
+      work equals net heat, or that an adiabatic process has q=0 by
+      definition so the first law collapses to one term — and state the one
+      condition that must hold for the shortcut to apply before using it.
+
+common_traps:
+  scaffold: wrong-then-right
+  guidance: |
+    Two to three trap pairs, each: the wrong move, the right move, and one
+    line on why the wrong move feels natural. Favour traps specific to
+    JEE-level thermal physics: mixing up the sign convention for work done
+    by vs on the gas between two problems, treating temperature in Celsius
+    inside a gas-law formula that needs Kelvin, confusing molar specific
+    heat at constant pressure with constant volume, or assuming an
+    adiabatic process has constant temperature (it doesn't — that's
+    isothermal).
+  bloom_floor: 4
+
+micro_exercise:
+  scaffold: one-shot-check
+  guidance: |
+    One fast question, same shape as the worked_example but with different
+    numbers. Keep the arithmetic small enough to finish in under a minute —
+    round temperatures and pressures, simple whole-number mole counts.
+  bloom_floor: 3
+
+retrieval_prompt:
+  scaffold: flashcard
+  guidance: |
+    Front asks for the law or relation by name (e.g. "first law of
+    thermodynamics", "Carnot efficiency"); back gives the symbolic form and
+    the one condition it needs to hold. Used by SM-2 spaced repetition.
+  bloom_floor: 2
+
+visual_analogy:
+  scaffold: pv-diagram-or-distribution-picture
+  guidance: |
+    Describe the process on a P-V diagram in words (a curve for isothermal,
+    a steeper curve for adiabatic) for thermodynamics-physics; for
+    kinetic-theory, describe the spread of molecular speeds in a gas — most
+    molecules cluster around one typical speed, with a longer tail of much
+    faster ones.
+
+    When the concept has a clean closed-form y=f(x), emit a fenced
+    gif-scene block at the end of the body. An isothermal or adiabatic P-V
+    curve (P = C/V, or P = C/V^gamma) is a genuine fit for `function-trace`.
+    A Maxwell-Boltzmann-style speed distribution (kinetic-theory) is a
+    genuine fit for `discrete-bars` — several bars at increasing speed
+    values, heights rising then falling, never a smooth curve the safe
+    evaluator cannot express as one formula. Schema:
+
+    ```gif-scene
+    {"type":"function-trace","expression":"20/x","x_range":[1,10],"y_range":[0,20],"frames":30,"fps":12}
+    ```
+
+    Allowed expression tokens: x, t, +, -, *, /, ^, parens, numbers, and
+    sin/cos/tan/log/ln/exp/sqrt/abs/pi/e. OMIT the block for anything that
+    doesn't reduce cleanly to one of the renderer's scene types — the
+    equipartition-of-energy argument or a mean-free-path derivation, for
+    instance — never invent a misleading scene.
+  bloom_floor: 2
+
+exam_pattern:
+  scaffold: gate-style-stem
+  guidance: |
+    One representative JEE Main stem (MCQ or numerical-value) with a
+    one-line "when you see this phrasing, do X" cue — e.g. "when the
+    question says 'thermally insulated', set q=0 and use the adiabatic
+    relation, not the isothermal one." JEE Main Paper 1 asks 25 questions
+    per subject: 20 MCQs (+4/-1) and 5 compulsory numerical-value questions
+    — do not invent a per-topic weightage beyond that.
+  exam_pattern_required: true
+  bloom_floor: 3
+
+mnemonic:
+  scaffold: short-rhyme
+  guidance: |
+    A short, memorable line for a rule that's easy to mix up (the sign
+    convention for work in the first law, which process (isothermal vs
+    adiabatic) keeps temperature fixed vs keeps heat out).
+  bloom_floor: 2
+
+interleaved_drill:
+  scaffold: mixed-rule-set
+  guidance: |
+    Three problems mixing two related ideas from this concept family (e.g.
+    a kinetic-theory question about rms speed feeding into a
+    thermodynamics-physics question about the internal energy of the same
+    gas sample).
+  bloom_floor: 4
+
+hook:
+  scaffold: predict-the-motion
+  guidance: |
+    Open on one concrete, fully-numbered gas process small enough to
+    picture immediately. Name the JEE-specific twist up front (e.g. "the
+    gas is compressed so fast that no heat has time to escape — what
+    happens to its temperature, and is that the same as compressing it
+    slowly?").
+
+    Fuse the hook into a scripted beat sequence rather than a static
+    sentence: emit a fenced interactive-spec block at the end of the body
+    (mirrors the gif-scene pattern used under visual_analogy). Schema:
+
+    ```interactive-spec
+    {"v":1,"kind":"simulation","title":"...","x_expr":"...","y_expr":"...",
+     "t_min":0,"t_max":1,
+     "narration_steps":[
+       {"at_progress":0,"text":"..."},
+       {"at_progress":0.5,"text":"...","trap":{"text":"what students get wrong","avoid":"the one-line fix"}}
+     ],
+     "ghost":{"x_expr":"...","y_expr":"..."}}
+    ```
+
+    3-5 narration_steps beats, synced to at_progress (0..1). Exactly ONE
+    beat carries a "trap" — weave it from this concept's authored
+    common-traps.md, not a fresh guess. OMIT the fence entirely for
+    concepts that don't reduce to a 2D parametric/trace scene (the
+    equipartition argument, a mean-free-path derivation) — never invent a
+    misleading scene.
+  bloom_floor: 1
+  stances:
+    shaken: |
+      One concrete, fully-numbered instance, small enough to picture right
+      now. No history, no "you'll need this later" framing — the reader is
+      here after getting something wrong, and the useful move is one thing
+      that works immediately.
+    assured: |
+      Name the exact JEE phrasing this concept hides behind, and the one
+      shortcut students reach for under time pressure that silently fails
+      (assuming a process is quasi-static, or confusing "insulated" with
+      "at constant temperature").

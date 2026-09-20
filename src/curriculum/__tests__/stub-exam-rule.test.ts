@@ -45,18 +45,24 @@ describe('exam-loader stub-exam rule — real tracked files (gate-ma.yml, jee-ma
     expect(exam.stub_concept_ids).toEqual([]);
   });
 
-  it('jee-main.yml still stubs the 41 concept_ids it has not migrated', () => {
-    // Was `toBe(64)` when jee-main was a fully Phase-1 stub exam. Its 23
-    // Mathematics ids are real concept-graph nodes now; Physics and
-    // Chemistry are not. A number is pinned rather than left loose so that
-    // migrating the next subject is a deliberate edit here too.
+  it('jee-main.yml has zero declared stubs — the migration is finished', () => {
+    // Was `toBe(64)` when jee-main was a fully Phase-1 stub exam, then
+    // `toBe(41)` once its Mathematics half migrated. Physics and Chemistry
+    // have now landed too, so the pack joins gate-ma at zero.
+    //
+    // The pinned-number discipline that got it here is kept by the test
+    // above (gate-ma) and this one: a stub reappearing is a deliberate edit,
+    // not a drift. What this specifically catches is a STALE stub entry — a
+    // migrated id left in both places. exam-loader accepts either, and a
+    // leftover entry is how a real node silently keeps reading as
+    // unresolved, which is the failure mode that made the count worth
+    // pinning in the first place.
     const exam = loadAllExams(true).get('jee-main')!;
-    expect(exam.stub_concept_ids.length).toBe(41);
-    expect(exam.stub_concept_ids).toContain('kinematics-1d');
-    // A migrated id must be GONE from the stub list, not left in both
-    // places — exam-loader would accept it either way, and a stale stub
-    // entry is how a real node silently keeps reading as unresolved.
-    expect(exam.stub_concept_ids).not.toContain('three-d-geometry');
+    expect(exam.stub_concept_ids).toEqual([]);
+    for (const migrated of ['three-d-geometry', 'kinematics-1d', 'coordination-compounds']) {
+      expect(exam.stub_concept_ids).not.toContain(migrated);
+      expect(CONCEPT_MAP.has(migrated)).toBe(true);
+    }
   });
 
   it('every jee-main concept_id is EITHER a real node OR a declared stub', () => {
@@ -86,19 +92,23 @@ describe('exam-loader stub-exam rule — real tracked files (gate-ma.yml, jee-ma
     // and SOME stubs means someone migrated half a subject and the topic
     // would render as studiable while parts of it lead nowhere. This holds
     // through any future split or rename.
+    //
+    // It also holds now that jee-main is fully migrated. The earlier version
+    // additionally asserted that BOTH a migrated and a stub section existed,
+    // because a pack that was entirely stub would have satisfied the
+    // half-migrated rule vacuously. That guard has done its job and is gone:
+    // with every section migrated the rule below is non-vacuous on its own,
+    // and demanding a stub section would now demand the pack be unfinished.
     const exam = loadAllExams(true).get('jee-main')!;
     let migrated = 0;
-    let stub = 0;
     for (const section of exam.syllabus) {
       const real = section.concept_ids.filter((c) => CONCEPT_MAP.has(c)).length;
       const all = section.concept_ids.length;
+      expect(all).toBeGreaterThan(0);
       expect(real === 0 || real === all, `${section.id}: ${real}/${all} real — half migrated`).toBe(true);
-      if (real === all) migrated++; else stub++;
+      if (real === all) migrated++;
     }
-    // Both halves still exist: this pack is deliberately part-finished, and
-    // a test that passed when EVERY section was stub would assert nothing.
-    expect(migrated).toBeGreaterThan(0);
-    expect(stub).toBeGreaterThan(0);
+    expect(migrated).toBe(exam.syllabus.length);
   });
 
   it('gate-ma syllabus sections have no stub_concept_ids (all real nodes)', () => {

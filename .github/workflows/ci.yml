@@ -289,6 +289,17 @@ jobs:
       - name: Curriculum bridge coverage + contract
         run: npm run ci:curriculum-bridge
 
+      # Explanation frames. The framework's whole claim is that composing an
+      # explanation with ZERO learner signals still yields a complete one —
+      # every required role present and non-empty. That failure mode is
+      # silent by construction: a concept missing its trap slot still
+      # renders, still reads fluently, and simply never warns the student
+      # about the mistake that costs them the mark. Blocking, with
+      # scripts/explanation-frame-baseline.json carrying the reasoned gaps
+      # so only NEW ones fail.
+      - name: Explanation frame contract + floor
+        run: npm run ci:explanation-frame
+
       # The gate that would have caught the boot crash PR #134 shipped, and
       # the one every other signal here missed. src/content/atomic-topic-spec.ts
       # used __dirname in a "type": "module" package, on an unconditional

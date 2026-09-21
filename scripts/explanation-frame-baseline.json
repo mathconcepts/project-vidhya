@@ -1,0 +1,6 @@
+{
+  "_comment": "Concepts that cannot yet be framed (src/content/explanation-frame). Each entry is a known, reasoned gap and does NOT fail ci:explanation-frame; anything new does. Closing an entry means deleting it, not editing the gate.",
+  "grandfathered": {
+    "integration-substitution": "Deliberate anchor: null in the concept-anchor registry — a relabelling step inside someone else's integral, with no honest standalone real-world use. Needs an editorial decision on whether 'anchor' stays a required role, not a fabricated sentence."
+  }
+}

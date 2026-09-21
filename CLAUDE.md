@@ -6705,3 +6705,127 @@ question's own source to the student) and only the comment changed.
 **Tests:** backend 5005 → **5008** + 1 todo (378 files). Frontend **4149** (107
 files, unchanged — backend and content only). `tsc --noEmit` clean both sides.
 `npm run ci` green across all 21 gates.
+
+### Topics follow the viewer's exam, and the static/variable split is a declared contract (v4.90.0)
+
+Two asks: GATE topics displayed under a JEE Main header, and a real framework
+for the static/variable split of an explanation, built *before* any content
+generation.
+
+**The topic leak was one raw `fetch`.** The backend was correct throughout —
+`/api/topics?exam_id=jee-main` returns JEE's 15 topics, verified against a
+local boot. The viewer's exam choice is appended in exactly ONE place
+(`withExamChoice`, inside `apiFetch`), and `SmartPracticePage.tsx` was the one
+`/api/topics` caller using a bare `fetch`. Home, SpinePage and AdminPage all
+went through `apiFetch` already. The header said "JEE Main (PCM)" because
+`useActiveExam` appends the choice itself; the chips below it did not.
+
+The hardcoded fallback went with it. `GATE_FALLBACK_TOPICS` was the page's
+initial state and `'linear-algebra'` its default topic — one exam's topics
+named on every exam, and the reason a *failed* topics load would still have
+shown GATE's list on a JEE deployment. The page now starts empty, resolves
+from the server, and on failure says so instead of offering another exam's
+topics; the CTA is disabled while no topic is selected.
+
+`frontend/src/lib/__tests__/exam-scope-invariants.test.ts` is the guard that
+makes the class findable rather than just this instance: a source grep, in the
+style of the backend's surveillance invariants, refusing any bare `fetch` to an
+exam-scoped endpoint. Proven non-vacuous — reverting the fix makes it fail
+naming `SmartPracticePage.tsx:120`. `useActiveExam`'s own raw fetch passes,
+because the invariant is "the choice is appended", not "apiFetch is used".
+
+Verified live in headless Chromium at 375px, and a sweep of `/`, `/spine`,
+`/progress`, `/smart-practice` and `/planned-session` in JEE mode came back
+clean on every GATE-only string.
+
+**Explanation Frame.** Full detail:
+`docs/designs/2026-09-21-explanation-frame-static-variable.md`.
+
+Researched against the code before designing, because this repo has a lot of
+half-overlapping content machinery and the wrong move was adding a twelfth.
+The finding: **every** personalisation mechanism here substitutes a WHOLE atom
+body — `stance-variants.ts` swaps a sibling file, `personalized-regen.ts`
+rewrites a body into `student_atom_overrides`, `applyPersonalizedRanking`
+reorders and by its own docblock never rewrites. Nothing declares which PART of
+an explanation is invariant, and three things follow: personalisation costs
+O(variants × concepts) in authoring (606 stance pairs are the same explanations
+written three times); `ci:variant-agreement` has to police drift with
+heuristics precisely because no artifact states what must survive a rewrite;
+and enrichment is a binary file swap rather than a shared floor plus more help.
+
+`src/content/explanation-frame/` is the contract. A frame is typed slots, each
+`static` (authored once, always rendered) or `adaptive` (may be replaced by a
+resolver, and ALWAYS declares the static text it degrades to). Two guarantees,
+enforced in `contract.ts` rather than by reviewer discipline, because both fail
+SILENTLY — a frame missing its `trap` slot still renders, still reads fluently,
+and simply never warns the student about the mistake that costs the mark:
+
+- **G1 (floor)** — composing against zero signals yields a complete
+  explanation. "Minimum content gives a reasonable explanation" is a property
+  of the type.
+- **G2 (monotonic enrichment)** — a resolver may replace a slot or fill an
+  optional one, never delete a required role; returning `null` is
+  indistinguishable from the resolver not existing, so more signal never
+  produces a worse explanation than less.
+
+Required roles (`anchor`, `core_idea`, `worked_example`, `trap`, `check`) are
+not invented here: they are the research framework's own Micro contract as
+already encoded in `delivery-length.ts`'s `MICRO_ATOM_TYPES`, plus `anchor`.
+Optional roles (`prerequisite_bridge`, `board_bridge`,
+`misconception_callout`) are the enrichment surface.
+
+Three resolvers ship, each reading a signal that genuinely exists and producing
+text from something already authored and already gated: `stance_body` (the
+authored `-shaken`/`-assured` bodies, arriving on `atom.stance_variants` since
+`atom-loader.ts` folds variants inline), `prerequisite_bridge`
+(`shaky_prerequisites` ∩ the concept's own graph prerequisites — an alert about
+an unrelated concept is not a reason to mention it), `board_bridge` (the
+curriculum-bridge registry, alarm-framing ban included). Deliberately three and
+not eleven: `delta-kinds.ts` names eleven reasons a delta might fire and is
+explicit that one has a detector, and shipping eleven resolvers against two
+real detectors would repeat exactly that mistake. `misconception_callout` is
+declared and unfilled — no deterministic source of misconception text exists,
+and a resolver that invents wording is worse than an empty role.
+
+`stance_body` is a **factory returned by the builder**, not a global
+registration: the bodies differ per concept, and a global key would let two
+concurrent compositions serve each other's text. `composeExplanation`'s third
+argument takes per-call resolvers for exactly this.
+
+Stores nothing, reads no database, adds no column (surveillance invariant 1).
+Resolvers take a plain `LearnerSignals` value object that `StudentContext`
+satisfies structurally, so `src/content/` never imports
+`src/personalization/`.
+
+**Measured, with zero new authoring: 169 of 170 concepts are frameable today.**
+The one blocker is `integration-substitution`, whose anchor is a deliberate
+reasoned `null` in the anchor registry ("a relabelling step inside someone
+else's integral") — recorded in `scripts/explanation-frame-baseline.json` with
+that reason rather than waved through, and NOT resolved by quietly demoting
+`anchor` to optional, which would weaken the floor for the other 169.
+
+`GET /api/admin/explanation-frame/:concept_id` (+ `/coverage`) is the shadow
+readout — admin, read-only, changes nothing a student sees, same
+`pedagogy-shadow` / `fsrs-shadow` precedent. One bug it caught in itself: the
+first probe bundle passed the concept's own id as a shaky prerequisite, so the
+prerequisite resolver correctly declined every time and the readout showed a
+working resolver as dead. It reads real graph prerequisites now. For
+`eigenvalues`: floor = 5 static slots / 8,736 chars, `enrich=2` under a stance
+signal, `enrich=3` once a weak prerequisite is present ("This leans on
+Determinants…").
+
+**Not wired to student delivery, deliberately.** Composing from the frame in
+`/api/lesson/compose` changes what every student reads and deserves its own
+verification pass rather than riding along on the framework that makes it
+possible. No content was generated or rewritten — framework before content was
+the explicit ask. What it unlocks, in order: wire delivery behind the existing
+experiment gate so the lift ledger can group by `enrichment_level`; a
+low-prior-competency register becomes one more stance value plus two authored
+slot bodies rather than a third copy of the corpus; each remaining `DeltaKind`
+detector lands as a new resolver the contract refuses if it fires without a
+signal; and generation finally has a declared target shape.
+
+**`ci:explanation-frame` is gate 22** — blocking, baselined.
+
+**Tests:** backend 5008 → 5030 passed (+22), 1 todo unchanged, 379 files. Frontend 4149 → 4154 (108 files).
+`npm run ci` green across 22 gates.

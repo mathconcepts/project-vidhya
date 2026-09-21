@@ -4,6 +4,111 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.90.0] — 2026-09-21 — Topics follow the viewer's exam, and the static/variable split is a declared contract
+
+**Operator action** — none. No new ENV vars, no migrations.
+
+Two asks: fix GATE topics showing under a JEE Main header, and put a real
+framework behind the static/variable split of an explanation *before* any
+content generation.
+
+### Smart Practice served GATE's topics under a JEE Main header
+
+Root-caused before anything was touched, and the backend turned out to be
+correct throughout: `/api/topics?exam_id=jee-main` returns JEE's 15 topics,
+verified against a local boot.
+
+The viewer's exam choice is appended in exactly ONE place — `withExamChoice`,
+called centrally inside `apiFetch` — and `SmartPracticePage.tsx` was the one
+`/api/topics` caller using a raw `fetch`. Every other caller (Home,
+SpinePage, AdminPage) already went through `apiFetch`. The header read "JEE
+Main (PCM)" because `useActiveExam` appends the choice itself; the chips
+below it did not, so the server answered with the deployment default.
+
+- `fetch('/api/topics')` → `apiFetch`.
+- **The hardcoded GATE fallback is gone.** `GATE_FALLBACK_TOPICS` was the
+  page's initial state and `'linear-algebra'` its default topic — one exam's
+  topics named on every exam, and the reason a *failed* topics load would
+  still have shown GATE's list on a JEE deployment. The page now starts with
+  no topics, resolves them from the server, and on failure says so rather
+  than offering another exam's.
+- **`frontend/src/lib/__tests__/exam-scope-invariants.test.ts`** is the guard
+  that makes this class of bug findable: a source grep, in the style of the
+  backend's surveillance invariants, refusing any bare `fetch` to an
+  exam-scoped endpoint. Proven non-vacuous — reverting the fix makes it fail
+  naming `SmartPracticePage.tsx:120`. `useActiveExam`'s raw fetch passes
+  because it wraps the path in `withExamChoice` itself.
+
+Verified live in headless Chromium at 375px with the choice set to
+`jee-main`: `?exam_id=jee-main` sent, 15 JEE chips rendered, no GATE topic
+present. A sweep of `/`, `/spine`, `/progress`, `/smart-practice` and
+`/planned-session` in JEE mode came back clean on every GATE-only string.
+
+### Explanation Frame — the static/variable contract
+
+Design doc: `docs/designs/2026-09-21-explanation-frame-static-variable.md`.
+
+Researched against the code first. **Every** personalisation mechanism this
+repo has substitutes a WHOLE atom body — stance variants swap a sibling file,
+`personalized-regen` rewrites a body into `student_atom_overrides`, and
+`applyPersonalizedRanking` reorders without rewriting. Nothing declares which
+PART of an explanation is invariant. Hence: personalisation costs
+O(variants × concepts) in authoring, `ci:variant-agreement` has to police
+drift with heuristics because no artifact states what must survive a rewrite,
+and enrichment is a binary file swap rather than a shared floor plus more
+help.
+
+`src/content/explanation-frame/` declares it. A frame is typed slots, each
+`static` (authored once, always rendered) or `adaptive` (may be replaced by a
+resolver, and **always** declares the static text it degrades to). Two
+guarantees, enforced in `contract.ts` rather than by review:
+
+- **G1 (floor).** Composing against zero signals yields a complete
+  explanation — every required role present and non-empty.
+- **G2 (monotonic enrichment).** A resolver may replace a slot or fill an
+  optional one; it can never delete a required role, and returning `null` is
+  indistinguishable from the resolver not existing.
+
+Required roles (`anchor`, `core_idea`, `worked_example`, `trap`, `check`) are
+the research framework's own Micro contract as already encoded in
+`delivery-length.ts`, plus `anchor`. Three resolvers ship, each reading a
+signal that genuinely exists and producing text from something already
+authored and already gated: `stance_body` (the authored `-shaken`/`-assured`
+bodies), `prerequisite_bridge` (`shaky_prerequisites` ∩ the concept's own
+graph prerequisites), `board_bridge` (the curriculum-bridge registry).
+Deliberately not eleven — `delta-kinds.ts` names eleven reasons a delta might
+fire and is explicit that one has a detector.
+
+Stores nothing, reads no database, adds no column. Resolvers take a plain
+`LearnerSignals` value object that `StudentContext` satisfies structurally,
+so `src/content/` does not import `src/personalization/`.
+
+**Measured, with zero new authoring: 169 of 170 concepts are frameable
+today.** The one blocker is `integration-substitution`, whose anchor is a
+deliberate reasoned `null` in the anchor registry — recorded in
+`scripts/explanation-frame-baseline.json` with that reason rather than waved
+through or papered over with a fabricated sentence.
+
+`GET /api/admin/explanation-frame/:concept_id` (+ `/coverage`) is the shadow
+readout, following the `pedagogy-shadow` / `fsrs-shadow` precedent: admin,
+read-only, changes nothing a student sees. For `eigenvalues` it reports the
+floor at 5 static slots / 8,736 chars, `enrich=2` under a stance signal, and
+`enrich=3` once a weak prerequisite is present ("This leans on
+Determinants…").
+
+**Not wired to student delivery, deliberately.** Composing from the frame in
+the lesson path changes what every student reads and deserves its own
+verification pass rather than riding along on the framework that makes it
+possible. No content was generated or rewritten in this pass — framework
+first was the explicit ask.
+
+**`ci:explanation-frame` is gate 22** (`npm run ci`), blocking, baselined.
+`ci:aggregate-drift` confirms package.json and ci.yml still agree.
+
+**Tests:** backend 5008 → 5030 passed (+22, the framework suite), 1 todo unchanged, 378 → 379 files. Frontend
+4149 → 4154 (+5: 3 exam-scope page tests, 2 invariants; 108 files). `tsc --noEmit` clean
+both sides. `npm run ci` green across 22 gates.
+
 ## [4.89.0] — 2026-09-20 — The syllabus floor is met for every concept, and the loader can serve what the gate counts
 
 **Operator action** — none. No new ENV vars, no migrations.

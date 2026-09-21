@@ -2749,3 +2749,32 @@ silent degradation for every existing student.
   items carry hand-set `difficulty` values. `empirical_difficulty` only moves
   once real attempts land, so the CAT selector's early JEE picks lean on those
   estimates.
+
+## Explanation Frame — wiring and the roles it leaves open (2026-09-21)
+
+The framework (`src/content/explanation-frame/`, design doc
+`docs/designs/2026-09-21-explanation-frame-static-variable.md`) is shipped,
+contract-enforced and measured at 169/170 concepts frameable. What is NOT done:
+
+- **Wire it to delivery.** `composeExplanation` does not feed
+  `/api/lesson/compose` or the atom renderer. This is the next step and
+  deliberately its own pass: it changes what every student reads. Put it
+  behind the existing experiment gate so the lift ledger can group by
+  `enrichment_level`.
+- **`misconception_callout` has no resolver.** The role is declared; no
+  deterministic source of misconception TEXT exists. `misconception-miner`
+  is DB-backed and prose-free. Needs either a registry of authored
+  misconception callouts or a gated generation path — not a resolver that
+  invents wording.
+- **`integration-substitution` blocks on `anchor`.** Its anchor is a
+  deliberate reasoned `null`. Baselined in
+  `scripts/explanation-frame-baseline.json`. The real question is editorial:
+  does `anchor` stay a required role? Demoting it to optional to clear one
+  concept would weaken the floor for the other 169.
+- **The remaining 8 unwired `DeltaKind` values** each become a resolver
+  against an existing optional role once their trigger detector exists. The
+  contract refuses any that fires without a signal, so they cannot be added
+  speculatively.
+- **A low-prior-competency register** is now cheap: one more stance value
+  plus authored bodies for the two narrative slots, NOT a third copy of the
+  corpus. Not authored in this pass (framework before content was the ask).

@@ -43,6 +43,19 @@ function problem(id: string, question: string) {
   };
 }
 
+/**
+ * Render and wait until GET /api/topics has answered.
+ *
+ * The page no longer ships a hardcoded topic list, so on first paint there
+ * is no topic selected and "Get problem" is correctly disabled. Clicking it
+ * before topics arrive is a race the real user cannot win either.
+ */
+async function renderPageWithTopics() {
+  const r = await renderPage();
+  await waitFor(() => expect(screen.getByText('linear algebra')).toBeInTheDocument());
+  return r;
+}
+
 async function renderPage() {
   const Page = (await import('./SmartPracticePage')).default;
   return render(
@@ -55,12 +68,23 @@ async function renderPage() {
 describe('SmartPracticePage — problem history (Previous / Next)', () => {
   beforeEach(() => {
     resolveMock.mockReset();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+    // A realistic /api/topics answer. It used to be `{ ok: false }`, which
+    // only worked because the page fell back to a hardcoded GATE topic
+    // list — the very bug fixed on 2026-09-21. With no fallback, a page
+    // that cannot load topics correctly offers none, so these history
+    // tests need the endpoint to actually answer.
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ topics: [{ id: 'linear-algebra' }, { id: 'calculus' }] }),
+        _url: url,
+      }),
+    ));
   });
 
   it('first problem: no Previous button, resolve() called once', async () => {
     resolveMock.mockResolvedValueOnce(problem('p-a', 'Problem A'));
-    await renderPage();
+    await renderPageWithTopics();
 
     fireEvent.click(screen.getByText('Get problem'));
     await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
@@ -73,7 +97,7 @@ describe('SmartPracticePage — problem history (Previous / Next)', () => {
     resolveMock
       .mockResolvedValueOnce(problem('p-a', 'Problem A'))
       .mockResolvedValueOnce(problem('p-b', 'Problem B'));
-    await renderPage();
+    await renderPageWithTopics();
 
     // Fetch problem A (fresh — resolve #1)
     fireEvent.click(screen.getByText('Get problem'));
@@ -107,7 +131,7 @@ describe('SmartPracticePage — problem history (Previous / Next)', () => {
       .mockResolvedValueOnce(problem('p-a', 'Problem A'))
       .mockResolvedValueOnce(problem('p-b', 'Problem B'))
       .mockResolvedValueOnce(problem('p-c', 'Problem C'));
-    await renderPage();
+    await renderPageWithTopics();
 
     fireEvent.click(screen.getByText('Get problem'));
     await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
@@ -132,7 +156,7 @@ describe('SmartPracticePage — problem history (Previous / Next)', () => {
       .mockResolvedValueOnce(problem('p-a', 'Problem A'))
       .mockResolvedValueOnce(problem('p-b', 'Problem B'))
       .mockResolvedValueOnce(problem('p-c', 'Problem C (calculus)'));
-    await renderPage();
+    await renderPageWithTopics();
 
     fireEvent.click(screen.getByText('Get problem'));
     await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
@@ -159,7 +183,7 @@ describe('SmartPracticePage — problem history (Previous / Next)', () => {
       .mockResolvedValueOnce(problem('p-a', 'Problem A'))
       .mockResolvedValueOnce(problem('p-b', 'Problem B'))
       .mockResolvedValueOnce(problem('p-c', 'Problem C (hard)'));
-    await renderPage();
+    await renderPageWithTopics();
 
     fireEvent.click(screen.getByText('Get problem'));
     await waitFor(() => expect(screen.getByText('Problem A')).toBeInTheDocument());
@@ -172,5 +196,67 @@ describe('SmartPracticePage — problem history (Previous / Next)', () => {
     fireEvent.click(screen.getByText('Next problem'));
     await waitFor(() => expect(screen.getByText('Problem C (hard)')).toBeInTheDocument());
     expect(resolveMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+/**
+ * Exam scoping — the reported bug (/investigate, 2026-09-21): the exam
+ * switcher said "JEE Main (PCM)" while the topic chips below it were
+ * GATE's eight. Root cause: this page called `/api/topics` with a raw
+ * `fetch`, so `withExamChoice` (applied centrally inside `apiFetch`)
+ * never appended the viewer's `?exam_id=`, and the server answered with
+ * the deployment default exam every time. The backend was correct
+ * throughout: `/api/topics?exam_id=jee-main` returns JEE's 15 topics.
+ */
+describe('SmartPracticePage — topics follow the viewer\'s exam', () => {
+  beforeEach(() => {
+    resolveMock.mockReset();
+    localStorage.clear();
+  });
+
+  it('sends the viewer\'s exam choice on /api/topics', async () => {
+    localStorage.setItem('vidhya.exam.choice', 'jee-main');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ topics: [{ id: 'jee-algebra' }, { id: 'jee-calculus' }] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await renderPage();
+
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.map(c => String(c[0]));
+      expect(calls.some(u => u.includes('/api/topics') && u.includes('exam_id=jee-main'))).toBe(true);
+    });
+  });
+
+  it('renders the topics the server returned, not a hardcoded GATE list', async () => {
+    localStorage.setItem('vidhya.exam.choice', 'jee-main');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ topics: [{ id: 'jee-algebra' }, { id: 'jee-trigonometry' }] }),
+    }));
+
+    await renderPage();
+
+    await waitFor(() => expect(screen.getByText('jee algebra')).toBeInTheDocument());
+    expect(screen.getByText('jee trigonometry')).toBeInTheDocument();
+    // The GATE chips that leaked into JEE mode in the report.
+    expect(screen.queryByText('linear algebra')).toBeNull();
+    expect(screen.queryByText('differential equations')).toBeNull();
+  });
+
+  it('a failed topics load offers no topics rather than another exam\'s', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, json: () => Promise.resolve({}) }));
+
+    await renderPage();
+
+    await waitFor(() =>
+      expect(screen.getByText(/Couldn't load this exam's topics/i)).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('linear algebra')).toBeNull();
+    // Nothing to practise means the CTA cannot fire a resolve() for a
+    // topic this exam may not even have.
+    expect(screen.getByText('Get problem').closest('button')).toBeDisabled();
   });
 });

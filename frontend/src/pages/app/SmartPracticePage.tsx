@@ -27,6 +27,7 @@ import { useActiveExam } from '@/hooks/useActiveExam';
 import { resolve, warmContentBundle, type ResolvedContent, type ContentSource } from '@/lib/content/resolver';
 import { recordAttempt } from '@/lib/gbrain/client';
 import { authFetch } from '@/lib/auth/client';
+import { apiFetch } from '@/hooks/useApi';
 import { InteractiveSidecar } from '@/components/lesson/interactives/InteractiveSidecar';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 import { preserveHardBreaks } from '@/lib/preserveHardBreaks';
@@ -35,13 +36,10 @@ import {
   BookOpen, Target, GraduationCap,
 } from 'lucide-react';
 
-const GATE_FALLBACK_TOPICS = [
-  'linear-algebra', 'calculus', 'differential-equations', 'complex-variables',
-  'probability-statistics', 'numerical-methods', 'transforms', 'discrete',
-];
-
-// The content bundle uses directory-slug topic IDs; the GATE syllabus section IDs
-// differ in two cases. Normalize before passing to the client resolver.
+// The content bundle uses directory-slug topic IDs; two GATE syllabus section
+// IDs differ from theirs. Normalize before passing to the client resolver.
+// Exam-agnostic by construction: an id with no entry (every JEE topic, and
+// every GATE topic but these two) passes through untouched.
 const TOPIC_ALIAS: Record<string, string> = {
   'transforms': 'transform-theory',
   'discrete': 'discrete-mathematics',
@@ -71,12 +69,16 @@ export default function SmartPracticePage() {
 
   const [searchParams] = useSearchParams();
   const conceptIdFromUrl = searchParams.get('concept');
-  const initialTopic = conceptIdFromUrl || searchParams.get('topic') || 'linear-algebra';
+  // No hardcoded default. A literal here ('linear-algebra') is one exam's
+  // topic, so on any other exam it named a topic that exam does not have.
+  // Empty until GET /api/topics answers for the exam actually being viewed.
+  const initialTopic = conceptIdFromUrl || searchParams.get('topic') || '';
   const rawDiff = searchParams.get('difficulty');
   const initialDifficulty = rawDiff === 'easy' ? 0.2 : rawDiff === 'hard' ? 0.8 : rawDiff === 'medium' ? 0.5 : 0.5;
   const natOnly = searchParams.get('mode') === 'nat';
 
-  const [examTopics, setExamTopics] = useState<string[]>(GATE_FALLBACK_TOPICS);
+  const [examTopics, setExamTopics] = useState<string[]>([]);
+  const [topicsFailed, setTopicsFailed] = useState(false);
   const [topic, setTopic] = useState<string>(initialTopic);
   const [difficulty, setDifficulty] = useState<number>(initialDifficulty);
   const [loading, setLoading] = useState(false);
@@ -109,19 +111,22 @@ export default function SmartPracticePage() {
     warmContentBundle();
   }, []);
 
+  // apiFetch, NOT a bare fetch: the viewer's exam choice rides along on
+  // every apiFetch call (see lib/exam-choice.ts). This page used a raw
+  // fetch, so it was the one /api/topics caller that never sent
+  // ?exam_id= — a viewer on JEE Main got a JEE header above GATE's eight
+  // topic chips, every time (/investigate, 2026-09-21).
   useEffect(() => {
-    fetch('/api/topics')
-      .then(r => r.ok ? r.json() : null)
-      .then((data: any) => {
-        if (data?.topics?.length > 0) {
-          const ids = data.topics.map((t: any) => t.id as string);
-          setExamTopics(ids);
-          if (!conceptIdFromUrl) {
-            setTopic(prev => ids.includes(prev) ? prev : ids[0]);
-          }
+    apiFetch<{ topics?: Array<{ id: string }> }>('/api/topics')
+      .then((data) => {
+        const ids = (data?.topics ?? []).map(t => t.id).filter(Boolean);
+        if (ids.length === 0) { setTopicsFailed(true); return; }
+        setExamTopics(ids);
+        if (!conceptIdFromUrl) {
+          setTopic(prev => (prev && ids.includes(prev) ? prev : ids[0]));
         }
       })
-      .catch(() => {});
+      .catch(() => setTopicsFailed(true));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextProblem = useCallback(async () => {
@@ -250,6 +255,13 @@ export default function SmartPracticePage() {
           <label style={{ display: 'block', fontSize: 'var(--text-caption2)', fontWeight: 'var(--weight-semibold)', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)', marginBottom: 8 }}>
             Topic
           </label>
+          {examTopics.length === 0 && (
+            <p style={{ margin: 0, fontSize: 'var(--text-subhead)', color: 'var(--text-tertiary)' }}>
+              {topicsFailed
+                ? "Couldn't load this exam's topics. Check your connection and reload."
+                : 'Loading topics…'}
+            </p>
+          )}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {examTopics.map(t => (
               <button
@@ -329,18 +341,18 @@ export default function SmartPracticePage() {
           )}
           <button
             onClick={nextProblem}
-            disabled={loading}
+            disabled={loading || !topic}
             style={{
               flex: 1,
               padding: '10px 0',
               borderRadius: 'var(--radius-sm)',
-              background: loading ? 'var(--surface-fill)' : 'var(--green)',
-              color: loading ? 'var(--text-tertiary)' : '#fff',
+              background: loading || !topic ? 'var(--surface-fill)' : 'var(--green)',
+              color: loading || !topic ? 'var(--text-tertiary)' : '#fff',
               border: 'none',
               fontFamily: 'var(--font-sans)',
               fontWeight: 'var(--weight-semibold)',
               fontSize: 'var(--text-body)',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: loading || !topic ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

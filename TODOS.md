@@ -4,6 +4,92 @@ Deferred work with enough context to pick up cold. Each entry states its
 trigger — the condition that makes it worth doing — so nothing sits here
 being vaguely important forever.
 
+## Real JEE Main past-paper questions still need a reachable source (2026-10-09)
+
+v4.91.0 built the machinery that makes a real PYQ import trustworthy — a
+citation is licensed by `source_locator.paper` at a reviewed
+`evidence_level`, enforced by `ci:practice-items`, and `ci:la-walkthrough`
+reports `0/N` reviewed across both exams rather than hiding it. What it could
+not do is import any, because **every NTA domain is refused by this
+environment's egress proxy**; the one reader that reaches them returns
+extracts truncated before the content that matters.
+
+**Trigger:** somebody with network access to `jeemain.nta.nic.in` (or a
+licensed question collection) can transcribe real paper questions.
+
+**What "done" looks like:** rows with `evidence_level: 'official'` and
+`source_locator: { paper: 'JEE Main 2024 Session 1', question_id: '…' }`. The
+gate refuses `official` without a paper, so there is no way to land these
+dishonestly. `ci:la-walkthrough --topic=jee-algebra` should then start
+reporting a non-zero reviewed count.
+
+**Also worth settling in the same pass:** the 127 authored years still in the
+bank (50 from `mcqs.json`, 77 from the two SQL seeds). They are kept as leads
+precisely so a reviewer can check them against real papers; each one either
+earns a locator or should be dropped. The two seed files assert "GATE
+previous year papers 2018-2024" at FILE level and name no question, so the
+attribution is unverified rather than wrong.
+
+## `verified: true` is asserted unconditionally on every PYQ row (2026-10-09)
+
+`scripts/upload-gate-em-materials.ts` hardcodes `verified: true`, and
+`src/content/build-content-bundle.ts`'s pyq lane hardcodes it again when
+folding rows into the bundle — overriding whatever the row said. Nothing
+anywhere reads the flag (grepped: no filter, no render, no gate), which is
+why v4.91.0 left it alone rather than sweeping 241 rows' worth of a claim it
+could not check.
+
+It is still a false claim sitting in committed data, and a future consumer
+could act on it.
+
+**Trigger:** any code starts reading `problem.verified`, or the Wolfram sweep
+(`npm run content:verify`) runs over the bank for the first time.
+
+**Doing it properly** means actually checking the answers, not relabelling:
+most of these questions are machine-checkable with sympy. Until then, do not
+flip the flag to `false` wholesale either — that asserts the opposite thing
+with equally little evidence.
+
+## Two JEE algebra concepts have no interactive-spec block (2026-10-09)
+
+`ci:la-walkthrough --topic=jee-algebra` reports `interactive 5/7`:
+`sets-relations-functions` and `permutations-combinations` have zero valid
+` ```interactive-spec ``` ` blocks. Pre-existing, found while making the test
+leg provenance-aware; report-only, since the gate only BLOCKS on
+`linear-algebra` by default.
+
+**Trigger:** the next JEE content wave, or whenever `enforce_topics` is
+widened past `linear-algebra`.
+
+Both are discrete/symbolic concepts, so the honest widget is likely a
+`guided_walkthrough` (a counting decision tree) rather than a forced
+`simulation` curve — the same call the graph-theory audit made in v4.88.0.
+Forcing a continuous trace onto a counting argument is the "fictional steps"
+failure mode the 2026-09-03 motion audit warns about.
+
+## Rendering the Explanation Frame to students (2026-10-09)
+
+v4.91.0 wired `composeExplanation` into `/api/lesson/compose` behind the
+experiment gate and attaches the result as an additive `explanation_frame`
+field. **No client reads that field**, so an enrolled treatment student's
+lesson is still byte-identical to a control student's.
+
+**Trigger:** once an enrolled pack has accrued enough sessions that
+`enrichment_level` distributions are worth looking at, or once somebody wants
+the frame's ordering in front of students.
+
+**What makes this its own pass, not a follow-on commit:** it changes what
+every enrolled student reads. It needs a real decision about whether the
+frame REPLACES the atom stack or sits alongside it, a renderer for the five
+required roles plus the two optional bridges, and a live check at 375px — the
+same bar the sticky-diagram and concept-anchor passes were held to. Shipping
+it inside the plumbing commit would have made the plumbing unverifiable.
+
+Still open from v4.90.0 and unchanged by this pass: a `misconception_callout`
+resolver (no deterministic source of misconception text exists yet, and a
+resolver that invents wording is worse than an empty role), and resolvers for
+the 8 `DeltaKind` values with no trigger detector.
+
 ## Reality panels for the rest of the corpus (2026-09-20)
 
 `SimulationSpec.reality` shipped in v4.88.0 with two pilots — `determinants`

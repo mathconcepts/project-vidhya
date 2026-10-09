@@ -24,6 +24,7 @@ import { renderLatexToPng, hasComplexMath } from '../utils/latex-to-image';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
 import { getDailyProblemRepo, type UnpostedPyq as PYQ } from '../storage/repositories/daily-problem-repo';
+import { provenanceLabel } from '../content/pyq-provenance';
 
 // ============================================================================
 // Types
@@ -87,7 +88,9 @@ function formatProblemCaption(pyq: PYQ): string {
     ``,
     `<b>Topic:</b> ${topicLabel}`,
     `<b>Difficulty:</b> ${difficultyStars} ${pyq.difficulty} | ${pyq.marks} marks`,
-    `<b>Year:</b> GATE ${pyq.year}`,
+    // Was `GATE ${pyq.year}` unconditionally — a paper citation built out
+    // of a year, on rows where 114 of those years were a code default.
+    `<b>Source:</b> ${provenanceLabel(pyq)}`,
     ``,
     `${pyq.question_text}`,
     ``,

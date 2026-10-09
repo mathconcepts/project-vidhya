@@ -64,12 +64,26 @@ describe('requireRecordId', () => {
 describe('practice-session log identity', () => {
   beforeEach(() => _resetPracticeSessionLog());
 
+  /**
+   * `logPracticeSession` prunes anything older than `PRUNE_AFTER_DAYS` (30)
+   * against `Date.now()` on EVERY write, so a fixture pinned to a literal
+   * date is a time bomb: it writes an entry and the same call deletes it.
+   *
+   * This block was pinned to '2026-08-26T10:00:00.000Z' and was green when
+   * written, still green on main's CI 27 days later, and red from roughly
+   * 2026-09-25 — the day the fixture crossed the window. No commit caused
+   * it and none could fix it; the calendar did. Relative to now, it cannot
+   * rot again.
+   */
   const base: PracticeSessionEntry = {
     student_id: 'stu-1',
     minutes: 12,
-    completed_at: '2026-08-26T10:00:00.000Z',
+    completed_at: new Date(Date.now() - 60_000).toISOString(),
     source: 'smart-practice',
   };
+
+  /** A date OUTSIDE the prune window, used only where that is the point. */
+  const PRUNED_COMPLETED_AT = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString();
 
   it('assigns an id on write, so the entry can mirror', () => {
     logPracticeSession(base);
@@ -91,10 +105,27 @@ describe('practice-session log identity', () => {
   it('still mirrors entries written before the id field existed', () => {
     // Dropping these would lose real practice minutes already on disk, so the
     // fallback composite covers them rather than the fix starting from empty.
-    const legacy = { ...base } as PracticeSessionEntry;
+    // A literal date is correct HERE: `entryId` is pure, never touches the
+    // store, and this asserts the composite's exact shape.
+    const legacy: PracticeSessionEntry = {
+      student_id: 'stu-1',
+      minutes: 12,
+      completed_at: '2026-08-26T10:00:00.000Z',
+      source: 'smart-practice',
+    };
     delete legacy.id;
     expect(entryId(legacy)).toBe('stu-1:2026-08-26T10:00:00.000Z:smart-practice');
     expect(() => requireRecordId('practice-sessions', entryId(legacy))).not.toThrow();
+  });
+
+  it('prunes an entry already older than the window, on the write itself', () => {
+    // The coupling that rotted this block, now asserted instead of implied:
+    // a stale fixture silently produces an EMPTY store, which reads as "the
+    // write path is broken" rather than "the date is too old". Pinning it
+    // means the next person to hardcode a date gets this failure, which says
+    // what is wrong, alongside the confusing one.
+    logPracticeSession({ ...base, completed_at: PRUNED_COMPLETED_AT });
+    expect(_enumerateEntriesForTest()).toHaveLength(0);
   });
 
   it('preserves an id that was supplied explicitly', () => {

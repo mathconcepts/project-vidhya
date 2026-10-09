@@ -33,7 +33,11 @@ describe('formatProblemCaption', () => {
     expect(caption).toContain('GATE Engineering Math');
     expect(caption).toContain('Linear Algebra');
     expect(caption).toContain('★☆☆');
-    expect(caption).toContain('GATE 2023');
+    // A bare `year: 2023` with no recorded paper is not a citation any more
+    // (src/content/pyq-provenance.ts) — the caption says what the question
+    // IS rather than asserting a paper nobody can check.
+    expect(caption).not.toContain('GATE 2023');
+    expect(caption).toContain('Exam-pattern practice');
     expect(caption).toContain('eigenvalues');
     expect(caption).toContain('A) 3, 3');
     expect(caption).toContain('B) 3, 0');

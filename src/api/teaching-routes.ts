@@ -523,6 +523,12 @@ async function handleBrief(req: ParsedRequest, res: ServerResponse): Promise<voi
       id: p.id,
       statement: (p.statement || p.question || '').slice(0, 200),
       year: p.year,
+      // Provenance travels with the row so the client can decide whether
+      // this question may be shown as coming from a paper. Without these
+      // two fields every row would render the honest fallback even after a
+      // reviewer records a real locator. See src/content/pyq-provenance.ts.
+      evidence_level: p.evidence_level,
+      source_locator: p.source_locator,
       difficulty: p.difficulty,
     }));
 

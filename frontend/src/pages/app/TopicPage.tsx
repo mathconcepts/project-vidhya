@@ -12,6 +12,7 @@ import { trackEvent } from '@/lib/analytics';
 import { MasteryRing } from '@/components/ui/MasteryRing';
 import { MarkdownAtomRenderer } from '@/components/lesson/MarkdownAtomRenderer';
 import { ChevronLeft, ChevronRight, ChevronDown, BookOpen, GraduationCap } from 'lucide-react';
+import { provenanceLabel } from '../../lib/pyq-provenance';
 
 interface Problem {
   id: string;
@@ -229,7 +230,7 @@ export default function TopicPage() {
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 'var(--text-caption)', color: 'var(--text-tertiary)' }}>
-                      {problem.year ? `GATE ${problem.year}` : 'Generated · verified'}
+                      {provenanceLabel(problem)}
                     </span>
                     <span style={{ width: 2, height: 2, borderRadius: '50%', background: 'var(--text-tertiary)', flexShrink: 0 }} />
                     <span style={{

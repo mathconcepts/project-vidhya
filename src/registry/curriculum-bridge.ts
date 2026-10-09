@@ -277,21 +277,38 @@ export function bridgeFor(
  * five concurrent exams, but a student has one school curriculum, so the
  * first one that names it is the answer.
  */
-export function bridgeForStudent(
-  student_id: string | null | undefined,
-  concept_id: string,
-): ConceptBridge | null {
+/**
+ * The student's own registered school curriculum, or null.
+ *
+ * Extracted so the Explanation Frame's `board_bridge` resolver and this
+ * module's own `bridgeForStudent` read the SAME rule — first registration
+ * carrying a track wins, an anonymous id never resolves, a profile lookup
+ * that throws degrades to null rather than taking the caller down. Two
+ * copies of "which track is this student on" would be free to disagree
+ * about which exam registration to believe.
+ *
+ * The only per-student input anywhere in the bridge path: the track the
+ * student picked. Everything downstream is a claim about a PUBLISHED state
+ * syllabus, identical for every student on that track.
+ */
+export function trackIdForStudent(student_id: string | null | undefined): string | null {
   if (!student_id || student_id.startsWith('anon_')) return null;
-  let track: string | null = null;
   try {
     const profile = getProfile(student_id);
     for (const reg of profile?.exams ?? []) {
-      if (reg.knowledge_track_id) { track = reg.knowledge_track_id; break; }
+      if (reg.knowledge_track_id) return reg.knowledge_track_id;
     }
   } catch {
     return null;
   }
-  return bridgeFor(track, concept_id);
+  return null;
+}
+
+export function bridgeForStudent(
+  student_id: string | null | undefined,
+  concept_id: string,
+): ConceptBridge | null {
+  return bridgeFor(trackIdForStudent(student_id), concept_id);
 }
 
 export interface BridgeAuditProblem {

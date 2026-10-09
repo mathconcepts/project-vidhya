@@ -191,7 +191,19 @@ async function main() {
             const conceptIds = mapPyqToConceptIds(canonicalTopic, q.tags, questionText);
             const problem = {
               id: q.id || `mcq-${d}-${topicMcqCount}`,
-              year: q.year || 2024,
+              // No year default. `year: q.year || 2024` used to stamp a
+              // paper year onto every source question that had none — 524
+              // of the 634 committed mcqs.json questions carry no year, and
+              // 114 shipped rows ended up claiming GATE 2024 because of
+              // this literal, which four surfaces then rendered as a paper
+              // citation (see src/content/pyq-provenance.ts). Absent is
+              // honest; a fallback literal is a fabricated claim.
+              ...(typeof q.year === 'number' ? { year: q.year } : {}),
+              // These are authored topic MCQs, not transcribed paper
+              // questions: nobody read them against a paper, so they get
+              // the level that says so. Only a reviewer who records
+              // source_locator.paper may raise this.
+              evidence_level: 'design_hypothesis' as const,
               question_text: questionText,
               options: q.options || {},
               correct_answer: q.correct_answer || 'A',

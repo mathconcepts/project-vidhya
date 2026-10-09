@@ -6829,3 +6829,209 @@ signal; and generation finally has a declared target shape.
 
 **Tests:** backend 5008 → 5030 passed (+22), 1 todo unchanged, 379 files. Frontend 4149 → 4154 (108 files).
 `npm run ci` green across 22 gates.
+
+### A paper citation needs a locator; the Explanation Frame reaches the lesson path (v4.91.0)
+
+Two asks: map the JEE past-exam questions with honest provenance, and wire
+`composeExplanation` into `/api/lesson/compose` behind the existing experiment
+gate.
+
+**The first ask turned up a live student-facing fabrication.**
+`scripts/upload-gate-em-materials.ts` built every PYQ-bank row with
+`year: q.year || 2024`, over source files where **524 of the 634 committed
+`mcqs.json` questions carry no year at all**. So 114 of the 241 shipped rows
+claimed a 2024 paper on no evidence, and four surfaces rendered that year as
+a citation: `TopicPage.tsx` (`GATE 2024`), `TeachingDashboardPage.tsx`,
+`src/api/topic-pages.ts` (public SEO pages) and `src/jobs/daily-problem.ts`
+(`Year: GATE 2024`, posted to a Telegram group). The other 127 years ARE an
+authored claim, but no row anywhere carried a locator naming a paper and
+question, so none of them was checkable either. Both seed files
+(`scripts/seed-pyqs.sql`, `supabase/seeds/gate_em_pyqs.sql`) assert "GATE
+previous year papers 2018-2024" at FILE level and name no question.
+
+**`src/content/pyq-provenance.ts` is the rule, stated once.** A citation is
+licensed by `source_locator.paper` — never by a bare year — and only at an
+`evidence_level` that says somebody read that paper (`official` /
+`directly_reviewed`). `pattern_supported` and `design_hypothesis` are claims
+about the question TYPE being exam-relevant, not about this question having
+been asked, and never cite however confident the author was. The vocabulary
+is the one that already existed (`EVIDENCE_LEVELS`, `SourceLocator`); what was
+missing was a decision procedure and anything enforcing it.
+
+`frontend/src/lib/pyq-provenance.ts` is a hand-synced mirror, because
+`pyq-bank.json` is a static file the browser reads directly and the backend's
+`rootDir` forbids an import either way. Unlike the two existing mirrors in
+this repo, it is not trusted: both implementations are driven over ONE shared
+fixture table (`src/content/__tests__/fixtures/pyq-provenance-cases.json`, 15
+cases on both sides of the rule), so a change made to one side and not the
+other fails on whichever was missed.
+
+- All 287 rows now carry `evidence_level`. REQUIRED on this bank, unlike on
+  `AuthoredItem` where it stays optional, and for a specific reason: a
+  practice item has never had a paper citation to make and a PYQ-bank row is
+  rendered next to one. A row with no level is a row nothing can decide
+  about, which is how the defaults got out. Enforced by `ci:practice-items`
+  and proven non-vacuous against a deliberately broken bank (it caught both
+  a missing level and an `official` row whose locator held only a year).
+- The 114 code-defaulted years are **deleted**; a fallback literal is not a
+  claim. The authored years are **kept** as a lead for whoever reviews the
+  bank against real papers, and simply never rendered. Deleting them would
+  destroy information; rendering them asserts something nobody checked.
+- `ci:la-walkthrough`'s test leg is provenance-aware, following the
+  `exam_tested: false` precedent exactly: a concept whose mapped questions
+  include none that was read against a paper gets a **flagged pass** (`—`,
+  with `N, none reviewed`), never a `✓`, and the summary counts the two flag
+  reasons apart. Linear Algebra reports
+  `test 0/26 (+26 mapped but no reviewed paper question)`; every JEE Maths
+  topic reports the same shape. **Zero concepts across either exam are backed
+  by a reviewed paper question** — the honest number this pass set out to
+  produce. The leg passes because these concepts do have exam-level practice;
+  it is not a tick because nothing there is evidence about a paper.
+
+**46 JEE Main Mathematics questions, labelled for what they are.** 2 per
+concept across all 23 JEE Maths concepts (bank **241 → 287**), authored by 4
+parallel Sonnet subagents on one shared brief. Every key verified by a second
+independent method before it landed — sympy for algebra, calculus, geometry
+and trigonometry; brute-force enumeration of the real sample space for every
+counting and probability question — and 8 of the 46 were then re-verified from
+scratch by this session rather than taken on the subagents' word (z³ = conj z
+having exactly 5 roots, 7¹⁰³ mod 25, the area between y²=4x and y=2x−4, an
+integrating-factor ODE, the ellipse's director circle, sin x + cos x = 1 on
+[0,2π], a combined-group variance, and a Cartesian plane angle — all 8 agreed).
+
+They are `design_hypothesis` and carry **no year, no paper, no session**.
+They are authored in the exam's style and were never read against a paper,
+and the gate now says so wherever they appear. Real PYQs still need a source
+this environment cannot reach — every NTA domain is refused by the egress
+proxy — and the point of this pass is that importing them later is
+trustworthy, because `official` is unfakeable without recording where it was
+read. Two concepts deliberately target the Tamil Nadu gaps the curriculum
+bridge already records: `parabola-ellipse-hyperbola` gets chord-of-contact
+and director-circle questions (TN has no standalone Class 11 conics chapter)
+and `three-d-geometry` gets Cartesian plane-angle and skew-line questions (TN
+teaches a vector-only treatment).
+
+Format constraint worth recording: this bank is rendered as a **raw string
+with no KaTeX pipeline** (`PracticePage.tsx` interpolates `question_text`
+directly), and all 241 existing rows use plain Unicode math with zero
+backslashes. Any LaTeX authored here would reach a student as literal source,
+so the brief forbade it outright — which also sidestepped the `\\dfrac`
+double-escaping trap from v4.87.0 entirely.
+
+**The second ask: `src/content/explanation-frame/wire.ts`.** The one place
+`composeExplanation` is reachable from a request a student made; everything
+else in that directory stays pure. It returns null — response byte-identical
+to before the file existed — unless **all three** hold:
+
+1. the request carries a `session_id` (anonymous has no stable bucket and
+   would dirty the lift signal; same rule and reason as
+   `src/personalization/lesson-wire.ts`);
+2. an `experiments` row `explanation_frame_v1_<exam_pack>` exists and is
+   `active`;
+3. the session buckets to `treatment` under that id.
+
+Condition 2 is what makes this honestly "behind the experiment gate" rather
+than "shipped dark behind a hash" — a 50/50 hash with no row is ON for half of
+everybody, everywhere the code deploys. `getExperiment` returns null without
+`DATABASE_URL`, so the DB-less demo and every un-enrolled deployment are off
+without anyone having had to remember to turn them off. The id carries both
+the version (per `ab.ts`'s convention, so a logic change cannot silently
+re-bucket an experiment already accruing evidence) and the exam pack, since
+the lift ledger groups by `exam_pack_id` and this platform now runs two exams
+— `personalized_selector_v1_gate_ma` was named when there was only one.
+
+`handleCompose` attaches the result as an additive `explanation_frame` field.
+**No client renders it yet, so a treatment student's lesson still looks
+exactly like a control student's.** That is deliberate: composing from the
+frame changes what every enrolled student reads, and the decision to render it
+belongs to a client change that can be verified on its own rather than riding
+along on the plumbing. What it buys now is that the composition RUNS against
+real signals on the real serving path — stance, concept mastery, weak
+prerequisites, board track — which the admin shadow readout
+(`/api/admin/explanation-frame/:concept_id`, synthetic probe bundles, admin
+only) cannot tell you, and that `enrichment_level` is in the response for the
+lift ledger to group by. `scripts/activate-explanation-frame.ts` is the
+operator switch (idempotent, `--exam`, `--dry-run`, `--deactivate`), a script
+and not a migration for the same reason as the other two activation scripts.
+
+Three things were deduped rather than copied, because each would have been a
+visible contradiction on one screen:
+
+- `servedStance` is hoisted out of the atom-load try and threaded into the
+  wire, so the frame's register can never disagree with the stance the atom
+  stack was just rendered in. It stays null when the atom load throws — the
+  frame then composes with no stance rather than guessing one.
+- `WEAK_PREREQUISITE_MASTERY` replaces the inline `< 0.5` in
+  `buildRelatedProblems`. A lesson offering prerequisite review for a concept
+  the frame declines to mention would read as a bug to the student.
+- `trackIdForStudent` is extracted from `bridgeForStudent` so the board-bridge
+  resolver and that function read ONE rule about which exam registration to
+  believe.
+
+**A real diagnosis, not a worked-around test failure.** The route-level test
+asserting "the frame composes in the same stance the atoms were served in"
+first came back with `enrichment_level: 0`. The cause was
+`stanceForConcept`'s per-(session, concept) PIN doing its job: an earlier test
+in the same file had already composed that pair with no snapshot, so the
+pinned `steady` was replayed. Each composing test now uses its own session and
+the test says why — a shared fixture session would have hidden exactly the
+mechanism it was testing.
+
+**Also:** `package-lock.json`'s version was stuck at `4.77.0` against a
+`4.90.0` `package.json` — the same stale-pin class as the `VERSION` file fixed
+in v4.39.0. Synced up by `npm install`. The content bundle was rebuilt
+(**756 → 1229 problems**; zero committed ids lost, verified by IDENTITY not by
+count per the v4.36.0 discipline): it was last built when the practice-item
+bank held 505 items, so the JEE packs' 427 items had never been reachable
+client-side at all. `practice-items` rows still carry no answer key, so the
+v4.36.0 leak discipline holds; the 46 new PYQ rows do carry keys, which is the
+PYQ bank's self-check lane by design (`pyq-bank.json` is a public static file
+and `SmartPracticePage` labels that path "not exam grading, no marks
+recorded") — the 23 JEE concepts' real grading goes through the 427
+server-graded practice items.
+
+**A test that rotted on a date, not on a commit — worth recording as a
+pattern.** CI's only red was
+`src/__tests__/unit/storage/durable-record-id.test.ts`'s 3 practice-session
+log tests, which also fail on pristine `origin/main` (confirmed in a separate
+worktree). The first instinct was right — not this pass's doing — and filing
+it as "pre-existing" would have been the end of it. What did not add up:
+main's own CI was GREEN on this exact base commit 17 days earlier. A failure
+that is pre-existing but was not failing is not explained yet.
+
+`logPracticeSession` prunes everything older than `PRUNE_AFTER_DAYS` (30)
+against `Date.now()` **on every write**, and the fixture was pinned to the
+literal `2026-08-26T10:00:00.000Z`. Each write deleted the entry it had just
+added, so `_enumerateEntriesForTest()` returned empty — which reads as a
+broken write path, not a stale date. Green when written, green at 27 days on
+main's last CI run, red from about 2026-09-25 when the fixture crossed the
+window. No commit caused it; no revert could have fixed it; and it would have
+blocked every PR opened from then on.
+
+Fixed by making the three store-writing fixtures relative to `Date.now()`.
+The fourth test keeps its literal date deliberately — `entryId` is pure,
+never touches the store, and that assertion is about the composite's exact
+shape, so a relative date there would assert nothing. One test added pinning
+the coupling itself (an entry already outside the window is dropped by the
+write), so the next person to hardcode a date gets a failure naming the real
+cause next to the confusing one. Nothing skipped, disabled or quarantined.
+
+The general lesson: **a date literal in a fixture that flows through
+retention or pruning logic is a time bomb with a fuse equal to the window.**
+It passes review, passes CI, and fires on a day nobody touched the code.
+
+**Tests:** backend **5023 → 5086** passing, 0 failed, 383 files, 1 todo —
++60 new and +3 recovered from the rotted fixture above. Both figures
+measured, the baseline by running the suite on a pristine `origin/main`
+worktree (5023 passed, 3 failed) rather than read off the last release's doc (provenance rule + the shared
+fixture table, the wire's gate/signal derivation, the wire composing for real
+under a mocked-active experiment incl. G1 and G2 on the serving path, 4
+route-level cases, 3 walkthrough-leg cases, 2 gate cases). Frontend
+**4154 → 4172** (+18), 109 files — the mirror over the same table. Six
+existing assertions moved as direct
+consequences and are documented at each site: the PYQ fixtures now need a
+level, `directly_reviewed`-without-a-locator trips two independent rules
+rather than one, the Telegram caption no longer asserts `GATE 2023`, and three
+bundle counts moved with the rebuild. `npm run ci` green across 22 gates;
+`tsc --noEmit` clean both sides.
+

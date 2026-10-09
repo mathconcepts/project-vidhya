@@ -49,6 +49,7 @@ import {
 import type { LessonRequest, Lesson } from '../lessons/types';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { composeFrameForLesson, WEAK_PREREQUISITE_MASTERY } from '../content/explanation-frame/wire';
 
 // ============================================================================
 // ContentAtom v2 — engagement enrichment helpers
@@ -301,7 +302,7 @@ async function buildRelatedProblems(
   // 3. Prerequisite review — only if student has a low-mastery prereq
   if (student?.mastery_by_concept) {
     const weakPrereqs = (concept.prerequisites || [])
-      .filter(pid => (student.mastery_by_concept![pid] ?? 0.5) < 0.5);
+      .filter(pid => (student.mastery_by_concept![pid] ?? WEAK_PREREQUISITE_MASTERY) < WEAK_PREREQUISITE_MASTERY);
     if (weakPrereqs.length > 0) {
       try {
         const r3 = await resolveContent({
@@ -482,6 +483,11 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
     // ContentAtom v2: also compute atoms[] for the same concept. Frontend
     // prefers atoms[] when non-empty; otherwise falls through to components[].
     let atoms: ContentAtom[] = [];
+    // Hoisted out of the try below so the Explanation Frame can be composed
+    // in the SAME register the atoms were served in. Stays null when the
+    // atom load throws — the frame then composes with no stance signal
+    // rather than guessing one.
+    let composedStance: string | null = null;
     try {
       const conceptAtoms = await loadConceptAtoms(effective_concept_id);
       const conceptMeta = await loadConceptMeta(effective_concept_id);
@@ -525,12 +531,13 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       // Pinned for the length of the concept: recovery can flip the derived
       // stance mid-read, and rewriting every body underneath a student who
       // just answered two correctly is not how that improvement should show up.
-      atoms = applyStanceVariants(
-        atoms,
-        stanceForConcept(lessonReq.session_id, effective_concept_id, () =>
-          stanceForSnapshot(lessonReq.student, effective_concept_id),
-        ),
+      const servedStance = stanceForConcept(
+        lessonReq.session_id,
+        effective_concept_id,
+        () => stanceForSnapshot(lessonReq.student, effective_concept_id),
       );
+      composedStance = servedStance;
+      atoms = applyStanceVariants(atoms, servedStance);
       // Concept-orchestrator v1: apply per-student overrides + populate
       // improved_since for the Improved badge. No-op without DB.
       atoms = await applyStudentOverrides(atoms, lessonReq.session_id ?? null);
@@ -557,6 +564,30 @@ async function handleCompose(req: ParsedRequest, res: ServerResponse): Promise<v
       }
     }
     (personalized as any).atoms = atoms;
+
+    // Explanation Frame (src/content/explanation-frame/wire.ts) — additive,
+    // and null for everyone the experiment has not enrolled, which today is
+    // everyone: `composeFrameForLesson` requires an active `experiments` row
+    // for this exam pack (so a DB-less deploy is off), a session id (so
+    // anonymous traffic is control) and a treatment bucket. No client reads
+    // this field yet, so a treatment student's lesson still renders exactly
+    // as a control student's does; what it buys is the composition running
+    // against real signals on the real path, and `enrichment_level` sitting
+    // in the response for the lift ledger to group by.
+    //
+    // `servedStance` is passed in rather than recomputed so the frame's
+    // register can never disagree with the stance the atom stack was just
+    // rendered in. Null when the atom load above threw, which is correct:
+    // there is no served stance to report.
+    (personalized as any).explanation_frame = await composeFrameForLesson({
+      concept_id: effective_concept_id,
+      session_id: lessonReq.session_id ?? null,
+      student_id: lessonReq.session_id ?? null,
+      exam_pack_id: lessonReq.student?.preferred_exam_id ?? undefined,
+      stance: composedStance,
+      mastery_by_concept: masteryByConcept,
+      representation_mode: lessonReq.student?.representation_mode ?? null,
+    });
 
     // Record as a telemetry event so Content Admin dashboard sees lesson traffic
     recordTelemetry({

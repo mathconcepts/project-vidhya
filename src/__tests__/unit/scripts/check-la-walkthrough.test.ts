@@ -266,6 +266,69 @@ describe('check-la-walkthrough', () => {
     expect(r.stdout).toContain(`[${target}] test leg failing`);
   });
 
+  // ── Test-leg provenance (src/content/pyq-provenance.ts) ─────────────
+  //
+  // The fixture bank's rows carry no `evidence_level`, which is exactly the
+  // state the real bank was in before the provenance backfill: a mapped
+  // question nobody read against a paper. The leg passes on it (the concept
+  // does have exam-level practice) but must never print the same ✓ as a
+  // reviewed paper question, or a bank of authored questions reads as a
+  // bank of past papers.
+
+  it('a mapped-but-unreviewed question passes the test leg WITHOUT a bare tick', () => {
+    const fixture = track(buildFixture());
+    const r = runScript(['--report-only'], fixture.root, fixture.env);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('none reviewed');
+    // Reported apart from the real passes, and the real count is zero here.
+    expect(r.stdout).toContain('mapped but no reviewed paper question');
+    expect(r.stdout).toMatch(/test 0\/\d+ \(/);
+  });
+
+  it('a question with a recorded paper at a reviewed level counts as a real pass', () => {
+    const target = LA_CONCEPT_IDS[0];
+    const fixture = track(
+      buildFixture((root) => {
+        const pyqPath = path.join(root, 'pyq-bank.json');
+        const bank = JSON.parse(fs.readFileSync(pyqPath, 'utf-8'));
+        bank.problems = bank.problems.map((p: { concept_id: string }) =>
+          p.concept_id === target
+            ? {
+                ...p,
+                evidence_level: 'official',
+                source_locator: { paper: 'GATE ME 2023', question_id: '14' },
+              }
+            : p,
+        );
+        fs.writeFileSync(pyqPath, JSON.stringify(bank));
+      }),
+    );
+    const r = runScript(['--report-only'], fixture.root, fixture.env);
+    expect(r.status).toBe(0);
+    // Exactly one concept now has reviewed provenance, and it reports as one.
+    expect(r.stdout).toMatch(/test 1\/\d+ \(/);
+    expect(r.stdout).toContain('1 (1 reviewed)');
+  });
+
+  it('a reviewed evidence level with no recorded paper is NOT a real pass', () => {
+    const target = LA_CONCEPT_IDS[0];
+    const fixture = track(
+      buildFixture((root) => {
+        const pyqPath = path.join(root, 'pyq-bank.json');
+        const bank = JSON.parse(fs.readFileSync(pyqPath, 'utf-8'));
+        // `official` plus a bare year is the shape 114 shipped rows had.
+        bank.problems = bank.problems.map((p: { concept_id: string }) =>
+          p.concept_id === target ? { ...p, evidence_level: 'official', year: 2024 } : p,
+        );
+        fs.writeFileSync(pyqPath, JSON.stringify(bank));
+      }),
+    );
+    const r = runScript(['--report-only'], fixture.root, fixture.env);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/test 0\/\d+ \(/);
+    expect(r.stdout).not.toContain('1 reviewed');
+  });
+
   it('honors concept_ids[] over a legacy concept_id on the PYQ leg', () => {
     const target = LA_CONCEPT_IDS[0];
     const fixture = track(

@@ -6990,15 +6990,40 @@ and `SmartPracticePage` labels that path "not exam grading, no marks
 recorded") — the 23 JEE concepts' real grading goes through the 427
 server-graded practice items.
 
-**Known pre-existing failure, named rather than absorbed:**
+**A test that rotted on a date, not on a commit — worth recording as a
+pattern.** CI's only red was
 `src/__tests__/unit/storage/durable-record-id.test.ts`'s 3 practice-session
-log tests fail identically on pristine `origin/main` — confirmed by running
-them in a separate worktree checked out at `origin/main`, not inferred.
-Unrelated to this pass, left alone, recorded in TODOS.md.
+log tests, which also fail on pristine `origin/main` (confirmed in a separate
+worktree). The first instinct was right — not this pass's doing — and filing
+it as "pre-existing" would have been the end of it. What did not add up:
+main's own CI was GREEN on this exact base commit 17 days earlier. A failure
+that is pre-existing but was not failing is not explained yet.
 
-**Tests:** backend **5023 → 5082** passing (+59), 383 files, 1 todo — both
-figures measured, the baseline by running the suite on a pristine
-`origin/main` worktree rather than read off the last release's doc (provenance rule + the shared
+`logPracticeSession` prunes everything older than `PRUNE_AFTER_DAYS` (30)
+against `Date.now()` **on every write**, and the fixture was pinned to the
+literal `2026-08-26T10:00:00.000Z`. Each write deleted the entry it had just
+added, so `_enumerateEntriesForTest()` returned empty — which reads as a
+broken write path, not a stale date. Green when written, green at 27 days on
+main's last CI run, red from about 2026-09-25 when the fixture crossed the
+window. No commit caused it; no revert could have fixed it; and it would have
+blocked every PR opened from then on.
+
+Fixed by making the three store-writing fixtures relative to `Date.now()`.
+The fourth test keeps its literal date deliberately — `entryId` is pure,
+never touches the store, and that assertion is about the composite's exact
+shape, so a relative date there would assert nothing. One test added pinning
+the coupling itself (an entry already outside the window is dropped by the
+write), so the next person to hardcode a date gets a failure naming the real
+cause next to the confusing one. Nothing skipped, disabled or quarantined.
+
+The general lesson: **a date literal in a fixture that flows through
+retention or pruning logic is a time bomb with a fuse equal to the window.**
+It passes review, passes CI, and fires on a day nobody touched the code.
+
+**Tests:** backend **5023 → 5086** passing, 0 failed, 383 files, 1 todo —
++60 new and +3 recovered from the rotted fixture above. Both figures
+measured, the baseline by running the suite on a pristine `origin/main`
+worktree (5023 passed, 3 failed) rather than read off the last release's doc (provenance rule + the shared
 fixture table, the wire's gate/signal derivation, the wire composing for real
 under a mocked-active experiment incl. G1 and G2 on the serving path, 4
 route-level cases, 3 walkthrough-leg cases, 2 gate cases). Frontend

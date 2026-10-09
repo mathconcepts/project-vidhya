@@ -108,13 +108,38 @@ built when the practice-item bank held 505 items, so the JEE packs' 427 items
 had never been reachable client-side. `practice-items` rows still carry no
 answer key — the v4.36.0 leak discipline holds.
 
-**Known pre-existing failure, not introduced here and not fixed here:**
-`src/__tests__/unit/storage/durable-record-id.test.ts`'s 3 practice-session
-log tests fail identically on pristine `origin/main` (confirmed in a separate
-worktree). Recorded in TODOS.md.
+### A test that rotted on a date, not on a commit
 
-**Tests:** backend **5023 → 5082** passing (+59), 383 files — baseline measured
-on a pristine `origin/main` worktree, not read off the last release's doc.
+CI's only red was `src/__tests__/unit/storage/durable-record-id.test.ts`'s 3
+practice-session log tests, which also fail on pristine `origin/main`
+(confirmed in a separate worktree). They were first filed here as
+pre-existing and left alone — but main's own CI was GREEN on this exact base
+commit 17 days ago, so "pre-existing" did not explain it and the gap was
+worth chasing.
+
+`logPracticeSession` prunes every entry older than `PRUNE_AFTER_DAYS` (30)
+against `Date.now()` **on every write**, and the fixture was pinned to the
+literal `2026-08-26T10:00:00.000Z`. Each write therefore deleted the entry it
+had just added, and `_enumerateEntriesForTest()` came back empty — which
+reads as "the write path is broken" rather than "the date is too old". The
+block was green when written, still green at 27 days on main's last CI run,
+and red from roughly 2026-09-25, the day the fixture crossed the window. No
+commit caused it and no revert could have fixed it.
+
+Fixed by making the three store-writing fixtures relative to now. The fourth
+test keeps its literal date, correctly: `entryId` is pure, never touches the
+store, and that assertion is about the composite's exact shape. One test
+added pinning the coupling itself — an entry already outside the window is
+dropped by the write — so the next person to hardcode a date gets a failure
+that says what is wrong alongside the confusing one. Nothing skipped,
+disabled or quarantined.
+
+Backend is now **383/383 files, 5086 passed, 0 failed**.
+
+**Tests:** backend **5023 → 5086** passing, 0 failed, 383 files — +60 new and
++3 recovered from the rotted fixture above. Baseline measured on a pristine
+`origin/main` worktree (5023 passed, 3 failed), not read off the last
+release's doc.
 Frontend **4154 → 4172** (+18), 109 files. `npm run ci` green across 22 gates
 against a fully-staged tree (`git status --porcelain` empty of unstaged and
 untracked entries, per the v4.85.0 rule); `tsc --noEmit` clean both sides.

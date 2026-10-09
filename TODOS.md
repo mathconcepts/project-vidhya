@@ -67,24 +67,6 @@ Both are discrete/symbolic concepts, so the honest widget is likely a
 Forcing a continuous trace onto a counting argument is the "fictional steps"
 failure mode the 2026-09-03 motion audit warns about.
 
-## `durable-record-id.test.ts` fails on main (2026-10-09)
-
-Three tests in `src/__tests__/unit/storage/durable-record-id.test.ts`
-("practice-session log identity") fail with `Cannot read properties of
-undefined (reading 'id')` and an empty enumeration after a write. **Confirmed
-pre-existing on pristine `origin/main`** by running them in a separate
-worktree, not inferred from "my diff doesn't touch that file".
-
-`logPracticeSession` followed by `_enumerateEntriesForTest()` returns nothing,
-so either the store's write path or the test's reset
-(`_resetPracticeSessionLog`) is not doing what the test assumes. Unrelated to
-the PYQ-provenance or Explanation-Frame work, so v4.91.0 left it alone rather
-than fixing an unrelated store under cover of a content pass.
-
-**Trigger:** immediately, if practice minutes are expected to mirror to
-`durable_records` — a store whose write path may be broken is losing real
-student minutes, and the test is the only thing currently saying so.
-
 ## Rendering the Explanation Frame to students (2026-10-09)
 
 v4.91.0 wired `composeExplanation` into `/api/lesson/compose` behind the

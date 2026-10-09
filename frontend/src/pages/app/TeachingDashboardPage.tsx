@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authFetch } from '@/lib/auth/client';
+import { provenanceLabel } from '../../lib/pyq-provenance';
 
 interface Recommendation {
   concept_id: string;
@@ -885,7 +886,7 @@ function TeachingBriefDrawer({ brief, loading, onClose, onPushToReview, pushStat
                       >
                         <p style={{ fontSize: 'var(--text-body)', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{p.statement}</p>
                         <div className="flex items-center gap-2" style={{ fontSize: 'var(--text-caption2)', color: 'var(--text-tertiary)' }}>
-                          {p.year && <span>GATE {p.year}</span>}
+                          <span>{provenanceLabel(p)}</span>
                           {p.difficulty && <span>· {p.difficulty}</span>}
                         </div>
                       </div>

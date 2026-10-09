@@ -81,6 +81,7 @@ import {
 } from '../src/scoring/deterministic-scorer';
 import { parseNumericAnswer } from '../src/gbrain/marking-derivation';
 import { EVIDENCE_LEVELS, type AuthoredItem } from '../src/scoring/learning-object-catalog-file';
+import { checkPyqProvenance } from '../src/content/pyq-provenance';
 import { ALL_CONCEPTS } from '../src/constants/concept-graph';
 import { findForbiddenPhrases, evidenceLevelLicensesClaim } from '../src/content/evidence-phrase-rule';
 import { hasAnyLocatorField, validateSourceLocatorShape } from '../src/content/source-locator';
@@ -501,11 +502,12 @@ export function checkPyqBank(bank: PyqBankFile): string[] {
     const p = bank.problems[i];
     const id = typeof p?.id === 'string' && p.id.length > 0 ? p.id : `problems[${i}]`;
 
-    if (p.evidence_level !== undefined) {
-      if (typeof p.evidence_level !== 'string' || !EVIDENCE_LEVEL_SET.has(p.evidence_level)) {
-        problems.push(`${id}: evidence_level '${String(p.evidence_level)}' is not one of {${EVIDENCE_LEVELS.join(', ')}}`);
-      }
-    }
+    // Provenance is REQUIRED on this bank (unlike on AuthoredItem, where it
+    // stays optional) and a citing level must name its paper. The rule and
+    // the defect it closes live in src/content/pyq-provenance.ts — one
+    // implementation, so the gate and the render sites cannot disagree
+    // about whether a row may claim it came from a paper.
+    problems.push(...checkPyqProvenance(p).map((msg) => `${id}: ${msg}`));
 
     problems.push(
       ...validateSourceLocatorShape(p.source_locator).map((msg) => `${id}: ${msg}`),

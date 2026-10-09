@@ -15,6 +15,7 @@ import { getTopicsForExam } from '../curriculum/topic-adapter';
 import { resolveActiveExamId } from '../curriculum/exam-loader';
 import type { ParsedRequest, RouteHandler } from '../lib/route-helpers';
 import { sendJSON, sendError } from '../lib/route-helpers';
+import { provenanceLabel } from '../content/pyq-provenance';
 const { Pool } = pg;
 
 // ============================================================================
@@ -108,7 +109,7 @@ async function handleTopicPage(req: ParsedRequest, res: ServerResponse): Promise
     return `
       <li class="problem-item">
         <span class="diff">${diffBadge} ${p.difficulty}</span>
-        <span class="year">${p.year}</span>
+        <span class="year">${escapeHtml(provenanceLabel(p))}</span>
         <p>${excerpt}</p>
       </li>`;
   }).join('\n');

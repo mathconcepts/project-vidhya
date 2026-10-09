@@ -148,6 +148,13 @@ describe('validateItemSchema', () => {
     }
   });
 
+  it('rejects a row with no evidence_level at all', () => {
+    const problems = checkPyqBank({ version: 1, problems: [{ id: 'la-001', question_text: 'x' }] });
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain('la-001');
+    expect(problems[0]).toContain('evidence_level is required');
+  });
+
   it('rejects an evidence_level outside the locked four', () => {
     const problems = validateItemSchema(mcqItem({ evidence_level: 'vibes' as never }));
     expect(problems[0]).toMatch(/evidence_level 'vibes' is not one of/);
@@ -451,8 +458,18 @@ describe('checkProvenanceVerificationMethod', () => {
 // ---------------------------------------------------------------------------
 
 describe('checkPyqBank', () => {
+  /**
+   * `evidence_level` is REQUIRED on this bank (src/content/pyq-provenance.ts
+   * — a row with no level is a row nothing can decide about, which is how
+   * 114 defaulted `year: 2024` claims reached four render surfaces). Every
+   * fixture therefore gets the authored-and-never-reviewed level by default;
+   * a test about the level itself overrides it.
+   */
   function pyqBank(problems: PyqBankFile['problems']): PyqBankFile {
-    return { version: 1, problems };
+    return {
+      version: 1,
+      problems: problems.map((p) => ({ evidence_level: 'design_hypothesis', ...p })),
+    };
   }
 
   it('passes a clean bank', () => {
@@ -460,10 +477,29 @@ describe('checkPyqBank', () => {
     expect(checkPyqBank(bank)).toEqual([]);
   });
 
-  it('accepts each of the four locked evidence_level values', () => {
-    for (const level of ['official', 'directly_reviewed', 'pattern_supported', 'design_hypothesis']) {
+  it('accepts the two authored levels on their own', () => {
+    // These two make a claim about the question TYPE being exam-relevant,
+    // which needs no locator.
+    for (const level of ['pattern_supported', 'design_hypothesis']) {
       const bank = pyqBank([{ id: 'la-001', question_text: 'x', evidence_level: level }]);
       expect(checkPyqBank(bank)).toEqual([]);
+    }
+  });
+
+  it('accepts the two citing levels only once a paper is recorded', () => {
+    // These two claim somebody read this question against a paper, so they
+    // have to say which one — otherwise the row is the shape 114 shipped
+    // rows had, and four surfaces printed it as a citation.
+    for (const level of ['official', 'directly_reviewed']) {
+      const bare = pyqBank([{ id: 'la-001', question_text: 'x', evidence_level: level }]);
+      expect(checkPyqBank(bare)).toHaveLength(1);
+      expect(checkPyqBank(bare)[0]).toContain('source_locator.paper is missing');
+
+      const sourced = pyqBank([{
+        id: 'la-001', question_text: 'x', evidence_level: level,
+        source_locator: { paper: 'GATE ME 2023', question_id: '14' },
+      }]);
+      expect(checkPyqBank(sourced)).toEqual([]);
     }
   });
 
@@ -503,8 +539,12 @@ describe('checkPyqBank', () => {
       { id: 'la-001', question_text: 'This is high-yield.', evidence_level: 'directly_reviewed' },
     ]);
     const problems = checkPyqBank(bank);
-    expect(problems).toHaveLength(1);
-    expect(problems[0]).toContain('source_locator is missing');
+    // Two independent rules object, and both should: the phrase rule (an
+    // unsourced "high-yield" claim) and the provenance rule (a reviewed
+    // level that names no paper). Collapsing them would hide one.
+    expect(problems).toHaveLength(2);
+    expect(problems.join('\n')).toContain('source_locator is missing');
+    expect(problems.join('\n')).toContain('source_locator.paper is missing');
   });
 
   it('P4: rejects a malformed source_locator (structural check runs independently of the phrase rule)', () => {

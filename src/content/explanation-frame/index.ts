@@ -10,3 +10,4 @@ export * from './contract';
 export * from './resolvers';
 export * from './compose';
 export * from './build';
+export * from './wire';

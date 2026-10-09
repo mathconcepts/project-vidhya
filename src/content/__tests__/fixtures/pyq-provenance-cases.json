@@ -1,0 +1,95 @@
+{
+  "_comment": "Shared fixture table for src/content/pyq-provenance.ts and its hand-synced mirror frontend/src/lib/pyq-provenance.ts. Both implementations are driven over every case in src/content/__tests__/pyq-provenance.test.ts, so a change to one that is not made to the other fails CI. `row` is a partial pyq-bank row; `citable` and `label` are what BOTH must produce.",
+  "cases": [
+    {
+      "name": "official with a paper and a question number cites both",
+      "row": { "evidence_level": "official", "source_locator": { "paper": "GATE ME 2023", "question_id": "14" } },
+      "citable": true,
+      "label": "GATE ME 2023 Q14"
+    },
+    {
+      "name": "official with a paper but no question number cites the paper alone",
+      "row": { "evidence_level": "official", "source_locator": { "paper": "JEE Main 2024 Session 1" } },
+      "citable": true,
+      "label": "JEE Main 2024 Session 1"
+    },
+    {
+      "name": "directly_reviewed also licenses a citation",
+      "row": { "evidence_level": "directly_reviewed", "source_locator": { "paper": "GATE CS 2021", "question_id": "7" } },
+      "citable": true,
+      "label": "GATE CS 2021 Q7"
+    },
+    {
+      "name": "a year is not a locator — this is the 114-row defect",
+      "row": { "evidence_level": "official", "year": 2024 },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "a locator with a year but no paper still names nothing printable",
+      "row": { "evidence_level": "official", "source_locator": { "year": 2024 } },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "pattern_supported never cites, even with a full locator",
+      "row": { "evidence_level": "pattern_supported", "source_locator": { "paper": "GATE EC 2022", "question_id": "3" } },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "design_hypothesis never cites — the authored JEE rows",
+      "row": { "evidence_level": "design_hypothesis", "year": 2023 },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "no evidence_level at all cannot cite",
+      "row": { "year": 2024 },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "an unknown evidence_level cannot cite",
+      "row": { "evidence_level": "totally_made_up", "source_locator": { "paper": "GATE ME 2023" } },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "an empty paper string is not a paper",
+      "row": { "evidence_level": "official", "source_locator": { "paper": "   " } },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "a non-string paper is not a paper",
+      "row": { "evidence_level": "official", "source_locator": { "paper": 2024 } },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "an empty locator object is not a locator",
+      "row": { "evidence_level": "official", "source_locator": {} },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "an array source_locator is refused rather than indexed",
+      "row": { "evidence_level": "official", "source_locator": ["GATE ME 2023"] },
+      "citable": false,
+      "label": "Exam-pattern practice"
+    },
+    {
+      "name": "a blank question_id falls back to the paper alone",
+      "row": { "evidence_level": "official", "source_locator": { "paper": "GATE ME 2023", "question_id": "  " } },
+      "citable": true,
+      "label": "GATE ME 2023"
+    },
+    {
+      "name": "a numeric question_id is ignored rather than coerced",
+      "row": { "evidence_level": "official", "source_locator": { "paper": "GATE ME 2023", "question_id": 14 } },
+      "citable": true,
+      "label": "GATE ME 2023"
+    }
+  ]
+}

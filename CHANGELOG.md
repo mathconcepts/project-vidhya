@@ -4,6 +4,121 @@ All notable changes to Vidhya are documented here.
 
 > **Operator note format** — each release includes an `Operator action` line listing any ENV vars added, migrations to run, or seed commands needed. If absent, no action is required to upgrade.
 
+## [4.91.0] — 2026-10-09 — A paper citation needs a locator, and the Explanation Frame reaches the lesson path
+
+**Operator action** — to enrol an exam pack in the Explanation Frame
+experiment: `DATABASE_URL=… npx tsx scripts/activate-explanation-frame.ts
+--exam gate-ma` (idempotent, `--dry-run`, `--deactivate`). Nothing is enrolled
+by default and nothing a student reads changes when it is. No new ENV vars, no
+migrations.
+
+Two asks: map the JEE past-exam questions with honest provenance, and wire
+`composeExplanation` into `/api/lesson/compose` behind the existing experiment
+gate.
+
+### Students were being told questions came from GATE 2024 because a fallback literal said so
+
+`scripts/upload-gate-em-materials.ts` built every row with
+`year: q.year || 2024`, over source files where **524 of 634 committed
+`mcqs.json` questions carry no year at all**. 114 of the 241 shipped PYQ-bank
+rows therefore claimed a 2024 paper on no evidence whatever, and four surfaces
+rendered that year as a citation: `TopicPage.tsx` (`GATE 2024`),
+`TeachingDashboardPage.tsx`, `src/api/topic-pages.ts` (public SEO pages) and
+`src/jobs/daily-problem.ts` (`Year: GATE 2024`, posted to a Telegram group).
+No row in the bank carried a locator naming a paper and question, so the
+other 127 authored years were not checkable either.
+
+`src/content/pyq-provenance.ts` is the rule, in one place: **a citation is
+licensed by `source_locator.paper`, never by a bare year**, and only at an
+`evidence_level` that says somebody read that paper (`official` /
+`directly_reviewed`). `pattern_supported` and `design_hypothesis` are claims
+about the question TYPE being exam-relevant and never cite, however confident
+the author was. `frontend/src/lib/pyq-provenance.ts` is the hand-synced
+mirror the static bank needs client-side; both are driven over ONE shared
+fixture table so neither can drift quietly.
+
+- All 287 rows now carry `evidence_level` — required on this bank, and
+  enforced by `ci:practice-items` (proven non-vacuous against a deliberately
+  broken bank). 114 fabricated years deleted; authored years kept as a lead
+  for a future reviewer and simply never rendered.
+- `ci:la-walkthrough`'s test leg is provenance-aware. It reports
+  `test 0/26 (+26 mapped but no reviewed paper question)` for Linear Algebra
+  and the same shape for every JEE Maths topic — a flagged pass, never a `✓`,
+  following the `exam_tested: false` precedent. **Zero concepts across both
+  exams are backed by a reviewed paper question**, which is the honest number
+  this pass set out to produce.
+
+### 46 JEE Main Mathematics questions, labelled for what they are
+
+2 per concept across all 23 JEE Maths concepts, authored by 4 parallel Sonnet
+subagents, bank **241 → 287**. Every key verified by a second independent
+method before it landed (sympy for algebra/calculus/geometry/trig,
+brute-force enumeration of the real sample space for counting and
+probability), and 8 were then re-verified independently by this session
+rather than taken on report.
+
+They are `design_hypothesis` and carry **no year, no paper, no session** —
+authored in the exam's style, never read against a paper, and the gate now
+says so wherever they appear. Real PYQs still need a source this environment
+cannot reach (every NTA domain is refused by the egress proxy); what changed
+is that importing them later is trustworthy, because `official` is
+unfakeable without recording where it was read.
+
+Two concepts reflect the Tamil Nadu curriculum gaps the bridge registry
+already records: `parabola-ellipse-hyperbola` gets chord-of-contact and
+director-circle questions (TN has no standalone Class 11 conics chapter), and
+`three-d-geometry` gets Cartesian plane-angle and skew-line questions (TN
+teaches a vector-only treatment).
+
+### Explanation Frame, on the real serving path
+
+`src/content/explanation-frame/wire.ts` is the one place
+`composeExplanation` is reachable from a request a student made. It returns
+null — response byte-identical to before this file existed — unless **all
+three** hold: the request carries a `session_id` (anonymous is always
+control, same rule as `personalization/lesson-wire.ts`), an `experiments` row
+for this exam pack exists and is `active`, and the session buckets to
+treatment. The row matters: a 50/50 hash with no row is on for half of
+everybody, everywhere the code deploys.
+
+`handleCompose` attaches the result as an additive `explanation_frame` field.
+No client renders it yet, so a treatment student's lesson still looks exactly
+like a control student's. What it buys now is that the composition runs
+against REAL signals on the REAL path — stance, concept mastery, weak
+prerequisites, board track — which the admin shadow readout's synthetic probe
+bundles cannot tell you, and that `enrichment_level` sits in the response for
+the lift ledger to group by. Rendering it changes what every enrolled student
+reads and deserves its own verification pass.
+
+`servedStance` is threaded in rather than recomputed, so the frame's register
+can never disagree with the stance the atom stack was just rendered in.
+`WEAK_PREREQUISITE_MASTERY` replaces an inline `< 0.5` in
+`buildRelatedProblems`, and `trackIdForStudent` is extracted so the board
+bridge and `bridgeForStudent` read one rule — a lesson offering prerequisite
+review while the frame declines to mention it would be a contradiction on one
+screen.
+
+### Also
+
+`package-lock.json`'s version was stuck at `4.77.0` against a `4.90.0`
+`package.json` — the same stale-pin class as the `VERSION` file fixed in
+v4.39.0. Synced up. The content bundle was rebuilt (**756 → 1229 problems**,
+zero committed ids lost, verified by identity not by count): it was last
+built when the practice-item bank held 505 items, so the JEE packs' 427 items
+had never been reachable client-side. `practice-items` rows still carry no
+answer key — the v4.36.0 leak discipline holds.
+
+**Known pre-existing failure, not introduced here and not fixed here:**
+`src/__tests__/unit/storage/durable-record-id.test.ts`'s 3 practice-session
+log tests fail identically on pristine `origin/main` (confirmed in a separate
+worktree). Recorded in TODOS.md.
+
+**Tests:** backend **5023 → 5082** passing (+59), 383 files — baseline measured
+on a pristine `origin/main` worktree, not read off the last release's doc.
+Frontend **4154 → 4172** (+18), 109 files. `npm run ci` green across 22 gates
+against a fully-staged tree (`git status --porcelain` empty of unstaged and
+untracked entries, per the v4.85.0 rule); `tsc --noEmit` clean both sides.
+
 ## [4.90.0] — 2026-09-21 — Topics follow the viewer's exam, and the static/variable split is a declared contract
 
 **Operator action** — none. No new ENV vars, no migrations.

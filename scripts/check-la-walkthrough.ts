@@ -85,6 +85,7 @@ import { parseInteractiveSpec } from '../frontend/src/components/lesson/interact
 import { FileLearningObjectCatalog } from '../src/scoring/learning-object-catalog-file';
 import type { AuthoredItem } from '../src/scoring/learning-object-catalog-file';
 import { gateItemFromPayload } from '../src/api/practice-routes';
+import { canCiteExamPaper } from '../src/content/pyq-provenance';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -221,16 +222,27 @@ class PyqBankParseError extends Error {
   }
 }
 
+/** Per concept: how many questions are mapped, and how many of those were read against a real paper. */
+export interface PyqCoverage {
+  total: number;
+  /** Rows where `canCiteExamPaper` holds — a recorded paper, at a reviewed evidence level. */
+  reviewed: number;
+}
+
 /**
- * Concept id -> count of PYQ bank problems mapped to it. Prefers each
- * problem's `concept_ids` array, falls back to a single `concept_id`.
+ * Concept id -> PYQ coverage. Prefers each problem's `concept_ids` array,
+ * falls back to a single `concept_id`.
  * Absent bank = 0 coverage everywhere (a deployment may ship without one).
  * A bank that EXISTS but fails to parse throws loudly — same discipline as
  * `check-syllabus-floor.ts`'s `PracticeItemParseError`: a bank nobody can
  * read must never silently count as "no PYQs here".
+ *
+ * `reviewed` is counted through `canCiteExamPaper` (src/content/pyq-provenance.ts)
+ * rather than a second copy of the rule, so this gate and the surfaces that
+ * render a citation always agree on what counts as a paper question.
  */
-function loadPyqConceptCounts(bankPath: string): Map<string, number> {
-  const counts = new Map<string, number>();
+function loadPyqConceptCounts(bankPath: string): Map<string, PyqCoverage> {
+  const counts = new Map<string, PyqCoverage>();
   if (!fs.existsSync(bankPath)) return counts;
 
   let data: unknown;
@@ -252,7 +264,11 @@ function loadPyqConceptCounts(bankPath: string): Map<string, number> {
     } else if (typeof p.concept_id === 'string') {
       ids = [p.concept_id];
     }
-    for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
+    const reviewed = canCiteExamPaper(raw as Record<string, unknown>) ? 1 : 0;
+    for (const id of ids) {
+      const prev = counts.get(id) ?? { total: 0, reviewed: 0 };
+      counts.set(id, { total: prev.total + 1, reviewed: prev.reviewed + reviewed });
+    }
   }
   return counts;
 }
@@ -265,14 +281,26 @@ interface Leg {
   pass: boolean;
   detail: string;
   /**
-   * Set only on a leg that passes for a reason OTHER than real evidence —
-   * today, exactly the `exam_tested: false` test-leg exemption. Printing
-   * and counting code must treat a flagged pass distinctly from a real one
-   * (see mark()/printTable() and the per-leg summary in main()); a flag
-   * that reads identically to "has a question" would be worse than no
+   * Set only on a leg that passes for a reason OTHER than real evidence.
+   * Printing and counting code must treat a flagged pass distinctly from a
+   * real one (see mark()/printTable() and the per-leg summary in main()); a
+   * flag that reads identically to "has a question" would be worse than no
    * flag at all.
    */
   flagged?: boolean;
+  /**
+   * Why the pass is flagged, so two different exemptions never collapse
+   * into one number:
+   *   'not-examined'          — `exam_tested: false`, a concept real papers
+   *                             assume rather than directly test.
+   *   'unreviewed-provenance' — questions ARE mapped, but not one of them
+   *                             was read against a paper
+   *                             (`canCiteExamPaper` false on all of them).
+   *                             The leg passes because the concept has
+   *                             exam-level practice; it is not a ✓ because
+   *                             nothing here is evidence about the paper.
+   */
+  flag_reason?: 'not-examined' | 'unreviewed-provenance';
 }
 
 export interface ConceptWalkthrough {
@@ -287,7 +315,7 @@ export interface ConceptWalkthrough {
 export async function evaluateWalkthrough(
   concepts: ReadonlyArray<{ id: string; exam_tested?: boolean }>,
   explainersJson: Record<string, unknown[]> | null,
-  pyqCounts: Map<string, number>,
+  pyqCounts: Map<string, PyqCoverage>,
   secondaryCoverage: Map<string, number>,
   catalog: FileLearningObjectCatalog,
 ): Promise<ConceptWalkthrough[]> {
@@ -296,7 +324,8 @@ export async function evaluateWalkthrough(
     const explainCount = countRealExplainers(c.id, explainersJson);
     const interactive = scanInteractiveSpecs(c.id);
     const practice = await checkPractice(c.id, catalog, secondaryCoverage);
-    const testCount = pyqCounts.get(c.id) ?? 0;
+    const testCoverage = pyqCounts.get(c.id) ?? { total: 0, reviewed: 0 };
+    const testCount = testCoverage.total;
     // Default-true, same "absent ⇒ tested" contract as ConceptNode.exam_tested.
     const isExamTested = c.exam_tested !== false;
 
@@ -320,9 +349,24 @@ export async function evaluateWalkthrough(
     // flagged concept anyway is still real evidence, so it's reported and
     // counted exactly like any other concept's — the flag exempts an
     // absence, it never hides or relabels a presence.
+    // Three ways this leg can land, and they are deliberately not one
+    // number. A concept with two authored exam-pattern questions has real
+    // practice at exam level, so it passes; but it has no evidence about
+    // what a paper asked, so it must not print the same ✓ as a concept
+    // backed by a reviewed paper question. Collapsing the two is how a
+    // bank of authored questions starts reading as a bank of past papers.
     const test: Leg = !isExamTested && testCount === 0
-      ? { pass: true, detail: 'not examined', flagged: true }
-      : { pass: testCount >= 1, detail: `${testCount}` };
+      ? { pass: true, detail: 'not examined', flagged: true, flag_reason: 'not-examined' }
+      : testCount === 0
+        ? { pass: false, detail: '0' }
+        : testCoverage.reviewed >= 1
+          ? { pass: true, detail: `${testCount} (${testCoverage.reviewed} reviewed)` }
+          : {
+              pass: true,
+              detail: `${testCount}, none reviewed`,
+              flagged: true,
+              flag_reason: 'unreviewed-provenance',
+            };
 
     out.push({
       concept_id: c.id,
@@ -410,7 +454,7 @@ async function main(): Promise<void> {
 
   const explainersJson = loadExplainersJson(EXPLAINERS_PATH);
 
-  let pyqCounts: Map<string, number>;
+  let pyqCounts: Map<string, PyqCoverage>;
   try {
     pyqCounts = loadPyqConceptCounts(PYQ_BANK_PATH);
   } catch (err) {
@@ -441,10 +485,15 @@ async function main(): Promise<void> {
   // separately so the summary line never claims coverage the bank does not
   // have. `legPassCounts.test` (all passes, real+flagged) is intentionally
   // NOT what gets printed for this leg below.
-  const testFlaggedCount = results.filter((r) => r.test.flagged).length;
+  const notExaminedCount = results.filter((r) => r.test.flag_reason === 'not-examined').length;
+  const unreviewedCount = results.filter((r) => r.test.flag_reason === 'unreviewed-provenance').length;
   const testRealPassCount = results.filter((r) => r.test.pass && !r.test.flagged).length;
-  const testSummary = testFlaggedCount > 0
-    ? `test ${testRealPassCount}/${results.length} (+${testFlaggedCount} not examined)`
+  const testNotes = [
+    notExaminedCount > 0 ? `+${notExaminedCount} not examined` : null,
+    unreviewedCount > 0 ? `+${unreviewedCount} mapped but no reviewed paper question` : null,
+  ].filter(Boolean);
+  const testSummary = testNotes.length > 0
+    ? `test ${testRealPassCount}/${results.length} (${testNotes.join(', ')})`
     : `test ${legPassCounts.test}/${results.length}`;
 
   console.log(
